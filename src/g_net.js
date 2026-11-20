@@ -29,7 +29,7 @@ function playerLabel(id) { const p = NET.slots[id]; if (!p) return '電腦'; if 
 // ---------- transports ----------
 function trysteroTransport(code) {
   if (!window.Trystero) throw new Error('連線模組載入失敗');
-  const room = window.Trystero.joinRoom({ appId: APP_ID, identity: 'none', maxUsers: 6 }, 'room-' + code);
+  const room = window.Trystero.joinRoom({ appId: APP_ID, identity: 'none', maxUsers: 10 }, 'room-' + code);
   const act = room.makeAction('m');
   const T = { send: (d, to) => act.send(d, to ? { target: to } : undefined), leave: () => room.leave() };
   act.onMessage((d, ctx) => T.onMsg && T.onMsg(d, ctx.peerId));
@@ -87,13 +87,13 @@ function hostPick(peer, id) {
 function mpRender() {
   const box = $('mpSlots'); if (!box) return;
   box.innerHTML = IDS.map(id => {
-    const p = NET.slots[id]; const S = SP[id]; const who = p ? (p === NET.me ? '你' : p === NET.hostId ? '房主' : '玩家 ' + (NET.order.indexOf(p) + 1)) : '空位 · 電腦控制';
+    const p = NET.slots[id]; const S = SP[id]; const who = p ? (p === NET.me ? '你' : p === NET.hostId ? '房主' : '玩家 ' + (NET.order.indexOf(p) + 1)) : CORE.includes(id) ? '空位 · 電腦控制' : '空位';
     return `<button class="mps${p === NET.me ? ' me' : p ? ' taken' : ''}" data-id="${id}" ${p && p !== NET.me ? 'disabled' : ''}><span class="ph">${PORTRAITS[id] ? `<img alt="" src="${PORTRAITS[id]}">` : ''}</span><b>${S.name}</b><small>${S.abil}</small><em>${who}</em></button>`;
   }).join('');
   box.querySelectorAll('.mps').forEach(b => b.addEventListener('click', () => mpPick(b.dataset.id)));
-  const n = (NET.me ? 1 : 0) + NET.peers.length; $('mpCount').textContent = `${n} / 4 人在房間`;
+  const n = (NET.me ? 1 : 0) + NET.peers.length; $('mpCount').textContent = `${n} / 8 人在房間`;
   if (NET.host) { const everyone = [NET.me, ...NET.peers]; const ok = everyone.every(p => IDS.some(k => NET.slots[k] === p)); $('mpStart').disabled = !ok; $('mpStart').textContent = ok ? '開始' : '等大家揀好角色'; }
-  else if (NET.hostId && NET.remoteStarted && !NET.on) mpStatus(IDS.some(k => !NET.slots[k]) ? '遊戲進行中：揀一隻「電腦控制」的角色加入。之前斷了線的話，會自動拿回原本的角色。' : '房間已滿，四隻角色都有人玩。');
+  else if (NET.hostId && NET.remoteStarted && !NET.on) mpStatus(IDS.some(k => !NET.slots[k]) ? '遊戲進行中：揀一隻「電腦控制」的角色加入。之前斷了線的話，會自動拿回原本的角色。' : '房間已滿，八隻角色都有人玩。');
   else if (NET.hostId && !NET.started) mpStatus(IDS.some(k => NET.slots[k] === NET.me) ? '已揀好，等房主開始。' : '揀一隻角色。');
 }
 function mpPeerLeft(id) {
@@ -120,8 +120,14 @@ function netBegin() {
   NET.on = true; NET.started = true; NET.client = !NET.host; NET.my = IDS.find(id => NET.slots[id] === NET.me);
   for (const id of IDS) { const C = chars[id]; C.owner = C.baseOwner = NET.slots[id] || NET.hostId; C.net = null; }
   audioInit(); $('mp').hidden = true; $('start').hidden = true; updChip();
-  joinCham(); playT = 0; fails = 0; PROTO = 0;
-  if (NET.host) { requestLock(); loadLevel('wall'); } // clients load when the host's level message arrives
+  joinCham(); syncParty(); playT = 0; fails = 0; PROTO = 0;
+  if (NET.host) { requestLock(); loadLevel('kitchen'); } // online games start in the kitchen; clients follow the host's level message
+}
+// the four Origin Dynamics characters only come along when a player picks them
+function syncParty() {
+  if (!NET.on) return; let ch = false;
+  for (const id of IDS) { const C = chars[id]; if (CORE.includes(id) || !NET.slots[id] || party.includes(C)) continue; party.push(C); C.root.visible = true; C.queue = []; C.lastTrail = C.pos.clone(); C.disp = C.pos.clone(); C.stamina = 100; C.stamMax = 100; if (STATE === 'play' && leader) { C.pos.copy(leader.pos); C.disp.copy(C.pos); } ch = true; }
+  if (ch) { assignGaps(); buildPartyHUD(); }
 }
 function netAfterSpawn() {
   if (!NET.on) return;
@@ -172,12 +178,12 @@ function netUpdate(dt) {
 }
 function netSendChars() {
   const c = [];
-  for (const C of party) if (C.owner === NET.me) c.push([C.id, +C.pos.x.toFixed(2), +C.pos.y.toFixed(2), +C.pos.z.toFixed(2), +C.yaw.toFixed(3), C.state, +(C.spd || 0).toFixed(1), (C.crouch ? 1 : 0) | (C.climbing ? 2 : 0) | (C.gliding ? 4 : 0) | (C.shoveT > 0 ? 8 : 0) | (C.pushing ? 16 : 0), Math.round(C.stamina), C.stamMax || 100, +(C.camo || 0).toFixed(2)]);
+  for (const C of party) if (C.owner === NET.me) c.push([C.id, +C.pos.x.toFixed(2), +C.pos.y.toFixed(2), +C.pos.z.toFixed(2), +C.yaw.toFixed(3), C.state, +(C.spd || 0).toFixed(1), (C.crouch ? 1 : 0) | (C.climbing ? 2 : 0) | (C.gliding ? 4 : 0) | (C.shoveT > 0 ? 8 : 0) | (C.pushing ? 16 : 0), Math.round(C.stamina), C.stamMax || 100, +(C.camo || 0).toFixed(2), C.on || '']);
   if (c.length) nsend({ t: 'p', lv: LEVEL, c });
 }
 function netRecvChars(d, from) {
   if (d.lv !== LEVEL) return;
-  for (const a of d.c) { const C = chars[a[0]]; if (!C || C.owner !== from) continue; C.net = { x: a[1], y: a[2], z: a[3], yaw: a[4], st: a[5], spd: a[6], fl: a[7] }; C.stamina = a[8]; C.stamMax = a[9]; C.camo = a[10]; }
+  for (const a of d.c) { const C = chars[a[0]]; if (!C || C.owner !== from) continue; C.net = { x: a[1], y: a[2], z: a[3], yaw: a[4], st: a[5], spd: a[6], fl: a[7] }; C.stamina = a[8]; C.stamMax = a[9]; C.camo = a[10]; C.on = a[11] || null; }
 }
 function netInterp(dt) {
   const k = 1 - Math.exp(-14 * dt);
@@ -195,6 +201,7 @@ function netInterp(dt) {
   }
 }
 function netSendWorld() {
+  syncParty();
   const w = { t: 'w', lv: LEVEL, q: quest, cp, pr: PROTO, gb: gotBat, cm: cellMax };
   w.bat = batteries.map(b => b.got ? 1 : 0); w.vi = VIALS.map(v => v.got ? 1 : 0); w.cr = CRUMBS.map(c => c.got ? 1 : 0);
   w.res = resizables.map(r => [+r.cx.toFixed(2), +r.cz.toFixed(2), +r.y0.toFixed(2), +r.target.toFixed(3), r.gone ? 1 : 0]);
@@ -206,10 +213,12 @@ function netSendWorld() {
     w.c = [+CAT.pos.x.toFixed(1), +CAT.pos.z.toFixed(1), +CAT.yaw.toFixed(3), CAT.mode, +(CAT.jump || 0).toFixed(2)];
     w.d = +KS.doorA.toFixed(3);
     w.core = [KS.coreGot ? 1 : 0, KS.carried ? 1 : 0, KS.carrier || '', KS.coreDrop ? [+KS.coreDrop.x.toFixed(1), +KS.coreDrop.y.toFixed(1), +KS.coreDrop.z.toFixed(1)] : 0];
+    w.liv = [LIV.open ? 1 : 0, LIV.parts.map(p => p.got ? 1 : 0).join(''), LIV.remoteGot ? 1 : 0];
   }
   nsend(w);
 }
 function netRecvWorld(w) {
+  syncParty();
   if (w.lv !== LEVEL || STATE === 'loading') return;
   if (w.q !== quest) setQuest(w.q); cp = w.cp; PROTO = w.pr; gotBat = w.gb; if (w.cm !== cellMax) { cellMax = w.cm; cells = cellMax; }
   const hide = o => { o.got = true; if (o.g) o.g.visible = false; if (o.halo) o.halo.visible = false; };
@@ -225,6 +234,7 @@ function netRecvWorld(w) {
   });
   if (changed) refreshPartyHUD();
   if (w.m) NET.npc = w;
+  if (w.liv) { if (w.liv[0] && !LIV.open) { LIV.open = true; SND.creak(); } [...w.liv[1]].forEach((g, i) => { const p = LIV.parts[i]; if (g === '1' && p && !p.got) { p.got = true; p.g.visible = false; p.halo.visible = false; } }); LIV.partsGot = LIV.parts.filter(p => p.got).length; LIV.remoteGot = !!w.liv[2]; }
   if (w.core) { KS.coreGot = !!w.core[0]; KS.carried = !!w.core[1]; KS.carrier = w.core[2] || null; KS.coreDrop = w.core[3] ? V3(...w.core[3]) : null; }
 }
 // the family and the cat on a client: follow the host's snapshot, animate locally
@@ -239,7 +249,7 @@ function netNPC(dt) {
   updKid(dt); updCat(dt);
 }
 function fridgeDoor() {
-  KS.door.rotation.y = KS.doorA; const open = clamp(KS.doorA / 1.2, 0, 1); KS.fridgeLight.intensity = 2600 * open; KS.fridgeL.on = open > .2; beams[2].k = .045 * open; KS.fridgeBeam.material.uniforms.uK.value = beams[2].k;
+  KS.door.rotation.y = KS.doorA; const open = clamp(KS.doorA / 1.2, 0, 1); KS.fridgeLight.intensity = 2600 * open; KS.fridgeL.on = open > .2; KS.fridgeBeamRec.k = .045 * open; KS.fridgeBeam.material.uniforms.uK.value = KS.fridgeBeamRec.k;
   if (KS.doorA > .35) { KS.doorCol.y0 = -1000; KS.doorCol.y1 = -999; } else { KS.doorCol.y0 = 6; KS.doorCol.y1 = 184; }
 }
 // name tags above teammates
@@ -258,7 +268,7 @@ function netTags() {
 function netMsg(d, from) {
   switch (d.t) {
     case 'hi': if (NET.host) { if (d.tok) NET.tokOf[from] = d.tok; if (NET.started && hostRejoin(from)) break; mpBroadcastLobby(from); } break;
-    case 'lobby': if (NET.host) break; NET.hostId = d.host; NET.slots = d.slots; NET.order = d.order || []; clearTimeout(NET.joinTimer); NET.remoteStarted = !!d.started; mpRender(); break;
+    case 'lobby': if (NET.host) break; NET.hostId = d.host; NET.slots = d.slots; NET.order = d.order || []; clearTimeout(NET.joinTimer); NET.remoteStarted = !!d.started; mpRender(); syncParty(); break;
     case 'pick': if (NET.host) { if (!NET.started) hostPick(from, d.id); else hostAssignLate(from, d.id, false); } break;
     case 'slot': if (NET.on && !NET.host) { NET.slots[d.id] = d.peer; NET.order = d.order; const C = chars[d.id]; C.baseOwner = d.peer; C.owner = d.own[d.id]; refreshPartyHUD(); updChip(); } break;
     case 'late': if (!NET.host && !NET.on) { NET.slots = d.slots; NET.order = d.order; NET.late = d; netBegin(); loadLevel(d.lv); } break;
@@ -275,13 +285,17 @@ function netMsg(d, from) {
     case 'ring': noiseRing(V3(...d.p)); if (d.v) { SND.clang(d.v); for (let i = 0; i < 16; i++) emit(V3(d.p[0], d.p[1] + 1, d.p[2]), V3(R(-30, 30), R(10, 40), R(-30, 30)), new THREE.Color(.5, .45, .4), R(.3, .8), R(.4, .9), 300, 1); } break;
     case 'knock': if (NET.my === d.id && mine(leader)) knock(leader, V3(d.x, leader.pos.y, d.z), d.m); break;
     case 'rev': netApplyRevive(d); break;
+    case 'pull': { const C = chars[d.id]; if (C && mine(C) && !C.frozen) startPull(C, V3(...d.hang), V3(...d.to)); break; }
     case 'stam': { const C = chars[d.id]; if (C && mine(C)) { C.stamMax = d.max; C.stamina = Math.min(C.stamMax, C.stamina + (d.st || 0)); refreshPartyHUD(); } break; }
     case 'scout': scoutCones(); SCOUT.t = d.d; break;
     // requests that only the host acts on
     case 'frz': if (NET.host) { const C = chars[d.id]; if (C && d.p && !C.frozen) { C.pos.set(...d.p); C.yaw = d.y || C.yaw; C.net = null; } hostFreeze(C, d.who); } break;
     case 'seen': if (NET.host) hostSeen(V3(...d.p), d.who); break;
     case 'gun': if (NET.host) hostGun(d.i, d.g, from); break;
-    case 'shv': if (NET.host) { const r = resizables[d.i]; if (r && !r.gone) { r.svx = (r.svx || 0) + d.vx; r.svz = (r.svz || 0) + d.vz; SND.push(); } } break;
+    case 'shv': if (NET.host) { const r = resizables[d.i]; if (r && !r.gone) { shoveRes(r, d.vx, d.vz); SND.push(); } } break;
+    case 'peb': launchPebble(V3(...d.a), V3(...d.b), d.d); break;
+    case 'swr': if (NET.host) hostSwitch(d.i, d.id); break;
+    case 'swo': if (!NET.host) swOn(d.i, d.d); break;
     case 'get': if (NET.host) hostGet(d); break;
     case 'proto': if (NET.host) hostProto(d.id, from); break;
   }
@@ -321,6 +335,7 @@ function hostGet(d) {
     if (KS.coreGot) return; KS.coreGot = true; KS.carried = true; KS.carrier = NET.on ? C.id : null; PROTO++; SND.pick(); setQuest(2);
     toastW(`拿到核心了！旁邊還有一支 Prototype（共 ${PROTO} 支）。核心在發光——帶着它更容易被看見`, 4.2);
     sayW(C.S.name, C.id === 'dad' ? '找到了……光比之前弱。我們得快點。' : '核心找到了！光比之前弱，快點！', C.S.col, 3);
+  } else if (d.k === 'part' || d.k === 'remote') { livingGet(d, C);
   } else if (d.k === 'cdrop') {
     if (!KS.coreDrop || KS.carried) return; KS.carried = true; KS.carrier = NET.on ? C.id : null; KS.coreDrop = null; SND.pick(); toastW(`${NET.on ? C.S.name : ''}重新拿起了核心`);
   }
@@ -338,9 +353,9 @@ function hostGun(i, grow, from) {
 }
 function hostFreeze(C, who) {
   if (!C || C.frozen) return;
-  if (STK && STK.mem.includes(C) && STK.lock) stkDown(true);
+  C.on = null; C.hop = null;
   const holder = party.find(q => q.carry === C); if (holder && mine(holder)) sqDrop(holder);
-  if (LEVEL === 'kitchen' && KS.carried && (KS.carrier === C.id || !NET.on)) { KS.carried = false; KS.carrier = null; KS.coreDrop = C.pos.clone().add(V3(0, .6, 0)); }
+  if (LEVEL === 'kitchen' && KS.carried && (KS.carrier === C.id || !NET.on)) { KS.carried = false; KS.carrier = null; KS.coreDrop = coreGround(C.pos); }
   netLease([C.id], NET.hostId);
   C.frozen = true; C.toyAt = 'floor'; C.climbing = false; C.mantle = null; C.vel.set(0, 0, 0); C.tumble = 0; C.toyVy = 0; C.crouch = false; C.toyTilt = 0; C.toyRoll = 0; C.stk = false; C.carried = false;
   toyLook(C, true); toyBurst(V3(C.pos.x, C.pos.y + C.h * .5, C.pos.z)); SND.heart(1); tone(1800, 600, .8, .08, 'triangle');
@@ -369,6 +384,8 @@ $('mpCode').addEventListener('keydown', e => { e.stopPropagation(); if (e.key ==
 $('mpBack').addEventListener('click', () => { $('mp').hidden = true; $('start').hidden = false; });
 $('mpStart').addEventListener('click', mpStartGame);
 $('mpLeave').addEventListener('click', mpLeave);
+$('pauseLeave').addEventListener('click', mpLeave);
+$('pauseCopy').addEventListener('click', () => { const l = mpLink(); (navigator.clipboard ? navigator.clipboard.writeText(l) : Promise.reject()).then(() => { $('pauseCopy').textContent = '已複製！'; setTimeout(() => $('pauseCopy').textContent = '複製邀請連結', 1600); }).catch(() => prompt('複製這條連結傳給朋友', l)); });
 $('mpCopy').addEventListener('click', () => { const l = mpLink(); (navigator.clipboard ? navigator.clipboard.writeText(l) : Promise.reject()).then(() => { $('mpCopy').textContent = '已複製！'; setTimeout(() => $('mpCopy').textContent = '複製邀請連結', 1600); }).catch(() => prompt('複製這條連結傳給朋友', l)); });
 // opened from an invite link: go straight to the join screen
 (() => { const m = location.search.match(/[?&]room=([A-Za-z0-9]{4})/); if (m) NET.autoJoin = m[1].toUpperCase(); })();

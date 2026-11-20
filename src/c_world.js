@@ -166,11 +166,11 @@ function rayT(o, d, maxT, c) {
   return t0;
 }
 function rayBlocked(o, d, maxT, skipSmall = true) {
-  for (const c of cols) { if (c.noRay || (skipSmall && c.small)) continue; const t = rayT(o, d, maxT, c); if (t > 0.01 && t < maxT) return true; }
+  for (const c of colsNear(o.x, o.y, o.z)) { if (c.noRay || (skipSmall && c.small)) continue; const t = rayT(o, d, maxT, c); if (t > 0.01 && t < maxT) return true; }
   return false;
 }
-function rayFirst(o, d, maxT) { let best = maxT; for (const c of cols) { if (c.small || c.noCam) continue; const t = rayT(o, d, maxT, c); if (t > 0.001 && t < best) best = t; } return best; }
-function solidAt(x, y, z) { for (const c of cols) { if (y < c.y0 || y > c.y1) continue; if (c.t === 'b') { if (x > c.x0 && x < c.x1 && z > c.z0 && z < c.z1) return c; } else if (Math.hypot(x - c.x, z - c.z) < c.r) return c; } return null; }
+function rayFirst(o, d, maxT) { let best = maxT; for (const c of colsNear(o.x, o.y, o.z)) { if (c.small || c.noCam) continue; const t = rayT(o, d, maxT, c); if (t > 0.001 && t < best) best = t; } return best; }
+function solidAt(x, y, z) { for (const c of colsNear(x, y, z)) { if (y < c.y0 || y > c.y1) continue; if (c.t === 'b') { if (x > c.x0 && x < c.x1 && z > c.z0 && z < c.z1) return c; } else if (Math.hypot(x - c.x, z - c.z) < c.r) return c; } return null; }
 
 // ---------- materials ----------
 let MAT = {};
@@ -255,7 +255,7 @@ function buildRoom() {
   box(-310, 40, 0, 260, -262, -250, M.wall, { uv: 120 }); box(140, 310, 0, 260, -262, -250, M.wall, { uv: 120 });
   box(40, 140, 0, 198, -262, -250, M.wall, { uv: 120 }); box(40, 140, 245, 260, -262, -250, M.wall, { uv: 120 });
   box(-310, -300, 0, 470, -262, 146, M.wall, { uv: 120 }); box(-310, -300, 0, 470, 154, 262, M.wall, { uv: 120 }); box(-310, -300, 9, 470, 146, 154, M.wall, { uv: 120 });
-  box(-336, -310, -10, 0, 136, 164, M.floor, { uv: 100, cast: false }); box(-336, -310, 0, 14, 136, 146, M.wall, { uv: 120 }); box(-336, -310, 0, 14, 154, 164, M.wall, { uv: 120 }); box(-336, -310, 9, 14, 146, 154, M.wall, { uv: 120 }); box(-340, -336, 0, 14, 136, 164, M.wall, { uv: 120 });
+  box(-340, -310, -10, 0, 132, 168, M.floor, { uv: 100, cast: false }); box(-340, -310, 0, 19, 132, 142, M.wall, { uv: 120 }); box(-340, -310, 0, 19, 158, 168, M.wall, { uv: 120 }); box(-340, -310, 16, 19, 142, 158, M.wall, { uv: 120 });
   const den = new THREE.PointLight(0xffb36b, 60, 0, 2); den.position.set(-322, 5, 150); LV.add(den);
   box(300, 310, 0, 260, -262, 262, M.wall, { uv: 120 });
   box(-310, 310, 0, 260, 250, 262, M.wall, { uv: 120 });
@@ -362,7 +362,7 @@ function buildRoom() {
   const sh = new THREE.Mesh(new THREE.CylinderGeometry(.35, .35, 10, 8), M.steel); sh.rotation.z = Math.PI / 2; sh.position.set(-12.5, 93.1, -232); LV.add(sh);
   for (let i = 0; i < 9; i++) { const s = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, 1.6, 8), M.steel); s.position.set(R(-40, 0), 92.25, R(-225, -200)); s.rotation.set(Math.PI / 2, 0, R(0, 6)); s.castShadow = true; LV.add(s); }
   // sugar cubes (resizable)
-  addResizable(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), M.sugar.clone()), 8, -173, 92, 1.6, 1.6, 1.6, 1, 8, '方糖');
+  addResizable(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), M.sugar.clone()), 8, -173, 92, 1.6, 1.6, 1.6, .5, 12, '方糖');
   const sc2 = new THREE.Mesh(new THREE.BoxGeometry(1.6, 1.6, 1.6), M.sugar); sc2.position.set(11.5, 92.8, -174); sc2.rotation.y = .4; sc2.castShadow = true; LV.add(sc2);
   // cork board + drawing + photo under the window
   box(30, 150, 118, 170, -250, -247, M.cork, { uv: 60 }); box(28, 152, 116, 118, -250, -246.5, M.oak); box(28, 152, 170, 172, -250, -246.5, M.oak);
@@ -402,8 +402,8 @@ function buildRoom() {
   const rugG = new THREE.PlaneGeometry(240, 190, 1, 1); rugG.rotateX(-Math.PI / 2);
   const rug = furMesh(rugG, rugM); rug.position.set(10, .3, 55); rug.castShadow = false; LV.add(rug); STATIC.rug = rug;
   cols.push({ t: 'b', x0: -110, x1: 130, y0: 0, y1: .3, z0: -40, z1: 150, m: rug, small: true });
-  addResizable(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), M.match.clone()), 40, -125, 0, 5.3, 1.6, 3.6, .5, 4, '火柴盒');
-  addResizable(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), M.sugar.clone()), 238, -76, 0, 1.6, 1.6, 1.6, 1, 8, '方糖');
+  addResizable(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), M.match.clone()), 40, -125, 0, 5.3, 1.6, 3.6, .3, 8, '火柴盒');
+  addResizable(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), M.sugar.clone()), 238, -76, 0, 1.6, 1.6, 1.6, .5, 12, '方糖');
   // the crack (goal) and the cardboard box blocking it
   addDecal(MAT.crack, 22, 22, -299.8, 8, 150, 0, Math.PI / 2);
   crackBox = addResizable(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), MAT.cardC.clone()), -289, 150, 0, 20, 22, 32, .25, 1, '紙箱');
@@ -419,7 +419,7 @@ function buildRoom() {
 }
 function addResizable(mesh, cx, cz, y0, sx, sy, sz, mn, mx, name) {
   mesh.castShadow = true; mesh.receiveShadow = true; LV.add(mesh);
-  const c = { t: 'b', x0: 0, x1: 0, y0, y1: 0, z0: 0, z1: 0, m: mesh, small: false };
+  const c = { t: 'b', x0: 0, x1: 0, y0, y1: 0, z0: 0, z1: 0, m: mesh, small: false, push: true };
   const r = { mesh, c, cx, cz, y0, sx, sy, sz, s: 1, target: 1, min: mn, max: mx, name, pulse: 0 };
   cols.push(c); resizables.push(r); applyResize(r); mesh.userData.res = r; return r;
 }
@@ -438,7 +438,7 @@ function addBattery(x, y, z) {
 let _bm = null; function M_batt() { return _bm || (_bm = new THREE.MeshStandardMaterial({ color: 0xdfe3e6, metalness: 1, roughness: .18, emissive: 0x153c3a, emissiveIntensity: .6 })); }
 
 // ---------- lights, volumetric beams, dust ----------
-const beams = []; let flashLight = null, flashBeam = null, doorBeam = null;
+let beams = []; let doorBeamRec = null, flashBeamRec = null; let flashLight = null, flashBeam = null, doorBeam = null;
 function beamMesh(color, len, angle, k) {
   const rad = Math.tan(angle) * len; const g = new THREE.ConeGeometry(rad, len, 48, 1, true); g.translate(0, -len / 2, 0);
   const m = new THREE.Mesh(g, new THREE.ShaderMaterial({
@@ -460,10 +460,10 @@ function buildLights() {
   const lb = beamMesh(0xffc98a, 50, .62, .05); aimBeam(lb, V3(-58, 126, -196), V3(-30, 92, -192)); beams.push({ m: lb, o: V3(-58, 126, -196), d: V3(-30, 92, -192).sub(V3(-58, 126, -196)).normalize(), ca: Math.cos(.7), len: 50, c: new THREE.Color(0xffc98a), k: .8 });
   upLight = new THREE.SpotLight(0xffbf7a, 0, 0, .55, .6, 2); upLight.position.set(-252, 430, -330); upLight.target.position.set(-252, 0, 80); LV.add(upLight, upLight.target);
   upLight.castShadow = true; upLight.shadow.mapSize.setScalar(TOUCH ? 512 : 1024); upLight.shadow.camera.near = 30; upLight.shadow.camera.far = 900; upLight.shadow.bias = -0.0004; upLight.shadow.normalBias = .05;
-  doorBeam = beamMesh(0xffbf7a, 520, .17, 0); aimBeam(doorBeam, V3(-252, 420, -300), V3(-252, 0, 80)); beams.push({ m: doorBeam, o: V3(-252, 420, -300), d: V3(-252, 0, 80).sub(V3(-252, 420, -300)).normalize(), ca: Math.cos(.2), len: 520, c: new THREE.Color(0xffbf7a), k: 0 });
+  doorBeam = beamMesh(0xffbf7a, 520, .17, 0); aimBeam(doorBeam, V3(-252, 420, -300), V3(-252, 0, 80)); beams.push({ m: doorBeam, o: V3(-252, 420, -300), d: V3(-252, 0, 80).sub(V3(-252, 420, -300)).normalize(), ca: Math.cos(.2), len: 520, c: new THREE.Color(0xffbf7a), k: 0 }); doorBeamRec = beams[beams.length - 1];
   flashLight = new THREE.SpotLight(0xfff0dc, 0, 0, .4, .45, 2); flashLight.castShadow = true; flashLight.shadow.mapSize.setScalar(TOUCH ? 512 : 1024); flashLight.shadow.camera.near = 3; flashLight.shadow.camera.far = 800; flashLight.shadow.bias = -0.0005; flashLight.shadow.normalBias = .04;
   LV.add(flashLight, flashLight.target);
-  flashBeam = beamMesh(0xfff0dc, 420, .4, 0); beams.push({ m: flashBeam, o: V3(), d: V3(0, -1, 0), ca: Math.cos(.42), len: 420, c: new THREE.Color(0xfff0dc), k: 0 });
+  flashBeam = beamMesh(0xfff0dc, 420, .4, 0); beams.push({ m: flashBeam, o: V3(), d: V3(0, -1, 0), ca: Math.cos(.42), len: 420, c: new THREE.Color(0xfff0dc), k: 0 }); flashBeamRec = beams[beams.length - 1];
 }
 let dust = null;
 function buildDust(o = {}) {

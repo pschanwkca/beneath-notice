@@ -43,28 +43,28 @@ function makePlush() {
 }
 function kitchenResizables(K) {
   // cereal box, toaster, mugs on the counter
-  const cer = resGroup(cmGroup(22, 30, 18, ({ part }) => { part(new THREE.BoxGeometry(22, 30, 18), K.cereal, 0, 0, 0); }, [K.cereal]), -279, -209, 90, 22, 30, 18, .25, 3, '麥片盒', true);
+  const cer = resGroup(cmGroup(22, 30, 18, ({ part }) => { part(new THREE.BoxGeometry(22, 30, 18), K.cereal, 0, 0, 0); }, [K.cereal]), -279, -209, 90, 22, 30, 18, .2, 5, '麥片盒', true);
   const tw = new THREE.MeshPhysicalMaterial({ color: 0xf3f0ea, roughness: .25, clearcoat: .8 }), tb = new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: .6 });
   resGroup(cmGroup(28, 18, 16, ({ part }) => {
     part(new THREE.BoxGeometry(28, 17, 16), tw, 0, -.5, 0); for (const s of [-1, 1]) part(new THREE.BoxGeometry(9, .8, 3), tb, s * 6, 8.2, 0);
     part(new THREE.BoxGeometry(2, 3, 2.5), tb, 14.5, 2, 0); part(new THREE.BoxGeometry(24, .6, 14), new THREE.MeshStandardMaterial({ color: 0xbfc4c8, metalness: 1, roughness: .3 }), 0, -8.7, 0);
-  }, [tw]), 114, -204, 90, 28, 18, 16, .25, 2, '多士爐', true);
+  }, [tw]), 114, -204, 90, 28, 18, 16, .2, 3, '多士爐', true);
   const mw = new THREE.MeshPhysicalMaterial({ color: 0xf2efe8, roughness: .2, clearcoat: 1 }), ms = new THREE.MeshStandardMaterial({ color: 0x9aa1a8, metalness: 1, roughness: .28 });
   for (const [x, mat, h, nm] of [[-270, mw, 16, '馬克杯'], [-256, ms, 13, '鋼杯']]) {
-    resGroup(cmGroup(11, h, 8, ({ part }) => { part(new THREE.CylinderGeometry(4, 4, h, 28), mat, -1, 0, 0); part(new THREE.TorusGeometry(2.6, .7, 10, 20, Math.PI), mat, 3, 0, 0, { r: [0, 0, -Math.PI / 2] }); part(new THREE.CircleGeometry(3.6, 24), new THREE.MeshStandardMaterial({ color: 0x3a2416, roughness: .3 }), -1, h / 2 - 1.5, 0, { r: [-Math.PI / 2, 0, 0], cast: false }); }, [mat]), x, -205, 90, 11, h, 8, .25, 3, nm, true);
+    resGroup(cmGroup(11, h, 8, ({ part }) => { part(new THREE.CylinderGeometry(4, 4, h, 28), mat, -1, 0, 0); part(new THREE.TorusGeometry(2.6, .7, 10, 20, Math.PI), mat, 3, 0, 0, { r: [0, 0, -Math.PI / 2] }); part(new THREE.CircleGeometry(3.6, 24), new THREE.MeshStandardMaterial({ color: 0x3a2416, roughness: .3 }), -1, h / 2 - 1.5, 0, { r: [-Math.PI / 2, 0, 0], cast: false }); }, [mat]), x, -205, 90, 11, h, 8, .2, 6, nm, true);
   }
   // a cookie you can eat (grow it and the whole team eats)
   const ck = new THREE.MeshStandardMaterial({ color: 0xc58a45, roughness: .85 }), chip = new THREE.MeshStandardMaterial({ color: 0x3a2214, roughness: .6 });
   const cg = cmGroup(5, 1, 5, ({ part }) => { part(new THREE.CylinderGeometry(2.4, 2.5, 1, 22), ck, 0, 0, 0); for (let i = 0; i < 8; i++) { const a = i * 2.4, rr = .5 + (i % 3) * .55; part(new THREE.SphereGeometry(.3, 8, 6), chip, Math.cos(a) * rr, .45, Math.sin(a) * rr, { s: [1, .5, 1] }); } }, [ck]);
-  COOKIE = resGroup(cg, -150, 88, 77, 5, 1, 5, .5, 8, '曲奇', false); COOKIE.eaten = false;
+  COOKIE = resGroup(cg, -150, 88, 77, 5, 1, 5, .4, 14, '曲奇', false); COOKIE.eaten = false;
   // the plush bear by the toy box
-  const P = makePlush(); const pr = resGroup(P.G, 175, 178, 0, P.W, P.H, P.D, .5, 5, '毛公仔', true); pr.c.bouncy = true;
+  const P = makePlush(); const pr = resGroup(P.G, 175, 178, 0, P.W, P.H, P.D, .4, 7, '毛公仔', true); pr.c.bouncy = true;
 }
 // ---- growing needs space ----
 function roomFor(r, nt) {
   if (nt <= r.target) return true;
   const hx = r.sx * nt / 2, hz = r.sz * nt / 2; const b = [r.cx - hx, r.cx + hx, r.y0 + .05, r.y0 + r.sy * nt, r.cz - hz, r.cz + hz];
-  for (const o of cols) {
+  for (const o of colsNear(r.cx, r.y0 + .1, r.cz)) {
     if (o === r.c || o.cat || o.y1 <= b[2] || o.y0 >= b[3]) continue; const q = colBounds(o);
     if (q[1] > b[0] + .05 && q[0] < b[1] - .05 && q[5] > b[4] + .05 && q[4] < b[5] - .05) return false;
   }

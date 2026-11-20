@@ -49,7 +49,7 @@ function tongueMesh() {
   TNG.mesh = new THREE.Mesh(g, mat); TNG.tip = new THREE.Mesh(new THREE.SphereGeometry(.42, 16, 12), mat); fxGroup.add(TNG.mesh, TNG.tip); TNG.mesh.visible = TNG.tip.visible = false;
 }
 function mouthPos(C) { const p = V3(); C.head.localToWorld(p.set(0, -.32 * C.k, 1.35 * C.k)); return p; }
-function rayHit(o, d, maxT) { let best = maxT, bc = null; for (const c of cols) { if (c.noCam || c.cat) continue; const t = rayT(o, d, maxT, c); if (t > .001 && t < best) { best = t; bc = c; } } return [best, bc]; }
+function rayHit(o, d, maxT) { let best = maxT, bc = null; for (const c of colsNear(o.x, o.y, o.z)) { if (c.noCam || c.cat) continue; const t = rayT(o, d, maxT, c); if (t > .001 && t < best) { best = t; bc = c; } } return [best, bc]; }
 function hitNormal(c, P) {
   if (Math.abs(P.y - c.y1) < .35) return V3(0, 1, 0); if (Math.abs(P.y - c.y0) < .35) return V3(0, -1, 0);
   if (c.t === 'c') { const n = V3(P.x - c.x, 0, P.z - c.z); return n.lengthSq() > 1e-6 ? n.normalize() : V3(1, 0, 0); }
@@ -60,6 +60,7 @@ function tongueItems() {
   const out = [];
   for (const b of batteries) if (!b.got) out.push({ p: V3(b.x, b.y + 1.2, b.z), set: q => { b.x = q.x; b.y = q.y - 1.2; b.z = q.z; b.g.position.set(b.x, b.y, b.z); b.halo.position.set(b.x, b.y + 1.2, b.z); } });
   for (const v of VIALS) if (!v.got) out.push({ p: V3(v.x, v.y + 1.6, v.z), set: q => { v.x = q.x; v.y = q.y - 1.6; v.z = q.z; } });
+  if (LEVEL === 'kitchen' && KS.coreDrop && !KS.carried) out.push({ p: KS.coreDrop.clone(), set: q => { KS.coreDrop = q.clone(); KS.core.position.copy(q); } });
   for (const c of CRUMBS) if (!c.got) out.push({ p: V3(c.x, c.y + .5, c.z), set: q => { c.x = q.x; c.y = q.y - .5; c.z = q.z; c.g.position.set(c.x, c.y, c.z); c.halo.position.set(c.x, c.y + 1.5, c.z); } });
   return out;
 }
@@ -134,8 +135,8 @@ function chamAnim(C, dt) {
 function sqCarry() {
   const C = leader; if (!C || C.id !== 'sq' || STK || STATE !== 'play' || !mine(C) || C.frozen) return;
   if (C.carry) { sqDrop(C); return; }
-  if (C.climbing) { toast('攀爬時抱不了人'); return; }
-  let best = null, bd = 6; for (const F of party) { if (F === C || F.frozen || F.stk || (NET.on && F.owner !== F.baseOwner)) continue; const p = F.disp || F.pos; const d = Math.hypot(p.x - C.pos.x, p.z - C.pos.z); if (d < bd && Math.abs(p.y - C.pos.y) < 3) { bd = d; best = F; } }
+  if (C.climbing || C.on || isBase(C)) { toast(C.climbing ? '攀爬時抱不了人' : '疊羅漢時抱不了人'); return; }
+  let best = null, bd = 6; for (const F of party) { if (F === C || F.frozen || F.on || F.hop || isBase(F) || (NET.on && F.owner !== F.baseOwner)) continue; const p = F.disp || F.pos; const d = Math.hypot(p.x - C.pos.x, p.z - C.pos.z); if (d < bd && Math.abs(p.y - C.pos.y) < 3) { bd = d; best = F; } }
   if (!best) { toast('要走近隊友才抱得到'); return; }
   C.carry = best; best.carried = true; best.state = 'hang'; best.queue = []; netLease([best.id], NET.me); SND.swish(); tone(500, 760, .12, .04, 'triangle');
   say(C.S.name, best.id === 'bear' ? '老友你……好重……' : `抱緊${best.S.name}！`, C.S.col, 1.8);

@@ -1,0 +1,18 @@
+[
+ {"click": "#go", "wait": 1500},
+ {"eval": "(async()=>{const b=window.__bn; for(let i=0;i<60 && b.state!=='play';i++){ b.press('Space'); await new Promise(r=>setTimeout(r,200));} window.__NODET=true; for(let k=0;k<30;k++) b.step(1); return b.info()})()", "wait": 300, "shot": "w1_basement"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; const cb=W.crackBox; cb.cz+=40; W.applyResize(cb); const L=b.leader; L.pos.set(-290,0,150).add(W.BO); for(const F of b.party) if(F!==L){F.pos.copy(L.pos); F.pos.x+=4; F.disp.copy(F.pos); F.queue=[];} b.setQuest(1); for(let k=0;k<60;k++) b.step(1); b.cam.yaw=Math.PI/2; b.cam.pitch=.1; return {q:b.quest, walk:W.NPCW.length}})()"},
+ {"down": "KeyW", "wait": 100},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; const L=b.leader; const out=[]; for(let k=0;k<14;k++){ for(let j=0;j<30;j++) b.step(1); out.push([b.LEVEL, ...L.pos.toArray().map(v=>+v.toFixed(1))]); if(k===5){} } return out})()", "shot": "w2_tunnel"},
+ {"up": "KeyW"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; for(let k=0;k<200;k++) b.step(1); b.cam.yaw=Math.PI/2+.5; return {lvl:b.LEVEL, q:b.quest, vis:W.ZL.map(z=>[z.id,z.near]), pos:b.leader.pos.toArray().map(v=>+v.toFixed(1)), gecko:b.chars.gecko.pos.toArray().map(v=>+v.toFixed(1)), banner:document.getElementById('chap').className, chap:document.getElementById('chapB').textContent, mom:b.mom.root.visible}})()", "wait": 300, "shot": "w3_hub"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; const L=b.leader; L.pos.set(20,310,-10).add(W.HO); L.vel.set(0,0,0); L.stamina=100; for(const F of b.party) if(F!==L){F.pos.copy(L.pos); F.pos.x+=6; F.disp.copy(F.pos); F.queue=[];} b.cam.yaw=Math.PI/2; b.cam.pitch=.35; for(let k=0;k<20;k++) b.step(1); return b.info()})()", "wait": 300, "shot": "w4_hubtop"},
+ {"down": "KeyW", "wait": 100},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; const L=b.leader; const out=[]; for(let k=0;k<16;k++){ for(let j=0;j<20;j++) b.step(1); out.push([b.LEVEL, L.state, ...L.pos.toArray().map(v=>+v.toFixed(1))]); } return out})()"},
+ {"up": "KeyW"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; for(let k=0;k<30;k++) b.step(1); return {lvl:b.LEVEL, pos:b.leader.pos.toArray().map(v=>+v.toFixed(1)), mom:b.mom.root.visible}})()", "wait": 300, "shot": "w4b_crawl"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; const L=b.leader; L.pos.set(-250,0,-100); L.vel.set(0,0,0); b.cam.yaw=-Math.PI/2; for(let k=0;k<60;k++) b.step(1); return {lvl:b.LEVEL, q:b.quest, qt:document.getElementById('qt').textContent, vis:W.ZL.map(z=>[z.id,z.near]), mom:b.mom.pos.toArray().map(v=>+v.toFixed(0)), momVis:b.mom.root.visible}})()", "wait": 300, "shot": "w5_kitchen"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; b.switchTo(b.chars.bear); const B=b.leader; B.pos.set(280,0,-54); B.vel.set(0,0,0); b.cam.yaw=-Math.PI/2; b.cam.pitch=.2; for(let k=0;k<10;k++) b.step(1); const t=b.bearShove(); for(let k=0;k<90;k++) b.step(1); return {shove:t, wedge:[W.LIV.wedge.cx.toFixed(1), W.LIV.wedge.cz.toFixed(1)], open:W.LIV.open, a:W.LIV.a.toFixed(2)}})()", "wait": 300, "shot": "w6_door"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; const L=b.leader; L.pos.set(330,0,-10); L.vel.set(0,0,0); for(let k=0;k<30;k++) b.step(1); const p=L.pos.toArray().map(v=>+v.toFixed(1)); L.pos.set(470,0,40); b.cam.yaw=-2.3; b.cam.pitch=.14; b.cam.dist=40; for(let k=0;k<60;k++) b.step(1); return {through:p, lvl:b.LEVEL}})()", "wait": 300, "shot": "w7_living"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; const L=b.leader; L.pos.set(700,0,40); b.cam.yaw=-0.6; b.cam.pitch=.1; b.cam.dist=60; for(let k=0;k<60;k++) b.step(1); return {lvl:b.LEVEL}})()", "wait": 300, "shot": "w8_living2"}
+]

@@ -1,0 +1,190 @@
+
+// =====================================================================
+//  LIVING / DINING ROOM — same level as the kitchen, through the door on the right wall
+//  (no loading: you just walk through once the door is open)
+//  The door is held shut by a rubber wedge on the kitchen side: push it away (bear) or
+//  shrink it (Dad) and the draught from the living-room window swings the door open.
+//  Online co-op chapter 1 objectives: find 3 machine parts → open the door → everyone
+//  into the living room → take the batteries from the TV remote → leave through the vent.
+// =====================================================================
+const LIV = { door: null, a: 0, target: .025, open: false, wedge: null, wedge0: null, segs: [], parts: [], partsGot: 0, remote: null, remoteGot: false, vent: V3(893, 0, -200) };
+function buildLivingRoom(K) {
+  const M = MAT, X0 = 312, X1 = 900;
+  const wallM = new THREE.MeshStandardMaterial({ color: 0xd9cbb5, roughness: .95, map: K.wall.map || null });
+  const floorM = new THREE.MeshStandardMaterial({ color: 0x8a5c3a, roughness: .7, map: K.floor.map || null });
+  box(X0 - 2, X1 + 12, -10, 0, -240, 240, floorM, { uv: 140, cast: false });
+  box(X0 - 2, X1 + 12, 260, 270, -240, 240, K.ceil, { cast: false });
+  box(X0, X1 + 12, 0, 260, -244, -232, wallM, { uv: 120 }); box(X1, X1 + 12, 0, 260, -232, 232, wallM, { uv: 120 });
+  // front wall with the window opening (x 700–850, y 100–210)
+  box(X0, 700, 0, 260, 232, 244, wallM, { uv: 120 }); box(850, X1 + 12, 0, 260, 232, 244, wallM, { uv: 120 }); box(700, 850, 0, 100, 232, 244, wallM, { uv: 120 }); box(700, 850, 210, 260, 232, 244, wallM, { uv: 120 });
+  box(X0, X1, 0, 9, -232, -230.5, M.white, { col: false }); box(X0, X1, 0, 9, 230.5, 232, M.white, { col: false }); box(X1 - 1.5, X1, 0, 9, -230, 230, M.white, { col: false });
+  // the door: hinged at z=40, closes towards z=-60, swings into the kitchen
+  const dg = new THREE.Group(); dg.position.set(300, 0, 40); LV.add(dg); LIV.door = dg;
+  const dm = new THREE.MeshPhysicalMaterial({ color: 0xf0ebe2, roughness: .55, clearcoat: .2 });
+  mesh(new THREE.BoxGeometry(4, 205, 98), dm, -2, 102.5, -49, { parent: dg }); mesh(new THREE.SphereGeometry(2.2, 16, 12), K.brass, -5.5, 100, -88, { parent: dg }); mesh(new THREE.SphereGeometry(2.2, 16, 12), K.brass, 1.5, 100, -88, { parent: dg });
+  for (const [y0, y1] of [[30, 95], [115, 190]]) mesh(new THREE.BoxGeometry(4.4, y1 - y0, 70), new THREE.MeshPhysicalMaterial({ color: 0xe6e0d4, roughness: .6 }), -2, (y0 + y1) / 2, -49, { parent: dg, cast: false });
+  for (let i = 0; i < 10; i++) { const c = { t: 'b', x0: 0, x1: 0, y0: 0, y1: 205, z0: 0, z1: 0, door: true }; cols.push(c); LIV.segs.push(c); }
+  box(299, 313, 205, 212, -62, 44, M.white, { col: false }); box(299, 313, 0, 212, -62, -58, M.white); box(299, 313, 0, 212, 40, 44, M.white);
+  // light under/through the gap
+  LIV.gapLight = pointL(0xffd9a8, 0, 306, 20, -55);
+  // rubber wedge jammed under the door's free end (kitchen side)
+  const wm = new THREE.MeshStandardMaterial({ color: 0x5b3f2c, roughness: .9 });
+  const wg = new THREE.BufferGeometry(); { const P = [-.5, -.5, -.5, .5, -.5, -.5, -.5, .5, -.5, -.5, -.5, .5, .5, -.5, .5, -.5, .5, .5]; wg.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); wg.setIndex([0, 1, 2, 3, 5, 4, 0, 3, 4, 0, 4, 1, 0, 2, 5, 0, 5, 3, 1, 4, 5, 1, 5, 2]); wg.computeVertexNormals(); }
+  const wr = resGroup(cmGroup(9, 5, 14, ({ part }) => { const m = part(new THREE.Mesh(wg).geometry, wm, 0, 0, 0, { s: [9, 5, 14] }); m.rotation.y = Math.PI; }, [wm]), 289, -54, 0, 9, 5, 14, .3, 3, '門擋', true);
+  LIV.wedge = wr; LIV.wedge0 = V3(wr.cx, 0, wr.cz);
+  // ---- dining zone ----
+  const wood = new THREE.MeshStandardMaterial({ color: 0x5a3a24, roughness: .55, map: K.wood.map || null });
+  box(400, 580, 72, 76, -175, -85, wood, { uv: 80 }); for (const [x, z] of [[405, -170], [575, -170], [405, -90], [575, -90]]) box(x - 3, x + 3, 0, 72, z - 3, z + 3, wood);
+  const chairL = (cx, cz, face) => { box(cx - 18, cx + 18, 44, 47, cz - 18, cz + 18, wood); for (const [dx, dz] of [[-16, -16], [16, -16], [-16, 16], [16, 16]]) box(cx + dx - 1.5, cx + dx + 1.5, 0, 44, cz + dz - 1.5, cz + dz + 1.5, wood); const bz = cz + face * 17; box(cx - 18, cx + 18, 47, 95, bz - 1.5, bz + 1.5, wood); };
+  for (const x of [440, 490, 540]) { chairL(x, -192, -1); chairL(x, -68, 1); }
+  // runner, fruit bowl, candle
+  box(410, 570, 76, 76.4, -140, -120, new THREE.MeshStandardMaterial({ color: 0x7a2f2f, roughness: .9 }), { col: false });
+  const fb = new THREE.MeshPhysicalMaterial({ color: 0xe8e2d6, roughness: .2, clearcoat: .6 });
+  resGroup(cmGroup(26, 9, 26, ({ part }) => { part(new THREE.CylinderGeometry(13, 8, 9, 32, 1, true), fb, 0, 0, 0); part(new THREE.SphereGeometry(4.6, 16, 12), K.apple, -4, 2, 2); part(new THREE.SphereGeometry(4.2, 16, 12), new THREE.MeshStandardMaterial({ color: 0xf2a33a, roughness: .5 }), 4, 2.5, -2); part(new THREE.SphereGeometry(4, 16, 12), K.apple, 0, 4, 5); }, [fb]), 490, -130, 76, 26, 9, 26, .3, 4, '生果碗', true);
+  // sideboard with drawers + family photos
+  const sb = new THREE.MeshStandardMaterial({ color: 0x3c2a1e, roughness: .6 }); box(360, 580, 0, 88, -230, -196, sb, { uv: 60 });
+  for (let i = 0; i < 4; i++) { const x = 368 + i * 53; box(x, x + 46, 52, 82, -196, -195, sb, { col: false }); box(x + 18, x + 28, 66, 68, -195, -192, K.brass); }
+  for (const [x, w, h, img] of [[385, 22, 28, 'photo'], [430, 18, 24, 'photo2'], [530, 26, 20, 'photo3']]) { box(x - w / 2, x + w / 2, 88, 88 + h, -224, -222, M.black); mesh(new THREE.PlaneGeometry(w - 3, h - 3), livingPhoto(img), x, 88 + h / 2, -221.8, { cast: false }); }
+  // fish tank on its stand (lid is walkable)
+  const st = new THREE.MeshStandardMaterial({ color: 0x24201c, roughness: .5 }); box(620, 720, 0, 80, -228, -186, st);
+  const glass = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: .02, transmission: .9, thickness: .5, transparent: true, opacity: .35, depthWrite: false });
+  box(620, 720, 80, 82, -228, -186, st); box(620, 721, 80, 140, -229, -228, glass, { cast: false }); box(620, 721, 80, 140, -186, -185, glass, { cast: false }); box(619, 620, 80, 140, -228, -186, glass, { cast: false }); box(720, 721, 80, 140, -228, -186, glass, { cast: false });
+  const water = mesh(new THREE.BoxGeometry(98, 50, 40), new THREE.MeshPhysicalMaterial({ color: 0x3a8cb0, roughness: .05, transmission: .6, transparent: true, opacity: .45, depthWrite: false }), 670, 107, -207, { cast: false });
+  box(621, 719, 82, 88, -227, -187, new THREE.MeshStandardMaterial({ color: 0xc8b48a, roughness: 1 }), { col: false });
+  box(618, 722, 140, 143, -230, -184, st); // lid
+  LIV.fish = []; for (let i = 0; i < 4; i++) { const f = mesh(new THREE.SphereGeometry(2, 14, 10), new THREE.MeshStandardMaterial({ color: [0xff8a2a, 0xffd23a, 0x4ac0ff, 0xff5a7a][i], emissive: 0x221100, roughness: .3 }), 670, 105, -207, { cast: false }); f.scale.set(1.6, 1, .6); LIV.fish.push({ m: f, ph: i * 1.7, r: 20 + i * 6, y: 95 + i * 7 }); }
+  const fl = new THREE.PointLight(0x7fd6ff, 900, 0, 2); fl.position.set(670, 135, -207); LV.add(fl);
+  // ---- living zone ----
+  const sofaM = new THREE.MeshPhysicalMaterial({ color: 0x4a5a6e, roughness: .95, sheen: .8, sheenColor: 0x8aa0c0 });
+  box(560, 578, 0, 85, 20, 222, sofaM); box(578, 650, 0, 30, 20, 222, sofaM); box(578, 650, 0, 60, 20, 36, sofaM); box(578, 650, 0, 60, 206, 222, sofaM);
+  ['左', '中', '右'].forEach((n, i) => resGroup(cmGroup(66, 15, 54, ({ part }) => { part(new THREE.BoxGeometry(66, 15, 54), sofaM, 0, 0, 0); }, [sofaM]), 614, 36 + 18 + 30 + i * 60 - 30 + 0, 30, 66, 15, 54, .4, 2.5, n + '坐墊', true));
+  const pil = new THREE.MeshPhysicalMaterial({ color: 0xe0b45a, roughness: .9, sheen: .9 }); resGroup(cmGroup(14, 34, 34, ({ part }) => { part(new THREE.BoxGeometry(14, 34, 34), pil, 0, 0, 0); }, [pil]), 590, 70, 45, 14, 34, 34, .4, 3, '咕𠱸', true);
+  const rugM = furMat({ color: 0xd9c9a8, len: .5, den: 2.6, droop: .1, clump: .5, rimK: .03, root: .65 });
+  const rg = new THREE.PlaneGeometry(190, 170); rg.rotateX(-Math.PI / 2); const rug = furMesh(rg, rugM); rug.position.set(745, .3, 120); LV.add(rug); cols.push({ t: 'b', x0: 650, x1: 840, y0: 0, y1: .3, z0: 35, z1: 205, small: true });
+  const ct = new THREE.MeshPhysicalMaterial({ color: 0x8a6a4a, roughness: .4, clearcoat: .5 }); box(690, 790, 38, 42, 70, 170, ct); for (const [x, z] of [[694, 74], [786, 74], [694, 166], [786, 166]]) box(x - 2.5, x + 2.5, 0, 38, z - 2.5, z + 2.5, ct);
+  box(694, 786, 10, 12, 74, 166, ct);  // lower shelf
+  // remote control (holds the batteries)
+  const rm = new THREE.MeshStandardMaterial({ color: 0x1c1c1e, roughness: .5 }); const bt = new THREE.MeshStandardMaterial({ color: 0x9a9aa2, roughness: .4 });
+  LIV.remote = resGroup(cmGroup(5, 2.2, 18, ({ part }) => { part(new THREE.BoxGeometry(5, 2.2, 18), rm, 0, 0, 0); for (let i = 0; i < 9; i++) part(new THREE.BoxGeometry(1.1, .5, 1.1), i === 0 ? new THREE.MeshStandardMaterial({ color: 0xd03030 }) : bt, (i % 3 - 1) * 1.4, 1.2, -6 + Math.floor(i / 3) * 1.8); }, [rm]), 730, 120, 42, 5, 2.2, 18, .4, 6, '遙控器', true);
+  resGroup(cmGroup(22, 1.4, 28, ({ part }) => { part(new THREE.BoxGeometry(22, 1.4, 28), new THREE.MeshStandardMaterial({ color: 0xc84a3a, roughness: .7 }), 0, 0, 0); }, []), 760, 150, 42, 22, 1.4, 28, .3, 4, '雜誌', true);
+  const mugM = new THREE.MeshPhysicalMaterial({ color: 0x3a6ea8, roughness: .25, clearcoat: .8 }); resGroup(cmGroup(9, 10, 9, ({ part }) => { part(new THREE.CylinderGeometry(4, 4, 10, 24), mugM, 0, 0, 0); }, [mugM]), 705, 90, 42, 9, 10, 9, .3, 5, '咖啡杯', true);
+  // TV on a low cabinet against the far wall (facing the sofa)
+  const tvc = new THREE.MeshStandardMaterial({ color: 0x2b2420, roughness: .55 }); box(860, 900, 0, 46, 30, 210, tvc);
+  box(888, 892, 52, 140, 40, 200, M.black); mesh(new THREE.PlaneGeometry(156, 84), LIV.tvMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(0x4a7ab0).multiplyScalar(1.4) }), 887.8, 96, 120, { cast: false }).rotation.y = -Math.PI / 2;
+  box(884, 896, 46, 52, 110, 130, M.black);
+  LIV.tvLight = new THREE.PointLight(0x7aa8ff, 2600, 0, 2); LIV.tvLight.position.set(850, 95, 120); LV.add(LIV.tvLight);
+  box(866, 884, 46, 52, 60, 84, new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: .3 })); // console
+  for (let i = 0; i < 3; i++) box(870 + i * 4, 872 + i * 4, 52, 52.6, 66, 68, new THREE.MeshBasicMaterial({ color: new THREE.Color(0x52ff9a).multiplyScalar(2) }), { col: false });
+  tubeM([[889, 56, 140], [892, 30, 150], [894, 4, 160], [880, 1, 215]], .7, M.black, 40); cols.push({ t: 'b', x0: 891, x1: 896, y0: 0, y1: 52, z0: 140, z1: 160 }); // a climbable cable bundle
+  // bookshelf with walkable shelves
+  const bs = new THREE.MeshStandardMaterial({ color: 0x6a4a30, roughness: .6 });
+  box(330, 334, 0, 200, 196, 230, bs); box(446, 450, 0, 200, 196, 230, bs); box(330, 450, 0, 200, 228, 232, bs);
+  for (const y of [0, 40, 80, 120, 160, 196]) box(330, 450, y, y + 4, 196, 230, bs);
+  const bc = [0x9a3a3a, 0x3a5a9a, 0x3a8a5a, 0xc8a24a, 0x5a3a7a, 0x2a2a2a];
+  [[44, 345, 6], [84, 352, 7], [124, 340, 5], [164, 360, 6]].forEach(([y, x0, n]) => { for (let i = 0; i < n; i++) { const h = R(22, 32), w = R(4, 6.5); const mat = new THREE.MeshStandardMaterial({ color: bc[(i + y) % 6], roughness: .7 }); const x = x0 + i * 8; resGroup(cmGroup(w, h, 22, ({ part }) => { part(new THREE.BoxGeometry(w, h, 22), mat, 0, 0, 0); }, [mat]), x, 214, y, w, h, 22, .3, 3, '書', true); } });
+  const robot = new THREE.MeshPhysicalMaterial({ color: 0xd8dde2, metalness: .6, roughness: .3 });
+  resGroup(cmGroup(14, 22, 10, ({ part }) => { part(new THREE.BoxGeometry(12, 12, 8), robot, 0, -3, 0); part(new THREE.BoxGeometry(9, 8, 8), robot, 0, 7, 0); part(new THREE.SphereGeometry(1.2, 10, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff5a3a).multiplyScalar(2) }), -2, 7.5, 4.2); part(new THREE.SphereGeometry(1.2, 10, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff5a3a).multiplyScalar(2) }), 2, 7.5, 4.2); }, [robot]), 420, 210, 124, 14, 22, 10, .3, 4, '玩具機械人', true);
+  // window + curtains (curtains reach the floor: climb them to the sill)
+  box(700, 850, 96, 100, 214, 232, M.white); box(700, 850, 206, 210, 228, 240, M.white, { col: false }); box(700, 704, 100, 206, 228, 240, M.white, { col: false }); box(846, 850, 100, 206, 228, 240, M.white, { col: false }); box(773.5, 776.5, 100, 206, 236, 239, M.white, { col: false });
+  mesh(new THREE.PlaneGeometry(420, 210), K.dusk, 775, 150, 330, { cast: false }).rotation.y = Math.PI;
+  mesh(new THREE.PlaneGeometry(146, 110), MAT.glassThin, 775, 155, 238, { cast: false }).rotation.y = Math.PI;
+  cols.push({ t: 'b', x0: 700, x1: 850, y0: 100, y1: 206, z0: 237, z1: 239, noRay: true });
+  const cur = new THREE.MeshPhysicalMaterial({ color: 0x8a7a9a, roughness: .95, sheen: .8, side: THREE.DoubleSide });
+  for (const x of [690, 852]) { box(x - 12, x + 12, 2, 230, 214, 220, cur); }
+  addBeam(0xbcd0ff, V3(775, 200, 225), V3(700, 0, 120), .35, .03);
+  // floor lamp
+  cyl(575, 8, 1, 0, 150, M.dsteel, { seg: 10 }); cyl(575, 8, 12, 0, 2, M.dsteel, { seg: 24 }); const shade = LIV.shade = mesh(new THREE.CylinderGeometry(10, 16, 18, 28, 1, true), new THREE.MeshStandardMaterial({ color: 0xf2e6cc, roughness: .9, side: THREE.DoubleSide, emissive: 0xffb36a, emissiveIntensity: .6 }), 575, 158, 8, { cast: false });
+  LIV.lamp = pointL(0xffc890, 9000, 575, 150, 8); pointL(0xffe0b8, 7000, 700, 235, 20);
+  // pendant over the dining table (shadow-casting)
+  cyl(490, -130, .3, 200, 260, M.black, { col: false, seg: 6 }); mesh(new THREE.SphereGeometry(16, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2), K.shade, 490, 195, -130); spotL(0xffd2a0, 52000, V3(490, 190, -130), V3(490, 0, -130), .95, .7, 1024, 10, 500);
+  // the vent out (online co-op exit)
+  box(899, 900, 4, 24, -214, -186, M.black, { col: false }); for (let i = 0; i < 6; i++) box(898.4, 899.4, 6 + i * 3.2, 7.2 + i * 3.2, -213, -187, M.dsteel, { col: false });
+  // houseplant + toy ball for good measure
+  cyl(860, -150, 14, 0, 26, new THREE.MeshPhysicalMaterial({ color: 0xe8e2d6, roughness: .4 }), { seg: 28 }); const leaf = furMat({ color: 0x3f7a33, len: 3, den: .45, droop: -.2, clump: .7, rimK: .12, root: .45 }); const lf = furMesh(new THREE.SphereGeometry(18, 28, 18), leaf); lf.position.set(860, 46, -150); LV.add(lf); cols.push({ t: 'c', x: 860, z: -150, r: 18, y0: 28, y1: 64 });
+  const pb = new THREE.MeshPhysicalMaterial({ color: 0x4ab0e0, roughness: .3, clearcoat: .8 }); resGroup(cmGroup(14, 14, 14, ({ part }) => { part(new THREE.SphereGeometry(7, 28, 20), pb, 0, 0, 0); }, [pb]), 640, 120, 0, 14, 14, 14, .3, 5, '皮球', true);
+  addBattery(420, 164, 212); addVial(670, 143, -200); addCrumb(480, 76.4, -110); addCrumb(740, 12, 150);
+  // where the living room's lamps actually light you up (used by 'can they see me')
+  KS.lights.push({ p: V3(575, 150, 8), range: 170 }, { p: V3(490, 186, -130), dir: V3(0, -1, 0), cos: Math.cos(.95), range: 300 }, { p: V3(850, 95, 120), range: 150 }, { p: V3(700, 235, 20), range: 200 });
+  buildSwitches(); updDoorSegs();
+}
+function livingPhoto(kind) {
+  const [c, x] = cnv(256, 320); x.fillStyle = '#e9e1d2'; x.fillRect(0, 0, 256, 320);
+  const g = x.createLinearGradient(0, 0, 0, 320); g.addColorStop(0, kind === 'photo3' ? '#9ac0d8' : '#c8a882'); g.addColorStop(1, '#5a4a3a'); x.fillStyle = g; x.fillRect(14, 14, 228, 292);
+  x.fillStyle = 'rgba(40,30,25,.75)'; const fig = (cx, s) => { x.beginPath(); x.arc(cx, 150, 22 * s, 0, 7); x.fill(); x.fillRect(cx - 26 * s, 176, 52 * s, 120); };
+  if (kind === 'photo') { fig(90, 1.1); fig(170, 1); } else if (kind === 'photo2') { fig(128, .8); } else { fig(70, 1); fig(130, .7); fig(190, 1.05); }
+  return new THREE.MeshStandardMaterial({ map: tex(c), roughness: .5 });
+}
+// the swinging door is a row of boxes that overlap, so nothing slips between them at any angle
+function updDoorSegs() {
+  const a = LIV.a, dx = -Math.sin(a), dz = -Math.cos(a), nx = -dz, nz = dx, n = LIV.segs.length, LEN = 98;
+  LIV.segs.forEach((c, i) => {
+    let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9;
+    for (const t of [i * LEN / n, (i + 1) * LEN / n]) for (const s of [-2.4, 2.4]) { const x = 298 + dx * t + nx * s, z = 40 + dz * t + nz * s; x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); }
+    c.x0 = x0; c.x1 = x1; c.z0 = z0; c.z1 = z1;
+  });
+}
+function updLiving(dt) {
+  if (!LIV.door) return;
+  // the wedge is gone (pushed away, shrunk, or fell) → the draught opens the door
+  if (!LIV.open && !NET.client) { const w = LIV.wedge; const moved = LIV.loose || Math.hypot(w.cx - LIV.wedge0.x, w.cz - LIV.wedge0.z) > 5 || w.target <= .5 || w.gone; if (moved) doorOpen(); }
+  const tgt = LIV.open ? .62 : .025; const pa = LIV.a; LIV.a = damp(LIV.a, tgt, LIV.open ? 1.3 : 6, dt); LIV.door.rotation.y = LIV.a;
+  if (Math.abs(LIV.a - pa) > 1e-5) updDoorSegs();
+  LIV.gapLight.intensity = 300 + LIV.a * 4000;
+  for (const f of LIV.fish) { f.ph += dt * .5; f.m.position.set(670 + Math.cos(f.ph) * f.r * 1.6, f.y + Math.sin(f.ph * 2.3) * 2, -207 + Math.sin(f.ph) * 10); f.m.rotation.y = -f.ph + Math.PI; }
+  if (LIV.tvMat) { if (LIV.tvOff) { LIV.tvMat.color.setRGB(.015, .016, .02); LIV.tvLight.intensity = 0; } else { const fl = .8 + Math.sin(T * 7) * .1 + (rnd() < .05 ? .3 : 0); LIV.tvMat.color.setRGB(.35 * fl, .5 * fl, .75 * fl); LIV.tvLight.intensity = 2200 * fl; } }
+  // pickups for the objectives
+  const L = leader; if (LEVEL !== 'kitchen' || !L) return;
+  for (const p of LIV.parts) { if (p.got || !KS.mp) continue; p.g.rotation.y += dt * 1.4; p.g.position.y = p.y + 2 + Math.sin(T * 2 + p.x) * .4; p.halo.position.set(p.x, p.g.position.y, p.z); p.halo.lookAt(camera.position);
+    if (STATE === 'play' && !L.frozen && mine(L) && Math.hypot(L.pos.x - p.x, L.pos.y + 1 - p.y - 2, L.pos.z - p.z) < 4) netGet('part', LIV.parts.indexOf(p)); }
+  if (remoteOn() && !LIV.remoteGot && LIV.remote && !L.frozen && mine(L) && STATE === 'play') { const r = LIV.remote; if (Math.hypot(L.pos.x - r.cx, L.pos.z - r.cz) < 6 && Math.abs(L.pos.y - (r.y0 + 2)) < 5) netGet('remote'); }
+}
+function remoteOn() { return KS.mp ? quest === 3 : (KS.ch2 && quest === 1); }
+function doorOpen() {
+  if (LIV.open) return; LIV.open = true; SND.creak(); noise(V3(296, 0, -10), .6); const w = LIV.wedge; if (!w.gone) { w.svx = -34; w.svz = 0; }
+  toastW('門擋移開了——一陣風把門吹開了！', 3);
+  if (KS.mp && quest === 1) setQuest(2);
+  else if (KS.ch2 && quest === 0) { setQuest(1); say('爸爸', '門開了！遙控器應該在沙發前面的咖啡枱上。', '#f5f0e6', 3); }
+}
+// someone picked up a part / the batteries (runs on the host, or directly in single player)
+function livingGet(d, C) {
+  if (d.k === 'part') {
+    const p = LIV.parts[d.i]; if (!p || p.got) return; p.got = true; p.g.visible = false; p.halo.visible = false; LIV.partsGot = LIV.parts.filter(q => q.got).length; SND.pick();
+    for (let i = 0; i < 24; i++) emit(V3(p.x, p.y + 2, p.z), V3(R(-10, 10), R(4, 18), R(-10, 10)), new THREE.Color(2, 1.6, .7), R(.15, .35), R(.4, 1), 30, 2);
+    toastW(`${C.S.name}找到了${PART_NAME[p.kind]}！（零件 ${LIV.partsGot}/3）`, 3);
+    if (LIV.partsGot >= 3 && quest === 0) { setQuest(1); sayW('爸爸', '三個零件齊了！下一步：打開去客廳的門。', '#f5f0e6', 3.2); }
+  } else if (d.k === 'remote') {
+    if (LIV.remoteGot) return; LIV.remoteGot = true; SND.pick(); const r = LIV.remote;
+    for (let i = 0; i < 30; i++) emit(V3(r.cx, r.y0 + 3, r.cz), V3(R(-10, 10), R(4, 20), R(-10, 10)), new THREE.Color(.6, 2, 1.9), R(.15, .35), R(.4, 1), 30, 2);
+    if (KS.mp) { setQuest(4); toastW('電池到手！全隊到客廳最裡面的通風口集合', 3.4); sayW(C.S.name, '電池拿到了！去通風口！', C.S.col, 2.6); }
+    else {
+      say('爸爸', '兩粒電池……夠核心撐一陣子了。', '#f5f0e6', 3.2);
+      END_TXT = ['第二章（試玩）· 完', '遙控器的電池', '核心又亮起來了。下一站：魚缸——還有車房裡的工作枱。'];
+      setTimeout(() => { if (STATE === 'play') { STATE = 'end'; endT = 0; } }, 1800);
+    }
+  }
+}
+// machine parts for the online co-op objective
+function addPart(x, y, z, kind) {
+  const g = new THREE.Group(); g.position.set(x, y + 2, z); LV.add(g);
+  if (kind === 'spring') { const pts = []; for (let i = 0; i <= 80; i++) { const a = i / 80 * Math.PI * 10; pts.push(V3(Math.cos(a) * .9, i / 80 * 3 - 1.5, Math.sin(a) * .9)); } g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 160, .14, 6), MAT.copper)); }
+  else if (kind === 'lens') { const l = new THREE.Mesh(new THREE.CylinderGeometry(1.4, 1.4, .3, 32), new THREE.MeshPhysicalMaterial({ color: 0xcfefff, roughness: 0, transmission: .8, thickness: .4, transparent: true, opacity: .7 })); l.rotation.x = Math.PI / 2; g.add(l); const rim = new THREE.Mesh(new THREE.TorusGeometry(1.45, .16, 8, 32), MAT.brass); g.add(rim); }
+  else { g.add(new THREE.Mesh(new THREE.CylinderGeometry(.8, .8, 2.4, 20), new THREE.MeshStandardMaterial({ color: 0x2a5ad0, roughness: .4 }))); for (const s of [-1, 1]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(.08, .08, 1.6, 6), MAT.steel); w.position.set(s * .35, -1.9, 0); g.add(w); } }
+  g.traverse(o => { if (o.isMesh) o.castShadow = true; });
+  const halo = new THREE.Mesh(new THREE.RingGeometry(1.9, 2.5, 32), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffd27a).multiplyScalar(2.2), transparent: true, opacity: .5, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false })); LVFX.add(halo);
+  LIV.parts.push({ g, halo, x, y, z, kind, got: false });
+}
+const PART_NAME = { spring: '彈簧', lens: '鏡片', cap: '電容' };
+const MP_QUESTS = [
+  { t: '找齊三個零件', s: '縮小機的零件散落在廚房：彈簧（爐頭旁）、鏡片（餐桌上）、電容（洗手盆下面的櫃）' },
+  { t: '打開通往客廳的門', s: '門被門擋卡住了——熊可以推開門擋，或者爸爸把它縮小' },
+  { t: '全隊進入客廳', s: '所有玩家都要走過去（電腦隊友會跟着）' },
+  { t: '拿走遙控器的電池', s: '遙控器在客廳的咖啡枱上' },
+  { t: '從通風口離開', s: '客廳最裡面的牆腳有通風口，全隊一齊到就可以離開' }
+];
+function livingHost() {
+  if (!NET.on || NET.client || STATE !== 'play' || LEVEL !== 'kitchen') return;
+  const P = playerChars().filter(C => !C.frozen);
+  if (quest === 2 && P.length && P.every(C => C.pos.x > 316)) { setQuest(3); toastW('全隊到齊客廳！', 2.4); }
+  if (quest === 4 && P.length && P.every(C => C.pos.distanceTo(LIV.vent) < 30)) { STATE = 'end'; endT = 0; sayW('小彩', '出去了！電池和零件都齊了。', '#9fd86b', 3); nsend({ t: 'end' }); }
+  else if (quest === 4 && P.some(C => C.pos.distanceTo(LIV.vent) < 30) && (!LIV.waitT || T - LIV.waitT > 6)) { LIV.waitT = T; toastW('通風口：要全隊一齊到才可以離開', 2.6); }
+}

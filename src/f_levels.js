@@ -24,22 +24,20 @@ function mesh(g, mat, x, y, z, o = {}) { const m = new THREE.Mesh(g, mat); m.pos
 function tubeM(pts, r, mat, seg = 60) { const c = new THREE.CatmullRomCurve3(pts.map(p => V3(...p))); return mesh(new THREE.TubeGeometry(c, seg, r, 10), mat, 0, 0, 0); }
 
 // ---------- chapter card ----------
+// Starting a game somewhere (title → chapter, or joining an online room). The whole world is already
+// built at start-up, so this only places everyone; moving between places later never comes back here.
 async function loadLevel(name) {
   window.__loads = (window.__loads || 0) + 1; if (NET.on && NET.host) nsend({ t: 'lvl', n: name });
   STATE = 'loading'; const D = LEVELS[name];
   $('lvlA').textContent = D.chapter; $('lvlB').textContent = D.title; $('lvl').hidden = false; requestAnimationFrame(() => $('lvl').classList.add('on'));
   $('end').hidden = true; $('dead').classList.remove('on');
   await new Promise(r => setTimeout(r, 700));
-  clearLevel(); LEVEL = name; LVL = D; loadingNext = false;
-  const old = scene.environment; scene.environment = buildEnv(D.env); if (old) old.dispose();
-  scene.environmentIntensity = D.envI; scene.fog.color.setHex(D.fog[0]); scene.fog.density = D.fog[1]; renderer.toneMappingExposure = D.expo;
-  D.build(); padBeams(); if (!dust) buildDust(D.dust); applyQ(QUAL); onResize();
-  CPS = D.cps; QUESTS = D.quests; quest = 0; cp = 0; meter = 0; setQuest(0); trail = []; grade.uniforms.uCrys.value = 0;
+  if (!WORLD) await buildWorld();
+  loadingNext = false; enterZone(name, true); LP.snap = true; meter = 0; trail = []; grade.uniforms.uCrys.value = 0;
   stkClear(); toyUnfreezeAll(); D.spawn(); netAfterSpawn();
   for (const C of party) { C.lastTrail = C.pos.clone(); C.disp = C.pos.clone(); C.queue = []; C.vel.set(0, 0, 0); C.climbing = false; C.mantle = null; C.tumble = 0; C.grounded = true; C.offK = 0; }
   assignGaps(); cam.tgt.set(leader.pos.x, leader.pos.y + leader.h * .8, leader.pos.z); cam.curD = cam.dist;
   for (const id in chars) animChar(chars[id], .016);
-  try { renderer.compile(scene, camera); } catch (e) { }
   buildPartyHUD(); lvT = 0; STATE = 'play'; $('hud').classList.remove('off', 'cine'); if (TOUCH) $('touch').hidden = false;
   await new Promise(r => setTimeout(r, 700)); $('lvl').classList.remove('on'); setTimeout(() => { $('lvl').hidden = true; }, 900);
 }
@@ -213,18 +211,22 @@ function kitchenMats() {
 // =====================================================================
 function buildHub() {
   const K = kitchenMats(), M = MAT;
-  box(-130, 130, -10, 4, -40, 40, M.floor, { uv: 100, cast: false });
-  box(-130, 130, 0, 340, -44, -28, M.wall, { uv: 120 });
-  box(-130, 130, 0, 340, 28, 40, K.drywall, { uv: 90 });
-  box(-88, -80, 0, 340, -28, 28, K.stud, { uv: 60 }); box(80, 88, 0, 340, -28, 28, K.stud, { uv: 60 });
+  box(-130, 88, -10, 4, -40, 40, M.floor, { uv: 100, cast: false });
+  box(-130, 88, 0, 340, -44, -28, M.wall, { uv: 120 });
+  box(-130, 88, 0, 340, 28, 40, K.drywall, { uv: 90 });
+  // the far stud has the hole from the basement tunnel in it
+  box(-88, -80, 0, 340, -28, 28, K.stud, { uv: 60 }); box(80, 88, 0, 340, -28, 11, K.stud, { uv: 60 }); box(80, 88, 0, 340, 19, 28, K.stud, { uv: 60 }); box(80, 88, 13, 340, 11, 19, K.stud, { uv: 60 });
+  box(79.6, 80, 13, 14.2, 10.4, 19.6, K.stud, { col: false });
   box(-80, 80, 0, 4, -28, 28, K.stud, { uv: 60 });
   // ledges along the concrete side (rest stops), alternating sides
   for (const [y, x0, x1] of [[70, -80, -22], [130, 22, 80], [190, -80, -22], [250, 22, 80]]) box(x0, x1, y - 4, y, -28, -10, K.stud, { uv: 60 });
   box(-80, 0, 330, 340, -28, 28, K.stud); box(40, 80, 330, 340, -28, 28, K.stud); box(0, 40, 330, 340, -28, -18, K.stud); box(0, 40, 330, 340, 6, 28, K.stud);
+  // the last ledge reaches out under the gap; from it, climb the board on the gap's edge up into the crawlspace
+  box(0, 40, 306, 310, -28, -4, K.stud, { uv: 60 }); box(0, 2.5, 310, 340, -17, -3, K.stud, { uv: 30 });
   // kitchen gap at the top (warm light leaking in)
-  const glow = mesh(new THREE.PlaneGeometry(40, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffc890).multiplyScalar(2.2) }), 20, 345, -6, { cast: false }); glow.rotation.x = Math.PI / 2;
-  // copper pipe + wires
-  cyl(40, 12, 2.6, 4, 330, M.copper, { seg: 20 });
+  const glow = mesh(new THREE.PlaneGeometry(40, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffc890).multiplyScalar(1.6) }), 20, 353, -6, { cast: false }); glow.rotation.x = Math.PI / 2;
+  // copper pipe running up through the gap: grab it from the top ledge and climb out
+  cyl(40, 23, 2.6, 4, 330, M.copper, { seg: 20 });
   tubeM([[-60, 4, 20], [-58, 120, 22], [-62, 240, 20], [-60, 330, 21]], .7, M.rubber); tubeM([[-50, 4, 22], [-46, 160, 24], [-52, 330, 23]], .55, M.paintRed);
   // pink insulation (fluffy fur)
   const ins = furMat({ color: 0xf2a0b4, len: .9, den: 1.6, droop: .2, clump: .55, rimK: .1, root: .7, rough: 1 });
@@ -244,14 +246,12 @@ function buildHub() {
   box(-20, -14, 4, 4.4, -16, -6, MAT.cardB, { col: false }); // cracker mat
   const needle = mesh(new THREE.CylinderGeometry(.12, .02, 18, 6), MAT.steel, -76, 12, -24); needle.rotation.z = .25;
   const stamp = mesh(new THREE.PlaneGeometry(6, 7), MAT.photo, -79.7, 14, -14, { cast: false }); stamp.rotation.y = Math.PI / 2;
-  // the hole back to the basement (where you came from)
-  mesh(new THREE.PlaneGeometry(9, 10), new THREE.MeshBasicMaterial({ color: 0x000000 }), -79.8, 9, 15, { cast: false }).rotation.y = Math.PI / 2;
   // lights
   LV.add(new THREE.HemisphereLight(0x6a5a4c, 0x2a1e16, 1.0));
-  spotL(0xffc890, 260000, V3(20, 420, -6), V3(0, 0, -4), .3, .6, 1024, 30, 600);
+  spotL(0xffc890, 90000, V3(20, 352, -6), V3(0, 0, -4), .45, .6, 1024, 6, 600);
   addBeam(0xffc890, V3(20, 330, -8), V3(0, 4, 0), .2, .07);
   addBeam(0xffb070, V3(-28, 10, -8), V3(-28, 4, 2), .9, .02);
-  STATIC.hubTop = V3(20, 300, -8);
+  STATIC.hubTop = V3(20, 341, -6);
 }
 const HUB_LINES = [
   [.8, '前拍檔', '歡迎來到我的……家。', '#b7d38a', 3],
@@ -267,23 +267,29 @@ LEVELS.wall = {
   chapter: '第一章', title: '牆的另一邊', env: 'hub', envI: .7, fog: [0x120d0a, .0016], expo: 1.25,
   dust: { N: 1800, box: [-80, 80, 4, 330, -28, 28], beamFrac: .6, door: false },
   build: buildHub,
-  cps: [[-40, 4, 16], [-50, 70, -20], [50, 130, -20], [-50, 190, -20], [50, 250, -20]],
-  quests: [{ t: '看看前拍檔的家', s: '牆腳的畫，記錄了她這三年' }, { t: '沿牆身爬上廚房', s: '沿水泥牆中間往上爬，累了就橫移到兩邊的木架上休息' }],
+  cps: [[60, 4, 15], [-50, 70, -20], [50, 130, -20], [-50, 190, -20], [50, 250, -20], [20, 310, -23]],
+  quests: [{ t: '看看前拍檔的家', s: '牆腳的畫，記錄了她這三年' }, { t: '沿牆身爬上廚房', s: '沿水泥牆中間往上爬，累了就橫移到兩邊的木架上休息；最頂那塊木架伸到缺口下面，沿缺口邊的木板爬上去' }],
+  // started from the chapter menu: everyone stands just inside the hole from the basement
   spawn() {
-    const P = [[-46, 4, 16], [-56, 4, 10], [-62, 4, 20], [-30, 4, 12], [-22, 4, -6]]; const ids = ['dad', 'sq', 'bear', 'cham', 'gecko'];
-    ids.forEach((id, i) => { const C = chars[id]; C.pos.set(...P[i]); C.yaw = 1.4; C.state = 'idle'; C.wave = false; C.lieK = 0; C.root.visible = true; });
-    chars.gecko.yaw = -1.6; chars.cham.yaw = -2.2; leader = chars.dad; mom.root.visible = false; if (KID.root) KID.root.visible = false; if (CAT.root) CAT.root.visible = false;
-    cam.yaw = -1.9; cam.pitch = .18;
+    const P = [[66, 4, 15], [72, 4, 11], [72, 4, 19], [-30, 4, 12], [-22, 4, -6]]; const ids = ['dad', 'sq', 'bear', 'cham', 'gecko'];
+    ids.forEach((id, i) => { const C = chars[id]; C.pos.set(...P[i]).add(HO); C.yaw = -Math.PI / 2; C.state = 'idle'; C.wave = false; C.lieK = 0; C.root.visible = true; });
+    chars.gecko.yaw = .9; chars.cham.yaw = -2.2; leader = chars.dad; mom.root.visible = false; momReset();
+    LEVELS.kitchen.prep(); cam.yaw = Math.PI / 2; cam.pitch = .18;
   },
+  // walked in from the basement
+  enter(prev, again) {
+    if (prev === 'basement' && !again) { momReset(); chars.cham.root.visible = true; chars.cham.pos.set(-30, 4, 12).add(HO); chars.cham.yaw = -2.2; }
+    LEVELS.kitchen.prep();
+  },
+  leave() { },
   npc() { }, detect(dt) { meter = Math.max(0, meter - dt * .3); },
   update(dt) {
     lvT += dt; scheduleLines(HUB_LINES);
-    for (const K of [chars.gecko, chars.cham]) if (!party.includes(K)) { const dx = leader.pos.x - K.pos.x, dz = leader.pos.z - K.pos.z; K.yaw = angDamp(K.yaw, Math.atan2(dx, dz), 3, dt); K.state = 'idle'; K.spd = 0; }
-    if (!NET.client && quest === 0 && (lvT > 17 || (leader.pos.z > 16 && Math.abs(leader.pos.x) < 85 && lvT > 4))) setQuest(1);
+    for (const K of [chars.gecko, chars.cham]) if (!party.includes(K) && !NPCW.some(w => w.C === K)) { const dx = leader.pos.x - K.pos.x, dz = leader.pos.z - K.pos.z; K.yaw = angDamp(K.yaw, Math.atan2(dx, dz), 3, dt); K.state = 'idle'; K.spd = 0; }
+    const lx = leader.pos.x - HO.x, lz = leader.pos.z - HO.z;
+    if (!NET.client && quest === 0 && (lvT > 17 || (lx < 20 && Math.abs(lx) < 85 && lvT > 4))) setQuest(1);
   },
-  win() {
-    if (!loadingNext && (NET.on ? party.some(C => isPlayerChar(C) && !C.frozen && C.pos.y > 272) : leader.pos.y > 272)) { loadingNext = true; if (!party.includes(chars.cham)) joinCham(); loadLevel('kitchen'); }
-  },
+  win() { },
   marker() { return quest >= 1 ? STATIC.hubTop : null; },
   reset() { }, eyeText: () => '', hint: () => ''
 };
@@ -311,17 +317,27 @@ function upperRun(x0, x1, K) {
 function buildKitchen() {
   const K = kitchenMats(), M = MAT;
   // shell
-  box(-330, 330, -10, 0, -240, 240, K.floor, { uv: 140, cast: false });
+  box(-312, 330, -10, 0, -240, 240, K.floor, { uv: 140, cast: false });
   box(-330, 330, 260, 270, -240, 240, K.ceil, { cast: false });
   box(-312, -150, 0, 260, -232, -220, K.wall, { uv: 120 }); box(-50, 312, 0, 260, -232, -220, K.wall, { uv: 120 });
   box(-150, -50, 0, 110, -232, -220, K.wall, { uv: 120 }); box(-150, -50, 190, 260, -232, -220, K.wall, { uv: 120 });
-  box(-312, 312, 0, 260, 220, 232, K.wall, { uv: 120 }); box(300, 312, 0, 260, -232, 232, K.wall, { uv: 120 });
+  box(-312, 312, 0, 260, 220, 232, K.wall, { uv: 120 }); box(300, 312, 0, 260, -232, -62, K.wall, { uv: 120 }); box(300, 312, 0, 260, 44, 232, K.wall, { uv: 120 }); box(300, 312, 212, 260, -62, 44, K.wall, { uv: 120 });
   box(-312, -300, 0, 260, -232, -104, K.wall, { uv: 120 }); box(-312, -300, 0, 260, -96, 232, K.wall, { uv: 120 }); box(-312, -300, 8, 260, -104, -96, K.wall, { uv: 120 });
-  box(-340, -312, -10, 0, -116, -84, K.floor, { cast: false }); box(-340, -312, 0, 12, -118, -104, K.wall, { col: false }); box(-340, -312, 0, 12, -96, -82, K.wall, { col: false }); box(-340, -312, 9, 12, -104, -96, K.wall, { col: false });
+  // behind the mouse hole: a crawl tunnel, then a small chamber over the gap that drops into the wall cavity
+  // (the cavity's top board is the floor here; the copper pipe sticks up through the gap)
+  box(-344, -312, 0, 18, -114, -110, K.stud); box(-344, -312, 0, 18, -90, -86, K.stud); box(-344, -312, 15, 18, -110, -90, K.stud);
+  box(-428, -424, 0, 24, -124, -76, K.stud); box(-428, -340, 0, 24, -124, -120, K.stud); box(-428, -340, 0, 24, -80, -76, K.stud);
+  box(-344, -340, 0, 24, -120, -110, K.stud); box(-344, -340, 0, 24, -90, -80, K.stud); box(-344, -340, 15, 24, -110, -90, K.stud);
+  box(-428, -340, 20, 24, -124, -76, K.stud);
+  // online games don't go down there: a grate covers the gap
+  { const g = new THREE.Group(); g.position.set(-380, 0, -100); LV.add(g); const gm = new THREE.MeshStandardMaterial({ color: 0x5a5e62, metalness: .9, roughness: .45 });
+    for (let i = 0; i <= 10; i++) { const b = new THREE.Mesh(new THREE.BoxGeometry(.7, .6, 25), gm); b.position.set(-20 + i * 4, .3, 0); b.castShadow = true; g.add(b); }
+    for (const z of [-12.3, 0, 12.3]) { const b = new THREE.Mesh(new THREE.BoxGeometry(41, .6, .7), gm); b.position.set(0, .3, z); g.add(b); }
+    KS.grate = { g, c: { t: 'b', x0: -401, x1: -359, y0: -999, y1: -998, z0: -113, z1: -87 } }; cols.push(KS.grate.c); g.visible = false; }
   pointL(0xffa860, 40, -326, 4, -100);
   addDecal(K.hole, 22, 22, -299.8, 7, -100, 0, Math.PI / 2);
   // baseboards
-  box(-300, -298.5, 0, 9, -96, 220, MAT.white, { col: false }); box(-300, -298.5, 0, 9, -158, -104, MAT.white, { col: false }); box(-300, 300, 0, 9, 218.5, 220, MAT.white, { col: false }); box(298.5, 300, 0, 9, -150, 220, MAT.white, { col: false });
+  box(-300, -298.5, 0, 9, -96, 220, MAT.white, { col: false }); box(-300, -298.5, 0, 9, -158, -104, MAT.white, { col: false }); box(-300, 300, 0, 9, 218.5, 220, MAT.white, { col: false }); box(298.5, 300, 0, 9, -150, -64, MAT.white, { col: false }); box(298.5, 300, 0, 9, 44, 220, MAT.white, { col: false });
   // backsplash
   box(-300, -150, 90, 150, -220.2, -219.9, K.tiles, { uv: 60, col: false, cast: false }); box(-150, -50, 90, 110, -220.2, -219.9, K.tiles, { uv: 60, col: false, cast: false }); box(-50, 148, 90, 150, -220.2, -219.9, K.tiles, { uv: 60, col: false, cast: false });
   // window above the sink
@@ -330,7 +346,6 @@ function buildKitchen() {
   mesh(new THREE.PlaneGeometry(420, 210), K.dusk, -100, 150, -330, { cast: false });
   cols.push({ t: 'b', x0: -150, x1: -50, y0: 110, y1: 190, z0: -229, z1: -227, noRay: true });
   // potted herb on the sill
-  cyl(-120, -216, 5, 110, 119, MAT.paintRed, { seg: 20 }); const herb = furMat({ color: 0x5f9a3a, len: 1.6, den: .9, droop: -.4, clump: .6, rimK: .1, root: .5 }); const hb = furMesh(new THREE.SphereGeometry(6, 24, 16), herb); hb.position.set(-120, 124, -216); LV.add(hb);
   // base cabinets + under-sink cupboard (hollow, door open)
   cabinetRun(-300, -140, K); cabinetRun(-60, 0, K); cabinetRun(76, 148, K);
   box(-140, -60, 0, 10, -220, -168, K.kick);
@@ -339,8 +354,6 @@ function buildKitchen() {
   const cd = new THREE.Group(); cd.position.set(-140, 10, -161.5); cd.rotation.y = -1.25; LV.add(cd);
   mesh(new THREE.BoxGeometry(80, 52, 1.8), K.cab, 40, 26, 0, { parent: cd }); mesh(new THREE.BoxGeometry(2, 12, 1.4), K.brass, 72, 34, 1.5, { parent: cd });
   tubeM([[-100, 64, -205], [-100, 40, -205], [-100, 30, -200], [-92, 30, -196], [-92, 42, -196], [-92, 44, -218]], 1.8, MAT.steel);
-  cyl(-122, -190, 4.2, 13, 31, new THREE.MeshPhysicalMaterial({ color: 0x3aa0d8, roughness: .3, clearcoat: .8 }), { seg: 20 }); cyl(-122, -190, 1.4, 31, 35, MAT.white, { seg: 12 });
-  box(-82, -66, 13, 24, -206, -192, MAT.cardB, { uv: 0 });
   // countertops
   box(-302, -140, 86, 90, -222, -158, K.quartz, { uv: 100 }); box(-60, 0, 86, 90, -222, -158, K.quartz, { uv: 100 }); box(76, 150, 86, 90, -222, -158, K.quartz, { uv: 100 });
   box(-140, -60, 86, 90, -222, -210, K.quartz, { uv: 100 }); box(-140, -60, 86, 90, -170, -158, K.quartz, { uv: 100 }); box(-140, -130, 86, 90, -210, -170, K.quartz, { uv: 100 }); box(-70, -60, 86, 90, -210, -170, K.quartz, { uv: 100 });
@@ -371,14 +384,12 @@ function buildKitchen() {
   // upper cabinets
   upperRun(-300, -160, K); upperRun(-40, -2, K); upperRun(78, 148, K); box(150, 232, 200, 236, -220, -150, K.cab, { uv: 60 });
   // counter props
-  box(-48, -6, 90, 91.8, -205, -172, K.wood, { uv: 40 });
-  for (let i = 0; i < 6; i++) { const c = mesh(new THREE.CylinderGeometry(1.4, 1.4, .5, 14), K.carrot, -30 + R(-6, 8), 92.1, -190 + R(-8, 8)); }
   kitchenResizables(K);
   // pushables: things the bear can shove off the edge to make noise
   const jar = new THREE.Group(); mesh(new THREE.CylinderGeometry(.5, .5, .82, 24), K.jar, 0, -.08, 0, { parent: jar }); mesh(new THREE.CylinderGeometry(.46, .46, .5, 24), K.jarRed, 0, -.22, 0, { parent: jar }); mesh(new THREE.CylinderGeometry(.52, .52, .16, 24), MAT.black, 0, .42, 0, { parent: jar });
-  const rj = addResizable(jar, -232, -164, 90, 5, 10, 5, 1, 1, '香料瓶'); rj.c.push = true;
+  const rj = addResizable(jar, -232, -164, 90, 5, 10, 5, .3, 6, '香料瓶'); rj.c.push = true;
   const can = new THREE.Group(); mesh(new THREE.CylinderGeometry(.5, .5, 1, 28), K.can, 0, 0, 0, { parent: can });
-  const rc = addResizable(can, 112, -164, 90, 7, 10, 7, 1, 1, '湯罐頭'); rc.c.push = true;
+  const rc = addResizable(can, 112, -164, 90, 7, 10, 7, .3, 6, '湯罐頭'); rc.c.push = true;
   // fridge (hollow, door swings open when Mom gets something)
   const FX0 = 150, FX1 = 232, FZ0 = -220, FZ1 = -150;
   box(FX0, FX0 + 4, 6, 184, FZ0, FZ1, K.fridgeIn); box(FX1 - 4, FX1, 6, 184, FZ0, FZ1, K.fridgeIn); box(FX0, FX1, 6, 184, FZ0, FZ0 + 4, K.fridgeIn);
@@ -388,7 +399,6 @@ function buildKitchen() {
   for (const y of [48, 86, 124]) box(FX0 + 4, FX1 - 4, y - 1, y, FZ0 + 4, FZ1 - 2, K.shelfGlass);
   box(156, 190, 12, 34, -214, -168, K.plastic); box(192, 226, 12, 34, -214, -168, K.plastic);
   mesh(new THREE.SphereGeometry(6, 16, 12), K.lettuce, 172, 22, -192, { cast: false }); for (let i = 0; i < 3; i++) { const cr = mesh(new THREE.CylinderGeometry(1.2, .3, 16, 10), K.carrot, 205 + i * 5, 20, -190); cr.rotation.x = Math.PI / 2; }
-  box(160, 172, 48, 70, -206, -194, K.milk, { uv: 0 }); box(176, 186, 48, 66, -210, -198, K.juice, { uv: 0 });
   cyl(214, -200, 6, 48, 60, MAT.glass, { seg: 20 }); mesh(new THREE.SphereGeometry(5.6, 20, 14), K.lettuce, 214, 53.5, -200, { cast: false });
   box(160, 190, 86, 93, -200, -186, K.pulp, { uv: 0 }); for (let i = 0; i < 6; i++) mesh(new THREE.SphereGeometry(2.3, 14, 10), K.egg, 164 + (i % 3) * 5 + R(-.3, .3), 94.5, -197 + Math.floor(i / 3) * 6, { cast: false }).scale.y = 1.25;
   mesh(new THREE.SphereGeometry(4, 20, 16), K.apple, 210, 90, -190); mesh(new THREE.SphereGeometry(3.8, 20, 16), K.apple, 218, 89.8, -178);
@@ -417,7 +427,6 @@ function buildKitchen() {
   const bun = furMat({ color: 0x8a8580, len: .6, den: 1.8, droop: .3, clump: .6, rimK: .05, root: .7 });
   for (const [x, z, r] of [[170, -205, 2.4], [196, -186, 1.6], [224, -210, 2.8], [180, -168, 1.4], [30, -166, 1.8]]) { const b = furMesh(new THREE.SphereGeometry(r, 20, 14), bun); b.position.set(x, r * .7, z); b.scale.y = .7; LV.add(b); }
   // cat cushion
-  const cush = cyl(190, -112, 22, 0, 4, K.cushion, { seg: 40 }); cush.scale.set(1, 1, .85);
   // dining table + chairs
   box(-215, -45, 72, 76, 40, 130, K.wood, { uv: 80 });
   for (const [x, z] of [[-210, 45], [-50, 45], [-210, 125], [-50, 125]]) box(x - 2.5, x + 2.5, 0, 72, z - 2.5, z + 2.5, K.wood, { uv: 60 });
@@ -429,17 +438,16 @@ function buildKitchen() {
   };
   chair(-170, 18, -1); chair(-90, 18, -1); chair(-170, 152, 1); chair(-90, 152, 1);
   mesh(new THREE.PlaneGeometry(21, 28), K.homework, -92, 76.05, 112, { cast: false }).rotation.set(-Math.PI / 2, 0, .12);
-  cyl(-150, 88, 10, 76, 77, MAT.white, { seg: 32 }); for (let i = 0; i < 4; i++) cyl(-150 + R(-5, 5), 88 + R(-5, 5), 2.8, 77, 77.8, K.cookie, { col: false, seg: 16 });
-  cyl(-112, 100, 3.6, 76, 88, K.milkGlass, { seg: 24 });
   const pc = new THREE.Group(); mesh(new THREE.BoxGeometry(1, 1, 1), K.pencilCase, 0, 0, 0, { parent: pc }); mesh(new THREE.BoxGeometry(1.02, .08, .2), K.brass, 0, .3, 0, { parent: pc });
-  const rp = addResizable(pc, -53, 112, 76, 6, 4, 14, 1, 1, '鉛筆盒'); rp.c.push = true;
-  addResizable(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), MAT.sugar.clone()), -112, 64, 0, 1.6, 1.6, 1.6, 1, 8, '方糖');
-  addResizable(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), MAT.sugar.clone()), 128, -190, 90, 1.6, 1.6, 1.6, 1, 8, '方糖');
+  const rp = addResizable(pc, -53, 112, 76, 6, 4, 14, .3, 6, '鉛筆盒'); rp.c.push = true;
+  addResizable(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), MAT.sugar.clone()), -112, 64, 0, 1.6, 1.6, 1.6, .5, 12, '方糖');
+  addResizable(new THREE.Mesh(new THREE.BoxGeometry(1, 1, 1), MAT.sugar.clone()), 128, -190, 90, 1.6, 1.6, 1.6, .5, 12, '方糖');
   // runner rug in front of the sink
   const rr = furMat({ color: 0xffffff, map: genRug(), len: .28, den: 3.4, droop: 0, clump: .45, root: .6, rimK: .02, rough: 1 });
   const rg = new THREE.PlaneGeometry(150, 46); rg.rotateX(-Math.PI / 2); const rug = furMesh(rg, rr); rug.position.set(-100, .3, -126); rug.castShadow = false; LV.add(rug);
   cols.push({ t: 'b', x0: -175, x1: -25, y0: 0, y1: .3, z0: -149, z1: -103, small: true });
   // wall clock + calendar
+  propsKitchen2(K); hideSpotsKitchen(K); cordRoute(140, -205, 150, -140); cordRoute(-170, -205, -160, -140);
   // batteries: top of the fridge, inside the cupboard
   addBattery(200, 184.5, -200); addBattery(-74, 13, -210);
   // ---------- lights ----------
@@ -461,7 +469,7 @@ function buildKitchen() {
   KS.fridgeL = { p: V3(191, 160, -160), range: 150, on: false }; KS.lights.push(KS.fridgeL);
   addBeam(0xffc68e, V3(-130, 190, 85), V3(-130, 0, 85), .55, .05);
   addBeam(0xffc68e, V3(-40, 200, -110), V3(-40, 0, -150), .55, .05);
-  KS.fridgeBeam = addBeam(0xeaf4ff, V3(191, 120, -175), V3(191, 0, -60), .45, 0); beams[2].k = 0;
+  KS.fridgeBeam = addBeam(0xeaf4ff, V3(191, 120, -175), V3(191, 0, -60), .45, 0); KS.fridgeBeamRec = beams[beams.length - 1]; KS.fridgeBeamRec.k = 0;
   STATIC.home = V3(-296, 0, -100);
   KS.coreGot = false; KS.carried = false; KS.doorA = 0; KS.closeT = 0; KS.said = {};
 }
@@ -535,8 +543,8 @@ function buildCat() {
 }
 
 // ---------------- kitchen NPC brains ----------------
-const MKP = { stove: { x: 34, z: -128, look: [22, 96, -178] }, sink: { x: -100, z: -127, look: [-100, 72, -192] }, fridge: { x: 176, z: -88, look: [191, 96, -186] }, table: { x: -96, z: 6, look: [-90, 112, 152] } };
-const MSCHED = [['stove', 12], ['fridge', 0], ['stove', 9], ['sink', 7], ['stove', 8], ['table', 6]];
+const MKP = { stove: { x: 34, z: -128, look: [22, 96, -178] }, sink: { x: -100, z: -127, look: [-100, 72, -192] }, fridge: { x: 176, z: -88, look: [191, 96, -186] }, table: { x: -90, z: 12, look: [-90, 112, 152] } };
+const MSCHED = [['stove', 10], ['table', 18], ['sink', 6], ['fridge', 0], ['table', 15], ['stove', 7], ['table', 14]];
 const KM = { mode: 'act', sched: 0, pt: 'stove', t: 10, inv: null, prev: null, trackT: 0 };
 const MOMK_LINES = { fridge: '雞蛋……還有半盒。', sink: '那間公司的人今天又來了，說要拿走地庫的東西。', table: '先吃吧。警察說，要等四十八小時才能立案。' };
 function momLineK(k) { const t = MOMK_LINES[k]; if (!t || KS.said['m_' + k]) return; KS.said['m_' + k] = 1; sayW('太太', t, '#f4bb72', 3.6); if (k === 'table') setTimeout(() => { if (LEVEL === 'kitchen') sayW('女兒', '……我想爸爸。', '#e8a0c0', 2.8); }, 3800); }
@@ -558,6 +566,7 @@ function updKitchenMom(dt) {
   else if (KM.mode === 'act' || KM.mode === 'fopen') {
     const p = MKP[KM.pt]; const la = V3(...p.look); mom.yaw = angDamp(mom.yaw, Math.atan2(la.x - P.x, la.z - P.z), 4, dt); mom.aimT.copy(la);
     if (KM.pt === 'stove') { mom.aimT.x += Math.sin(T * 2.2) * 5; if (rnd() < dt * 2) emit(V3(19 + R(-6, 6), 104, -178 + R(-6, 6)), V3(R(-3, 3), R(10, 18), R(-3, 3)), new THREE.Color(.16, .16, .17), R(1.2, 2.4), R(1.4, 2.2), -4, .4); }
+    if (KM.pt === 'table' && KM.mode === 'act') { mom.yaw = angDamp(mom.yaw, 0, 4, dt); const gl = Math.sin(T * .55) > .86 ? 1 : 0; mom.aimT.set(la.x + gl * 140, la.y - 10 - gl * 20, la.z - gl * 120); }
     if (KM.mode === 'fopen') { KS.doorTarget = 1.5; KS.closeT = 2.4; }
     KM.t -= dt; if (KM.t <= 0) nextSched();
   } else if (KM.mode === 'inv') {
@@ -578,14 +587,16 @@ function momAnimK(dt, moveD) {
   const P = mom.pos; P.y = 0; const R0 = mom.root; R0.position.copy(P); R0.rotation.y = mom.yaw;
   const prev = mom.phase; mom.phase += moveD / 62 * Math.PI; const ph = mom.phase; const walking = moveD > 0;
   mom.amp = walking ? .42 : damp(mom.amp || 0, 0, 4, dt); const ak = mom.amp / .42;
-  for (const L of mom.legs) { const s = L.s; const a = Math.sin(ph) * s * mom.amp; L.hip.rotation.x = -a; L.knee.rotation.x = .08 + Math.max(0, Math.cos(ph) * s) * .75 * ak; L.ankle.rotation.x = -(L.hip.rotation.x + L.knee.rotation.x) * .6; }
-  mom.pelvis.position.y = 88 + Math.abs(Math.cos(ph)) * 1.6 * ak - .8; mom.pelvis.rotation.y = Math.sin(ph) * .06 * ak;
+  const sitting = KM.mode === 'act' && KM.pt === 'table' && !walking; mom.sitK = damp(mom.sitK || 0, sitting ? 1 : 0, 5, dt); const sk = mom.sitK;
+  for (const L of mom.legs) { const s = L.s; const a = Math.sin(ph) * s * mom.amp; L.hip.rotation.x = lerp(-a, -1.5, sk); L.knee.rotation.x = lerp(.08 + Math.max(0, Math.cos(ph) * s) * .75 * ak, 1.55, sk); L.ankle.rotation.x = lerp(-(-a + .08) * .6, -.05, sk); }
+  mom.pelvis.position.y = lerp(88 + Math.abs(Math.cos(ph)) * 1.6 * ak - .8, 53, sk); mom.pelvis.rotation.y = Math.sin(ph) * .06 * ak * (1 - sk);
   mom.aim.x = damp(mom.aim.x, mom.aimT.x, 3, dt); mom.aim.y = damp(mom.aim.y, mom.aimT.y, 3, dt); mom.aim.z = damp(mom.aim.z, mom.aimT.z, 3, dt);
   R0.updateMatrixWorld(true); const hp = V3(); mom.head.getWorldPosition(hp);
   const ad = V3().subVectors(mom.aim, hp); const yr = Math.atan2(Math.sin(Math.atan2(ad.x, ad.z) - mom.yaw), Math.cos(Math.atan2(ad.x, ad.z) - mom.yaw)); const pitch = Math.atan2(-ad.y, Math.hypot(ad.x, ad.z));
   mom.head.rotation.y = damp(mom.head.rotation.y, clamp(yr, -.9, .9), 4, dt); mom.head.rotation.x = damp(mom.head.rotation.x, clamp(pitch * .7, -.25, .75), 4, dt);
   const A0 = mom.arms[0], A1 = mom.arms[1]; if (!(KM.mode === 'fetch' && TOY.fetch && TOY.fetch.mode !== 'walk')) mom.chest.rotation.x = damp(mom.chest.rotation.x, 0, 6, dt);
-  if (KM.mode === 'act' && KM.pt === 'stove') { A1.sh.rotation.set(-.95 + Math.sin(T * 4) * .08, .25, Math.cos(T * 4) * .06); A1.el.rotation.x = -.85 + Math.cos(T * 4) * .1; A0.sh.rotation.set(-.3, 0, 0); A0.el.rotation.x = -.6; mom.spoon.visible = true; }
+  if (sk > .5) { const e = Math.max(0, Math.sin(T * 1.3)); A1.sh.rotation.set(-.9 - e * .55, .25, 0); A1.el.rotation.x = -.9 - e * .9; A0.sh.rotation.set(-.55, -.1, 0); A0.el.rotation.x = -.9; mom.spoon.visible = true; }
+  else if (KM.mode === 'act' && KM.pt === 'stove') { A1.sh.rotation.set(-.95 + Math.sin(T * 4) * .08, .25, Math.cos(T * 4) * .06); A1.el.rotation.x = -.85 + Math.cos(T * 4) * .1; A0.sh.rotation.set(-.3, 0, 0); A0.el.rotation.x = -.6; mom.spoon.visible = true; }
   else if (KM.mode === 'act' && KM.pt === 'sink') { A1.sh.rotation.set(-.75 + Math.sin(T * 5) * .05, 0, 0); A1.el.rotation.x = -.7; A0.sh.rotation.set(-.75 + Math.cos(T * 5) * .05, 0, 0); A0.el.rotation.x = -.7; mom.spoon.visible = false; }
   else if (KM.mode === 'fetch' && TOY.fetch && TOY.fetch.mode !== 'walk') { const F = TOY.fetch; const reach = F.mode === 'grab' ? sstep(0, .5, F.t) * (1 - sstep(.9, 1.15, F.t)) : F.mode === 'drop' ? Math.sin(clamp(F.t / 1.1, 0, 1) * Math.PI) : 0; const low = F.from && F.from.y < 40 ? 1 : .4; A1.sh.rotation.set(-.55 - reach * (.25 + low * .2), 0, 0); A1.el.rotation.x = F.mode === 'carry' ? -1.35 : -.9 + reach * .7; mom.chest.rotation.x = reach * low * .5; A0.sh.rotation.set(-.15, 0, 0); A0.el.rotation.x = -.3; mom.spoon.visible = false; }
   else if (KM.mode === 'fopen') { A1.sh.rotation.set(-1.25, .2, 0); A1.el.rotation.x = -.25; A0.sh.rotation.x = -.2; A0.el.rotation.x = -.2; mom.spoon.visible = false; }
@@ -627,10 +638,10 @@ function catSee(L = leader) {
   if (!(L.spd > 1.2 || d < 45) || (L.crouch && d > 70)) return false;
   const [cl] = ceilAt(L.pos.x, L.pos.z, L.pos.y); if (cl - L.pos.y < 28) return false;
   const eye = V3(CAT.pos.x, 22, CAT.pos.z); const tp = V3(L.pos.x, L.pos.y + 2, L.pos.z); const v = V3().subVectors(tp, eye); const dl = v.length(); v.divideScalar(dl);
-  for (const c of cols) { if (c.cat || c.small) continue; const t = rayT(eye, v, dl - 1, c); if (t > .5 && t < dl - 1) return false; }
+  for (const c of colsNear(eye.x, eye.y, eye.z)) { if (c.cat || c.small) continue; const t = rayT(eye, v, dl - 1, c); if (t > .5 && t < dl - 1) return false; }
   return true;
 }
-function ceilAt(x, z, y) { let m = 1e9, mc = null; for (const c of cols) { if (c.y0 < y + .5 || c.y0 > m) continue; if (!xzHit(c, x, z, .6, _h)) continue; m = c.y0; mc = c; } return [m, mc]; }
+function ceilAt(x, z, y) { let m = 1e9, mc = null; for (const c of colsNear(x, y, z)) { if (c.y0 < y + .5 || c.y0 > m) continue; if (!xzHit(c, x, z, .6, _h)) continue; m = c.y0; mc = c; } return [m, mc]; }
 function updCat(dt) {
   const C = CAT; let sp = 0, ty = null; C.cool = Math.max(0, (C.cool || 0) - dt);
   if (NET.client) { const w = NET.npc; if (w && w.c) { const ox = C.pos.x, oz = C.pos.z; const k = 1 - Math.exp(-10 * dt); C.pos.x += (w.c[0] - C.pos.x) * k; C.pos.z += (w.c[1] - C.pos.z) * k; sp = Math.hypot(C.pos.x - ox, C.pos.z - oz) / Math.max(dt, 1e-4); ty = w.c[2]; C.mode = w.c[3]; C.jump = w.c[4]; } const L = leader; catAnim(dt, sp, ty, L.pos.x - C.pos.x, L.pos.z - C.pos.z); return; }
@@ -703,13 +714,14 @@ function detectKitchen(dt) {
   KS.watch = seen > 0 ? { p: (who === 'kid' ? KID.head : mom.head).getWorldPosition(V3()), s: seen, who } : null;
   const kd = Math.hypot(L.pos.x - KID.root.position.x, L.pos.z - KID.root.position.z); if (kd < 45 && L.pos.y < 40 && L.spd > 2 && !L.crouch && KID.mode !== 'read') { seen = Math.max(seen, .3); who = who || 'kid'; }
   if (seen > 0) {
-    const lit = litAt(V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z)); const mv = L.spd > 1.5 ? 1 : .5; const cr = L.crouch ? .55 : 1; const glow = KS.carried && (!NET.on || KS.carrier === L.id) ? 1.35 : 1;
+    const lit = litAt(V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z)) * (inDark(L.pos) ? .6 : 1); const mv = L.spd > 1.5 ? 1 : .5; const cr = L.crouch ? .55 : 1; const glow = KS.carried && (!NET.on || KS.carrier === L.id) ? 1.35 : 1;
     const k = seen * lit * mv * cr * glow * (L.id === 'cham' ? 1 - .82 * L.camo : 1); meter += k * dt * 1.0;
     const tp = V3(L.pos.x, L.pos.y + 2, L.pos.z);
     if (meter > .32) netSeen(tp, who);
   } else meter -= dt * .24;
   meter = clamp(meter, 0, 1); if (meter >= 1) { toyFreeze(who); }
 }
+function coreGround(p) { const [s] = supportAt(p.x, p.z, .8, p.y + 1); return V3(p.x, (s > -1e8 ? s : 0) + 1.6, p.z); }
 function inFridge(L) { return L.pos.x > 154 && L.pos.x < 228 && L.pos.z > -216 && L.pos.z < -150 && L.pos.y >= 11.5 && L.pos.y < 180; }
 function updKitchenPlayer(dt) {
   const L = leader; L.slow = 1;
@@ -721,45 +733,82 @@ function updKitchenPlayer(dt) {
     for (const F of party) if (F !== L && mine(F) && !F.frozen) { const fits = F.h < 5.9; F.pos.set(fits ? 191 + R(-8, 8) : 191, 0, fits ? -186 + R(-6, 6) : -140); F.queue = []; F.disp.copy(F.pos); F.qst = 'idle'; }
     trail = []; L.lastTrail.copy(L.pos);
   }
-  if (KS.coreGot && !KS.carried && KS.coreDrop && !L.frozen && L.pos.distanceTo(KS.coreDrop) < 4.5) netGet('cdrop');
+  if (KS.mp) return;
+  if (KS.coreGot && !KS.carried && KS.coreDrop && !L.frozen && Math.hypot(L.pos.x - KS.coreDrop.x, L.pos.z - KS.coreDrop.z) < 5.5 && Math.abs(L.pos.y + 1 - KS.coreDrop.y) < 6) netGet('cdrop');
   if (!KS.coreGot && !L.frozen && L.pos.distanceTo(V3(212, 0, -194)) < 4.5) netGet('core');
   if (KS.carried) { const C = NET.on && KS.carrier ? chars[KS.carrier] : leader; const p = V3(C.pos.x, C.pos.y + C.h + 1.4 + Math.sin(T * 3) * .25, C.pos.z); KS.core.position.lerp(p, 1 - Math.exp(-14 * dt)); KS.core.rotation.y += dt * 2; KS.coreLight.intensity = 60 + Math.sin(T * 5) * 15; }
   else if (KS.coreDrop) { KS.core.position.lerp(KS.coreDrop, 1 - Math.exp(-10 * dt)); KS.core.rotation.y += dt; }
   else { KS.core.rotation.y += dt; KS.core.position.y = 1.6 + Math.sin(T * 2) * .2; }
   if (!NET.client && quest === 0 && !KS.coreGot && playerChars().some(C => Math.hypot(C.pos.x - 191, C.pos.z + 120) < 80) && CAT.mode === 'sleep') setQuest(1);
 }
+const SP_Q1 = [{ t: '找回縮小機的核心', s: '它掉到雪櫃底下了，發着青光' }, { t: '貓睡在雪櫃前面', s: '潛行繞過牠、讓熊推跌東西把牠引開，或者趁太太開雪櫃時溜進去找排水口' }, { t: '把核心帶回牆腳的洞', s: '核心在發光，比平時更容易被看見' }];
+const SP_Q2 = [{ t: '打開通往客廳的門', s: '核心的光越來越弱。門被門擋卡住了——熊可以推開門擋，或者爸爸把它縮小' }, { t: '拿走遙控器的電池', s: '客廳咖啡枱上的遙控器有電池，可以幫核心充電' }];
+const KLINES_SP = [[1.2, '女兒', '媽，爸爸今晚會回來吃飯嗎？', '#e8a0c0', 3], [4.6, '太太', '……先吃吧，湯快好了。', '#f4bb72', 2.8], [8, '小彩', '雪櫃底下有青光——核心應該就在那裡。小心那隻貓，還有她們的視線。', '#9fd86b', 4]];
+const KLINES_MP = [[1.2, '女兒', '媽，爸爸今晚會回來吃飯嗎？', '#e8a0c0', 3], [4.6, '太太', '……先吃吧，湯快好了。', '#f4bb72', 2.8], [8, '爸爸', '聽好：縮小機少了三個零件——彈簧、鏡片、電容，全部都掉在這個廚房裡。', '#f5f0e6', 4.2], [12.6, '小彩', '找齊之後去客廳，從通風口出去。別讓她們看見！', '#9fd86b', 3.4]];
+let END_TXT = null;
 LEVELS.kitchen = {
   chapter: '第一章', title: '晚飯時間的廚房', env: 'kitchen', envI: .75, fog: [0x1a1510, .0007], expo: 1.18,
-  dust: { N: 1600, box: [-300, 300, 0, 250, -220, 220], beamFrac: .5, door: false },
-  toys: true,
-  build() { buildKitchen(); buildKid(); buildCat(); buildToyBin(); LEVELS.kitchen.updrafts = [{ x: 57, z: -205, r: 9, y0: 88.5, y1: 156, fx: 5 }, buildVent()]; addVial(-128, 13, -200); addVial(170, 184, -168); addVial(70, 88.5, -215); for (const p of [[-120, 0, 70], [-70, 0, 100], [20, 0, -146], [-30, 91.8, -182], [246, 1.2, 122]]) addCrumb(...p); },
-  cps: [[-286, 0, -100], [-100, 13, -192], [-130, 0, 86], [191, 0, -190], [260, 0, 190]],
-  quests: [{ t: '找回縮小機的核心', s: '它掉到雪櫃底下了，發着青光' }, { t: '貓睡在雪櫃前面', s: '潛行繞過牠、讓熊推跌東西把牠引開，或者趁太太開雪櫃時溜進去找排水口' }, { t: '把核心帶回牆腳的洞', s: '核心在發光，比平時更容易被看見' }],
-  spawn() {
-    const P = [[-288, 0, -100], [-304, 0, -98], [-310, 0, -102], [-318, 0, -100]]; ['dad', 'sq', 'bear', 'cham'].forEach((id, i) => { const C = chars[id]; C.pos.set(...P[i]); C.yaw = Math.PI / 2; C.state = 'idle'; C.wave = false; C.root.visible = true; });
-    chars.gecko.pos.set(-326, 0, -96); chars.gecko.yaw = Math.PI / 2; chars.gecko.state = 'idle'; chars.gecko.wave = false;
-    leader = chars.dad; if (!party.includes(chars.cham)) joinCham(); PROTO = Math.max(PROTO, 1);
+  dust: { N: 2600, box: [-300, 900, 0, 250, -220, 220], beamFrac: .45, door: false },
+  toys: true, npcNear: true,
+  build() {
+    buildKitchen(); buildKid(); buildCat(); buildToyBin(); LEVELS.kitchen.updrafts = [{ x: 57, z: -205, r: 9, y0: 88.5, y1: 156, fx: 5 }, buildVent()];
+    addVial(-128, 13, -200); addVial(170, 184, -168); addVial(70, 88.5, -215); for (const p of [[-120, 0, 70], [-70, 0, 100], [20, 0, -146], [-30, 91.8, -182], [246, 1.2, 122]]) addCrumb(...p);
+    buildLivingRoom(kitchenMats());
+    // online co-op: the three machine parts
+    addPart(44, 88.5, -212, 'spring'); addPart(-122, 76, 116, 'lens'); addPart(-112, 13, -186, 'cap');
+  },
+  cps: [[-286, 0, -100], [-100, 13, -192], [-130, 0, 86], [191, 0, -190], [260, 0, 190], [340, 0, -10], [640, 0, 60]],
+  quests: SP_Q1,
+  // the family at dinner — set up once, before anyone can see into the kitchen
+  prep() {
+    const Z = ZONES.kitchen; if (Z.prepped) return; Z.prepped = true;
     mom.root.visible = true; mom.phone.visible = false; mom.active = false; if (!mom.spoon) { mom.spoon = new THREE.Mesh(new THREE.CylinderGeometry(.5, .7, 26, 8), KMAT.wood); mom.spoon.position.set(0, -27, 8); mom.spoon.rotation.x = 1.2; mom.arms[1].el.add(mom.spoon); }
     mom.pos.set(34, 0, -128); mom.yaw = Math.PI; mom.aim.set(22, 96, -178); mom.aimT.copy(mom.aim); KM.mode = 'act'; KM.pt = 'stove'; KM.sched = 0; KM.t = 10;
     KID.root.visible = true; KID.root.position.set(-90, 0, 157); KID.root.rotation.y = Math.PI; KID.mode = 'read'; KID.t = 7;
-    CAT.root.visible = true; CAT.pos.copy(CAT.home); CAT.mode = 'sleep'; CAT.sleepK = 1; CAT.col = null;
+    CAT.root.visible = true; CAT.pos.copy(CAT.home); CAT.mode = 'sleep'; CAT.sleepK = 1;
+    kitchenMode();
+  },
+  // an online game starts here (everyone comes out of the mouse hole)
+  spawn() {
+    const P = [[-288, 0, -100], [-294, 0, -96], [-294, 0, -104], [-318, 0, -100], [-322, 0, -94], [-322, 0, -106], [-330, 0, -100], [-336, 0, -95]]; party.forEach((C, i) => { C.pos.set(...P[i % 8]); C.yaw = Math.PI / 2; C.state = 'idle'; C.wave = false; C.root.visible = true; C.lieK = 0; });
+    chars.gecko.pos.set(-340, 0, -100); chars.gecko.yaw = Math.PI / 2; chars.gecko.state = 'idle'; chars.gecko.wave = false; chars.gecko.root.visible = true;
+    chars.cham.root.visible = true; leader = chars.dad; if (!party.includes(chars.cham)) joinCham(); PROTO = Math.max(PROTO, 1);
+    momReset(); ZONES.kitchen.prepped = false; this.prep(); kitchenMode();
     cam.yaw = -1.75; cam.pitch = .12;
+  },
+  // climbed up out of the wall
+  enter(prev, again) {
+    this.prep(); if (!party.includes(chars.cham)) joinCham(); PROTO = Math.max(PROTO, 1); kitchenMode();
+    if (!again) { chars.gecko.wave = false; toast('穿過老鼠洞就是廚房。這裡開始，太太、女兒和貓都可能看見你', 4); }
   },
   npc(dt) { if (STATE === 'play' || STATE === 'fail' || STATE === 'end' || STATE === 'frozen') { updKitchenMom(dt); updKid(dt); updCat(dt); } },
   detect: detectKitchen,
   update(dt) {
     lvT += dt; updKitchenPlayer(dt); updCookie();
-    scheduleLines([[1.2, '女兒', '媽，爸爸今晚會回來吃飯嗎？', '#e8a0c0', 3], [4.6, '太太', '……先吃吧，湯快好了。', '#f4bb72', 2.8], [8, '前拍檔', '核心在雪櫃底下，我看見青光了。小心那隻貓——還有她們的視線。', '#b7d38a', 4]]);
-    if (rnd() < dt * .75) { emit(KS.tap, V3(0, -2, 0), new THREE.Color(.5, .62, .7), .35, .9, 300, 0); setTimeout(() => { if (LEVEL === 'kitchen') { for (let i = 0; i < 4; i++) emit(V3(-100, 68.9, -193), V3(R(-6, 6), R(5, 12), R(-6, 6)), new THREE.Color(.5, .62, .72), .2, .35, 200, 1); if (leader.pos.distanceTo(V3(-100, 68, -193)) < 120) SND.drip(); } }, 420); }
+    scheduleLines(KS.mp ? KLINES_MP : KLINES_SP);
+    if (rnd() < dt * .75) { emit(KS.tap, V3(0, -2, 0), new THREE.Color(.5, .62, .7), .35, .9, 300, 0); setTimeout(() => { if (ZONES.kitchen.near) { for (let i = 0; i < 4; i++) emit(V3(-100, 68.9, -193), V3(R(-6, 6), R(5, 12), R(-6, 6)), new THREE.Color(.5, .62, .72), .2, .35, 200, 1); if (leader.pos.distanceTo(V3(-100, 68, -193)) < 120) SND.drip(); } }, 420); }
   },
   win() {
-    const W = KS.carried ? (NET.on && KS.carrier ? chars[KS.carrier] : leader) : null; if (!W) return;
+    if (KS.mp) { livingHost(); return; }
+    const W = KS.carried ? leader : null; if (!W || KS.ch2) return;
     const home = Math.hypot(W.pos.x + 296, W.pos.z + 100) < 9 && W.pos.y < 3 && STATE === 'play';
-    if (home && party.some(C => C.frozen)) { if (!KS.said.leftToy || T - KS.said.leftToy > 6) { KS.said.leftToy = T; toastW('還有隊友是玩具！先把他救回來，不能丟下任何人', 3.4); } return; }
-    if (home) { STATE = 'end'; endT = 0; sayW('前拍檔', '回來了……快，牆裡面安全。', '#b7d38a', 3); if (NET.host) nsend({ t: 'end' }); }
+    if (home && party.some(C => C.frozen)) { if (!KS.said.leftToy || T - KS.said.leftToy > 6) { KS.said.leftToy = T; toast('還有隊友是玩具！先把他救回來，不能丟下任何人', 3.4); } return; }
+    if (home) {
+      // chapter one is done — but nothing stops: the story just carries on into the living room
+      KS.carried = false; KS.coreDrop = null; KS.home = true; KS.core.position.set(-306, 1.6, -100); KS.ch2 = true;
+      QUESTS = SP_Q2; setQuest(0); chapterBanner('第一章 · 完', '核心找回來了');
+      say('前拍檔', '（從牆裡）放在洞口就好，我看着它。……它的光越來越弱了。', '#b7d38a', 3.6);
+      setTimeout(() => say('爸爸', '客廳的遙控器裡有電池。去拿過來，幫核心充電。', '#f5f0e6', 3.4), 3800);
+      setTimeout(() => chapterBanner('第二章', '客廳'), 7600);
+    }
   },
-  marker() { const t = toyMarker(); if (t) return t; if (KS.coreDrop) return KS.coreDrop; return quest >= 2 ? STATIC.home : (KS.coreGot ? null : V3(212, 2, -194)); },
-  reset() { KS.coreDrop = null; KS.carrier = null; KM.mode = 'goto'; KM.pt = 'stove'; KS.doorTarget = 0; KS.closeT = 0; CAT.mode = 'home'; KID.mode = 'read'; KID.t = 6; if (KS.carried) { const C = leader; KS.core.position.set(C.pos.x, C.pos.y + 6, C.pos.z); } },
+  marker() {
+    const t = toyMarker(); if (t) return t;
+    if (KS.mp) { if (quest === 0) { const p = LIV.parts.filter(q => !q.got).sort((a, b) => Math.hypot(a.x - leader.pos.x, a.z - leader.pos.z) - Math.hypot(b.x - leader.pos.x, b.z - leader.pos.z))[0]; return p ? V3(p.x, p.y + 2, p.z) : null; } if (quest === 1) return V3(LIV.wedge.cx, 4, LIV.wedge.cz); if (quest === 2) return V3(345, 0, -10); if (quest === 3) return V3(LIV.remote.cx, 46, LIV.remote.cz); return LIV.vent; }
+    if (KS.ch2) return quest === 0 ? V3(LIV.wedge.cx, 4, LIV.wedge.cz) : (LIV.remoteGot ? null : V3(LIV.remote.cx, 46, LIV.remote.cz));
+    if (KS.coreDrop) return KS.coreDrop; return quest >= 2 ? STATIC.home : (KS.coreGot ? null : V3(212, 2, -194));
+  },
+  reset() { if (KS.coreGot && !KS.carried) KS.coreDrop = KS.home ? null : coreGround(KS.coreDrop || KS.core.position); else KS.coreDrop = null; KS.carrier = null; KM.mode = 'goto'; KM.pt = 'stove'; KS.doorTarget = 0; KS.closeT = 0; CAT.mode = 'home'; KID.mode = 'read'; KID.t = 6; if (KS.carried) { const C = leader; KS.core.position.set(C.pos.x, C.pos.y + 6, C.pos.z); } },
   eyeText: () => meter > .3 ? '她們在看這邊！快躲進影子裡' : '太太和女兒在廚房',
   hint(L) {
     if (TOUCH) return '';
@@ -768,12 +817,21 @@ LEVELS.kitchen = {
   },
   onSwitch() { }
 };
+// single player and online co-op tell different stories in the same rooms
+function kitchenMode() {
+  KS.mp = NET.on;
+  if (KS.grate) { KS.grate.g.visible = KS.mp; KS.grate.c.y0 = KS.mp ? 0 : -999; KS.grate.c.y1 = KS.mp ? .6 : -998; }
+  if (KS.core) KS.core.visible = !KS.mp;
+  for (const p of LIV.parts) { const on = KS.mp && !p.got; p.g.visible = on; p.halo.visible = on; }
+  if (KS.mp && QUESTS !== MP_QUESTS) { QUESTS = MP_QUESTS; LEVELS.kitchen.quests = MP_QUESTS; setQuest(0); }
+}
 LEVELS.basement = {
   chapter: '序章', title: '地庫實驗室', env: 'basement', envI: .85, fog: [0x0a0d12, .00135], expo: 1.3, dust: {},
   build() { buildRoom(); buildLights(); },
-  cps: null, quests: null, spawn() { placeStart(); },
-  npc(dt) { updMom(dt); }, detect(dt) { updDetect(dt); }, update(dt) { updTrap(); }, win() { winBasement(); },
-  marker() { return quest >= 1 ? V3(-300, 7, 150) : null; }, reset() { momReset(); },
+  afterShift(o) { machine.x += o.x; machine.y += o.y; machine.z += o.z; },
+  cps: CPS_B, quests: BASE_Q, spawn() { placeStart(); },
+  npc(dt) { if (STATE === 'play' || STATE === 'fail' || STATE === 'end' || STATE === 'frozen') updMom(dt); }, detect(dt) { updDetect(dt); }, update(dt) { updTrap(); }, win() { winBasement(); },
+  marker() { return quest === 3 ? V3(70, 6, 15).add(HO) : quest >= 1 ? V3(-300, 7, 150).add(BO) : null; }, reset() { momReset(); },
   eyeText: () => meter > .3 ? '她在看這邊！快躲起來' : mom.mode === 'door' ? '樓上的門打開了' : '太太在地庫', hint: () => ''
 };
 LVL = LEVELS.basement;

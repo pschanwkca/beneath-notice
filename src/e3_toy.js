@@ -30,8 +30,8 @@ function toyFreeze(who) {
   if (NET.on) { const L = leader; if (L.frozen || (NET.pend.frz && T - NET.pend.frz < 2)) return; NET.pend.frz = T; meter = 0; if (NET.host) hostFreeze(L, who); else nsend({ t: 'frz', id: L.id, who, p: [L.pos.x, L.pos.y, L.pos.z], y: L.yaw }, NET.hostId); return; }
   const L = leader; const left = party.filter(C => !C.frozen && C !== L);
   if (!left.length || !LVL.toys) { fail(); return; }
-  if (STK) { if (STK.lock) stkDown(true); stkClear(); }
-  if (LEVEL === 'kitchen' && KS.carried) { KS.carried = false; KS.coreDrop = L.pos.clone().add(V3(0, .6, 0)); }
+  L.on = null; L.hop = null;
+  if (LEVEL === 'kitchen' && KS.carried) { KS.carried = false; KS.coreDrop = coreGround(L.pos); }
   L.frozen = true; L.toyAt = 'floor'; L.climbing = false; L.mantle = null; L.vel.set(0, 0, 0); L.tumble = 0; L.toyVy = 0; L.crouch = false; L.toyTilt = 0; L.toyRoll = 0;
   toyLook(L, true); meter = 0; STATE = 'frozen'; failT = 0; TOY.focus = L;
   SND.heart(1); tone(1800, 600, .8, .08, 'triangle'); nz(1.2, 4200, 1, .08, 'highpass'); toyBurst(V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z));
@@ -181,10 +181,10 @@ function buildToyBin() {
   crayon(x, [[40, 175], [470, 172]], '#f2c94c', 9);
   const lab = mesh(new THREE.PlaneGeometry(30, 11.7), new THREE.MeshStandardMaterial({ map: tex(c), roughness: .8 }), 250, 13, Z0 - .06, { cast: false }); lab.rotation.y = Math.PI;
   // things already inside
-  const ball = mesh(new THREE.SphereGeometry(6.4, 32, 24), new THREE.MeshPhysicalMaterial({ color: 0xe5483f, roughness: .3, clearcoat: .8 }), 238, 7.6, 130); cols.push({ t: 'c', x: 238, z: 130, r: 6, y0: 1.2, y1: 14 });
-  const st = mesh(new THREE.TorusGeometry(6.42, .7, 10, 48), new THREE.MeshPhysicalMaterial({ color: 0xf2f0e8, roughness: .3 }), 238, 7.6, 130); st.rotation.x = 1.1;
+  const bred = new THREE.MeshPhysicalMaterial({ color: 0xe5483f, roughness: .3, clearcoat: .8 }); const bwh = new THREE.MeshPhysicalMaterial({ color: 0xf2f0e8, roughness: .3 });
+  resGroup(cmGroup(12.8, 12.8, 12.8, ({ part }) => { part(new THREE.SphereGeometry(6.4, 32, 24), bred, 0, 0, 0); part(new THREE.TorusGeometry(6.42, .7, 10, 48), bwh, 0, 0, 0, { r: [1.1, 0, 0] }); }, [bred]), 238, 130, 1.2, 12.8, 12.8, 12.8, .3, 5, '波波', true);
   const bm = ['#e0507a', '#3c78c8', '#f2c94c'].map((col, i) => { const [bc, bx] = cnv(128, 128); bx.fillStyle = '#e9d6b4'; bx.fillRect(0, 0, 128, 128); bx.font = '900 92px "Fredoka",sans-serif'; bx.textAlign = 'center'; bx.fillStyle = col; bx.fillText('ABC'[i], 64, 98); return new THREE.MeshStandardMaterial({ map: tex(bc), roughness: .7 }); });
-  box(256, 263, 1.2, 8.2, 108, 115, bm[0]); box(263.5, 270.5, 1.2, 8.2, 108, 115, bm[1]); box(259.5, 266.5, 8.2, 15.2, 108.5, 115.5, bm[2]);
+  [[259.5, 111.5, 1.2], [267, 111.5, 1.2], [263, 112, 8.2]].forEach(([x, z, y], i) => resGroup(cmGroup(7, 7, 7, ({ part }) => { part(new THREE.BoxGeometry(7, 7, 7), bm[i], 0, 0, 0); }, [bm[i]]), x, z, y, 7, 7, 7, .4, 5, '積木', true));
   TOY.box = { x0: X0 + W, x1: X1 - W, z0: Z0 + W, z1: Z1 - W, cx: 250, cz: 120, ap: V3(250, 0, 74) };
   STATIC.toyBox = V3(250, 30, 120);
 }

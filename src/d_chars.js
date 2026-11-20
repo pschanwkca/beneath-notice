@@ -12,7 +12,7 @@ const chars = {}; const party = [];
 function makeChar(id) {
   const S = SP[id], k = S.k;
   const C = { id, S, k, r: S.r, h: S.h, pos: V3(), vel: V3(), yaw: 0, grounded: true, stamina: 100, stamMax: 100, state: 'idle', phase: 0, squash: 0, t: R(0, 9), queue: [], gap: 0, blink: R(1, 4), lean: 0, roll: 0, climbN: V3(0, 0, 1), spin: 0, getup: 0, look: 0, moved: 0, glideK: 0, crouch: false };
-  C.skinM = S.skin ? (S.cham ? MAT.gecko.clone() : MAT.gecko) : null; C.bellyM = S.skin ? (S.cham ? MAT.geckoBelly.clone() : MAT.geckoBelly) : null; if (S.cham) C.skinM.color.setHex(S.skinCol);
+  C.skinM = S.skin ? ((S.cham || S.skinCol) ? MAT.gecko.clone() : MAT.gecko) : null; C.bellyM = S.skin ? ((S.cham || S.bellyCol) ? MAT.geckoBelly.clone() : MAT.geckoBelly) : null; if (S.skinCol) C.skinM.color.setHex(S.skinCol); if (S.bellyCol) C.bellyM.color.setHex(S.bellyCol);
   const root = new THREE.Group(); scene.add(root); C.root = root;
   const body = new THREE.Group(); body.position.y = .92 * k; root.add(body); C.body = body;
   const fm = (bel, len = S.len, den = S.den, col = S.fur) => S.skin ? null : furMat({ color: col, belly: S.belly, bellyAmt: bel, len, den, rimK: .07 });
@@ -24,7 +24,7 @@ function makeChar(id) {
   if (S.skin) plain(ell(.72 * k, .86 * k, .5 * k), C.bellyM, body, 0, .6 * k, .52 * k);
   const neck = new THREE.Group(); neck.position.y = 1.62 * k; body.add(neck); C.neck = neck;
   const head = new THREE.Group(); head.position.y = 1.0 * k; neck.add(head); C.head = head;
-  part(ell(1.3 * k, 1.17 * k, 1.2 * k, 48, 32), fm(.5), head, 0, 0, 0);
+  C.headM = part(ell(1.3 * k, 1.17 * k, 1.2 * k, 48, 32), fm(.5), head, 0, 0, 0);
   part(ell(.6 * k, .46 * k, .52 * k), fm(1, S.len * .7), head, 0, -.3 * k, .96 * k);
   const nose = plain(new THREE.SphereGeometry(.16 * k, 20, 14), new THREE.MeshPhysicalMaterial({ color: S.nose, roughness: .25, clearcoat: 1 }), head, 0, -.12 * k, 1.45 * k); nose.scale.set(1.3, .9, 1);
   C.eyes = [];
@@ -50,7 +50,7 @@ function makeChar(id) {
       g.position.set(s * 1.12 * k, .5 * k, -.05 * k); g.rotation.set(0, s * -.45, s * -.75);
       part(ell(.42 * k, .4 * k, .22 * k, 24, 16), fm(0), g, 0, 0, 0);
       plain(ell(.26 * k, .24 * k, .08 * k, 20, 12), new THREE.MeshStandardMaterial({ color: 0x3a2618, roughness: .8 }), g, 0, -.02 * k, .17 * k);
-    }
+    } else crewEar(C, S, g, s, k, part, plain, fm);
     C.ears.push(g);
   }
   // arms
@@ -88,7 +88,7 @@ function makeChar(id) {
       part(ell(sz[i] * k, .55 * k, sz[i] * .85 * k), fm(0, .42, 15, i === 3 ? 0xa48b77 : S.fur), g, 0, .32 * k, 0);
       g.rotation.x = i === 0 ? -.9 : -.42; C.tail.push(g); parent = g;
     }
-  } else {
+  } else if (!crewTail(C, S, tailRoot, k, part, fm)) {
     part(new THREE.SphereGeometry(.34 * k, 18, 14), fm(0, S.len * 1.3), tailRoot, 0, 0, 0);
   }
   // outfits
@@ -135,6 +135,7 @@ function makeChar(id) {
     plain(new THREE.CircleGeometry(.72 * k, 32), new THREE.MeshStandardMaterial({ color: 0xf1ede4, roughness: .4, metalness: .3 }), cap, 0, 0, -.205 * k).rotation.y = Math.PI;
     for (const s of [-1, 1]) plain(new THREE.TorusGeometry(.5 * k, .05 * k, 6, 16, Math.PI), MAT.leather, body, s * .55 * k, 1.1 * k, -.2 * k).rotation.y = Math.PI / 2;
   }
+  crewExtras(C, S, head, body, k, part, plain);
   return C;
 }
 

@@ -73,7 +73,7 @@ canvas.addEventListener('mousedown', e => {
   mbtn = e.button; dragDist = 0;
 });
 addEventListener('mouseup', e => { if (e.button === 0) keys.Mouse0 = false; if (dragMode && mbtn >= 0 && dragDist < 6 && STATE === 'play') { primaryDown(mbtn); keys.Mouse0 = false; } mbtn = -1; });
-function primaryDown(btn) { const L = leader; if (!L) return; if (L.id === 'bear') { if (btn === 0) { keys.Mouse0 = true; bearShove(); } return; } if (L.id === 'cham') { if (btn === 0) chamTongue(); return; } if (L.id === 'sq') { if (btn === 0) sqCarry(); else if (btn === 2) sqScout(); return; } fireGun(btn === 0); }
+function primaryDown(btn) { const L = leader; if (!L) return; if (L.id === 'bear') { if (btn === 0) { keys.Mouse0 = true; bearShove(); } return; } if (L.id === 'cham') { if (btn === 0) chamTongue(); return; } if (L.id === 'sq') { if (btn === 0) sqCarry(); else if (btn === 2) sqScout(); return; } if (L.id === 'hog') { if (btn === 0) hogRoll(); return; } if (L.id === 'coon') { if (btn === 0) coonThrow(); return; } if (L.id === 'rab' || L.id === 'frog') { if (btn === 0) keys.Mouse0 = true; else if (btn === 2 && L.id === 'frog') frogSwitch(); return; } fireGun(btn === 0); }
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 addEventListener('wheel', e => { cam.dist = clamp(cam.dist + e.deltaY * .012, 8, 42); }, { passive: true });
 
@@ -86,12 +86,12 @@ const G = 250, TERM = -175, STEP = .95;
 const _h = { nx: 0, nz: 0, pen: 0 };
 
 // ---------- character physics ----------
-function supportAt(x, z, r, yMax) { let s = -1e9, sc = null; for (const c of cols) { if (c.y1 > yMax || c.y1 < s) continue; if (!xzHit(c, x, z, r, _h)) continue; s = c.y1; sc = c; } return [s, sc]; }
+function supportAt(x, z, r, yMax) { let s = -1e9, sc = null; for (const c of colsNear(x, yMax, z)) { if (c.y1 > yMax || c.y1 < s) continue; if (!xzHit(c, x, z, r, _h)) continue; s = c.y1; sc = c; } return [s, sc]; }
 function resolveH(C, allowStep) {
   let best = null;
   for (let it = 0; it < 3; it++) {
     let any = false;
-    for (const c of cols) {
+    for (const c of colsNear(C.pos.x, C.pos.y + 1, C.pos.z)) {
       if (c.y1 <= C.pos.y + .001 || c.y0 >= C.pos.y + C.h) continue;
       if (!xzHit(c, C.pos.x, C.pos.z, C.r, _h)) continue;
       const rise = c.y1 - C.pos.y;
@@ -109,7 +109,7 @@ function pushCol(c, dx, dz) {
   const r = resizables.find(q => q.c === c); if (!r) return false;
   if (Math.abs(dx) > Math.abs(dz)) dz = 0; else dx = 0;
   const nb = [c.x0 + dx, c.x1 + dx, c.z0 + dz, c.z1 + dz, c.y0 + .05, c.y1];
-  for (const o of cols) { if (o === c || o.y1 <= nb[4] || o.y0 >= nb[5]) continue; const b = colBounds(o); if (b[1] > nb[0] && b[0] < nb[1] && b[5] > nb[2] && b[4] < nb[3]) return false; }
+  for (const o of colsNear((c.x0 + c.x1) / 2, c.y0 + .1, (c.z0 + c.z1) / 2)) { if (o === c || o.y1 <= nb[4] || o.y0 >= nb[5]) continue; const b = colBounds(o); if (b[1] > nb[0] && b[0] < nb[1] && b[5] > nb[2] && b[4] < nb[3]) return false; }
   r.cx += dx; r.cz += dz; applyResize(r); if (rnd() < .08) SND.push(); return true;
 }
 function moveVert(C, dt) {
@@ -121,7 +121,7 @@ function moveVert(C, dt) {
   ceil(C);
 }
 function ceil(C) {
-  for (const c of cols) { if (c.y0 < C.pos.y + C.h * .55 || C.pos.y + C.h <= c.y0) continue; if (!xzHit(c, C.pos.x, C.pos.z, C.r * .7, _h)) continue; C.pos.y = c.y0 - C.h; if (C.vel.y > 0) C.vel.y = 0; }
+  for (const c of colsNear(C.pos.x, C.pos.y + 1, C.pos.z)) { if (c.y0 < C.pos.y + C.h * .55 || C.pos.y + C.h <= c.y0) continue; if (!xzHit(c, C.pos.x, C.pos.z, C.r * .7, _h)) continue; C.pos.y = c.y0 - C.h; if (C.vel.y > 0) C.vel.y = 0; }
 }
 function land(C, imp) {
   if (C !== leader) return;
@@ -139,7 +139,7 @@ function readMove() {
 function startClimb(C, hit) { C.climbing = true; C.climbN.set(hit.nx, 0, hit.nz); C.vel.set(0, 0, 0); C.grounded = false; C.crouch = false; C.yaw = Math.atan2(-hit.nx, -hit.nz); SND.swish(); }
 function detach(C, push, up, grounded) { C.climbing = false; C.vel.set(C.climbN.x * push * 20, up, C.climbN.z * push * 20); C.climbCD = .35; if (grounded) C.grounded = true; }
 function updLeader(C, dt) {
-  const ctl = STATE === 'play' && !(C.tumble > 0) && !PAUSED;
+  const ctl = STATE === 'play' && !(C.tumble > 0) && !PAUSED && !isBase(C);
   const mv = ctl ? readMove() : { x: 0, y: 0, m: 0, run: false }; const inX = mv.x, inY = mv.y;
   const fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
   let wx = fx * inY + rx * inX, wz = fz * inY + rz * inX; const wl = Math.hypot(wx, wz); if (wl > 0) { wx /= wl; wz /= wl; }
@@ -155,11 +155,13 @@ function updLeader(C, dt) {
   }
   if (C.zip) { updZip(C, dt); return; }
   if (C.climbing) { updClimb(C, dt, inX, inY, ctl, mv.run); return; }
-  const sp = speedOf(C, mv.run) * (joy.on ? clamp(mv.m / .85, .35, 1) : 1); const tx = wx * sp, tz = wz * sp; const acc = (C.grounded ? 150 : 50) * dt;
+  if (C.leapT > 0) C.leapT -= dt;
+  const sp = speedOf(C, mv.run) * (joy.on ? clamp(mv.m / .85, .35, 1) : 1); const tx = wx * sp, tz = wz * sp; const acc = (C.grounded ? 150 : C.leapT > 0 ? 9 : 50) * dt;
   let dvx = tx - C.vel.x, dvz = tz - C.vel.z; const dl = Math.hypot(dvx, dvz); if (dl > acc) { dvx *= acc / dl; dvz *= acc / dl; }
   if (C.tumble > 0) { if (C.grounded) { C.vel.x *= 1 - 5 * dt; C.vel.z *= 1 - 5 * dt; } } else { C.vel.x += dvx; C.vel.z += dvz; }
   if (wl > 0 && !(C.tumble > 0)) C.yaw = angDamp(C.yaw, Math.atan2(wx, wz), 13, dt);
   if (ctl && pressed.Space && C.grounded) { C.vel.y = 47 * C.S.jmp; C.grounded = false; C.squash = -.55; C.crouch = false; SND.jump(); }
+  if (C.dashT > 0) hogDash(C, dt); chargeJump(C, dt, ctl);
   C.vel.y -= G * dt; const wasGl = C.gliding; C.gliding = false;
   if (C.id === 'sq' && ctl && !C.grounded && keys.Space && (C.vel.y < 0 || wasGl)) {
     const w = carryWeight(C); C.gliding = true; C.vel.y = Math.max(C.vel.y, -10 - 7 * w); const hx = Math.sin(C.yaw), hz = Math.cos(C.yaw);
@@ -173,14 +175,14 @@ function updLeader(C, dt) {
   if (hit && ctl && C.climbCD <= 0 && !C.crouch && (C.stamina > 8 || C.id === 'gecko')) { if (-(wx * hit.nx + wz * hit.nz) > .5) startClimb(C, hit); }
   if (C.grounded && !C.cold) C.stamina = Math.min(C.stamMax || 100, C.stamina + 45 * dt);
   const hs = Math.hypot(C.vel.x, C.vel.z); C.spd = hs;
-  C.state = C.tumble > 0 ? 'tumble' : C.gliding ? 'glide' : !C.grounded ? 'air' : hs > .8 ? (C.crouch ? 'sneak' : 'walk') : (C.crouch ? 'crouch' : 'idle');
-  if (C.pos.y < -5) { C.pos.set(...CPS[cp]); C.vel.set(0, 0, 0); }
+  C.state = C.dashT > 0 ? 'roll' : C.tumble > 0 ? 'tumble' : C.gliding ? 'glide' : !C.grounded ? 'air' : hs > .8 ? (C.crouch ? 'sneak' : 'walk') : (C.crouch ? 'crouch' : 'idle');
+  if (C.pos.y < -400 || (WORLD && C.pos.y < -5 && !zoneAt(C.pos, 30))) { C.pos.set(...CPS[cp]); C.vel.set(0, 0, 0); }
 }
 function resolveClimb(C) {
   let best = null;
   for (let it = 0; it < 2; it++) {
     let any = false;
-    for (const c of cols) {
+    for (const c of colsNear(C.pos.x, C.pos.y + 1, C.pos.z)) {
       if (c.y1 <= C.pos.y + .001 || c.y0 >= C.pos.y + C.h) continue;
       if (!xzHit(c, C.pos.x, C.pos.z, C.r, _h)) continue;
       C.pos.x += _h.nx * _h.pen; C.pos.z += _h.nz * _h.pen; any = true;
@@ -243,8 +245,8 @@ function updFollower(F, L, dt) {
     while (move > 1e-4 && F.queue.length) {
       const q = F.queue[0]; const dx = q.x - F.pos.x, dy = q.y - F.pos.y, dz = q.z - F.pos.z; const d = Math.hypot(dx, dy, dz);
       F.qst = q.st; F.qyaw = q.yaw;
-      if (d <= move) { F.pos.set(q.x, q.y, q.z); move -= d; F.queue.shift(); if (Math.hypot(dx, dz) > .05) F.tyaw = Math.atan2(dx, dz); }
-      else { const k = move / d; F.pos.x += dx * k; F.pos.y += dy * k; F.pos.z += dz * k; move = 0; if (Math.hypot(dx, dz) > .05) F.tyaw = Math.atan2(dx, dz); }
+      if (d <= move) { F.pos.set(q.x, q.y, q.z); move -= d; F.queue.shift(); if (Math.hypot(dx, dz) > .3) F.tyaw = Math.atan2(dx, dz); }
+      else { const k = move / d; F.pos.x += dx * k; F.pos.y += dy * k; F.pos.z += dz * k; move = 0; if (Math.hypot(dx, dz) > .3) F.tyaw = Math.atan2(dx, dz); }
     }
     moved = (m0 - move) / dt;
   }
@@ -252,7 +254,7 @@ function updFollower(F, L, dt) {
   const st = F.qst || 'idle';
   if (st === 'climb' && (moved > .3 || floating || F.pos.y - sup > .35)) { F.state = 'climb'; F.yaw = angDamp(F.yaw, F.qyaw, 10, dt); }
   else if (moved > .5) { F.state = (st === 'air' || st === 'glide' || st === 'tumble') ? (F.id === 'sq' && st === 'glide' ? 'glide' : 'air') : (st === 'sneak' ? 'sneak' : 'walk'); if (F.tyaw !== undefined) F.yaw = angDamp(F.yaw, F.tyaw, 10, dt); }
-  else { F.state = L.crouch ? 'crouch' : 'idle'; const dx = L.pos.x - F.pos.x, dz = L.pos.z - F.pos.z; if (Math.hypot(dx, dz) > .5) F.yaw = angDamp(F.yaw, Math.atan2(dx, dz), 3, dt); }
+  else { F.state = L.crouch ? 'crouch' : 'idle'; const dx = L.pos.x - F.pos.x, dz = L.pos.z - F.pos.z; if (Math.hypot(dx, dz) > 5) F.yaw = angDamp(F.yaw, Math.atan2(dx, dz), 2, dt); }
   F.crouch = F.state === 'crouch' || F.state === 'sneak';
   // walk beside the leader's path instead of in the camera line
   const flat = F.state === 'walk' || F.state === 'idle' || F.state === 'sneak' || F.state === 'crouch';
@@ -264,14 +266,14 @@ function updFollower(F, L, dt) {
 function hideOccluders() {
   const L = leader; const a = camera.position, b = V3(L.pos.x, L.pos.y + L.h * .6, L.pos.z); const ab = V3().subVectors(b, a); const len2 = ab.lengthSq();
   for (const F of party) {
-    if (F === L || F.stk || F.frozen) { F.root.visible = true; continue; }
+    if (F === L || F.on || F.hop || F.frozen || isBase(F)) { F.root.visible = true; continue; }
     const p = V3(F.disp.x, F.disp.y + F.h * .5, F.disp.z); const t = clamp(V3().subVectors(p, a).dot(ab) / len2, 0, 1); const q = V3().copy(a).addScaledVector(ab, t);
     F.root.visible = !(p.distanceTo(q) < F.r + 1.3 && t < .92) && p.distanceTo(a) > F.r + .8;
   }
 }
 function switchTo(N) {
   if (NET.on) return;
-  if (!N || N === leader || STATE !== 'play' || leader.mantle || STK) return;
+  if (!N || N === leader || STATE !== 'play' || leader.mantle || leader.hop || N.hop) return;
   if (N.frozen) { toast(`${N.S.name}變成了玩具，要先救回來`); return; }
   const ik = trail.length - N.queue.length;
   for (const F of party) {
@@ -279,7 +281,7 @@ function switchTo(N) {
     if (F === leader) F.queue = trail.slice(Math.max(0, ik)).reverse();
     else { const ij = trail.length - F.queue.length; F.queue = ij <= ik ? trail.slice(ij, ik) : trail.slice(ik, ij).reverse(); }
   }
-  const old = leader; old.climbing = false; old.mantle = null; old.qst = old.state === 'climb' ? 'climb' : 'idle'; old.qyaw = old.yaw; old.vel.set(0, 0, 0);
+  const old = leader; old.climbing = false; old.mantle = null; old.tumble = 0; old.rollT = 0; old.qst = old.state === 'climb' ? 'climb' : 'idle'; old.qyaw = old.yaw; old.vel.set(0, 0, 0);
   N.vel.set(0, 0, 0); N.tumble = 0; N.queue = []; N.grounded = false; if (N.state !== 'climb' && N.disp) N.pos.copy(N.disp);
   if (N.state === 'climb') { N.climbing = true; N.climbN.set(-Math.sin(N.yaw), 0, -Math.cos(N.yaw)); }
   trail = []; N.lastTrail.copy(N.pos); leader = N;
@@ -291,9 +293,9 @@ function switchTo(N) {
 function updCam(dt) {
   if (STATE === 'play' && !PAUSED) { cam.yaw -= mouseDX * .0024; cam.pitch = clamp(cam.pitch + mouseDY * .0022, -.45, 1.25); }
   mouseDX = mouseDY = 0;
-  const L = leader; const ty = STK && STK.lock ? (STK.by + L.pos.y + L.h) * .5 + 1 : L.pos.y + L.h * (L.crouch ? .62 : .8);
+  const L = leader; const ty = L.pos.y + L.h * (L.crouch ? .62 : .8);
   cam.tgt.x = damp(cam.tgt.x, L.pos.x, 16, dt); cam.tgt.y = damp(cam.tgt.y, ty, 10, dt); cam.tgt.z = damp(cam.tgt.z, L.pos.z, 16, dt);
-  const d = cam.dist * (L.climbing ? 1.18 : 1) * (STK && STK.lock ? 1.35 : 1);
+  const d = cam.dist * (L.climbing ? 1.18 : 1) * (L.on || isBase(L) ? 1.3 : 1);
   const dir = V3(Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch));
   const o = V3(cam.tgt.x + Math.cos(cam.yaw) * 1.1, cam.tgt.y, cam.tgt.z - Math.sin(cam.yaw) * 1.1);
   const hitT = rayFirst(o, dir, d + 1); const want = Math.max(1.6, Math.min(d, hitT - .9));
@@ -333,9 +335,10 @@ function updResizables(dt) {
       const c = r.c; for (const C of [leader]) { if (C.pos.y < c.y1 && C.pos.y + C.h > c.y0 && xzHit(c, C.pos.x, C.pos.z, C.r * .55, _h)) { const qx = clamp(C.pos.x, c.x0, c.x1), qz = clamp(C.pos.z, c.z0, c.z1); if (Math.hypot(C.pos.x - qx, C.pos.z - qz) < .01) { C.pos.y = c.y1; C.vel.y = Math.max(C.vel.y, 0); C.climbing = false; } } }
     }
     const hl = aimRes && aimRes.r === r ? .35 + Math.sin(T * 8) * .1 : 0; r.pulse = Math.max(0, r.pulse - dt * 2);
-    const e = Math.max(hl, r.pulse); for (const m of (r.hl || [r.mesh.material])) if (m && m.emissive) m.emissive.setRGB(.15 * e, .9 * e, .85 * e);
+
   }
   gunBeam.material.opacity = Math.max(0, gunBeam.material.opacity - dt * 4);
+  updOutlines();
 }
 
 // ---------- Mom: the family upstairs searching for you ----------
@@ -347,32 +350,33 @@ const MOM_PATH = [
   { x: 120, z: 86 }, { x: 60, z: 150, stop: 3, look: [175, 20, 180], line: 'boxes' },
   { x: -120, z: 112, stop: 3.2, look: [-262, 6, 168], line: 'center' },
   { x: -252, z: 86 }, { x: -252, z: -244, line: 'leave' }
-];
+].map(n => ({ ...n, x: n.x + BO.x, z: n.z + BO.z, look: n.look && [n.look[0] + BO.x, n.look[1] + BO.y, n.look[2] + BO.z] }));
 const MOM_LINES = [
   { enter: '老公？你在下面嗎？', bench: '實驗室怎麼亂成這樣……機器還在冒火花。', shelf: 'Origin Dynamics 的人又打電話來找你了。', boxes: '你又躲起來做實驗了？', center: '……手機也沒帶走。', leave: '我報警了。你快點回來。' },
   { enter: '老公……？', bench: '女兒一直問爸爸去了哪裡。', shelf: '那些人說，不准我們碰你的東西。', boxes: '……', center: '求你了，快點回來。', leave: '……' }
 ];
-function momY(x, z) { return x < -200 && z < 71 ? clamp((60 - z) * .909 + 10, 0, 260) : 0; }
+function momY(x, z) { x -= BO.x; z -= BO.z; return (x < -200 && z < 71 ? clamp((60 - z) * .909 + 10, 0, 260) : 0) + BO.y; }
 function setShadowLive(l, on) { l.shadow.autoUpdate = on; if (on) l.shadow.needsUpdate = true; }
 function startMomVisit() {
-  mom.active = true; mom.mode = 'door'; mom.doorT = 0; mom.node = 0; mom.pos.set(-252, 260, -244); mom.yaw = 0; mom.root.visible = true; mom.visits++; mom.lines = MOM_LINES[Math.min(1, mom.visits - 1)];
-  mom.aim.set(-252, 0, 60); mom.aimT.copy(mom.aim); setShadowLive(upLight, true); setShadowLive(flashLight, true); SND.creak();
+  mom.active = true; mom.mode = 'door'; mom.doorT = 0; mom.node = 0; mom.pos.set(-252, 260, -244).add(BO); mom.yaw = 0; mom.root.visible = true; mom.visits++; mom.lines = MOM_LINES[Math.min(1, mom.visits - 1)];
+  mom.aim.set(-252, 0, 60).add(BO); mom.aimT.copy(mom.aim); setShadowLive(upLight, true); setShadowLive(flashLight, true); SND.creak();
 }
-function momReset() { mom.active = false; mom.root.visible = false; mom.mode = 'off'; mom.timer = 24; flashLight.intensity = 0; beams[3].k = 0; setShadowLive(flashLight, false); }
+function momReset() { mom.active = false; mom.root.visible = false; mom.mode = 'off'; mom.timer = 24; flashLight.intensity = 0; flashBeamRec.k = 0; setShadowLive(flashLight, false); }
 function momSay(key) { const t = mom.lines && mom.lines[key]; if (t && t !== '……' || key === 'leave') say('太太', t || '……', '#f4bb72', 3.4); }
 function updMom(dt) {
+  if (ZONES.kitchen.prepped) return; // she has gone back upstairs to cook
   if (!mom.active) {
-    door.rotation.y = damp(door.rotation.y, 0, 3, dt); upLight.intensity = damp(upLight.intensity, 0, 3, dt); beams[2].k = damp(beams[2].k, 0, 3, dt);
+    door.rotation.y = damp(door.rotation.y, 0, 3, dt); upLight.intensity = damp(upLight.intensity, 0, 3, dt); doorBeamRec.k = damp(doorBeamRec.k, 0, 3, dt);
     if (upLight.intensity < 50) setShadowLive(upLight, false);
     if (STATE === 'play') { mom.timer -= dt; if (mom.timer <= 0) startMomVisit(); }
-    doorBeam.material.uniforms.uK.value = beams[2].k; return;
+    doorBeam.material.uniforms.uK.value = doorBeamRec.k; return;
   }
   const P = mom.pos;
   if (mom.mode === 'door') { mom.doorT += dt; if (mom.doorT > 1.3) { mom.mode = 'walk'; } }
   if (mom.mode === 'closing') { door.rotation.y = damp(door.rotation.y, 0, 4, dt); mom.doorT += dt; if (mom.doorT > 1.2) { SND.thud(.3); momReset(); mom.timer = 36 + R(0, 14); return; } }
   else door.rotation.y = damp(door.rotation.y, 1.25, 2.2, dt);
   const open = clamp(door.rotation.y / 1.25, 0, 1);
-  upLight.intensity = 470000 * open; beams[2].k = .06 * open; doorBeam.material.uniforms.uK.value = beams[2].k;
+  upLight.intensity = 470000 * open; doorBeamRec.k = .06 * open; doorBeam.material.uniforms.uK.value = doorBeamRec.k;
   let moveD = 0;
   if (mom.mode === 'walk') {
     const nx = MOM_PATH[mom.node + 1]; if (!nx) { mom.mode = 'closing'; mom.doorT = 0; return; }
@@ -408,7 +412,7 @@ function updMom(dt) {
   mom.head.rotation.y = damp(mom.head.rotation.y, clamp(yr, -.8, .8), 4, dt); mom.head.rotation.x = damp(mom.head.rotation.x, clamp(pitch * .55, -.2, .6), 4, dt);
   mom.lightDir.copy(ad).normalize();
   flashLight.position.copy(lp); flashLight.target.position.copy(mom.aim); flashLight.intensity = 105000;
-  beams[3].o.copy(lp); beams[3].d.copy(mom.lightDir); beams[3].k = .055; flashBeam.material.uniforms.uK.value = .05; aimBeam(flashBeam, lp, mom.aim);
+  flashBeamRec.o.copy(lp); flashBeamRec.d.copy(mom.lightDir); flashBeamRec.k = .055; flashBeam.material.uniforms.uK.value = .05; aimBeam(flashBeam, lp, mom.aim);
   // footsteps
   if (walking && Math.floor(prev / Math.PI) !== Math.floor(ph / Math.PI)) {
     const Lg = mom.legs[Math.floor(ph / Math.PI) % 2 === 0 ? 0 : 1]; const fp = V3(); Lg.ankle.getWorldPosition(fp); fp.y = P.y;
@@ -420,7 +424,7 @@ function updMom(dt) {
 }
 function knock(C, from, msg) {
   if (NET.on && !mine(C)) return;
-  if (STK && STK.lock) stkDown(true);
+  C.on = null; C.hop = null;
   const dx = C.pos.x - from.x, dz = C.pos.z - from.z, d = Math.hypot(dx, dz) || 1;
   C.climbing = false; C.mantle = null; C.vel.set(dx / d * 42, 52, dz / d * 42); C.grounded = false; C.tumble = .9; C.crouch = false; if (msg) toast(msg);
 }
@@ -432,7 +436,7 @@ function updDetect(dt) {
   const cosA = d.dot(mom.lightDir); let seen = 0;
   if (dist < 480 && cosA > Math.cos(.36) && !rayBlocked(o, d, dist - 1.2, false)) seen = (1.2 - dist / 520) * (L.crouch ? .5 : 1) * (.55 + .45 * sstep(Math.cos(.36), 1, cosA));
   const md = Math.hypot(L.pos.x - mom.pos.x, L.pos.z - mom.pos.z);
-  if (md < 80 && L.pos.y < 30 && L.spd > 2 && !L.crouch) { const fx = Math.sin(mom.yaw), fz = Math.cos(mom.yaw); if (((L.pos.x - mom.pos.x) * fx + (L.pos.z - mom.pos.z) * fz) / md > .25) seen = Math.max(seen, .4); }
+  if (md < 80 && L.pos.y < BO.y + 30 && L.spd > 2 && !L.crouch) { const fx = Math.sin(mom.yaw), fz = Math.cos(mom.yaw); if (((L.pos.x - mom.pos.x) * fx + (L.pos.z - mom.pos.z) * fz) / md > .25) seen = Math.max(seen, .4); }
   if (seen > 0) {
     meter += seen * dt * .95;
     if (meter > .3 && mom.mode !== 'track' && mom.mode !== 'closing') { mom.prevMode = mom.mode; mom.mode = 'track'; if (!mom.said.sus) { mom.said.sus = 1; say('太太', '嗯？……什麼東西在動？', '#f4bb72', 2.6); } }
@@ -459,10 +463,12 @@ function say(name, text, color, dur = 3) { $('subn').textContent = name; $('subn
 function toast(t, dur = 2.6) { $('toast').textContent = t; $('toast').classList.add('on'); toastT = dur; }
 function refreshPartyHUD() {
   for (const id of IDS) { const el = $('pm-' + id); if (!el) continue; const C = chars[id]; el.classList.toggle('on', leader && leader.id === id); el.classList.toggle('toy', !!C.frozen); const sm = el.querySelector('small'); if (sm && party.includes(C)) sm.textContent = C.frozen ? (C.toyAt === 'box' ? '在玩具箱' : C.toyAt === 'hand' ? '被拿走了' : '變成玩具') : NET.on ? playerLabel(id) + ((C.stamMax || 100) < 100 ? ` · ${C.stamMax}%` : '') : (C.stamMax || 100) < 100 ? `體力 ${C.stamMax}%` : SP[id].role; }
-  if (!leader) return; for (const id of IDS) $('touch').classList.toggle(id, leader.id === id); $('tbAct').textContent = leader.id === 'cham' ? '舌' : '抱'; $('tbCrouch').classList.toggle('dn', !!leader.crouch); $('an').textContent = leader.S.abil; $('ad').textContent = leader.S.desc; $('cells').style.display = leader.id === 'dad' ? 'flex' : 'none';
+  if (!leader) return; for (const id of IDS) $('touch').classList.toggle(id, leader.id === id); $('tbAct').textContent = ({ cham: '舌', sq: '抱', hog: '滾', coon: '彈', rab: '跳', frog: '跳' })[leader.id] || '抱'; $('tbScout').textContent = leader.id === 'frog' ? '電' : '偵察'; $('tbCrouch').classList.toggle('dn', !!leader.crouch); $('an').textContent = leader.S.abil; $('ad').textContent = leader.S.desc; $('cells').style.display = leader.id === 'dad' ? 'flex' : 'none';
 }
 function buildPartyHUD() {
   const order = [['dad', 1], ['sq', 2], ['bear', 3], ['cham', 4]]; const has = id => party.includes(chars[id]);
+  for (const id of IDS) if (!order.some(o => o[0] === id) && party.includes(chars[id])) order.push([id, order.length + 1]);
+  $('party').classList.toggle('many', order.length > 4);
   $('party').innerHTML = order.map(([id, k]) => `<div class="pm${!has(id) ? ' lock' : ''}" id="pm-${id}" data-id="${id}"><div class="ph">${PORTRAITS[id] ? `<img alt="${SP[id].name}" src="${PORTRAITS[id]}">` : ''}</div><b>${SP[id].name}</b><small>${!has(id) ? '在牆裡等你' : SP[id].role}</small>${has(id) ? `<kbd>${k}</kbd>` : ''}</div>`).join('');
   document.querySelectorAll('.pm[data-id]').forEach(el => el.addEventListener('pointerdown', e => { const id = el.dataset.id; if (has(id)) { e.preventDefault(); pressed['sw_' + id] = true; } }));
   refreshPartyHUD();
@@ -470,8 +476,10 @@ function buildPartyHUD() {
 QUESTS = [
   { t: '離開工作枱', s: '找路下到地面。你很輕，直接跳下去也不會受傷' },
   { t: '找到牆腳的裂縫', s: '左邊牆腳，好像有人在等你' },
-  { t: '移開紙箱', s: '熊可以推開它，或者用爸爸的尺寸槍把它縮小' }
+  { t: '移開紙箱', s: '熊可以推開它，或者用爸爸的尺寸槍把它縮小' },
+  { t: '跟着前拍檔進入牆內', s: '穿過牆腳的洞，沿着隧道走' }
 ];
+const BASE_Q = QUESTS;
 function setQuest(q) { quest = q; if (!QUESTS[q]) return; $('qt').textContent = QUESTS[q].t; $('qs').textContent = QUESTS[q].s; }
 const _pv = V3();
 function project(p, el, offX = 0, offY = 0, clampEdge = false) {
@@ -506,15 +514,14 @@ function updHUD(dt) {
   const ph = L.id === 'bear' && !STK ? pushTarget(L) : null;
   if (NET.on && L.frozen) h = PROTO > 0 ? '你變成了玩具！等隊友來搖醒你，或者讓他們用 Prototype（R）' : '你變成了玩具！等隊友來玩具箱搖醒你';
   else if (NET.on && !mine(L)) h = '隊友正在帶着你行動……';
-  else if (STK) h = stkHintText();
+  else if (stackHintK && stackHintText()) h = stackHintText();
   else if (TOY.rescuing) h = `正在搖醒${TOY.rescuing.S.name}…… ${Math.min(99, Math.round(TOY.rescuing.rescueT / 1.4 * 100))}%`;
   else if (fz && PROTO > 0 && !L.climbing) h = TOUCH ? `按「復活」用 Prototype 救回${fz.S.name}（體力上限 -20%），或者去玩具箱救他` : `<kbd>R</kbd> 用 Prototype 救回${fz.S.name}（體力上限 -20%）· 或者去玩具箱救他`;
   else if (fz && !L.climbing && fz.toyAt === 'box') h = `${fz.S.name}在玩具箱裡——爬進去碰一下就能救回來`;
-  else if (L.climbing && L.overhang > 0) h = TOUCH ? '上面凸出來爬不過去 · 按「疊」叫隊友疊羅漢' : '上面凸出來爬不過去 · <kbd>F</kbd> 叫隊友疊羅漢';
-  else if (stkHintK && !L.climbing) h = TOUCH ? '爬不上去？按「疊」叫隊友疊羅漢' : '爬不上去？<kbd>F</kbd> 疊羅漢：隊友一個踩一個上去';
   else if (L.id === 'cham' && tongueAim && !L.climbing) h = tongueAim.item ? (TOUCH ? '按「舌」用舌頭拿過來' : '左鍵 用舌頭拿過來') : (TOUCH ? '按「舌」黐住那裡飛過去' : '左鍵 吐舌頭黐住那裡飛過去');
   else if (L.id === 'cham' && L.camo > .85) h = '變色中——停着不動很難被看見';
   else if (L.id === 'sq' && L.carry) h = TOUCH ? `抱着${L.carry.S.name}——跳起按住「跳」一起滑翔 · 再按「抱」放下` : `抱着${L.carry.S.name}——跳起按住 <kbd>Space</kbd> 一起滑翔 · 左鍵放下`;
+  else if (crewHint(L)) h = crewHint(L);
   else if (ph) h = TOUCH ? `按「推」推動「${ph.name}」` : `左鍵 推「${ph.name}」 · 按住左鍵 推着走`;
   else if (TOUCH) {
     if (L.climbing) h = '推搖桿上下左右攀爬 · 按「跳」跳開';
@@ -537,6 +544,7 @@ function updHUD(dt) {
 // ---------- animation ----------
 function animChar(C, dt) {
   if (C.frozen) { C.root.position.copy(C.pos); C.root.rotation.set(C.toyTilt || 0, C.yaw, C.toyRoll || 0); return; }
+  if (C !== leader && C.tumble > 0) C.tumble = Math.max(0, C.tumble - dt);
   C.t += dt; const k = C.k, b = C.body, st = C.state, spd = C.spd || 0;
   C.root.position.copy(C !== leader && C.disp && party.includes(C) ? C.disp : C.pos); C.root.rotation.y = C.yaw;
   let legA = 0, armA = 0, bob = 0, lean = 0, roll = 0, armZ = 0, legZ = 0, armX = 0, legT = 0, armAlt = 0;
@@ -558,7 +566,7 @@ function animChar(C, dt) {
   b.position.y = .92 * k + bob - (C.crouch ? .3 * k : 0) + Math.sin(C.t * 2.1) * .018 * k;
   C.lean = damp(C.lean, lean, 9, dt); C.roll = damp(C.roll, roll, 10, dt);
   let bx = C.lean, bz = C.roll;
-  if (C.tumble > 0) { C.spin += dt * 13; bx = C.spin; } else C.spin = 0;
+  if (C.tumble > 0) { C.spin += dt * 13; bx = C.spin; } else if (st === 'roll') { C.spin += dt * 24; bx = C.spin; } else C.spin = 0;
   if (C.rollT > 0) bx = (1 - C.rollT / .55) * Math.PI * 2;
   if (C.lieK > 0) { bx = lerp(bx, -1.5, C.lieK); b.position.y = lerp(b.position.y, .45 * k, C.lieK); }
   b.rotation.set(bx, 0, bz);
@@ -579,13 +587,14 @@ function animChar(C, dt) {
 // ---------- flow ----------
 function placeStart() {
   const D = chars.dad, S = chars.sq, B = chars.bear, K = chars.gecko;
-  D.pos.set(-22, 92, -192); D.yaw = 2.6; S.pos.set(-9, 92, -186); S.yaw = -1.9; B.pos.set(-30, 92, -177); B.yaw = 2.2;
+  D.pos.set(-22, 92, -192).add(BO); D.yaw = 2.6; S.pos.set(-9, 92, -186).add(BO); S.yaw = -1.9; B.pos.set(-30, 92, -177).add(BO); B.yaw = 2.2;
   S.gap = 7; B.gap = 13.5; S.side = -3.4; B.side = 4; D.side = -3.4; for (const C of [D, S, B]) { C.lastTrail = C.pos.clone(); C.disp = C.pos.clone(); C.queue = []; C.state = 'idle'; C.stamina = 100; }
-  K.pos.set(-305, 0, 150); K.yaw = Math.PI / 2; K.state = 'idle'; chars.cham.root.visible = false; chars.cham.pos.set(0, -500, 0);
+  K.pos.set(-305, 0, 150).add(BO); K.yaw = Math.PI / 2; K.state = 'idle'; K.root.visible = true; chars.cham.root.visible = false; chars.cham.pos.set(-30, 4, 12).add(HO); chars.cham.yaw = -2.2;
   leader = D; trail = [];
 }
 function startGame(ch = 0) {
   if (ch === 1) { $('start').hidden = true; playT = 0; fails = 0; requestLock(); loadLevel('wall'); return; }
+  enterZone('basement', true); LP.snap = true;
   $('start').hidden = true; if (TOUCH) $('touch').hidden = false; $('hud').classList.remove('off'); $('hud').classList.add('cine'); STATE = 'intro'; introT = 0; playT = 0; quest = 0; setQuest(0); cp = 0; meter = 0; fails = 0;
   chars.dad.lieK = 1; chars.sq.lieK = 1; chars.bear.lieK = 1; momReset(); mom.timer = 70; mom.visits = 0; mom.said = {};
   refreshPartyHUD(); requestLock();
@@ -597,7 +606,7 @@ function updIntro(dt) {
   chars.dad.lieK = clamp(1 - (t - 1.2) / .9, 0, 1); chars.sq.lieK = clamp(1 - (t - 2.2) / .9, 0, 1); chars.bear.lieK = clamp(1 - (t - 3.6) / 1, 0, 1);
   chars.sq.look = t > 2.5 && t < 4.5 ? .5 : 0;
   const k = sstep(0, 6.4, t);
-  const p0 = V3(-38, 108, -172), l0 = V3(-55, 112, -212);
+  const p0 = V3(-38, 108, -172).add(BO), l0 = V3(-55, 112, -212).add(BO);
   cam.yaw = .55; cam.pitch = .22; const D = chars.dad;
   const dir = V3(Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch));
   const tg = V3(D.pos.x, D.pos.y + D.h * .8, D.pos.z); const p1 = tg.clone().addScaledVector(dir, 15);
@@ -607,20 +616,24 @@ function updIntro(dt) {
   if (t > 6.5 || ((pressed.Space || pressed.Enter) && t > .6)) { STATE = 'play'; $('hud').classList.remove('cine'); for (const C of party) C.lieK = 0; if (t < 6.5) say(INTRO[3][1], INTRO[3][2], INTRO[3][3], 4.6); }
 }
 function updTitle(dt) {
-  const a = T * .09; const c = V3(-34, 96, -196);
-  camera.position.set(c.x + Math.sin(a) * 46, 112 + Math.sin(T * .2) * 4, c.z + 26 + Math.cos(a) * 22); camera.lookAt(c.x, c.y + 6, c.z);
+  const a = T * .09; const c = V3(-34, 96, -196).add(BO);
+  camera.position.set(c.x + Math.sin(a) * 46, c.y + 16 + Math.sin(T * .2) * 4, c.z + 26 + Math.cos(a) * 22); camera.lookAt(c.x, c.y + 6, c.z);
   bokeh.uniforms.focus.value = camera.position.distanceTo(c);
 }
 function winBasement() {
-  if (quest === 0 && leader.grounded && leader.pos.y < 2) { setQuest(1); toast('下到地面了'); mom.timer = Math.min(mom.timer, 9); }
+  if (quest === 0 && leader.grounded && leader.pos.y < BO.y + 2) { setQuest(1); toast('下到地面了'); mom.timer = Math.min(mom.timer, 9); }
   if (quest >= 1) {
-    const g = chars.gecko; const d = Math.hypot(leader.pos.x + 300, leader.pos.z - 150);
+    const g = chars.gecko; const d = Math.hypot(leader.pos.x - (BO.x - 300), leader.pos.z - (BO.z + 150));
     if (d < 70 && !mom.said.gk) { mom.said.gk = 1; say('前拍檔', '教授？……真的是你？我在紙箱後面！', '#b7d38a', 3.4); }
-    const blocked = crackBox.c.z0 < 154 && crackBox.c.z1 > 146 && crackBox.c.x0 < -293 && crackBox.c.y1 > 6;
+    const c = crackBox.c; const blocked = c.z0 < BO.z + 154 && c.z1 > BO.z + 146 && c.x0 < BO.x - 293 && c.y1 > BO.y + 6;
     if (quest === 1 && d < 45 && blocked) setQuest(2);
     if (quest === 2 && !blocked) { setQuest(1); toast('路打開了！'); }
-    g.wave = !blocked && d < 120;
-    if (!blocked && d < 9 && leader.pos.y < 3) { STATE = 'end'; endT = 0; say('前拍檔', '三年了……我一直在等你。快進來，牆裡面比較安全。', '#b7d38a', 4.5); }
+    if (!mom.said.lead) g.wave = !blocked && d < 120;
+    // the way is open: she turns and leads everyone through the hole, along the tunnel and into the wall
+    if (!blocked && d < 16 && leader.pos.y < BO.y + 3 && !mom.said.lead) {
+      mom.said.lead = 1; g.wave = false; setQuest(3); say('前拍檔', '三年了……我一直在等你。快進來，牆裡面比較安全。', '#b7d38a', 4.5);
+      npcWalk(g, [V3(-318, 0, 150).add(BO), V3(-345, 0, 150).add(BO), V3(70, 4, 15).add(HO), V3(30, 4, 8).add(HO), V3(-22, 4, -6).add(HO)], 13, () => { g.yaw = .9; });
+    }
   }
 }
 function updCheckpoints() { if (!CPS) return; const who = NET.on ? playerChars().filter(C => !C.frozen) : [leader]; CPS.forEach((p, i) => { if (who.some(C => (C.grounded || !mine(C)) && Math.hypot(C.pos.x - p[0], C.pos.y - p[1], C.pos.z - p[2]) < 30)) cp = i; }); }
@@ -632,7 +645,7 @@ function updBatteries(dt) {
 }
 function updTrap() {
   const t = STATIC.trap; if (!t || !t.armed || STATE !== 'play') return;
-  if (Math.hypot(leader.pos.x - t.x, leader.pos.z - t.z) < 5 && leader.pos.y < 2) { t.armed = false; t.bar.rotation.x = Math.PI / 2; SND.snap(); knock(leader, V3(t.x, 0, t.z + 4), '老鼠夾！好險……'); cam.shake = .6; }
+  if (Math.hypot(leader.pos.x - t.x, leader.pos.z - t.z) < 5 && leader.pos.y < BO.y + 2) { t.armed = false; t.bar.rotation.x = Math.PI / 2; SND.snap(); knock(leader, V3(t.x, BO.y, t.z + 4), '老鼠夾！好險……'); cam.shake = .6; }
 }
 
 // ---------- main loop ----------
@@ -644,8 +657,7 @@ function update(dt) {
   if (LEVEL === 'basement') { machine.field.material.uniforms.uT.value = T;
   const fl = .75 + Math.sin(T * 13) * .08 + (rnd() < .04 ? R(-.5, .6) : 0); machine.light.intensity = 900 * fl; machine.field.material.uniforms.uK.value = .85 + (fl - .75);
   if (rnd() < dt * 1.3) { const a = R(0, 6.28); const p = V3(machine.x + Math.cos(a) * 17, machine.y + Math.sin(a) * 17, machine.z + 1); for (let i = 0; i < 14; i++) emit(p, V3(R(-25, 25), R(5, 40), R(-10, 25)), rnd() < .5 ? new THREE.Color(3, 1.6, .5) : new THREE.Color(.8, 3, 2.8), R(.12, .25), R(.3, .9), 220, .5); if (leader) SND.crack(clamp(1 - leader.pos.distanceTo(V3(machine.x, machine.y, machine.z)) / 200, 0, 1)); } }
-  if (dust) { dust.material.uniforms.uT.value = T; for (let i = 0; i < 4; i++) dust.material.uniforms.uBK.value[i] = beams[i] ? beams[i].k : 0; }
-  updRings(dt); if (STATE === 'play') { bearHold(dt); if (!NET.client) { updSlides(dt); updPushFall(dt); } } updResizables(dt); if (LVL && LVL.toys && STATE !== 'loading') updToys(dt); updTongue(dt); updScout(dt); updWatch(); updBatteries(dt); updParticles(dt);
+  updRings(dt); updPebbles(dt); if (STATE === 'play') { bearHold(dt); if (!NET.client) { updSlides(dt); updPushFall(dt); } } updResizables(dt); if (LVL && LVL.toys && STATE !== 'loading') updToys(dt); updTongue(dt); updScout(dt); updWatch(); updBatteries(dt); updParticles(dt);
   if (STATE === 'title') updTitle(dt);
   else if (STATE === 'intro') { updIntro(dt); for (const C of party) { C.state = 'idle'; C.spd = 0; } }
   else if (STATE === 'play') {
@@ -656,13 +668,13 @@ function update(dt) {
     if (!NET.on) for (const C of party) if (pressed['sw_' + C.id]) switchTo(C);
     if (pressed.KeyC || pressed.Tab) setTimeout(refreshPartyHUD, 30);
     if (pressed.KeyH) { hudOn = !hudOn; $('hud').classList.toggle('off', !hudOn); }
-    if (pressed.KeyF) stkStart();
-    const lockL = (STK && STK.lock) || !mine(leader) || leader.frozen;
+    if (pressed.KeyF) stackPress(); crewInput(leader, !leader.frozen && mine(leader));
+    const lockL = !mine(leader) || leader.frozen || !!leader.on || !!leader.hop || leader.pullT > 0;
     if (!lockL) { const sub = dt > 1 / 30 ? 2 : 1; for (let s = 0; s < sub; s++) updLeader(leader, dt / sub); }
-    if (STK) updStack(dt);
-    if (!lockL) pushTrail(leader); for (const F of party) if (F !== leader && !F.stk && !F.frozen && !F.carried && mine(F)) updFollower(F, leader, dt);
+    updHops(dt); stackInput(); stackSolve(dt);
+    if (!lockL) pushTrail(leader); for (const F of party) if (F !== leader && !F.on && !F.hop && !F.drop && !F.frozen && !F.carried && mine(F) && !isBase(F)) updFollower(F, leader, dt);
     updCarry(dt); updTongueAim(); updVentFx(dt);
-    stkScan(dt);
+    stackScan(dt);
     updAim(); LVL.detect(dt); if (!NET.client) updCheckpoints(); LVL.update(dt); if (!NET.client) LVL.win();
     cellT += dt; if (cells < cellMax && cellT > 10) { cells++; cellT = 0; } if (cells >= cellMax) cellT = 0;
     updCam(dt); hideOccluders();
@@ -676,14 +688,13 @@ function update(dt) {
     if (failT > 3.2) { STATE = 'play'; $('dead').classList.remove('on'); }
   } else if (STATE === 'end') {
     endT += dt; updCam(dt); if (STK) stkClear(); for (const F of party) if (F !== leader && !F.frozen) updFollower(F, leader, dt); hideOccluders();
-    const K = chars.gecko; K.wave = LEVEL === 'basement';
-    if (endT > 3.6 && LEVEL === 'basement') { if (!loadingNext) { loadingNext = true; chars.gecko.wave = false; loadLevel('wall'); } }
-    else if (endT > 3.6 && $('end').hidden) { $('endA').textContent = '第一章 · 完'; $('endB').textContent = '找回核心'; $('endC').textContent = '核心找回來了，但它的光越來越弱。下一站：客廳的電視與魚缸。'; $('st3l').textContent = '鈕扣電池（總數）'; $('st3').textContent = gotBat;
+    if (endT > 3.6 && $('end').hidden) { const E = END_TXT || (NET.on ? ['第一章（多人）· 完', '零件與電池', '三個零件和電池都齊了。從通風口爬出去——下一站：車房的工作枱。'] : ['第一章 · 完', '找回核心', '核心找回來了，但它的光越來越弱。']); $('endA').textContent = E[0]; $('endB').textContent = E[1]; $('endC').textContent = E[2]; $('st3l').textContent = '鈕扣電池（總數）'; $('st3').textContent = gotBat;
       $('end').hidden = false; $('hud').classList.add('off'); $('touch').hidden = true; if (document.pointerLockElement) document.exitPointerLock();
       const m = Math.floor(playT / 60), s = Math.floor(playT % 60); $('st1').textContent = `${m}:${String(s).padStart(2, '0')}`; $('st2').textContent = fails; $('st3').textContent = `${gotBat}/3`;
     }
   }
-  if (LEVEL === 'basement') { if (STATE === 'play' || STATE === 'fail' || STATE === 'end') updMom(dt); } else if (NET.client) netNPC(dt); else LVL.npc(dt);
+  zoneTick(dt); if (WORLD && (ZONES.kitchen.near || LEVEL === 'kitchen')) updLiving(dt);
+  if (NET.client) netNPC(dt); else for (const Z of ZL) { const D = LEVELS[Z.id]; if (D && (Z.id === LEVEL || (Z.near && Z.prepped && D.npcNear))) D.npc(dt); }
   const cr = STATE === 'frozen' ? clamp(1 - failT / 2.3, 0, 1) * .8 : STATE === 'fail' ? clamp(failT / .7, 0, 1) * (failT < 2.4 ? 1 : clamp(1 - (failT - 2.4) / .8, 0, 1)) : meter * .55;
   grade.uniforms.uCrys.value = damp(grade.uniforms.uCrys.value, cr, 8, dt);
   grade.uniforms.uFlash.value = STATE === 'fail' && failT > .6 && failT < 1.1 ? (1 - Math.abs(failT - .85) / .25) * .5 : 0;
@@ -709,7 +720,7 @@ function frame(now) {
 function onResize() {
   const w = innerWidth, h = innerHeight; renderer.setSize(w, h); composer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
   grade.uniforms.uRes.value.set(w * renderer.getPixelRatio(), h * renderer.getPixelRatio());
-  const sc = h * renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2)); if (dust) dust.material.uniforms.uScale.value = sc; if (parts) parts.material.uniforms.uScale.value = sc;
+  const sc = h * renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2)); onResizeDust(sc); if (parts) parts.material.uniforms.uScale.value = sc;
 }
 addEventListener('resize', onResize);
 function applyQ(q) {
@@ -717,7 +728,7 @@ function applyQ(q) {
   renderer.setPixelRatio(P[0]); composer.setPixelRatio(P[0]); onResize(); gtao.enabled = P[1]; bokeh.enabled = P[2]; setShells(P[3]);
   document.querySelectorAll('.sel button').forEach(b => b.classList.toggle('on', b.dataset.q === q));
 }
-function pause() { PAUSED = true; $('pause').hidden = false; }
+function pause() { PAUSED = true; $('pause').hidden = false; $('pauseMP').hidden = !NET.on; if (NET.on) { $('pauseCode').textContent = NET.code; $('pause').querySelector('.tag').textContent = '多人遊戲不會暫停——其他人還在玩。點「繼續」回到遊戲。'; } }
 function resume() { PAUSED = false; $('pause').hidden = true; last = performance.now(); requestLock(); }
 document.querySelectorAll('.sel button').forEach(b => b.addEventListener('click', () => applyQ(b.dataset.q)));
 $('go').addEventListener('click', () => { audioInit(); startGame(0); });
@@ -758,8 +769,8 @@ function setupTouch() {
   hold('tbGrow', () => fireGun(true)); hold('tbShrink', () => fireGun(false));
   hold('tbStack', () => { pressed.KeyF = true; });
   hold('tbProto', () => { pressed.KeyR = true; });
-  hold('tbAct', () => { if (leader.id === 'cham') chamTongue(); else if (leader.id === 'sq') sqCarry(); });
-  hold('tbScout', () => sqScout());
+  hold('tbAct', () => { const id = leader.id; if (id === 'cham') chamTongue(); else if (id === 'sq') sqCarry(); else if (id === 'hog') hogRoll(); else if (id === 'coon') coonThrow(); else if (id === 'rab' || id === 'frog') keys.Mouse0 = true; }, () => { keys.Mouse0 = false; });
+  hold('tbScout', () => { if (leader.id === 'frog') frogSwitch(); else sqScout(); });
   hold('tbPush', () => { keys.TPush = true; bearShove(); }, () => { keys.TPush = false; });
   hold('tbPause', () => { if (STATE === 'play' || STATE === 'intro') pause(); });
   T.addEventListener('contextmenu', e => e.preventDefault());
@@ -785,17 +796,20 @@ async function init() {
   setLoad(.05, '載入字體…');
   try { await Promise.race([Promise.all(['500 20px "LXGW WenKai TC"', '700 20px "Noto Sans TC"', '600 20px Fredoka', '600 20px Caveat'].map(f => document.fonts.load(f, '爸爸最棒第測試縮小態被觀測ABC'))), new Promise(r => setTimeout(r, 3500))]); } catch (e) { }
   setLoad(.15, '生成材質…'); await tick(); makeMaterials();
-  setLoad(.5, '搭建地庫…'); await tick();
-  scene.environment = buildEnv(); scene.environmentIntensity = .85;
-  buildRoom(); buildLights(); buildDust(); buildParticles();
-  setLoad(.7, '喚醒角色…'); await tick();
-  for (const id of ['dad', 'sq', 'bear', 'gecko', 'cham']) chars[id] = makeChar(id);
-  party.push(chars.dad, chars.sq, chars.bear); buildMom(); placeStart();
+  setLoad(.3, '喚醒角色…'); await tick();
+  for (const id of ['dad', 'sq', 'bear', 'gecko', 'cham', 'hog', 'rab', 'coon', 'frog']) chars[id] = makeChar(id);
+  for (const id of ['hog', 'rab', 'coon', 'frog']) { chars[id].root.visible = false; chars[id].pos.set(0, -900, 0); }
+  party.push(chars.dad, chars.sq, chars.bear); buildMom();
+  // the whole house is built now, once: walking from room to room never loads anything
+  const WL = { basement: [.42, '搭建地庫…'], wall: [.52, '搭建牆內…'], kitchen: [.6, '搭建廚房和客廳…'] };
+  await buildWorld(async id => { setLoad(...WL[id]); await tick(); });
+  buildParticles(); enterZone('basement', true); scene.environment = ZONES.basement.envTex; placeStart();
   for (const id in chars) animChar(chars[id], .016);
   setLoad(.82, '拍攝頭像…'); await tick(); makePortraits();
   setLoad(.92, '編譯著色器…'); await tick();
   applyQ(TOUCH ? 'low' : 'high'); onResize(); if (TOUCH) setupTouch();
-  mom.root.visible = true; flashLight.intensity = 1; upLight.intensity = 1; renderer.compile(scene, camera); mom.root.visible = false; flashLight.intensity = 0; upLight.intensity = 0;
+  for (const Z of ZL) Z.lv.visible = Z.fx.visible = true; const kv = [KID.root.visible, CAT.root.visible]; KID.root.visible = CAT.root.visible = true;
+  mom.root.visible = true; renderer.compile(scene, camera); mom.root.visible = false; KID.root.visible = kv[0]; CAT.root.visible = kv[1];
   setShadowLive(upLight, false); setShadowLive(flashLight, false);
   STATE = 'title'; updTitle(0); composer.render();
   setLoad(1, '完成'); $('load').hidden = true; $('start').hidden = false;

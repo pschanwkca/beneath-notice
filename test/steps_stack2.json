@@ -1,0 +1,41 @@
+[
+ {
+  "click": "#go1",
+  "wait": 4000
+ },
+ {
+  "eval": "(async()=>{const b=window.__bn; for(let i=0;i<300 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,200)); b.loadLevel('kitchen'); await new Promise(r=>setTimeout(r,1500)); for(let i=0;i<300 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,200)); window.__NODET=true; return [b.LEVEL,b.state]})()"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; const c=b.chars; const L=b.leader; L.pos.set(-100,0,-156); L.yaw=Math.PI; c.sq.pos.set(-96,0,-155); c.bear.pos.set(-102,0,-152); c.cham.pos.set(-80,0,-140); for(const k of ['sq','bear','cham']){c[k].disp.copy(c[k].pos); c[k].queue=[];} b.cam.yaw=0.5; b.cam.pitch=.15; b.cam.dist=18; for(let k=0;k<20;k++) b.step(1); b.press('KeyF'); for(let k=0;k<40;k++) b.step(1); return {dadOn:L.on, hint:document.getElementById('hint').textContent}})()"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; const c=b.chars; b.switchTo(c.bear); for(let k=0;k<5;k++) b.step(1); const B=b.leader; B.pos.set(-102,0,-152); const sqPos=c.sq.pos.toArray().map(v=>+v.toFixed(1)); b.press('KeyF'); for(let k=0;k<40;k++) b.step(1); return {leader:B.id, bearOn:B.on, dadOn:c.dad.on, sqState:c.sq.state, sqPos, dadY:+c.dad.pos.y.toFixed(1), bearY:+B.pos.y.toFixed(1), hint:document.getElementById('hint').textContent}})()",
+  "wait": 200,
+  "shot": "s2_tower"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; const B=b.leader; b.press('Space'); for(let k=0;k<60;k++) b.step(1); return {bearPos:B.pos.toArray().map(v=>+v.toFixed(1)), on:B.on, hint:document.getElementById('hint').textContent}})()"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; const c=b.chars; b.press('KeyF'); for(let k=0;k<70;k++) b.step(1); const r1=[c.dad.pos.y.toFixed(1), c.dad.on]; b.press('KeyF'); for(let k=0;k<70;k++) b.step(1); return {dad:r1, sq:[c.sq.pos.y.toFixed(1), c.sq.on], hint:document.getElementById('hint').textContent}})()",
+  "wait": 200,
+  "shot": "s2_inside"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; b.switchTo(b.chars.dad); b.KM.mode='goto'; b.KM.pt='table'; for(let k=0;k<600;k++){ b.step(1); if(b.KM.mode==='act') break;} for(let k=0;k<90;k++) b.step(1); const L=b.leader; L.pos.set(-60,0,-60); b.cam.yaw=-2.6; b.cam.pitch=.2; b.cam.dist=70; for(let k=0;k<5;k++) b.step(1); return {km:b.KM.mode, pt:b.KM.pt, sitK:+(b.mom.sitK||0).toFixed(2), mom:b.mom.pos.toArray().map(v=>+v.toFixed(0))}})()",
+  "wait": 200,
+  "shot": "s2_momsit"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; b.switchTo(b.chars.dad); const L=b.leader; L.pos.set(-60,90,-180); L.vel.set(0,0,0); b.cam.yaw=0.3; b.cam.pitch=.25; b.cam.dist=40; for(let k=0;k<30;k++) b.step(1); return {aim:b.leader.id, outlines:b.resizables.filter(r=>r.hulls&&r.hulls[0]&&r.hulls[0].visible).length, total:b.resizables.length, names:b.resizables.map(r=>r.name).join(',')}})()",
+  "wait": 200,
+  "shot": "s2_outline"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; const L=b.leader; L.pos.set(212,0,-194); b.step(3); const got=b.KS.coreGot; L.pos.set(-250,40,-158); L.climbing=true; L.climbN.set(0,0,1); b.step(2); window.__NODET=false; b.toyFreeze('mom'); window.__NODET=true; for(let k=0;k<160;k++) b.step(1); const drop=b.KS.coreDrop&&b.KS.coreDrop.toArray().map(v=>+v.toFixed(1)); return {got, drop, carried:b.KS.carried}})()"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; b.state='fail'; b.step(200); return {state:b.state, drop:b.KS.coreDrop&&b.KS.coreDrop.toArray().map(v=>+v.toFixed(1)), got:b.KS.coreGot}})()"
+ }
+]
