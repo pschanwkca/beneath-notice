@@ -116,6 +116,30 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--fain
 .chap i{display:block;width:72px;height:1px;margin:14px auto 0;background:linear-gradient(90deg,transparent,var(--amber),transparent)}
 .pmp{margin-top:22px;padding-top:18px;border-top:1px solid var(--faint);display:grid;gap:12px;justify-items:center}
 .pmp[hidden]{display:none}
+.rbox{width:min(880px,94vw);max-height:calc(100vh - 56px);overflow:auto;padding:18px 22px 16px;text-align:center}
+.rtip{font-size:12px;color:var(--dim);margin:0 0 14px;line-height:1.5}
+.rgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:12px}
+@media (max-width:700px){.rgrid{grid-template-columns:repeat(4,1fr)}}
+.rc{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px 9px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--faint)}
+.rc .ph,.mps .ph{position:relative}
+.rc .ph{width:56px;height:56px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 35%,#2b3442,#121820);display:grid;place-items:center}
+.rc .ph img{width:100%;height:100%;object-fit:cover}
+.rc .ph img.sil,.mps .ph img.sil{filter:brightness(0);opacity:.9}
+.rc .ph svg,.mps .ph svg{width:74%;height:74%}
+.rc .ph i,.mps .ph i{position:absolute;inset:0;display:grid;place-items:center;font:700 24px "Fredoka",sans-serif;font-style:normal;color:rgba(245,240,230,.6)}
+.rc b{font-size:14px;margin-top:5px}.rc small{font-size:11px;color:var(--dim)}.rc em{font-style:normal;font-size:11px;color:var(--amber)}
+.rc p{font-size:11px;line-height:1.45;color:var(--dim);margin:3px 0 0}
+.rc.lock,.mps.lock{background:rgba(255,255,255,.015);border-style:dashed}
+.rc.lock .ph,.mps.lock .ph{background:radial-gradient(circle at 50% 35%,#1b2129,#0a0d11)}
+.mps.lock{opacity:1;cursor:default}.mps.lock:hover{transform:none;border-color:var(--faint)}.mps.lock small{line-height:1.35}
+.unl{position:absolute;left:50%;top:15%;transform:translate(-50%,-10px);display:flex;align-items:center;gap:12px;padding:9px 20px 9px 9px;border-radius:99px;background:rgba(10,13,18,.82);border:1px solid rgba(244,187,114,.55);box-shadow:0 12px 40px rgba(0,0,0,.5);opacity:0;transition:opacity .5s,transform .6s;pointer-events:none;text-align:left}
+.unl.on{opacity:1;transform:translate(-50%,0)}
+.unl .ph{width:54px;height:54px;flex:none;border-radius:50%;overflow:hidden;border:2px solid var(--amber);background:#121820}
+.unl .ph img{width:100%;height:100%;object-fit:cover}
+.unl small{display:block;font-size:11px;letter-spacing:.24em;color:var(--amber)}
+.unl b{display:block;font-size:18px;margin-top:2px}.unl b span{font-size:12px;color:var(--dim);margin-left:8px;font-weight:500}
+.unl em{display:block;font-style:normal;font-size:12px;color:var(--dim);margin-top:2px}
+@media (max-height:520px){.rc .ph{width:46px;height:46px}.rc p{font-size:10px}.rc em{display:none}.rbox{padding:14px 16px 12px}.rtip{display:none}}
 .pmp .code{font:600 13px "Fredoka","Noto Sans TC";color:var(--dim);letter-spacing:.06em}
 .pmp .code b{display:block;margin-top:4px;font:700 34px/1 "Fredoka";letter-spacing:.22em;color:var(--ink)}
 .dead{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;opacity:0;transition:opacity .5s}
@@ -172,7 +196,10 @@ html.touch .desk{display:none}
 html.touch .keys:not(.mkeys){display:none}
 html.touch .mkeys{display:grid!important}
 @media (orientation:portrait){html.touch #rot{display:grid}}
-html.touch .q{left:calc(10px + env(safe-area-inset-left));top:8px;min-width:0;max-width:36vw;padding:8px 12px}
+html.touch .q{left:calc(10px + env(safe-area-inset-left));top:8px;min-width:0;max-width:min(36vw,300px);padding:7px 11px;pointer-events:auto}
+html.touch .q:not(.open) #qs{display:none}
+html.touch .panel,html.touch .tb{backdrop-filter:none;-webkit-backdrop-filter:none}
+html.touch .panel{background:rgba(10,13,18,.68)}html.touch .tb{background:rgba(10,13,18,.62)}
 html.touch #qt{font-size:14px;margin-top:3px}
 html.touch #qs{font-size:11px;line-height:1.35}
 html.touch .bat{margin-top:5px;padding-top:5px;font-size:11px}
@@ -261,6 +288,7 @@ html.touch .mpchip{bottom:auto;top:62px}
 
 <div id="hud" class="hud off">
   <div id="mpChip" class="mpchip" hidden></div>
+  <div class="unl" id="unl" aria-live="polite"></div>
   <div id="watch"><i></i><span></span></div>
   <div class="bars"></div>
   <div class="q panel" id="quest">
@@ -320,6 +348,7 @@ html.touch .mpchip{bottom:auto;top:62px}
       <button id="go">序章：地庫</button>
       <button id="go1" class="ghost">第一章：牆內與廚房</button>
       <button id="goMP" class="ghost mpbtn">多人連線 · 最多 8 人</button>
+      <button id="goRoster" class="ghost">角色</button>
       <div class="sel" id="qsel" role="group" aria-label="畫質">
         <button data-q="high" class="on">高畫質</button><button data-q="med">中</button><button data-q="low">低</button>
       </div>
@@ -363,6 +392,15 @@ html.touch .mpchip{bottom:auto;top:62px}
       <div id="mpErr" class="mperr"></div>
       <div class="mpact"><button id="mpStart" disabled>開始</button><button id="mpLeave" class="ghost small">離開房間</button></div>
     </div>
+  </div>
+</div>
+
+<div class="ov" id="roster" hidden>
+  <div class="rbox panel">
+    <div class="mph"><b>角色</b><span id="rosterN"></span></div>
+    <p class="rtip">四位主角一開始就可以在多人模式使用；其他角色要在單人故事裡解鎖，解鎖後多人模式就可以揀。</p>
+    <div class="rgrid" id="rosterGrid"></div>
+    <div class="mpact"><button id="rosterClose" class="ghost small">關閉</button></div>
   </div>
 </div>
 
@@ -413,6 +451,7 @@ import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 import { Pass } from 'three/addons/postprocessing/Pass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 
 // ---------- utils ----------
 const $ = id => document.getElementById(id);
@@ -440,7 +479,7 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPrefer
 renderer.setPixelRatio(Math.min(devicePixelRatio, TOUCH ? 1.25 : 1.5));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = TOUCH ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.3;
 const MAXANI = Math.min(8, renderer.capabilities.getMaxAnisotropy());
@@ -671,13 +710,16 @@ function partitionCols() {
 function colsNear(x, y, z) { if (!WORLD) return cols; for (const Z of ZL) for (const b of Z.core) if (x > b[0] && x < b[1] && y > b[2] && y < b[3] && z > b[4] && z < b[5]) return Z.cols; return cols; }
 
 // ---------- light pool ----------
-const LP = { grp: new THREE.Group(), pt: [], sh: [], sp: [], hemi: null, snap: true };
+// A fixed set of real lights (so shaders never recompile) is pointed at the lamps that matter most for
+// what the camera sees. Choices are re-made a few times a second, a lamp only loses its slot to a clearly
+// stronger one, and swaps fade — so lights never pop or flicker as you move.
+const LP = { grp: new THREE.Group(), pt: [], sh: [], sp: [], hemi: null, snap: true, t: 0, want: null, frame: 0 };
 function setupLightPool() {
   scene.add(LP.grp);
   for (const Z of ZL) { Z.lights = []; for (const g of [Z.lv, Z.fx]) g.traverse(o => { if (o.isLight) { Z.lights.push(o); o.visible = false; } }); }
-  const NP = TOUCH ? 6 : 9;
+  const NP = TOUCH ? 5 : 9, NS = TOUCH ? 2 : 3;
   for (let i = 0; i < NP; i++) { const l = new THREE.PointLight(0xffffff, 0, 0, 2); LP.grp.add(l); LP.pt.push({ l, cur: null, f: 0 }); }
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < NS; i++) {
     const l = new THREE.SpotLight(0xffffff, 0, 0, .5, .5, 2); l.castShadow = true; l.shadow.mapSize.setScalar(1024); l.shadow.autoUpdate = false; LP.grp.add(l, l.target); LP.sh.push({ l, cur: null, f: 0 });
   }
   { const l = new THREE.SpotLight(0xffffff, 0, 0, .5, .5, 2); LP.grp.add(l, l.target); LP.sp.push({ l, cur: null, f: 0 }); }
@@ -686,18 +728,22 @@ function setupLightPool() {
 const _lw = V3(), _lt = V3();
 function lightScore(l, cp, lp) { l.getWorldPosition(_lw); const d2 = Math.min(_lw.distanceToSquared(cp), _lw.distanceToSquared(lp)); const c = l.color; return l.intensity * (c.r * .3 + c.g * .55 + c.b * .15) / (d2 + 900); }
 function poolAssign(slots, want, dt, copy) {
-  const N = slots.length, top = want.slice(0, N), keep = new Set(want.slice(0, N + 2)), topS = new Set(top);
-  for (const s of slots) if (s.cur && !keep.has(s.cur)) s.out = true;
+  const N = slots.length, sc = new Map(want.map(e => [e.l, e.sc])), top = want.slice(0, N);
+  for (const s of slots) if (s.cur && !s.out && !sc.has(s.cur)) s.out = true;   // gone dark or out of reach
   const used = new Set(); for (const s of slots) if (s.cur) used.add(s.cur);
-  for (const l of top) {
-    if (used.has(l)) continue;
+  for (const e of top) {
+    if (used.has(e.l)) continue;
     let s = slots.find(q => !q.cur);
-    if (!s) { const v = slots.find(q => q.cur && !topS.has(q.cur) && !q.out); if (v) v.out = true; continue; }
-    s.cur = l; s.f = LP.snap ? 1 : 0; s.out = false; s.fresh = true; used.add(l);
+    if (!s) {   // only give up a slot for a clearly stronger lamp
+      let weak = null; for (const q of slots) if (q.cur && !q.out && (!weak || (sc.get(q.cur) || 0) < (sc.get(weak.cur) || 0))) weak = q;
+      if (weak && e.sc > (sc.get(weak.cur) || 0) * 1.6) weak.out = true;
+      continue;
+    }
+    s.cur = e.l; s.f = LP.snap ? 1 : 0; s.out = false; s.fresh = true; used.add(e.l);
   }
   for (const s of slots) {
-    if (s.out) { s.f -= dt * 3.5; if (s.f <= 0 || LP.snap) { s.cur = null; s.f = 0; s.out = false; } }
-    else if (s.cur) s.f = Math.min(1, s.f + dt * 3.5);
+    if (s.out) { s.f -= dt * 3; if (s.f <= 0 || LP.snap) { s.cur = null; s.f = 0; s.out = false; } }
+    else if (s.cur) s.f = Math.min(1, s.f + dt * 3);
     copy(s);
   }
 }
@@ -713,22 +759,31 @@ function copySpot(s) {
   if (l.castShadow) {
     const sh = l.shadow, vs = v.shadow;
     if (s.fresh) {
-      s.fresh = false;
-      if (sh.mapSize.x !== vs.mapSize.x) { sh.mapSize.copy(vs.mapSize); if (sh.map) { sh.map.dispose(); sh.map = null; } }
-      sh.bias = vs.bias; sh.normalBias = vs.normalBias; sh.camera.near = vs.camera.near; sh.camera.far = vs.camera.far; sh.camera.updateProjectionMatrix(); sh.needsUpdate = true;
+      s.fresh = false; const ms = TOUCH ? 1024 : vs.mapSize.x;
+      if (sh.mapSize.x !== ms) { sh.mapSize.setScalar(ms); if (sh.map) { sh.map.dispose(); sh.map = null; } }
+      sh.bias = vs.bias * (TOUCH ? 1.6 : 1); sh.normalBias = vs.normalBias * (TOUCH ? 1.8 : 1); sh.radius = TOUCH ? 3 : 1; sh.camera.near = vs.camera.near; sh.camera.far = vs.camera.far; sh.camera.updateProjectionMatrix(); sh.needsUpdate = true;
     }
-    sh.autoUpdate = vs.autoUpdate && v.castShadow; if (vs.needsUpdate) { sh.needsUpdate = true; vs.needsUpdate = false; }
+    const live = vs.autoUpdate && v.castShadow;
+    // phones redraw shadows every other frame
+    if (TOUCH) { sh.autoUpdate = false; if (live && (LP.frame & 1)) sh.needsUpdate = true; } else sh.autoUpdate = live;
+    if (vs.needsUpdate) { sh.needsUpdate = true; vs.needsUpdate = false; }
   }
 }
 function lightTick(dt) {
-  const cp = camera.position, lp = leader ? leader.pos : cp; const pts = [], shs = [], sps = [];
-  for (const Z of ZL) if (Z.near) for (const l of Z.lights) {
-    if (l.isHemisphereLight || !(l.intensity > 0)) continue;
-    const sc = lightScore(l, cp, lp); const e = { l, sc };
-    if (l.isSpotLight) (l.castShadow ? shs : sps).push(e); else if (l.isPointLight) pts.push(e);
+  LP.frame++; LP.t -= dt;
+  if (LP.t <= 0 || LP.snap || !LP.want) {
+    LP.t = .16; const cp = camera.position, lp = leader ? leader.pos : cp; const pts = [], shs = [], sps = [];
+    for (const Z of ZL) if (Z.near) for (const l of Z.lights) {
+      if (l.isHemisphereLight || !(l.intensity > 0)) continue;
+      // lamps from a neighbouring place only count when they are close (e.g. right through the mouse hole)
+      if (Z !== WC.cz) { l.getWorldPosition(_lw); if (_lw.distanceTo(cp) > 150 && _lw.distanceTo(lp) > 150) continue; }
+      const e = { l, sc: lightScore(l, cp, lp) };
+      if (l.isSpotLight) (l.castShadow ? shs : sps).push(e); else if (l.isPointLight) pts.push(e);
+    }
+    const ord = a => a.sort((p, q) => q.sc - p.sc);
+    LP.want = [ord(pts), ord(shs), ord(sps)];
   }
-  const ord = a => a.sort((p, q) => q.sc - p.sc).map(e => e.l);
-  poolAssign(LP.pt, ord(pts), dt, copyPoint); poolAssign(LP.sh, ord(shs), dt, copySpot); poolAssign(LP.sp, ord(sps), dt, copySpot);
+  poolAssign(LP.pt, LP.want[0], dt, copyPoint); poolAssign(LP.sh, LP.want[1], dt, copySpot); poolAssign(LP.sp, LP.want[2], dt, copySpot);
   // the room's ambient sky light follows the camera
   const Z = WC.cz; const h = Z && Z.lights.find(l => l.isHemisphereLight);
   if (h) { const k = LP.snap ? 1 : 1 - Math.exp(-3 * dt); LP.hemi.color.lerp(h.color, k); LP.hemi.groundColor.lerp(h.groundColor, k); LP.hemi.intensity += (h.intensity - LP.hemi.intensity) * k; }
@@ -1010,7 +1065,7 @@ void main(){
 };
 const fxGroup = new THREE.Group(); scene.add(fxGroup);
 let LV = new THREE.Group(); scene.add(LV); let LVFX = new THREE.Group(); fxGroup.add(LVFX);
-const rt = new THREE.WebGLRenderTarget(innerWidth, innerHeight, { type: THREE.HalfFloatType, samples: TOUCH ? 2 : 4 });
+const rt = new THREE.WebGLRenderTarget(innerWidth, innerHeight, { type: THREE.HalfFloatType, samples: TOUCH ? 0 : 4 });
 const composer = new EffectComposer(renderer, rt);
 composer.setPixelRatio(renderer.getPixelRatio()); composer.setSize(innerWidth, innerHeight);
 const renderPass = new RenderPass(scene, camera);
@@ -1028,7 +1083,10 @@ composer.addPass(gtao); composer.addPass(bokeh);
 composer.addPass(new FnPass(() => { fxGroup.visible = true; }));
 const sanitize = new ShaderPass({ uniforms: { tDiffuse: { value: null } }, vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
   fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv; void main(){ vec4 c=texture2D(tDiffuse,vUv); if(any(isnan(c))||any(isinf(c))) c=vec4(0.0,0.0,0.0,1.0); gl_FragColor=vec4(clamp(c.rgb,0.0,48.0),c.a); }` });
-composer.addPass(sanitize); composer.addPass(bloom); composer.addPass(outPass); composer.addPass(grade);
+// phones: no MSAA, a cheap FXAA pass instead; bloom can run at lower resolution
+const fxaa = new ShaderPass(FXAAShader); fxaa.enabled = TOUCH;
+let BLOOM_K = 1; const _bloomSize = bloom.setSize.bind(bloom); bloom.setSize = (w, h) => _bloomSize(Math.max(64, Math.round(w * BLOOM_K)), Math.max(64, Math.round(h * BLOOM_K)));
+composer.addPass(sanitize); composer.addPass(bloom); composer.addPass(outPass); composer.addPass(fxaa); composer.addPass(grade);
 
 // ---------- world: colliders ----------
 const cols = []; const STATIC = [];
@@ -2072,8 +2130,7 @@ function refreshPartyHUD() {
   if (!leader) return; for (const id of IDS) $('touch').classList.toggle(id, leader.id === id); $('tbAct').textContent = ({ cham: '舌', sq: '抱', hog: '滾', coon: '彈', rab: '跳', frog: '跳' })[leader.id] || '抱'; $('tbScout').textContent = leader.id === 'frog' ? '電' : '偵察'; $('tbCrouch').classList.toggle('dn', !!leader.crouch); $('an').textContent = leader.S.abil; $('ad').textContent = leader.S.desc; $('cells').style.display = leader.id === 'dad' ? 'flex' : 'none';
 }
 function buildPartyHUD() {
-  const order = [['dad', 1], ['sq', 2], ['bear', 3], ['cham', 4]]; const has = id => party.includes(chars[id]);
-  for (const id of IDS) if (!order.some(o => o[0] === id) && party.includes(chars[id])) order.push([id, order.length + 1]);
+  const has = id => party.includes(chars[id]); const order = IDS.filter(has).map((id, i) => [id, i + 1]);
   $('party').classList.toggle('many', order.length > 4);
   $('party').innerHTML = order.map(([id, k]) => `<div class="pm${!has(id) ? ' lock' : ''}" id="pm-${id}" data-id="${id}"><div class="ph">${PORTRAITS[id] ? `<img alt="${SP[id].name}" src="${PORTRAITS[id]}">` : ''}</div><b>${SP[id].name}</b><small>${!has(id) ? '在牆裡等你' : SP[id].role}</small>${has(id) ? `<kbd>${k}</kbd>` : ''}</div>`).join('');
   document.querySelectorAll('.pm[data-id]').forEach(el => el.addEventListener('pointerdown', e => { const id = el.dataset.id; if (has(id)) { e.preventDefault(); pressed['sw_' + id] = true; } }));
@@ -2086,7 +2143,9 @@ QUESTS = [
   { t: '跟着前拍檔進入牆內', s: '穿過牆腳的洞，沿着隧道走' }
 ];
 const BASE_Q = QUESTS;
-function setQuest(q) { quest = q; if (!QUESTS[q]) return; $('qt').textContent = QUESTS[q].t; $('qs').textContent = QUESTS[q].s; }
+function setQuest(q) { quest = q; if (!QUESTS[q]) return; $('qt').textContent = QUESTS[q].t; $('qs').textContent = QUESTS[q].s; questOpen(); }
+let _qT = 0; function questOpen() { const el = $('quest'); el.classList.add('open'); clearTimeout(_qT); _qT = setTimeout(() => el.classList.remove('open'), 7000); }
+$('quest').addEventListener('pointerdown', e => { if (TOUCH) { e.stopPropagation(); questOpen(); } });
 const _pv = V3();
 function project(p, el, offX = 0, offY = 0, clampEdge = false) {
   _pv.copy(p).project(camera); let x = (_pv.x * .5 + .5) * innerWidth, y = (-_pv.y * .5 + .5) * innerHeight; const behind = _pv.z > 1;
@@ -2255,7 +2314,7 @@ function updTrap() {
 }
 
 // ---------- main loop ----------
-let fpsAcc = 0, fpsN = 0, fpsLow = 0;
+let fpsAcc = 0, fpsN = 0, fpsLow = 0; const DYN = { k: 1 };
 function update(dt) {
   T += dt; grade.uniforms.uT.value = T;
   if (STATE === 'loading') { pressed = {}; updParticles(dt); return; }
@@ -2320,17 +2379,19 @@ function frame(now) {
   fpsAcc += dt; fpsN++;
   if (fpsAcc > 2) {
     const fps = fpsN / fpsAcc; $('fps').textContent = Math.round(fps) + ' fps · ' + ({ high: '高', med: '中', low: '低' })[QUAL]; fpsAcc = 0; fpsN = 0;
+    if (STATE === 'play' && !PAUSED && TOUCH && QUAL === 'low') { const k0 = DYN.k; if (fps < 27) DYN.k = Math.max(.7, DYN.k - .1); else if (fps > 50) DYN.k = Math.min(1, DYN.k + .1); if (DYN.k !== k0) applyQ('low'); }
     if (STATE === 'play' && !PAUSED) { if ((QUAL === 'high' && fps < 30) || (QUAL === 'med' && fps < 22)) { if (++fpsLow >= 2) { applyQ(QUAL === 'high' ? 'med' : 'low'); toast('畫質已自動調低，保持流暢'); fpsLow = 0; } } else fpsLow = 0; }
   }
 }
 function onResize() {
   const w = innerWidth, h = innerHeight; renderer.setSize(w, h); composer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
-  grade.uniforms.uRes.value.set(w * renderer.getPixelRatio(), h * renderer.getPixelRatio());
+  grade.uniforms.uRes.value.set(w * renderer.getPixelRatio(), h * renderer.getPixelRatio()); fxaa.material.uniforms.resolution.value.set(1 / (w * renderer.getPixelRatio()), 1 / (h * renderer.getPixelRatio()));
   const sc = h * renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2)); onResizeDust(sc); if (parts) parts.material.uniforms.uScale.value = sc;
 }
 addEventListener('resize', onResize);
 function applyQ(q) {
-  QUAL = q; const P = { high: [Math.min(devicePixelRatio, 1.5), true, true, 16], med: [Math.min(devicePixelRatio, 1.1), true, false, 12], low: [TOUCH ? Math.min(devicePixelRatio, 1.25) : .85, false, false, 8] }[q];
+  QUAL = q; const P = { high: [Math.min(devicePixelRatio, 1.5), true, true, 16], med: [Math.min(devicePixelRatio, 1.1), true, false, 12], low: [TOUCH ? Math.min(devicePixelRatio, 1.25) * DYN.k : .85, false, false, TOUCH ? 6 : 8] }[q];
+  BLOOM_K = q === 'low' ? .5 : 1; fxaa.enabled = TOUCH || q === 'low'; grade.uniforms.uGrain.value = TOUCH ? .014 : .035;
   renderer.setPixelRatio(P[0]); composer.setPixelRatio(P[0]); onResize(); gtao.enabled = P[1]; bokeh.enabled = P[2]; setShells(P[3]);
   document.querySelectorAll('.sel button').forEach(b => b.classList.toggle('on', b.dataset.q === q));
 }
@@ -3194,11 +3255,12 @@ function crewExtras(C, S, head, body, k, part, plain) {
   const badge = (y = 1.16, z = .98) => { const b = plain(new THREE.CircleGeometry(.17 * k, 24), M.badge, body, -.42 * k, y * k, z * k); b.rotation.y = -.38; b.castShadow = false; };
   const lathe = (pts, mat, sz = .95) => { const m = plain(new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0] * k, p[1] * k)), 48), mat, body, 0, 0, 0); m.scale.z = sz; return m; };
   if (S.spines) {
-    const sm = furMat({ color: S.spines, len: .62, den: 9, droop: -.25, clump: .92, rimK: .14, root: .45, belly: 0xd8c4a4, bellyAmt: 0 });
-    const g1 = new THREE.SphereGeometry(1, 40, 24, Math.PI * 1.08, Math.PI * .84, .05, 2.2); g1.scale(1.1 * k, 1.12 * k, 1.02 * k);
+    // spiky coat over the back, and a crown of spines over the head that reads from the front too
+    const sm = furMat({ color: S.spines, len: .8, den: 7, droop: -.3, clump: .95, rimK: .16, root: .4, belly: 0xe8d6b8, bellyAmt: 0 });
+    const g1 = new THREE.SphereGeometry(1, 40, 24, Math.PI * 1.02, Math.PI * .96, .05, 2.3); g1.scale(1.12 * k, 1.14 * k, 1.04 * k);
     part(g1, sm, body, 0, .74 * k, -.06 * k);
-    const g2 = new THREE.SphereGeometry(1, 40, 24, Math.PI * 1.02, Math.PI * .96, .02, 1.9); g2.scale(1.34 * k, 1.22 * k, 1.24 * k);
-    part(g2, sm, head, 0, .04 * k, -.08 * k);
+    const g2 = new THREE.SphereGeometry(1, 48, 24, Math.PI * .62, Math.PI * 1.76, 0, 1.45); g2.scale(1.36 * k, 1.26 * k, 1.26 * k);
+    part(g2, sm, head, 0, .06 * k, -.1 * k);
   }
   if (S.mask) {
     for (const s of [-1, 1]) { const p = plain(ell(.44 * k, .31 * k, .12 * k, 24, 16), M.mask, head, s * .5 * k, .15 * k, .93 * k); p.rotation.y = s * .32; const w = plain(ell(.36 * k, .09 * k, .1 * k, 16, 8), M.white, head, s * .52 * k, .48 * k, .9 * k); w.rotation.set(0, s * .3, s * -.12); }
@@ -3362,6 +3424,55 @@ function crewHint(L) {
   if ((L.id === 'rab' || L.id === 'frog') && L.charge > 0) return `蓄力 ${Math.round(L.charge * 100)}%……放手${L.id === 'rab' ? '起跳' : '跳出去'}`;
   return '';
 }
+
+// =====================================================================
+//  CHARACTER ROSTER & UNLOCKS
+//  The four leads are always available online. Origin Dynamics staff are unlocked by playing the
+//  single-player story on this device; locked ones show as a black silhouette with a "?".
+//  More characters arrive with later chapters (shown as "?" placeholders).
+// =====================================================================
+const ROSTER = [
+  { id: 'dad' }, { id: 'sq' }, { id: 'bear' }, { id: 'cham' },
+  { id: 'hog', key: 'prologue', how: '完成序章（地庫實驗室）' },
+  { id: 'rab', key: 'ch1', how: '完成第一章（把核心帶回牆腳）' },
+  { id: 'coon', key: 'ch2', how: '完成第二章（客廳的電池）' },
+  { id: 'frog', key: 'bat6', how: '單人模式集齊 6 粒鈕扣電池' },
+  { id: 'f1', future: true, how: '第三章：車房（製作中）' },
+  { id: 'f2', future: true, how: '第四章：鄰居家（製作中）' },
+  { id: 'f3', future: true, how: '第五章：馬路（製作中）' },
+  { id: 'f4', future: true, how: '第六章：公園（製作中）' }
+];
+const UNL = (() => { try { return JSON.parse(localStorage.getItem('bn_unlock_v1') || '{}') || {}; } catch (e) { return {}; } })();
+function isUnlocked(id) { const r = ROSTER.find(q => q.id === id); return !!r && !r.future && (!r.key || !!UNL[r.key]); }
+function unlockedCount() { return ROSTER.filter(r => isUnlocked(r.id)).length; }
+// single player progress unlocks characters for online games
+function unlockKey(key) {
+  if (NET.on || UNL[key]) return; UNL[key] = 1;
+  try { localStorage.setItem('bn_unlock_v1', JSON.stringify(UNL)); } catch (e) { }
+  for (const r of ROSTER) if (r.key === key) UNLQ.push(r.id);
+  if (!UNLQ.busy) { UNLQ.busy = true; setTimeout(nextUnlock, WC.banner > 0 ? WC.banner * 1000 + 400 : 300); }
+}
+const UNLQ = [];
+function nextUnlock() {
+  const id = UNLQ.shift(); const el = $('unl'); if (!id || !el) { UNLQ.busy = false; return; } UNLQ.busy = true; const S = SP[id];
+  el.innerHTML = `<div class="ph">${PORTRAITS[id] ? `<img alt="" src="${PORTRAITS[id]}">` : ''}</div><div><small>新角色解鎖</small><b style="color:${S.col}">${S.name}<span>${S.role}</span></b><em>${S.abil} · 多人模式可以揀</em></div>`;
+  el.classList.add('on'); SND.pick(); setTimeout(() => { el.classList.remove('on'); setTimeout(nextUnlock, 700); }, 4600);
+}
+// a dark animal silhouette for characters nobody has seen yet
+const SIL_SVG = `<svg viewBox="0 0 64 64" aria-hidden="true"><path fill="#07090c" d="M18 13c5 0 8 4 8 8 2-1 4-1 6-1s4 0 6 1c0-4 3-8 8-8 5 0 8 4 8 9 0 4-2 7-5 8 2 3 3 6 3 10 0 10-9 17-20 17S12 50 12 40c0-4 1-7 3-10-3-1-5-4-5-8 0-5 3-9 8-9z"/></svg>`;
+function rosterCard(r, opts = {}) {
+  const open = isUnlocked(r.id), S = SP[r.id];
+  if (open) return `<div class="rc"><div class="ph">${PORTRAITS[r.id] ? `<img alt="" src="${PORTRAITS[r.id]}">` : ''}</div><b style="color:${S.col}">${S.name}</b><small>${S.role}</small><em>${S.abil}</em><p>${S.desc}</p></div>`;
+  const pic = r.future ? SIL_SVG : PORTRAITS[r.id] ? `<img class="sil" alt="" src="${PORTRAITS[r.id]}">` : SIL_SVG;
+  return `<div class="rc lock"><div class="ph">${pic}<i>?</i></div><b>？？？</b><p>${r.how}</p></div>`;
+}
+function openRoster() {
+  $('rosterN').textContent = `已解鎖 ${unlockedCount()} / ${ROSTER.length}`;
+  $('rosterGrid').innerHTML = ROSTER.map(r => rosterCard(r)).join('');
+  $('roster').hidden = false;
+}
+$('goRoster').addEventListener('click', () => { audioInit(); openRoster(); });
+$('rosterClose').addEventListener('click', () => { $('roster').hidden = true; });
 
 // =====================================================================
 //  KITCHEN, second pass
@@ -3617,7 +3728,7 @@ function livingGet(d, C) {
     if (KS.mp) { setQuest(4); toastW('電池到手！全隊到客廳最裡面的通風口集合', 3.4); sayW(C.S.name, '電池拿到了！去通風口！', C.S.col, 2.6); }
     else {
       say('爸爸', '兩粒電池……夠核心撐一陣子了。', '#f5f0e6', 3.2);
-      END_TXT = ['第二章（試玩）· 完', '遙控器的電池', '核心又亮起來了。下一站：魚缸——還有車房裡的工作枱。'];
+      END_TXT = ['第二章（試玩）· 完', '遙控器的電池', '核心又亮起來了。下一站：魚缸——還有車房裡的工作枱。']; unlockKey('ch2');
       setTimeout(() => { if (STATE === 'play') { STATE = 'end'; endT = 0; } }, 1800);
     }
   }
@@ -3695,7 +3806,7 @@ function joinGecko() {
   const K = chars.gecko; if (party.includes(K)) return; party.push(K); K.lastTrail = K.pos.clone(); K.disp = K.pos.clone(); K.queue = []; K.wave = false; K.state = 'idle'; K.stamina = 100;
   assignGaps(); buildPartyHUD();
 }
-function scheduleLines(list) { for (const L of list) if (lvT - 1 / 60 < L[0] && lvT >= L[0]) { if (typeof L[1] === 'function') L[1](); else say(L[1], L[2], L[3], L[4] || 3.2); } }
+function scheduleLines(list, dt = 1 / 60) { for (const L of list) if (lvT - dt < L[0] && lvT >= L[0]) { if (typeof L[1] === 'function') L[1](); else say(L[1], L[2], L[3], L[4] || 3.2); } }
 
 // ---------- noise (distractions) ----------
 function noise(p, loud, clang) {
@@ -3909,7 +4020,7 @@ const HUB_LINES = [
   [9.8, '爸爸', '核心在意外時被彈走了，從暖氣管飛上了廚房。沒有它，我們變不回去。', '#f5f0e6', 4],
   [13.8, '前拍檔', '我的腳受過傷，爬不上去了。小彩——你跟他們去。', '#b7d38a', 3.4],
   [17.4, '小彩', '我、我是 Origin Dynamics 的實習生……上個月來搬地庫的機器，醒來就變成這樣了。', '#9fd86b', 4],
-  [17.8, () => { if (!party.includes(chars.cham)) { joinCham(); toast('實習生小彩加入隊伍！停着不動會變色隱身，左鍵吐舌頭（按 4 或點頭像操控）', 4.5); } }],
+  [17.8, () => { if (!party.includes(chars.cham)) { joinCham(); toast('實習生小彩加入隊伍！停着不動會變色隱身，' + (TOUCH ? '按「舌」吐舌頭（點頭像操控）' : '左鍵吐舌頭（按 4 或點頭像操控）'), 4.5); } }],
   [22, '前拍檔', '……我會在牆洞那邊看着你們。', '#b7d38a', 3]
 ];
 LEVELS.wall = {
@@ -3927,13 +4038,15 @@ LEVELS.wall = {
   },
   // walked in from the basement
   enter(prev, again) {
-    if (prev === 'basement' && !again) { momReset(); chars.cham.root.visible = true; chars.cham.pos.set(-30, 4, 12).add(HO); chars.cham.yaw = -2.2; }
+    if (prev === 'basement' && !again) { unlockKey('prologue'); momReset(); chars.cham.root.visible = true; chars.cham.pos.set(-30, 4, 12).add(HO); chars.cham.yaw = -2.2; }
     LEVELS.kitchen.prep();
   },
   leave() { },
   npc() { }, detect(dt) { meter = Math.max(0, meter - dt * .3); },
   update(dt) {
-    lvT += dt; scheduleLines(HUB_LINES);
+    lvT += dt; scheduleLines(HUB_LINES, dt);
+    // walking up to 小彩 also brings her along, whatever the timing
+    const K = chars.cham; if (!party.includes(K) && lvT > 3 && leader.pos.distanceTo(K.pos) < 13) { joinCham(); toast('實習生小彩加入隊伍！停着不動會變色隱身，' + (TOUCH ? '按「舌」吐舌頭（點頭像操控）' : '左鍵吐舌頭（按 4 或點頭像操控）'), 4.5); }
     for (const K of [chars.gecko, chars.cham]) if (!party.includes(K) && !NPCW.some(w => w.C === K)) { const dx = leader.pos.x - K.pos.x, dz = leader.pos.z - K.pos.z; K.yaw = angDamp(K.yaw, Math.atan2(dx, dz), 3, dt); K.state = 'idle'; K.spd = 0; }
     const lx = leader.pos.x - HO.x, lz = leader.pos.z - HO.z;
     if (!NET.client && quest === 0 && (lvT > 17 || (lx < 20 && Math.abs(lx) < 85 && lvT > 4))) setQuest(1);
@@ -4434,7 +4547,7 @@ LEVELS.kitchen = {
   detect: detectKitchen,
   update(dt) {
     lvT += dt; updKitchenPlayer(dt); updCookie();
-    scheduleLines(KS.mp ? KLINES_MP : KLINES_SP);
+    scheduleLines(KS.mp ? KLINES_MP : KLINES_SP, dt);
     if (rnd() < dt * .75) { emit(KS.tap, V3(0, -2, 0), new THREE.Color(.5, .62, .7), .35, .9, 300, 0); setTimeout(() => { if (ZONES.kitchen.near) { for (let i = 0; i < 4; i++) emit(V3(-100, 68.9, -193), V3(R(-6, 6), R(5, 12), R(-6, 6)), new THREE.Color(.5, .62, .72), .2, .35, 200, 1); if (leader.pos.distanceTo(V3(-100, 68, -193)) < 120) SND.drip(); } }, 420); }
   },
   win() {
@@ -4445,7 +4558,7 @@ LEVELS.kitchen = {
     if (home) {
       // chapter one is done — but nothing stops: the story just carries on into the living room
       KS.carried = false; KS.coreDrop = null; KS.home = true; KS.core.position.set(-306, 1.6, -100); KS.ch2 = true;
-      QUESTS = SP_Q2; setQuest(0); chapterBanner('第一章 · 完', '核心找回來了');
+      QUESTS = SP_Q2; setQuest(0); chapterBanner('第一章 · 完', '核心找回來了'); unlockKey('ch1');
       say('前拍檔', '（從牆裡）放在洞口就好，我看着它。……它的光越來越弱了。', '#b7d38a', 3.6);
       setTimeout(() => say('爸爸', '客廳的遙控器裡有電池。去拿過來，幫核心充電。', '#f5f0e6', 3.4), 3800);
       setTimeout(() => chapterBanner('第二章', '客廳'), 7600);
@@ -4561,7 +4674,7 @@ function mpConnect(code, host) {
 function mpBroadcastLobby(to) { nsend({ t: 'lobby', host: NET.me, slots: NET.slots, started: NET.started, order: NET.order }, to); }
 function mpPick(id) {
   if (NET.on || !NET.me) return;
-  const cur = NET.slots[id]; if (cur && cur !== NET.me) return;
+  const cur = NET.slots[id]; if (cur && cur !== NET.me) return; if (!isUnlocked(id)) return;
   if (NET.host) hostPick(NET.me, id); else nsend({ t: 'pick', id }, NET.hostId || undefined);
 }
 function hostPick(peer, id) {
@@ -4574,6 +4687,8 @@ function mpRender() {
   const box = $('mpSlots'); if (!box) return;
   box.innerHTML = IDS.map(id => {
     const p = NET.slots[id]; const S = SP[id]; const who = p ? (p === NET.me ? '你' : p === NET.hostId ? '房主' : '玩家 ' + (NET.order.indexOf(p) + 1)) : CORE.includes(id) ? '空位 · 電腦控制' : '空位';
+    // not unlocked on this device yet: a silhouette and how to get it
+    if (!p && !isUnlocked(id)) { const r = ROSTER.find(q => q.id === id); return `<button class="mps lock" disabled><span class="ph">${PORTRAITS[id] ? `<img class="sil" alt="" src="${PORTRAITS[id]}">` : SIL_SVG}<i>?</i></span><b>？？？</b><small>${r.how}</small></button>`; }
     return `<button class="mps${p === NET.me ? ' me' : p ? ' taken' : ''}" data-id="${id}" ${p && p !== NET.me ? 'disabled' : ''}><span class="ph">${PORTRAITS[id] ? `<img alt="" src="${PORTRAITS[id]}">` : ''}</span><b>${S.name}</b><small>${S.abil}</small><em>${who}</em></button>`;
   }).join('');
   box.querySelectorAll('.mps').forEach(b => b.addEventListener('click', () => mpPick(b.dataset.id)));
@@ -4800,7 +4915,8 @@ function hostGet(d) {
   const C = chars[d.id] || leader;
   if (d.k === 'bat') {
     const b = batteries[d.i]; if (!b || b.got) return; b.got = true; b.g.visible = false; b.halo.visible = false; gotBat++; cellMax++; cells = cellMax; SND.pick();
-    toastW(`${NET.on ? C.S.name : ''}找到鈕扣電池！尺寸槍能量上限 +1（這裡 ${batteries.filter(q => q.got).length}/${batteries.length}）`);
+    toastW(`${NET.on ? C.S.name : ''}找到鈕扣電池！尺寸槍能量上限 +1（${batteries.filter(q => q.got).length}/${batteries.length}）`);
+    if (batteries.every(q => q.got)) unlockKey('bat6');
     for (let i = 0; i < 30; i++) emit(V3(b.x, b.y + 1.4, b.z), V3(R(-10, 10), R(4, 20), R(-10, 10)), new THREE.Color(.5, 2, 1.9), R(.15, .35), R(.4, 1), 30, 2);
   } else if (d.k === 'vial') {
     const v = VIALS[d.i]; if (!v || v.got) return; v.got = true; v.g.visible = false; v.halo.visible = false; PROTO++; SND.pick(); toyBurst(V3(v.x, v.y + 1.6, v.z));
@@ -4877,7 +4993,7 @@ $('mpCopy').addEventListener('click', () => { const l = mpLink(); (navigator.cli
 (() => { const m = location.search.match(/[?&]room=([A-Za-z0-9]{4})/); if (m) NET.autoJoin = m[1].toUpperCase(); })();
 requestAnimationFrame(frame);
 init().catch(e => { console.error(e); $('err').textContent = '載入失敗：' + (e && e.stack || e); });
-if (location.hash === '#dev') window.__bn = { step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT }; }, info: () => ({ fps: $('fps').textContent, state: STATE, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
+if (location.hash === '#dev') window.__bn = { step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT }; }, info: () => ({ fps: $('fps').textContent, state: STATE, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
 </script>
 </body>
 </html>

@@ -116,6 +116,30 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--fain
 .chap i{display:block;width:72px;height:1px;margin:14px auto 0;background:linear-gradient(90deg,transparent,var(--amber),transparent)}
 .pmp{margin-top:22px;padding-top:18px;border-top:1px solid var(--faint);display:grid;gap:12px;justify-items:center}
 .pmp[hidden]{display:none}
+.rbox{width:min(880px,94vw);max-height:calc(100vh - 56px);overflow:auto;padding:18px 22px 16px;text-align:center}
+.rtip{font-size:12px;color:var(--dim);margin:0 0 14px;line-height:1.5}
+.rgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:12px}
+@media (max-width:700px){.rgrid{grid-template-columns:repeat(4,1fr)}}
+.rc{display:flex;flex-direction:column;align-items:center;gap:2px;padding:10px 6px 9px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--faint)}
+.rc .ph,.mps .ph{position:relative}
+.rc .ph{width:56px;height:56px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 35%,#2b3442,#121820);display:grid;place-items:center}
+.rc .ph img{width:100%;height:100%;object-fit:cover}
+.rc .ph img.sil,.mps .ph img.sil{filter:brightness(0);opacity:.9}
+.rc .ph svg,.mps .ph svg{width:74%;height:74%}
+.rc .ph i,.mps .ph i{position:absolute;inset:0;display:grid;place-items:center;font:700 24px "Fredoka",sans-serif;font-style:normal;color:rgba(245,240,230,.6)}
+.rc b{font-size:14px;margin-top:5px}.rc small{font-size:11px;color:var(--dim)}.rc em{font-style:normal;font-size:11px;color:var(--amber)}
+.rc p{font-size:11px;line-height:1.45;color:var(--dim);margin:3px 0 0}
+.rc.lock,.mps.lock{background:rgba(255,255,255,.015);border-style:dashed}
+.rc.lock .ph,.mps.lock .ph{background:radial-gradient(circle at 50% 35%,#1b2129,#0a0d11)}
+.mps.lock{opacity:1;cursor:default}.mps.lock:hover{transform:none;border-color:var(--faint)}.mps.lock small{line-height:1.35}
+.unl{position:absolute;left:50%;top:15%;transform:translate(-50%,-10px);display:flex;align-items:center;gap:12px;padding:9px 20px 9px 9px;border-radius:99px;background:rgba(10,13,18,.82);border:1px solid rgba(244,187,114,.55);box-shadow:0 12px 40px rgba(0,0,0,.5);opacity:0;transition:opacity .5s,transform .6s;pointer-events:none;text-align:left}
+.unl.on{opacity:1;transform:translate(-50%,0)}
+.unl .ph{width:54px;height:54px;flex:none;border-radius:50%;overflow:hidden;border:2px solid var(--amber);background:#121820}
+.unl .ph img{width:100%;height:100%;object-fit:cover}
+.unl small{display:block;font-size:11px;letter-spacing:.24em;color:var(--amber)}
+.unl b{display:block;font-size:18px;margin-top:2px}.unl b span{font-size:12px;color:var(--dim);margin-left:8px;font-weight:500}
+.unl em{display:block;font-style:normal;font-size:12px;color:var(--dim);margin-top:2px}
+@media (max-height:520px){.rc .ph{width:46px;height:46px}.rc p{font-size:10px}.rc em{display:none}.rbox{padding:14px 16px 12px}.rtip{display:none}}
 .pmp .code{font:600 13px "Fredoka","Noto Sans TC";color:var(--dim);letter-spacing:.06em}
 .pmp .code b{display:block;margin-top:4px;font:700 34px/1 "Fredoka";letter-spacing:.22em;color:var(--ink)}
 .dead{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;opacity:0;transition:opacity .5s}
@@ -172,7 +196,10 @@ html.touch .desk{display:none}
 html.touch .keys:not(.mkeys){display:none}
 html.touch .mkeys{display:grid!important}
 @media (orientation:portrait){html.touch #rot{display:grid}}
-html.touch .q{left:calc(10px + env(safe-area-inset-left));top:8px;min-width:0;max-width:36vw;padding:8px 12px}
+html.touch .q{left:calc(10px + env(safe-area-inset-left));top:8px;min-width:0;max-width:min(36vw,300px);padding:7px 11px;pointer-events:auto}
+html.touch .q:not(.open) #qs{display:none}
+html.touch .panel,html.touch .tb{backdrop-filter:none;-webkit-backdrop-filter:none}
+html.touch .panel{background:rgba(10,13,18,.68)}html.touch .tb{background:rgba(10,13,18,.62)}
 html.touch #qt{font-size:14px;margin-top:3px}
 html.touch #qs{font-size:11px;line-height:1.35}
 html.touch .bat{margin-top:5px;padding-top:5px;font-size:11px}
@@ -261,6 +288,7 @@ html.touch .mpchip{bottom:auto;top:62px}
 
 <div id="hud" class="hud off">
   <div id="mpChip" class="mpchip" hidden></div>
+  <div class="unl" id="unl" aria-live="polite"></div>
   <div id="watch"><i></i><span></span></div>
   <div class="bars"></div>
   <div class="q panel" id="quest">
@@ -320,6 +348,7 @@ html.touch .mpchip{bottom:auto;top:62px}
       <button id="go">序章：地庫</button>
       <button id="go1" class="ghost">第一章：牆內與廚房</button>
       <button id="goMP" class="ghost mpbtn">多人連線 · 最多 8 人</button>
+      <button id="goRoster" class="ghost">角色</button>
       <div class="sel" id="qsel" role="group" aria-label="畫質">
         <button data-q="high" class="on">高畫質</button><button data-q="med">中</button><button data-q="low">低</button>
       </div>
@@ -363,6 +392,15 @@ html.touch .mpchip{bottom:auto;top:62px}
       <div id="mpErr" class="mperr"></div>
       <div class="mpact"><button id="mpStart" disabled>開始</button><button id="mpLeave" class="ghost small">離開房間</button></div>
     </div>
+  </div>
+</div>
+
+<div class="ov" id="roster" hidden>
+  <div class="rbox panel">
+    <div class="mph"><b>角色</b><span id="rosterN"></span></div>
+    <p class="rtip">四位主角一開始就可以在多人模式使用；其他角色要在單人故事裡解鎖，解鎖後多人模式就可以揀。</p>
+    <div class="rgrid" id="rosterGrid"></div>
+    <div class="mpact"><button id="rosterClose" class="ghost small">關閉</button></div>
   </div>
 </div>
 

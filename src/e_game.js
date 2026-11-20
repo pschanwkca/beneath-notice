@@ -466,8 +466,7 @@ function refreshPartyHUD() {
   if (!leader) return; for (const id of IDS) $('touch').classList.toggle(id, leader.id === id); $('tbAct').textContent = ({ cham: '舌', sq: '抱', hog: '滾', coon: '彈', rab: '跳', frog: '跳' })[leader.id] || '抱'; $('tbScout').textContent = leader.id === 'frog' ? '電' : '偵察'; $('tbCrouch').classList.toggle('dn', !!leader.crouch); $('an').textContent = leader.S.abil; $('ad').textContent = leader.S.desc; $('cells').style.display = leader.id === 'dad' ? 'flex' : 'none';
 }
 function buildPartyHUD() {
-  const order = [['dad', 1], ['sq', 2], ['bear', 3], ['cham', 4]]; const has = id => party.includes(chars[id]);
-  for (const id of IDS) if (!order.some(o => o[0] === id) && party.includes(chars[id])) order.push([id, order.length + 1]);
+  const has = id => party.includes(chars[id]); const order = IDS.filter(has).map((id, i) => [id, i + 1]);
   $('party').classList.toggle('many', order.length > 4);
   $('party').innerHTML = order.map(([id, k]) => `<div class="pm${!has(id) ? ' lock' : ''}" id="pm-${id}" data-id="${id}"><div class="ph">${PORTRAITS[id] ? `<img alt="${SP[id].name}" src="${PORTRAITS[id]}">` : ''}</div><b>${SP[id].name}</b><small>${!has(id) ? '在牆裡等你' : SP[id].role}</small>${has(id) ? `<kbd>${k}</kbd>` : ''}</div>`).join('');
   document.querySelectorAll('.pm[data-id]').forEach(el => el.addEventListener('pointerdown', e => { const id = el.dataset.id; if (has(id)) { e.preventDefault(); pressed['sw_' + id] = true; } }));
@@ -480,7 +479,9 @@ QUESTS = [
   { t: '跟着前拍檔進入牆內', s: '穿過牆腳的洞，沿着隧道走' }
 ];
 const BASE_Q = QUESTS;
-function setQuest(q) { quest = q; if (!QUESTS[q]) return; $('qt').textContent = QUESTS[q].t; $('qs').textContent = QUESTS[q].s; }
+function setQuest(q) { quest = q; if (!QUESTS[q]) return; $('qt').textContent = QUESTS[q].t; $('qs').textContent = QUESTS[q].s; questOpen(); }
+let _qT = 0; function questOpen() { const el = $('quest'); el.classList.add('open'); clearTimeout(_qT); _qT = setTimeout(() => el.classList.remove('open'), 7000); }
+$('quest').addEventListener('pointerdown', e => { if (TOUCH) { e.stopPropagation(); questOpen(); } });
 const _pv = V3();
 function project(p, el, offX = 0, offY = 0, clampEdge = false) {
   _pv.copy(p).project(camera); let x = (_pv.x * .5 + .5) * innerWidth, y = (-_pv.y * .5 + .5) * innerHeight; const behind = _pv.z > 1;
@@ -649,7 +650,7 @@ function updTrap() {
 }
 
 // ---------- main loop ----------
-let fpsAcc = 0, fpsN = 0, fpsLow = 0;
+let fpsAcc = 0, fpsN = 0, fpsLow = 0; const DYN = { k: 1 };
 function update(dt) {
   T += dt; grade.uniforms.uT.value = T;
   if (STATE === 'loading') { pressed = {}; updParticles(dt); return; }
@@ -714,17 +715,19 @@ function frame(now) {
   fpsAcc += dt; fpsN++;
   if (fpsAcc > 2) {
     const fps = fpsN / fpsAcc; $('fps').textContent = Math.round(fps) + ' fps · ' + ({ high: '高', med: '中', low: '低' })[QUAL]; fpsAcc = 0; fpsN = 0;
+    if (STATE === 'play' && !PAUSED && TOUCH && QUAL === 'low') { const k0 = DYN.k; if (fps < 27) DYN.k = Math.max(.7, DYN.k - .1); else if (fps > 50) DYN.k = Math.min(1, DYN.k + .1); if (DYN.k !== k0) applyQ('low'); }
     if (STATE === 'play' && !PAUSED) { if ((QUAL === 'high' && fps < 30) || (QUAL === 'med' && fps < 22)) { if (++fpsLow >= 2) { applyQ(QUAL === 'high' ? 'med' : 'low'); toast('畫質已自動調低，保持流暢'); fpsLow = 0; } } else fpsLow = 0; }
   }
 }
 function onResize() {
   const w = innerWidth, h = innerHeight; renderer.setSize(w, h); composer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
-  grade.uniforms.uRes.value.set(w * renderer.getPixelRatio(), h * renderer.getPixelRatio());
+  grade.uniforms.uRes.value.set(w * renderer.getPixelRatio(), h * renderer.getPixelRatio()); fxaa.material.uniforms.resolution.value.set(1 / (w * renderer.getPixelRatio()), 1 / (h * renderer.getPixelRatio()));
   const sc = h * renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2)); onResizeDust(sc); if (parts) parts.material.uniforms.uScale.value = sc;
 }
 addEventListener('resize', onResize);
 function applyQ(q) {
-  QUAL = q; const P = { high: [Math.min(devicePixelRatio, 1.5), true, true, 16], med: [Math.min(devicePixelRatio, 1.1), true, false, 12], low: [TOUCH ? Math.min(devicePixelRatio, 1.25) : .85, false, false, 8] }[q];
+  QUAL = q; const P = { high: [Math.min(devicePixelRatio, 1.5), true, true, 16], med: [Math.min(devicePixelRatio, 1.1), true, false, 12], low: [TOUCH ? Math.min(devicePixelRatio, 1.25) * DYN.k : .85, false, false, TOUCH ? 6 : 8] }[q];
+  BLOOM_K = q === 'low' ? .5 : 1; fxaa.enabled = TOUCH || q === 'low'; grade.uniforms.uGrain.value = TOUCH ? .014 : .035;
   renderer.setPixelRatio(P[0]); composer.setPixelRatio(P[0]); onResize(); gtao.enabled = P[1]; bokeh.enabled = P[2]; setShells(P[3]);
   document.querySelectorAll('.sel button').forEach(b => b.classList.toggle('on', b.dataset.q === q));
 }

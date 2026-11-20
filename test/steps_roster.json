@@ -1,0 +1,9 @@
+[
+ {"eval": "(()=>{ window.__bn.openRoster(); return document.getElementById('rosterN').textContent })()", "wait": 400, "shot": "r1_roster"},
+ {"click": "#rosterClose", "wait": 200},
+ {"eval": "(()=>{ const b=window.__bn; b.unlockKey('prologue'); b.unlockKey('bat6'); b.openRoster(); return [document.getElementById('rosterN').textContent, b.isUnlocked('hog'), b.isUnlocked('rab')] })()", "wait": 1400, "shot": "r2_roster_unlocked"},
+ {"click": "#rosterClose", "wait": 200},
+ {"click": "#goMP", "wait": 300},
+ {"click": "#mpCreate", "wait": 2500, "shot": "r3_lobby"},
+ {"eval": "(()=>{ const b=window.__bn; b.mpPick('rab'); const r1=b.NET.slots.rab; b.mpPick('hog'); return [r1||null, b.NET.slots.hog ? 'hog taken by me' : null] })()", "wait": 600, "shot": "r4_lobby_pick"}
+]

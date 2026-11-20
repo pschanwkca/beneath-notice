@@ -8,6 +8,7 @@ import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 import { Pass } from 'three/addons/postprocessing/Pass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 
 // ---------- utils ----------
 const $ = id => document.getElementById(id);
@@ -35,7 +36,7 @@ const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPrefer
 renderer.setPixelRatio(Math.min(devicePixelRatio, TOUCH ? 1.25 : 1.5));
 renderer.setSize(innerWidth, innerHeight);
 renderer.shadowMap.enabled = true;
-renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.shadowMap.type = TOUCH ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure = 1.3;
 const MAXANI = Math.min(8, renderer.capabilities.getMaxAnisotropy());

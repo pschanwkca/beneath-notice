@@ -98,7 +98,7 @@ void main(){
 };
 const fxGroup = new THREE.Group(); scene.add(fxGroup);
 let LV = new THREE.Group(); scene.add(LV); let LVFX = new THREE.Group(); fxGroup.add(LVFX);
-const rt = new THREE.WebGLRenderTarget(innerWidth, innerHeight, { type: THREE.HalfFloatType, samples: TOUCH ? 2 : 4 });
+const rt = new THREE.WebGLRenderTarget(innerWidth, innerHeight, { type: THREE.HalfFloatType, samples: TOUCH ? 0 : 4 });
 const composer = new EffectComposer(renderer, rt);
 composer.setPixelRatio(renderer.getPixelRatio()); composer.setSize(innerWidth, innerHeight);
 const renderPass = new RenderPass(scene, camera);
@@ -116,7 +116,10 @@ composer.addPass(gtao); composer.addPass(bokeh);
 composer.addPass(new FnPass(() => { fxGroup.visible = true; }));
 const sanitize = new ShaderPass({ uniforms: { tDiffuse: { value: null } }, vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
   fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv; void main(){ vec4 c=texture2D(tDiffuse,vUv); if(any(isnan(c))||any(isinf(c))) c=vec4(0.0,0.0,0.0,1.0); gl_FragColor=vec4(clamp(c.rgb,0.0,48.0),c.a); }` });
-composer.addPass(sanitize); composer.addPass(bloom); composer.addPass(outPass); composer.addPass(grade);
+// phones: no MSAA, a cheap FXAA pass instead; bloom can run at lower resolution
+const fxaa = new ShaderPass(FXAAShader); fxaa.enabled = TOUCH;
+let BLOOM_K = 1; const _bloomSize = bloom.setSize.bind(bloom); bloom.setSize = (w, h) => _bloomSize(Math.max(64, Math.round(w * BLOOM_K)), Math.max(64, Math.round(h * BLOOM_K)));
+composer.addPass(sanitize); composer.addPass(bloom); composer.addPass(outPass); composer.addPass(fxaa); composer.addPass(grade);
 
 // ---------- world: colliders ----------
 const cols = []; const STATIC = [];

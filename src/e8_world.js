@@ -68,13 +68,16 @@ function partitionCols() {
 function colsNear(x, y, z) { if (!WORLD) return cols; for (const Z of ZL) for (const b of Z.core) if (x > b[0] && x < b[1] && y > b[2] && y < b[3] && z > b[4] && z < b[5]) return Z.cols; return cols; }
 
 // ---------- light pool ----------
-const LP = { grp: new THREE.Group(), pt: [], sh: [], sp: [], hemi: null, snap: true };
+// A fixed set of real lights (so shaders never recompile) is pointed at the lamps that matter most for
+// what the camera sees. Choices are re-made a few times a second, a lamp only loses its slot to a clearly
+// stronger one, and swaps fade — so lights never pop or flicker as you move.
+const LP = { grp: new THREE.Group(), pt: [], sh: [], sp: [], hemi: null, snap: true, t: 0, want: null, frame: 0 };
 function setupLightPool() {
   scene.add(LP.grp);
   for (const Z of ZL) { Z.lights = []; for (const g of [Z.lv, Z.fx]) g.traverse(o => { if (o.isLight) { Z.lights.push(o); o.visible = false; } }); }
-  const NP = TOUCH ? 6 : 9;
+  const NP = TOUCH ? 5 : 9, NS = TOUCH ? 2 : 3;
   for (let i = 0; i < NP; i++) { const l = new THREE.PointLight(0xffffff, 0, 0, 2); LP.grp.add(l); LP.pt.push({ l, cur: null, f: 0 }); }
-  for (let i = 0; i < 3; i++) {
+  for (let i = 0; i < NS; i++) {
     const l = new THREE.SpotLight(0xffffff, 0, 0, .5, .5, 2); l.castShadow = true; l.shadow.mapSize.setScalar(1024); l.shadow.autoUpdate = false; LP.grp.add(l, l.target); LP.sh.push({ l, cur: null, f: 0 });
   }
   { const l = new THREE.SpotLight(0xffffff, 0, 0, .5, .5, 2); LP.grp.add(l, l.target); LP.sp.push({ l, cur: null, f: 0 }); }
@@ -83,18 +86,22 @@ function setupLightPool() {
 const _lw = V3(), _lt = V3();
 function lightScore(l, cp, lp) { l.getWorldPosition(_lw); const d2 = Math.min(_lw.distanceToSquared(cp), _lw.distanceToSquared(lp)); const c = l.color; return l.intensity * (c.r * .3 + c.g * .55 + c.b * .15) / (d2 + 900); }
 function poolAssign(slots, want, dt, copy) {
-  const N = slots.length, top = want.slice(0, N), keep = new Set(want.slice(0, N + 2)), topS = new Set(top);
-  for (const s of slots) if (s.cur && !keep.has(s.cur)) s.out = true;
+  const N = slots.length, sc = new Map(want.map(e => [e.l, e.sc])), top = want.slice(0, N);
+  for (const s of slots) if (s.cur && !s.out && !sc.has(s.cur)) s.out = true;   // gone dark or out of reach
   const used = new Set(); for (const s of slots) if (s.cur) used.add(s.cur);
-  for (const l of top) {
-    if (used.has(l)) continue;
+  for (const e of top) {
+    if (used.has(e.l)) continue;
     let s = slots.find(q => !q.cur);
-    if (!s) { const v = slots.find(q => q.cur && !topS.has(q.cur) && !q.out); if (v) v.out = true; continue; }
-    s.cur = l; s.f = LP.snap ? 1 : 0; s.out = false; s.fresh = true; used.add(l);
+    if (!s) {   // only give up a slot for a clearly stronger lamp
+      let weak = null; for (const q of slots) if (q.cur && !q.out && (!weak || (sc.get(q.cur) || 0) < (sc.get(weak.cur) || 0))) weak = q;
+      if (weak && e.sc > (sc.get(weak.cur) || 0) * 1.6) weak.out = true;
+      continue;
+    }
+    s.cur = e.l; s.f = LP.snap ? 1 : 0; s.out = false; s.fresh = true; used.add(e.l);
   }
   for (const s of slots) {
-    if (s.out) { s.f -= dt * 3.5; if (s.f <= 0 || LP.snap) { s.cur = null; s.f = 0; s.out = false; } }
-    else if (s.cur) s.f = Math.min(1, s.f + dt * 3.5);
+    if (s.out) { s.f -= dt * 3; if (s.f <= 0 || LP.snap) { s.cur = null; s.f = 0; s.out = false; } }
+    else if (s.cur) s.f = Math.min(1, s.f + dt * 3);
     copy(s);
   }
 }
@@ -110,22 +117,31 @@ function copySpot(s) {
   if (l.castShadow) {
     const sh = l.shadow, vs = v.shadow;
     if (s.fresh) {
-      s.fresh = false;
-      if (sh.mapSize.x !== vs.mapSize.x) { sh.mapSize.copy(vs.mapSize); if (sh.map) { sh.map.dispose(); sh.map = null; } }
-      sh.bias = vs.bias; sh.normalBias = vs.normalBias; sh.camera.near = vs.camera.near; sh.camera.far = vs.camera.far; sh.camera.updateProjectionMatrix(); sh.needsUpdate = true;
+      s.fresh = false; const ms = TOUCH ? 1024 : vs.mapSize.x;
+      if (sh.mapSize.x !== ms) { sh.mapSize.setScalar(ms); if (sh.map) { sh.map.dispose(); sh.map = null; } }
+      sh.bias = vs.bias * (TOUCH ? 1.6 : 1); sh.normalBias = vs.normalBias * (TOUCH ? 1.8 : 1); sh.radius = TOUCH ? 3 : 1; sh.camera.near = vs.camera.near; sh.camera.far = vs.camera.far; sh.camera.updateProjectionMatrix(); sh.needsUpdate = true;
     }
-    sh.autoUpdate = vs.autoUpdate && v.castShadow; if (vs.needsUpdate) { sh.needsUpdate = true; vs.needsUpdate = false; }
+    const live = vs.autoUpdate && v.castShadow;
+    // phones redraw shadows every other frame
+    if (TOUCH) { sh.autoUpdate = false; if (live && (LP.frame & 1)) sh.needsUpdate = true; } else sh.autoUpdate = live;
+    if (vs.needsUpdate) { sh.needsUpdate = true; vs.needsUpdate = false; }
   }
 }
 function lightTick(dt) {
-  const cp = camera.position, lp = leader ? leader.pos : cp; const pts = [], shs = [], sps = [];
-  for (const Z of ZL) if (Z.near) for (const l of Z.lights) {
-    if (l.isHemisphereLight || !(l.intensity > 0)) continue;
-    const sc = lightScore(l, cp, lp); const e = { l, sc };
-    if (l.isSpotLight) (l.castShadow ? shs : sps).push(e); else if (l.isPointLight) pts.push(e);
+  LP.frame++; LP.t -= dt;
+  if (LP.t <= 0 || LP.snap || !LP.want) {
+    LP.t = .16; const cp = camera.position, lp = leader ? leader.pos : cp; const pts = [], shs = [], sps = [];
+    for (const Z of ZL) if (Z.near) for (const l of Z.lights) {
+      if (l.isHemisphereLight || !(l.intensity > 0)) continue;
+      // lamps from a neighbouring place only count when they are close (e.g. right through the mouse hole)
+      if (Z !== WC.cz) { l.getWorldPosition(_lw); if (_lw.distanceTo(cp) > 150 && _lw.distanceTo(lp) > 150) continue; }
+      const e = { l, sc: lightScore(l, cp, lp) };
+      if (l.isSpotLight) (l.castShadow ? shs : sps).push(e); else if (l.isPointLight) pts.push(e);
+    }
+    const ord = a => a.sort((p, q) => q.sc - p.sc);
+    LP.want = [ord(pts), ord(shs), ord(sps)];
   }
-  const ord = a => a.sort((p, q) => q.sc - p.sc).map(e => e.l);
-  poolAssign(LP.pt, ord(pts), dt, copyPoint); poolAssign(LP.sh, ord(shs), dt, copySpot); poolAssign(LP.sp, ord(sps), dt, copySpot);
+  poolAssign(LP.pt, LP.want[0], dt, copyPoint); poolAssign(LP.sh, LP.want[1], dt, copySpot); poolAssign(LP.sp, LP.want[2], dt, copySpot);
   // the room's ambient sky light follows the camera
   const Z = WC.cz; const h = Z && Z.lights.find(l => l.isHemisphereLight);
   if (h) { const k = LP.snap ? 1 : 1 - Math.exp(-3 * dt); LP.hemi.color.lerp(h.color, k); LP.hemi.groundColor.lerp(h.groundColor, k); LP.hemi.intensity += (h.intensity - LP.hemi.intensity) * k; }

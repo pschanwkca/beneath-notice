@@ -75,7 +75,7 @@ function mpConnect(code, host) {
 function mpBroadcastLobby(to) { nsend({ t: 'lobby', host: NET.me, slots: NET.slots, started: NET.started, order: NET.order }, to); }
 function mpPick(id) {
   if (NET.on || !NET.me) return;
-  const cur = NET.slots[id]; if (cur && cur !== NET.me) return;
+  const cur = NET.slots[id]; if (cur && cur !== NET.me) return; if (!isUnlocked(id)) return;
   if (NET.host) hostPick(NET.me, id); else nsend({ t: 'pick', id }, NET.hostId || undefined);
 }
 function hostPick(peer, id) {
@@ -88,6 +88,8 @@ function mpRender() {
   const box = $('mpSlots'); if (!box) return;
   box.innerHTML = IDS.map(id => {
     const p = NET.slots[id]; const S = SP[id]; const who = p ? (p === NET.me ? '你' : p === NET.hostId ? '房主' : '玩家 ' + (NET.order.indexOf(p) + 1)) : CORE.includes(id) ? '空位 · 電腦控制' : '空位';
+    // not unlocked on this device yet: a silhouette and how to get it
+    if (!p && !isUnlocked(id)) { const r = ROSTER.find(q => q.id === id); return `<button class="mps lock" disabled><span class="ph">${PORTRAITS[id] ? `<img class="sil" alt="" src="${PORTRAITS[id]}">` : SIL_SVG}<i>?</i></span><b>？？？</b><small>${r.how}</small></button>`; }
     return `<button class="mps${p === NET.me ? ' me' : p ? ' taken' : ''}" data-id="${id}" ${p && p !== NET.me ? 'disabled' : ''}><span class="ph">${PORTRAITS[id] ? `<img alt="" src="${PORTRAITS[id]}">` : ''}</span><b>${S.name}</b><small>${S.abil}</small><em>${who}</em></button>`;
   }).join('');
   box.querySelectorAll('.mps').forEach(b => b.addEventListener('click', () => mpPick(b.dataset.id)));
@@ -314,7 +316,8 @@ function hostGet(d) {
   const C = chars[d.id] || leader;
   if (d.k === 'bat') {
     const b = batteries[d.i]; if (!b || b.got) return; b.got = true; b.g.visible = false; b.halo.visible = false; gotBat++; cellMax++; cells = cellMax; SND.pick();
-    toastW(`${NET.on ? C.S.name : ''}找到鈕扣電池！尺寸槍能量上限 +1（這裡 ${batteries.filter(q => q.got).length}/${batteries.length}）`);
+    toastW(`${NET.on ? C.S.name : ''}找到鈕扣電池！尺寸槍能量上限 +1（${batteries.filter(q => q.got).length}/${batteries.length}）`);
+    if (batteries.every(q => q.got)) unlockKey('bat6');
     for (let i = 0; i < 30; i++) emit(V3(b.x, b.y + 1.4, b.z), V3(R(-10, 10), R(4, 20), R(-10, 10)), new THREE.Color(.5, 2, 1.9), R(.15, .35), R(.4, 1), 30, 2);
   } else if (d.k === 'vial') {
     const v = VIALS[d.i]; if (!v || v.got) return; v.got = true; v.g.visible = false; v.halo.visible = false; PROTO++; SND.pick(); toyBurst(V3(v.x, v.y + 1.6, v.z));

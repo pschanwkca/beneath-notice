@@ -1,0 +1,3 @@
+[
+ {"eval": "(()=>{ const b=window.__bn; b.unlockKey('prologue'); b.unlockKey('ch1'); b.unlockKey('ch2'); b.unlockKey('bat6'); b.openRoster(); return document.getElementById('rosterN').textContent })()", "wait": 800, "shot": "h1_roster"}
+]

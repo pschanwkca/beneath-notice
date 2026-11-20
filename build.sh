@@ -13,7 +13,7 @@ cat <<'X'
 </script>
 <script type="module">
 X
-cat src/a_core.js src/e8_world.js src/b_lore.js src/c_world.js src/d_chars.js src/e_game.js src/e2_team.js src/e3_toy.js src/e4_size.js src/e5_chars.js src/e9_crew.js src/e6_kitchen2.js src/e7_living.js src/f_levels.js src/g_net.js src/z_boot.js
+cat src/a_core.js src/e8_world.js src/b_lore.js src/c_world.js src/d_chars.js src/e_game.js src/e2_team.js src/e3_toy.js src/e4_size.js src/e5_chars.js src/e9_crew.js src/e10_roster.js src/e6_kitchen2.js src/e7_living.js src/f_levels.js src/g_net.js src/z_boot.js
 cat <<'X'
 </script>
 </body>

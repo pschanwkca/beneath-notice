@@ -73,11 +73,12 @@ function crewExtras(C, S, head, body, k, part, plain) {
   const badge = (y = 1.16, z = .98) => { const b = plain(new THREE.CircleGeometry(.17 * k, 24), M.badge, body, -.42 * k, y * k, z * k); b.rotation.y = -.38; b.castShadow = false; };
   const lathe = (pts, mat, sz = .95) => { const m = plain(new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0] * k, p[1] * k)), 48), mat, body, 0, 0, 0); m.scale.z = sz; return m; };
   if (S.spines) {
-    const sm = furMat({ color: S.spines, len: .62, den: 9, droop: -.25, clump: .92, rimK: .14, root: .45, belly: 0xd8c4a4, bellyAmt: 0 });
-    const g1 = new THREE.SphereGeometry(1, 40, 24, Math.PI * 1.08, Math.PI * .84, .05, 2.2); g1.scale(1.1 * k, 1.12 * k, 1.02 * k);
+    // spiky coat over the back, and a crown of spines over the head that reads from the front too
+    const sm = furMat({ color: S.spines, len: .8, den: 7, droop: -.3, clump: .95, rimK: .16, root: .4, belly: 0xe8d6b8, bellyAmt: 0 });
+    const g1 = new THREE.SphereGeometry(1, 40, 24, Math.PI * 1.02, Math.PI * .96, .05, 2.3); g1.scale(1.12 * k, 1.14 * k, 1.04 * k);
     part(g1, sm, body, 0, .74 * k, -.06 * k);
-    const g2 = new THREE.SphereGeometry(1, 40, 24, Math.PI * 1.02, Math.PI * .96, .02, 1.9); g2.scale(1.34 * k, 1.22 * k, 1.24 * k);
-    part(g2, sm, head, 0, .04 * k, -.08 * k);
+    const g2 = new THREE.SphereGeometry(1, 48, 24, Math.PI * .62, Math.PI * 1.76, 0, 1.45); g2.scale(1.36 * k, 1.26 * k, 1.26 * k);
+    part(g2, sm, head, 0, .06 * k, -.1 * k);
   }
   if (S.mask) {
     for (const s of [-1, 1]) { const p = plain(ell(.44 * k, .31 * k, .12 * k, 24, 16), M.mask, head, s * .5 * k, .15 * k, .93 * k); p.rotation.y = s * .32; const w = plain(ell(.36 * k, .09 * k, .1 * k, 16, 8), M.white, head, s * .52 * k, .48 * k, .9 * k); w.rotation.set(0, s * .3, s * -.12); }

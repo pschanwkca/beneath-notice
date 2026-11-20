@@ -158,7 +158,7 @@ function livingGet(d, C) {
     if (KS.mp) { setQuest(4); toastW('電池到手！全隊到客廳最裡面的通風口集合', 3.4); sayW(C.S.name, '電池拿到了！去通風口！', C.S.col, 2.6); }
     else {
       say('爸爸', '兩粒電池……夠核心撐一陣子了。', '#f5f0e6', 3.2);
-      END_TXT = ['第二章（試玩）· 完', '遙控器的電池', '核心又亮起來了。下一站：魚缸——還有車房裡的工作枱。'];
+      END_TXT = ['第二章（試玩）· 完', '遙控器的電池', '核心又亮起來了。下一站：魚缸——還有車房裡的工作枱。']; unlockKey('ch2');
       setTimeout(() => { if (STATE === 'play') { STATE = 'end'; endT = 0; } }, 1800);
     }
   }

@@ -46,7 +46,7 @@ function joinGecko() {
   const K = chars.gecko; if (party.includes(K)) return; party.push(K); K.lastTrail = K.pos.clone(); K.disp = K.pos.clone(); K.queue = []; K.wave = false; K.state = 'idle'; K.stamina = 100;
   assignGaps(); buildPartyHUD();
 }
-function scheduleLines(list) { for (const L of list) if (lvT - 1 / 60 < L[0] && lvT >= L[0]) { if (typeof L[1] === 'function') L[1](); else say(L[1], L[2], L[3], L[4] || 3.2); } }
+function scheduleLines(list, dt = 1 / 60) { for (const L of list) if (lvT - dt < L[0] && lvT >= L[0]) { if (typeof L[1] === 'function') L[1](); else say(L[1], L[2], L[3], L[4] || 3.2); } }
 
 // ---------- noise (distractions) ----------
 function noise(p, loud, clang) {
@@ -260,7 +260,7 @@ const HUB_LINES = [
   [9.8, '爸爸', '核心在意外時被彈走了，從暖氣管飛上了廚房。沒有它，我們變不回去。', '#f5f0e6', 4],
   [13.8, '前拍檔', '我的腳受過傷，爬不上去了。小彩——你跟他們去。', '#b7d38a', 3.4],
   [17.4, '小彩', '我、我是 Origin Dynamics 的實習生……上個月來搬地庫的機器，醒來就變成這樣了。', '#9fd86b', 4],
-  [17.8, () => { if (!party.includes(chars.cham)) { joinCham(); toast('實習生小彩加入隊伍！停着不動會變色隱身，左鍵吐舌頭（按 4 或點頭像操控）', 4.5); } }],
+  [17.8, () => { if (!party.includes(chars.cham)) { joinCham(); toast('實習生小彩加入隊伍！停着不動會變色隱身，' + (TOUCH ? '按「舌」吐舌頭（點頭像操控）' : '左鍵吐舌頭（按 4 或點頭像操控）'), 4.5); } }],
   [22, '前拍檔', '……我會在牆洞那邊看着你們。', '#b7d38a', 3]
 ];
 LEVELS.wall = {
@@ -278,13 +278,15 @@ LEVELS.wall = {
   },
   // walked in from the basement
   enter(prev, again) {
-    if (prev === 'basement' && !again) { momReset(); chars.cham.root.visible = true; chars.cham.pos.set(-30, 4, 12).add(HO); chars.cham.yaw = -2.2; }
+    if (prev === 'basement' && !again) { unlockKey('prologue'); momReset(); chars.cham.root.visible = true; chars.cham.pos.set(-30, 4, 12).add(HO); chars.cham.yaw = -2.2; }
     LEVELS.kitchen.prep();
   },
   leave() { },
   npc() { }, detect(dt) { meter = Math.max(0, meter - dt * .3); },
   update(dt) {
-    lvT += dt; scheduleLines(HUB_LINES);
+    lvT += dt; scheduleLines(HUB_LINES, dt);
+    // walking up to 小彩 also brings her along, whatever the timing
+    const K = chars.cham; if (!party.includes(K) && lvT > 3 && leader.pos.distanceTo(K.pos) < 13) { joinCham(); toast('實習生小彩加入隊伍！停着不動會變色隱身，' + (TOUCH ? '按「舌」吐舌頭（點頭像操控）' : '左鍵吐舌頭（按 4 或點頭像操控）'), 4.5); }
     for (const K of [chars.gecko, chars.cham]) if (!party.includes(K) && !NPCW.some(w => w.C === K)) { const dx = leader.pos.x - K.pos.x, dz = leader.pos.z - K.pos.z; K.yaw = angDamp(K.yaw, Math.atan2(dx, dz), 3, dt); K.state = 'idle'; K.spd = 0; }
     const lx = leader.pos.x - HO.x, lz = leader.pos.z - HO.z;
     if (!NET.client && quest === 0 && (lvT > 17 || (lx < 20 && Math.abs(lx) < 85 && lvT > 4))) setQuest(1);
@@ -785,7 +787,7 @@ LEVELS.kitchen = {
   detect: detectKitchen,
   update(dt) {
     lvT += dt; updKitchenPlayer(dt); updCookie();
-    scheduleLines(KS.mp ? KLINES_MP : KLINES_SP);
+    scheduleLines(KS.mp ? KLINES_MP : KLINES_SP, dt);
     if (rnd() < dt * .75) { emit(KS.tap, V3(0, -2, 0), new THREE.Color(.5, .62, .7), .35, .9, 300, 0); setTimeout(() => { if (ZONES.kitchen.near) { for (let i = 0; i < 4; i++) emit(V3(-100, 68.9, -193), V3(R(-6, 6), R(5, 12), R(-6, 6)), new THREE.Color(.5, .62, .72), .2, .35, 200, 1); if (leader.pos.distanceTo(V3(-100, 68, -193)) < 120) SND.drip(); } }, 420); }
   },
   win() {
@@ -796,7 +798,7 @@ LEVELS.kitchen = {
     if (home) {
       // chapter one is done — but nothing stops: the story just carries on into the living room
       KS.carried = false; KS.coreDrop = null; KS.home = true; KS.core.position.set(-306, 1.6, -100); KS.ch2 = true;
-      QUESTS = SP_Q2; setQuest(0); chapterBanner('第一章 · 完', '核心找回來了');
+      QUESTS = SP_Q2; setQuest(0); chapterBanner('第一章 · 完', '核心找回來了'); unlockKey('ch1');
       say('前拍檔', '（從牆裡）放在洞口就好，我看着它。……它的光越來越弱了。', '#b7d38a', 3.6);
       setTimeout(() => say('爸爸', '客廳的遙控器裡有電池。去拿過來，幫核心充電。', '#f5f0e6', 3.4), 3800);
       setTimeout(() => chapterBanner('第二章', '客廳'), 7600);
