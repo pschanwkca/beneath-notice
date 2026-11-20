@@ -1,0 +1,12 @@
+[
+ {"click":"#go1","wait":4000},
+ {"eval":"(()=>{const b=window.__bn; b.loadLevel('kitchen'); return 1})()","wait":4500},
+ {"eval":"(()=>{const b=window.__bn; window.__z=()=>{b.meter=0; b.KM.mode='act'; b.KM.pt='stove'; b.KM.t=99;}; const L=b.leader; L.pos.set(-100,0,-156); L.yaw=Math.PI; L.vel.set(0,0,0); let i=0; for(const c of b.party) if(c!==L){i++; c.pos.set(-100+i*3.5-7,0,-143); c.disp.copy(c.pos); c.queue=[];} b.cam.yaw=0.5; b.cam.pitch=.18; b.cam.dist=16; for(let k=0;k<20;k++){b.step(1);__z();} const P=b.stkPlan(L,false); return {ok:P.ok, n:P.mem&&P.mem.map(c=>c.id), ledge:P.ledge, by:P.by, short:P.short, err:P.err, hint:document.getElementById('hint').textContent}})()"},
+ {"eval":"(()=>{const b=window.__bn; b.press('KeyF'); for(let k=0;k<40;k++){b.step(1);__z();} return {ph:b.STK&&b.STK.phase, mem:b.STK&&b.STK.mem.map(c=>[c.id,c.pos.y.toFixed(1),c.state])}})()","wait":200,"shot":"st1_tower"},
+ {"eval":"(()=>{const b=window.__bn; for(let k=0;k<30;k++){b.step(1);__z();} return {ph:b.STK&&b.STK.phase, hint:document.getElementById('hint').textContent}})()","wait":200,"shot":"st2_ready"},
+ {"eval":"(()=>{const b=window.__bn; b.keys.KeyW=true; b.step(1); b.keys.KeyW=false; for(let k=0;k<60;k++){b.step(1);__z();} return {ph:b.STK&&b.STK.phase, L:b.leader.pos.toArray().map(v=>+v.toFixed(1))}})()","wait":200,"shot":"st3_pull"},
+ {"eval":"(()=>{const b=window.__bn; for(let k=0;k<60;k++){b.step(1);__z();} return {ph:b.STK&&b.STK.phase}})()","wait":200,"shot":"st4_pull2"},
+ {"eval":"(()=>{const b=window.__bn; for(let k=0;k<260;k++){b.step(1);__z(); if(!b.STK) break;} b.cam.yaw=0.3; b.cam.pitch=.25; b.cam.dist=18; for(let k=0;k<30;k++){b.step(1);__z();} return {stk:!!b.STK, all:b.party.map(c=>[c.id,c.pos.toArray().map(v=>+v.toFixed(1)),c.state])}})()","wait":200,"shot":"st5_inside"},
+ {"eval":"(()=>{const b=window.__bn; for(let k=0;k<120;k++){b.step(1);__z();} return {all:b.party.map(c=>[c.id,c.pos.toArray().map(v=>+v.toFixed(1)),c.state]), cp:b.cp}})()"},
+ {"eval":"(()=>{const b=window.__bn; const L=b.leader; L.pos.set(-250,0,-156); L.yaw=Math.PI; L.climbing=false; let i=0; for(const c of b.party) if(c!==L){i++; c.pos.set(-250+i*3.5-7,0,-143); c.disp.copy(c.pos); c.queue=[];} for(let k=0;k<10;k++){b.step(1);__z();} b.press('KeyF'); const r=[]; for(let k=0;k<200;k++){b.step(1);__z(); if(k%25==0) r.push([b.STK&&b.STK.phase, document.getElementById('toast').textContent]); if(k==90){} } return {r, after:b.party.map(c=>[c.id,c.pos.toArray().map(v=>+v.toFixed(1))])}})()","wait":200,"shot":"st6_collapse"}
+]

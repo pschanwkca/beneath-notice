@@ -1,0 +1,46 @@
+[
+ {
+  "click": "#go1",
+  "wait": 4500
+ },
+ {
+  "eval": "(async()=>{const b=window.__bn; for(let i=0;i<300 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,200)); return [b.LEVEL,b.state]})()"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; for(let k=0;k<60*19;k++) b.step(1); return {party:b.party.map(c=>c.id), lvl:b.LEVEL, toast:document.getElementById('toast').textContent}})()",
+  "wait": 300,
+  "shot": "c1_hub"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; b.loadLevel('kitchen'); return 1})()",
+  "wait": 4500
+ },
+ {
+  "eval": "(async()=>{const b=window.__bn; for(let i=0;i<300 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,200)); return [b.LEVEL,b.state]})()"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; window.__z=()=>{b.meter=0;}; b.switchTo(b.chars.cham); const L=b.leader; L.pos.set(-200,90,-200); L.yaw=0; for(let k=0;k<200;k++){b.step(1);__z();} b.cam.yaw=0.6; b.cam.pitch=.2; b.cam.dist=12; for(let k=0;k<20;k++){b.step(1);__z();} return {camo:+L.camo.toFixed(2), col:'#'+L.skinM.color.getHexString(), hint:document.getElementById('hint').textContent}})()",
+  "wait": 200,
+  "shot": "c2_camo"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; const L=b.leader; L.pos.set(-128,13,-180); L.yaw=Math.PI; b.cam.yaw=0; b.cam.pitch=.05; b.cam.dist=10; for(let k=0;k<10;k++){b.step(1);__z();} const a=b.tongueAim; const P0=b.PROTO; b.chamTongue(); for(let k=0;k<40;k++){b.step(1);__z();} return {aim:a&&{item:!!a.item, P:a.P.toArray().map(v=>+v.toFixed(1))}, P0, P1:b.PROTO}})()",
+  "wait": 200,
+  "shot": "c3_tongue"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; b.switchTo(b.chars.sq); const L=b.leader; L.pos.set(40,0,110); L.yaw=0; for(const c of b.party) if(c!==L){c.pos.set(42,0,107); c.disp.copy(c.pos); c.queue=[];} for(let k=0;k<10;k++){b.step(1);__z();} b.sqCarry(); b.step(2); const who=L.carry&&L.carry.id; L.pos.set(60,30,120); L.vel.set(0,-5,0); L.grounded=false; b.keys.Space=true; const ys=[]; for(let k=0;k<120;k++){b.step(1);__z(); if(k%30==0) ys.push(+L.pos.y.toFixed(1));} b.cam.yaw=1.2; b.cam.pitch=.1; b.cam.dist=26; b.step(2); return {who, ys, gl:L.gliding}})()",
+  "wait": 200,
+  "shot": "c4_updraft"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; b.keys.Space=false; const L=b.leader; for(let k=0;k<200;k++){b.step(1);__z(); if(L.grounded) break;} b.step(5); const c=L.carry; L.pos.set(-60,0,-60); for(let k=0;k<5;k++)b.step(1); b.sqScout(); for(let k=0;k<30;k++){b.step(1);__z();} b.cam.yaw=-2.6; b.cam.pitch=.35; b.cam.dist=60; b.step(3); return {carryAfterLand:!!c, scout:b.SCOUT.t.toFixed(1)}})()",
+  "wait": 200,
+  "shot": "c5_scout"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; b.switchTo(b.chars.dad); const L=b.leader; const r=b.resizables.find(q=>q.name==='\u6bdb\u516c\u4ed4'); const ok4=b.roomFor(r,4); r.target=4; L.pos.set(130,0,178); for(let k=0;k<80;k++){b.step(1);__z();} const top=r.c.y1; L.pos.set(178,top+25,176); L.vel.set(0,0,0); L.grounded=false; let mx=0, bounced=false; for(let k=0;k<90;k++){b.step(1);__z(); if(L.vel.y>20) bounced=true; if(bounced) mx=Math.max(mx,L.pos.y);} L.pos.set(120,0,178); L.yaw=Math.PI/2; b.cam.yaw=-1.75; b.cam.pitch=.18; b.cam.dist=26; for(let k=0;k<20;k++){b.step(1);__z();} const ck=b.resizables.find(q=>q.name==='\u66f2\u5947'); const okC=b.roomFor(ck,4); return {ok4, top:+top.toFixed(1), bounced, mx:+mx.toFixed(1), okCookie:okC, km:b.KM.mode}})()",
+  "wait": 200,
+  "shot": "c6_plush"
+ }
+]

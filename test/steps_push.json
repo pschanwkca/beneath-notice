@@ -1,0 +1,7 @@
+[
+ {"click":"#go1","wait":4000},
+ {"eval":"(()=>{const b=window.__bn; b.loadLevel('kitchen'); return 1})()","wait":4500},
+ {"eval":"(()=>{const b=window.__bn; window.__z=()=>{b.meter=0;}; b.switchTo(b.chars.bear); const L=b.leader; L.pos.set(112,90,-170.5); L.yaw=0; L.vel.set(0,0,0); for(const c of b.party) if(c!==L){c.pos.set(100,90,-190); c.disp.copy(c.pos); c.queue=[];} b.cam.yaw=-1.2; b.cam.pitch=.15; b.cam.dist=16; for(let k=0;k<30;k++){b.step(1);__z();} const can=b.resizables.find(r=>r.name==='湯罐頭'); return {tgt:(b.pushTarget(L)||{}).name, hint:document.getElementById('hint').textContent, can:[can.cx,can.cz,can.y0]}})()","wait":200,"shot":"p1_bear"},
+ {"eval":"(()=>{const b=window.__bn; b.bearShove(); const r=[]; for(let k=0;k<40;k++){b.step(1);__z();} const can=b.resizables.find(r=>r.name==='湯罐頭'); r.push([can.cx.toFixed(1),can.cz.toFixed(1),can.y0.toFixed(1)]); for(let k=0;k<2;k++){b.bearShove(); for(let j=0;j<40;j++){b.step(1);__z();} r.push([can.cx.toFixed(1),can.cz.toFixed(1),can.y0.toFixed(1)]);} return {r, mom:b.KM.mode, toast:document.getElementById('toast').textContent}})()","wait":200,"shot":"p2_fall"},
+ {"eval":"(()=>{const b=window.__bn; const L=b.leader; L.pos.set(-232,90,-171); L.yaw=0; b.cam.yaw=Math.PI; b.keys.Mouse0=true; b.keys.KeyW=true; const jar=b.resizables.find(r=>r.name==='香料瓶'); const r=[]; for(let k=0;k<60;k++){b.step(1);__z(); if(k%15==0) r.push([jar.cz.toFixed(1),jar.y0.toFixed(1),L.state]);} b.keys.Mouse0=false; b.keys.KeyW=false; return r})()","wait":200,"shot":"p3_hold"}
+]

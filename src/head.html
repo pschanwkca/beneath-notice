@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>BENEATH NOTICE</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Noto+Sans+TC:wght@400;500;700&family=LXGW+WenKai+TC:wght@400;700&family=Caveat:wght@500;700&display=swap" rel="stylesheet">
+<style>
+/* VOICE: hushed, tender, a little mischievous: a bedtime story told from 5 cm up
+   IDEA: a scientist's field notebook dropped under his own workbench
+   PICTURE: the live 3D basement itself, full-bleed, lit by moon, lamp and machine
+   COLOUR and TYPE: night ink #07090c, moon blue, lamp amber, machine cyan; Fredoka + Noto Sans TC
+   LAYOUT: full-screen game; HUD tucked into corners, overlays centred on the scene */
+:root{--ink:#f5f0e6;--dim:rgba(245,240,230,.64);--faint:rgba(245,240,230,.16);--panel:rgba(10,13,18,.52);--cyan:#82ece6;--amber:#f4bb72;--rose:#ff8f9f;color-scheme:dark}
+*{box-sizing:border-box;min-width:0}
+html,body{margin:0;height:100%;background:#07090c;color:var(--ink);font:15px/1.5 "Noto Sans TC","Fredoka",system-ui,sans-serif;overflow:hidden;-webkit-user-select:none;user-select:none}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:none}
+.hud{position:fixed;inset:0;pointer-events:none;transition:opacity .4s}
+.hud.off{opacity:0}
+.hud .q,.hud .party,.hud .abil{transition:opacity .6s}
+.hud.cine .q,.hud.cine .party,.hud.cine .abil{opacity:0}
+.bars::before,.bars::after{content:"";position:fixed;left:0;right:0;height:0;background:#000;transition:height .8s;z-index:1}
+.bars::before{top:0}.bars::after{bottom:0}
+.hud.cine .bars::before,.hud.cine .bars::after{height:7vh}
+.panel{background:var(--panel);backdrop-filter:blur(10px) saturate(1.2);-webkit-backdrop-filter:blur(10px) saturate(1.2);border:1px solid var(--faint);border-radius:16px}
+.q{position:absolute;left:22px;top:20px;padding:12px 16px 12px 14px;min-width:230px;max-width:330px}
+.qh{display:flex;align-items:center;gap:8px;font:600 12px/1 "Fredoka","Noto Sans TC";color:var(--amber);letter-spacing:.02em}
+.qh i{width:8px;height:8px;border-radius:50%;background:var(--amber);box-shadow:0 0 10px var(--amber)}
+#qt{font-weight:700;font-size:17px;margin-top:6px}
+#qs{color:var(--dim);font-size:13px;margin-top:2px}
+.bat{margin-top:8px;padding-top:8px;border-top:1px solid var(--faint);font-size:12px;color:var(--dim)}
+.bat b{font:600 13px "Fredoka";color:var(--cyan)}
+.eye{position:absolute;left:50%;top:18px;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:4px;opacity:0;transition:opacity .5s}
+.eye.on{opacity:1}
+.eye svg{width:58px;height:58px;filter:drop-shadow(0 2px 10px rgba(0,0,0,.5))}
+.eye span{font-size:12px;color:var(--dim);background:var(--panel);padding:2px 10px;border-radius:99px;border:1px solid var(--faint)}
+.party{position:absolute;left:22px;bottom:20px;display:flex;gap:10px;align-items:flex-end}
+.pm{position:relative;width:64px;display:flex;flex-direction:column;align-items:center;gap:4px;opacity:.55;transition:opacity .3s,transform .3s}
+.pm.on{opacity:1;transform:translateY(-6px)}
+.pm .ph{width:64px;height:64px;border-radius:50%;background:radial-gradient(circle at 50% 35%,#2b3442,#121820);border:2px solid var(--faint);overflow:hidden;display:grid;place-items:center}
+.pm.on .ph{border-color:var(--amber);box-shadow:0 0 0 3px rgba(244,187,114,.18),0 8px 24px rgba(0,0,0,.45)}
+.pm img{width:100%;height:100%;object-fit:cover}
+.pm b{font-size:12px;line-height:1}
+.pm small{font-size:10px;color:var(--dim);line-height:1}
+.pm kbd{position:absolute;top:-4px;right:-2px;font:600 10px "Fredoka";background:#0d1117;border:1px solid var(--faint);border-radius:6px;padding:1px 5px;color:var(--dim)}
+.pm.lock .ph{filter:grayscale(1) brightness(.6)}
+.abil{position:absolute;right:22px;bottom:20px;padding:12px 16px;min-width:190px;text-align:right}
+.an{font-weight:700;font-size:16px}
+.ad{font-size:12px;color:var(--dim)}
+.cells{display:flex;gap:5px;justify-content:flex-end;margin-top:8px}
+.cells i{width:16px;height:9px;border-radius:3px;background:rgba(130,236,230,.16);border:1px solid rgba(130,236,230,.35)}
+.cells i.f{background:var(--cyan);box-shadow:0 0 8px var(--cyan)}
+.stam{position:absolute;width:40px;height:40px;transform:translate(-50%,-50%);opacity:0;transition:opacity .25s}
+.stam.on{opacity:1}
+.stam circle{fill:none;stroke-width:4}
+.stam .bg{stroke:rgba(0,0,0,.35)}
+.stam .fg{stroke:#f5f0e6;stroke-linecap:round;transform:rotate(-90deg);transform-origin:50% 50%;stroke-dasharray:94.25;transition:stroke .2s}
+.stam.low .fg{stroke:var(--rose)}
+.stam .cap{stroke:rgba(255,143,159,.75);stroke-dasharray:0 200;transform-origin:50% 50%;stroke-width:4.5}
+.bat.proto{display:flex;align-items:center;gap:6px;border-top:none;margin-top:4px;padding-top:0}
+.bat.proto b{color:#5ff2e6}
+.bat .pk{margin-left:auto;font-size:10px;color:var(--dim);border:1px solid var(--faint);border-radius:5px;padding:0 5px}
+html.touch .bat .pk{display:none}
+.vial{display:inline-block;width:7px;height:16px;border-radius:2px 2px 4px 4px;background:linear-gradient(#d8dde2 0 22%,rgba(255,255,255,.2) 22% 45%,#5ff2e6 45%);box-shadow:0 0 8px rgba(95,242,230,.6);transform:rotate(12deg)}
+.pm.toy .ph{filter:saturate(.25) brightness(.85);border-color:#5ff2e6;border-style:dashed}
+.pm.toy small{color:#5ff2e6}
+.mk{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:3px;opacity:0;transition:opacity .3s}
+.mk.on{opacity:1}
+.dia{width:14px;height:14px;transform:rotate(45deg);border:2px solid var(--amber);background:rgba(244,187,114,.25);box-shadow:0 0 12px rgba(244,187,114,.6)}
+.mk span{font:600 11px "Fredoka";color:var(--amber);text-shadow:0 1px 4px #000}
+.cross{position:absolute;left:50%;top:50%;width:22px;height:22px;transform:translate(-50%,-50%);border:1.5px solid rgba(245,240,230,.7);border-radius:50%;opacity:0;transition:opacity .2s,border-color .2s,width .2s,height .2s}
+.cross::after{content:"";position:absolute;left:50%;top:50%;width:3px;height:3px;margin:-1.5px;border-radius:50%;background:#fff}
+.cross.on{opacity:1}
+.cross.t{border-color:var(--cyan);width:30px;height:30px;box-shadow:0 0 14px rgba(130,236,230,.5)}
+.hint{position:absolute;left:50%;bottom:118px;transform:translateX(-50%);font-size:13px;color:var(--dim);background:var(--panel);border:1px solid var(--faint);padding:5px 14px;border-radius:99px;opacity:0;transition:opacity .3s;white-space:nowrap}
+.hint.on{opacity:1}
+.hint kbd,.keys kbd{font:600 11px "Fredoka";background:rgba(255,255,255,.08);border:1px solid var(--faint);border-bottom-width:2px;border-radius:6px;padding:1px 6px;margin:0 2px;color:var(--ink)}
+.sub{position:absolute;left:50%;bottom:150px;transform:translateX(-50%);max-width:min(760px,86vw);text-align:center;font-size:19px;line-height:1.45;text-shadow:0 2px 8px #000,0 0 2px #000;opacity:0;transition:opacity .35s}
+.sub.on{opacity:1}
+.sub b{display:block;font-size:12px;font-weight:600;letter-spacing:.04em;margin-bottom:2px}
+.toast{position:absolute;right:22px;top:20px;max-width:320px;padding:10px 14px;font-size:13px;opacity:0;transform:translateY(-6px);transition:opacity .35s,transform .35s}
+.toast.on{opacity:1;transform:none}
+.fps{position:absolute;right:8px;bottom:4px;font:500 10px "Fredoka";color:rgba(255,255,255,.28)}
+.ov{position:fixed;inset:0;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 50% 60%,rgba(7,9,12,.15),rgba(7,9,12,.82));transition:opacity .6s}
+.ov[hidden]{display:none}
+.card{width:min(620px,94vw);text-align:center}
+.logo{font:700 clamp(40px,7vw,76px)/1 "Fredoka";letter-spacing:.01em;margin:0;text-shadow:0 6px 40px rgba(130,236,230,.25)}
+.logo span{color:var(--cyan)}
+.zh{font:500 20px "LXGW WenKai TC","Noto Sans TC";color:var(--amber);margin-top:8px;letter-spacing:.3em}
+.tag{color:var(--dim);font-size:16px;margin:18px auto 22px;max-width:34em}
+.row{display:flex;gap:12px;justify-content:center;align-items:center;flex-wrap:wrap}
+button{font:600 17px "Fredoka","Noto Sans TC";color:#10131a;background:var(--amber);border:0;border-radius:99px;padding:12px 34px;min-height:46px;cursor:pointer;box-shadow:0 6px 24px rgba(244,187,114,.35);transition:transform .15s,box-shadow .15s}
+button:hover{transform:translateY(-1px);box-shadow:0 8px 30px rgba(244,187,114,.5)}
+button:focus-visible,select:focus-visible{outline:2px solid var(--cyan);outline-offset:3px}
+button.ghost{background:transparent;color:var(--ink);border:1px solid var(--faint);box-shadow:none}
+.sel{display:flex;gap:4px;padding:4px;border-radius:99px;border:1px solid var(--faint);background:var(--panel)}
+.sel button{font-size:14px;padding:6px 14px;min-height:36px;background:transparent;color:var(--dim);box-shadow:none}
+.sel button.on{background:rgba(245,240,230,.12);color:var(--ink)}
+.keys{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 22px;text-align:left;margin:26px auto 0;max-width:470px;font-size:13px;color:var(--dim)}
+.keys div{display:flex;justify-content:space-between;gap:10px;border-bottom:1px solid var(--faint);padding-bottom:5px}
+.note{margin-top:18px;font-size:12px;color:rgba(245,240,230,.42)}
+#load .bar{width:220px;height:3px;border-radius:3px;background:var(--faint);overflow:hidden;margin:16px auto 0}
+#load .bar i{display:block;height:100%;width:0;background:var(--cyan);transition:width .3s}
+#load p{color:var(--dim);font-size:13px;margin-top:10px}
+#err{color:var(--rose);font-size:12px;white-space:pre-wrap;text-align:left;max-width:90vw;margin-top:12px}
+.lvl{position:fixed;inset:0;z-index:40;display:grid;place-items:center;text-align:center;background:#050608;opacity:0;transition:opacity .7s}
+.lvl.on{opacity:1}
+.lvl[hidden]{display:none}
+.dead{position:fixed;inset:0;display:grid;place-items:center;pointer-events:none;opacity:0;transition:opacity .5s}
+.dead.on{opacity:1}
+.dead div{text-align:center;text-shadow:0 2px 20px rgba(0,0,0,.8)}
+.dead h2{font:700 30px "Noto Sans TC";margin:0;color:#e9fbff}
+.dead p{color:var(--dim);margin:8px 0 0}
+.stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:22px auto;max-width:440px}
+.stats div{padding:12px;border-radius:14px;border:1px solid var(--faint);background:var(--panel)}
+.stats b{display:block;font:600 24px "Fredoka";color:var(--cyan)}
+.stats span{font-size:12px;color:var(--dim)}
+@media(max-width:600px){.keys{grid-template-columns:minmax(0,1fr)}.q{min-width:0;max-width:60vw}.abil{display:none}.sub{font-size:16px;bottom:120px}}
+/* phone */
+.mob{display:none}
+html.touch .mob{display:inline}
+html.touch .desk{display:none}
+.touchui{position:fixed;inset:0;touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+.touchui[hidden]{display:none}
+.joyhint{position:absolute;left:calc(70px + env(safe-area-inset-left));bottom:40px;width:104px;height:104px;border-radius:50%;border:2px dashed rgba(245,240,230,.2);display:grid;place-items:center;color:rgba(245,240,230,.4);font-size:11px;pointer-events:none}
+.joy{position:absolute;width:118px;height:118px;margin:-59px 0 0 -59px;border-radius:50%;border:2px solid rgba(245,240,230,.3);background:rgba(10,13,18,.28);opacity:0;transition:opacity .12s;pointer-events:none}
+.joy.on{opacity:1}
+.joy i{position:absolute;left:50%;top:50%;width:52px;height:52px;margin:-26px;border-radius:50%;background:rgba(245,240,230,.88);box-shadow:0 4px 16px rgba(0,0,0,.45)}
+.tb{position:absolute;width:58px;height:58px;min-height:0;padding:0;border-radius:50%;background:rgba(10,13,18,.5);border:1.5px solid rgba(245,240,230,.32);color:var(--ink);font:600 13px "Noto Sans TC",sans-serif;box-shadow:none;-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:transform .08s,background .1s}
+.tb:hover{transform:none;box-shadow:none}
+.tb.pr{transform:scale(.92);background:rgba(244,187,114,.9);color:#10131a}
+.tb.dn{border-color:var(--amber);color:var(--amber)}
+.tbtns{position:absolute;right:calc(16px + env(safe-area-inset-right));bottom:16px;width:230px;height:230px;pointer-events:none}
+.tbtns .tb{pointer-events:auto}
+#tbJump{right:0;bottom:0;width:86px;height:86px;font-size:17px}
+#tbCrouch{right:113px;bottom:13px}
+#tbSwap{right:13px;bottom:113px}
+#tbGrow,#tbShrink{display:none;border-color:rgba(130,236,230,.6);color:var(--cyan)}
+.touchui.dad #tbGrow,.touchui.dad #tbShrink{display:block}
+#tbGrow{right:84px;bottom:84px}
+#tbShrink{right:150px;bottom:150px;width:52px;height:52px}
+#tbPush{display:none;right:84px;bottom:84px;border-color:rgba(217,166,117,.7);color:#e9bf8f}
+.touchui.bear #tbPush{display:block}
+#tbStack{right:176px;bottom:74px;width:52px;height:52px}
+#tbProto{display:none;right:14px;bottom:188px;width:56px;height:56px;border-color:rgba(95,242,230,.7);color:#5ff2e6;font-size:12px}
+.touchui.proto #tbProto{display:block}
+#tbAct,#tbScout{display:none;border-color:rgba(159,216,107,.7);color:#bfe89a}
+#tbAct{right:84px;bottom:84px}
+#tbScout{right:150px;bottom:150px;width:52px;height:52px;font-size:12px}
+.touchui.sq #tbAct,.touchui.cham #tbAct,.touchui.sq #tbScout{display:block}
+#watch{position:fixed;z-index:6;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;transition:opacity .2s;pointer-events:none}
+#watch.on{opacity:1}
+#watch i{display:block;width:0;height:0;border-left:16px solid #ff8f9f;border-top:11px solid transparent;border-bottom:11px solid transparent;filter:drop-shadow(0 0 6px rgba(255,143,159,.8))}
+#watch span{font:600 12px "Noto Sans TC";color:#ffd9de;background:rgba(10,13,18,.62);padding:4px 9px;border-radius:999px;white-space:nowrap}
+#tbPause{top:10px;right:calc(12px + env(safe-area-inset-right));width:44px;height:44px;display:grid;place-items:center}
+#rot{position:fixed;inset:0;z-index:60;display:none;place-items:center;text-align:center;background:#07090c;padding:24px}
+#rot svg{width:64px;height:64px;margin-bottom:14px;animation:tilt 2.4s ease-in-out infinite}
+@keyframes tilt{0%,30%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}
+.mkeys{display:none!important}
+html.touch .keys:not(.mkeys){display:none}
+html.touch .mkeys{display:grid!important}
+@media (orientation:portrait){html.touch #rot{display:grid}}
+html.touch .q{left:calc(10px + env(safe-area-inset-left));top:8px;min-width:0;max-width:36vw;padding:8px 12px}
+html.touch #qt{font-size:14px;margin-top:3px}
+html.touch #qs{font-size:11px;line-height:1.35}
+html.touch .bat{margin-top:5px;padding-top:5px;font-size:11px}
+html.touch .party{left:auto;right:calc(66px + env(safe-area-inset-right));top:8px;bottom:auto;gap:6px;align-items:flex-start}
+html.touch .pm{width:46px;pointer-events:auto;opacity:.7}
+html.touch .pm.on{transform:none;opacity:1}
+html.touch .pm .ph{width:46px;height:46px}
+html.touch .pm small,html.touch .pm kbd{display:none}
+html.touch .pm b{font-size:10px}
+html.touch .abil,html.touch .fps{display:none}
+html.touch .eye{top:6px}
+html.touch .eye svg{width:42px;height:42px}
+html.touch .toast{right:auto;left:50%;top:76px;transform:translate(-50%,-6px);text-align:center}
+html.touch .toast.on{transform:translate(-50%,0)}
+html.touch .sub{bottom:96px;font-size:15px;max-width:min(560px,60vw)}
+html.touch .hint{left:42%;bottom:60px;font-size:12px;white-space:normal;max-width:40vw;text-align:center}
+html.touch .logo{font-size:clamp(30px,7vw,52px)}
+html.touch .zh{margin-top:4px;font-size:16px}
+html.touch .tag{font-size:14px;margin:10px auto 14px}
+html.touch .keys{margin-top:14px;gap:4px 18px}
+html.touch .note{margin-top:10px}
+html.touch .card{max-height:100vh;overflow:auto}
+
+@media(prefers-reduced-motion:reduce){*{transition:none!important}}
+</style>
+</head>
+<body>
+<canvas id="c" tabindex="0"></canvas>
+
+<div id="touch" class="touchui" hidden>
+  <div class="joyhint">移動</div>
+  <div class="joy" id="joyBase"><i id="joyKnob"></i></div>
+  <div class="tbtns">
+    <button class="tb" id="tbJump">跳</button>
+    <button class="tb" id="tbCrouch">潛行</button>
+    <button class="tb" id="tbSwap">換人</button>
+    <button class="tb" id="tbGrow">放大</button>
+    <button class="tb" id="tbShrink">縮小</button>
+    <button class="tb" id="tbPush">推</button>
+    <button class="tb" id="tbStack">疊</button>
+    <button class="tb" id="tbProto">復活</button>
+    <button class="tb" id="tbAct">抱</button>
+    <button class="tb" id="tbScout">偵察</button>
+  </div>
+  <button class="tb" id="tbPause" aria-label="暫停"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><rect x="4" y="3" width="4" height="14" rx="1.5" fill="currentColor"/><rect x="12" y="3" width="4" height="14" rx="1.5" fill="currentColor"/></svg></button>
+</div>
+
+<div id="hud" class="hud off">
+  <div id="watch"><i></i><span></span></div>
+  <div class="bars"></div>
+  <div class="q panel" id="quest">
+    <div class="qh"><i></i><span>主線</span></div>
+    <div id="qt">離開工作枱</div>
+    <div id="qs">找路下到地面</div>
+    <div class="bat" id="batw">鈕扣電池 <b id="batn">0</b><b id="batt">/3</b></div>
+    <div class="bat proto" id="protw" style="display:none"><i class="vial"></i>Prototype <b id="protn">0</b> <span class="pk">R 使用</span></div>
+  </div>
+  <div class="eye" id="eye">
+    <svg viewBox="0 0 64 64" aria-hidden="true">
+      <circle cx="32" cy="32" r="28" fill="rgba(10,13,18,.6)" stroke="rgba(245,240,230,.18)" stroke-width="2"/>
+      <circle id="eyering" cx="32" cy="32" r="28" fill="none" stroke="#bff6ff" stroke-width="3.5" stroke-linecap="round" stroke-dasharray="175.9" stroke-dashoffset="175.9" transform="rotate(-90 32 32)"/>
+      <path id="eyelid" d="M14 32 Q32 16 50 32 Q32 48 14 32Z" fill="none" stroke="#f5f0e6" stroke-width="2.4"/>
+      <circle id="eyepupil" cx="32" cy="32" r="5.5" fill="#f5f0e6"/>
+    </svg>
+    <span id="eyet">太太在地庫</span>
+  </div>
+  <div class="party" id="party"></div>
+  <div class="abil panel" id="abil">
+    <div class="an" id="an">尺寸槍</div>
+    <div class="ad" id="ad">左鍵放大 · 右鍵縮小</div>
+    <div class="cells" id="cells"></div>
+  </div>
+  <div class="stam" id="stam"><svg viewBox="0 0 40 40"><circle class="bg" cx="20" cy="20" r="15"/><circle class="fg" id="stc" cx="20" cy="20" r="15"/><circle class="cap" id="stcap" cx="20" cy="20" r="15"/></svg></div>
+  <div class="mk" id="mk"><div class="dia"></div><span id="mkd"></span></div>
+  <div class="cross" id="cross"></div>
+  <div class="hint" id="hint"></div>
+  <div class="sub" id="sub"><b id="subn"></b><span id="subt"></span></div>
+  <div class="toast panel" id="toast"></div>
+  <div class="fps" id="fps"></div>
+</div>
+
+<div id="rot"><div><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="20" y="6" width="24" height="52" rx="5" fill="none" stroke="#f5f0e6" stroke-width="3"/><circle cx="32" cy="51" r="2.5" fill="#f5f0e6"/></svg><div style="font-weight:700;font-size:18px">把手機轉成橫向</div><p style="color:var(--dim);font-size:14px;margin:6px 0 0">BENEATH NOTICE 只支援橫屏遊玩</p></div></div>
+
+<div class="lvl" id="lvl" hidden><div><div class="zh" id="lvlA"></div><div class="logo" id="lvlB" style="font-size:clamp(34px,5vw,60px);margin-top:8px"></div></div></div>
+
+<div class="dead" id="dead"><div><h2>你被看見了</h2><p>縮小態被觀測，定型了……回到上一個安全點</p></div></div>
+
+<div class="ov" id="load">
+  <div class="card">
+    <div class="logo">BENEATH <span>NOTICE</span></div>
+    <div class="zh">視線之下</div>
+    <div class="bar"><i id="lbar"></i></div>
+    <p id="ltxt">載入引擎中…</p>
+    <div id="err"></div>
+  </div>
+</div>
+
+<div class="ov" id="start" hidden>
+  <div class="card">
+    <div class="logo">BENEATH <span>NOTICE</span></div>
+    <div class="zh">視線之下</div>
+    <p class="tag">一次失控的縮小實驗，你只剩 5 公分高。<br>家人就在樓上找你，但絕對不能被他們看見。</p>
+    <div class="row">
+      <button id="go">序章：地庫</button>
+      <button id="go1" class="ghost">第一章：牆內與廚房</button>
+      <div class="sel" id="qsel" role="group" aria-label="畫質">
+        <button data-q="high" class="on">高畫質</button><button data-q="med">中</button><button data-q="low">低</button>
+      </div>
+    </div>
+    <div class="keys">
+      <div><span>移動</span><span><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd></span></div>
+      <div><span>視角</span><span>滑鼠</span></div>
+      <div><span>跑</span><span><kbd>Shift</kbd></span></div>
+      <div><span>潛行</span><span><kbd>C</kbd></span></div>
+      <div><span>跳／攀爬時跳開</span><span><kbd>Space</kbd></span></div>
+      <div><span>換角色</span><span><kbd>Tab</kbd> <kbd>1</kbd>–<kbd>4</kbd></span></div>
+      <div><span>角色能力</span><span>左鍵／右鍵</span></div>
+      <div><span>疊羅漢</span><span><kbd>F</kbd></span></div>
+      <div><span>用 Prototype 救隊友</span><span><kbd>R</kbd></span></div>
+      <div><span>隱藏介面</span><span><kbd>H</kbd></span></div>
+    </div>
+    <div class="keys mkeys">
+      <div><span>移動（推到盡是跑）</span><span>左半邊拖動</span></div>
+      <div><span>轉視角</span><span>右半邊滑動</span></div>
+      <div><span>跳／潛行／換人／能力</span><span>右下按鈕</span></div>
+      <div><span>疊羅漢</span><span>「疊」按鈕</span></div>
+      <div><span>換角色</span><span>點右上頭像</span></div>
+    </div>
+    <div class="note"><span class="desk">序章原型 · 地庫實驗室 · 走向牆壁按住前進就會攀爬</span><span class="mob">序章原型 · 地庫實驗室 · 撞向牆壁並繼續前進就會攀爬</span></div>
+  </div>
+</div>
+
+<div class="ov" id="pause" hidden>
+  <div class="card">
+    <div class="logo" style="font-size:44px">暫停</div>
+    <p class="tag">點擊繼續。滑鼠會被鎖定用來轉視角，按 Esc 可以再次暫停。</p>
+    <div class="row">
+      <button id="resume">繼續</button>
+      <div class="sel" id="qsel2" role="group" aria-label="畫質">
+        <button data-q="high">高畫質</button><button data-q="med">中</button><button data-q="low">低</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="ov" id="end" hidden>
+  <div class="card">
+    <div class="zh" style="letter-spacing:.1em" id="endA">序章原型 · 完</div>
+    <div class="logo" style="font-size:clamp(34px,5vw,54px);margin-top:10px" id="endB">牆的另一邊</div>
+    <p class="tag" id="endC">失蹤三年的前拍檔帶你們走進牆內。下一站：廚房。</p>
+    <div class="stats">
+      <div><b id="st1">0:00</b><span>用時</span></div>
+      <div><b id="st2">0</b><span>被看見</span></div>
+      <div><b id="st3">0/3</b><span id="st3l">鈕扣電池</span></div>
+    </div>
+    <div class="row"><button id="again">再玩一次</button></div>
+  </div>
+</div>

@@ -1,0 +1,52 @@
+[
+ {
+  "click": "#go1",
+  "wait": 4000
+ },
+ {
+  "eval": "(async()=>{const b=window.__bn; for(let i=0;i<300 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,200)); return [b.LEVEL,b.state]})()"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; b.loadLevel('kitchen'); return 1})()",
+  "wait": 4500
+ },
+ {
+  "eval": "(async()=>{const b=window.__bn; for(let i=0;i<300 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,200)); return [b.LEVEL,b.state]})()"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; const L=b.leader; L.pos.set(60,0,-60); L.yaw=0; let i=0; for(const c of b.party) if(c!==L){i++; c.pos.set(60+i*4,0,-52-i*3); c.disp.copy(c.pos); c.queue=[];} b.cam.yaw=-0.6; b.cam.pitch=.25; b.cam.dist=40; for(let k=0;k<20;k++) b.step(1); b.toyFreeze('mom'); for(let k=0;k<50;k++) b.step(1); return {st:b.state, toy:b.chars.dad.frozen, hint:document.getElementById('hint').textContent}})()",
+  "wait": 200,
+  "shot": "t1_frozen"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; for(let k=0;k<110;k++){b.step(1); b.meter=0;} return {st:b.state, leader:b.leader.id, fetch:b.TOY.fetch&&b.TOY.fetch.mode, toast:document.getElementById('toast').textContent, pm:document.querySelector('#pm-dad small').textContent}})()"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; const L=b.leader; L.pos.set(-200,0,-60); for(let k=0;k<400;k++){b.step(1); b.meter=0; if(b.TOY.fetch&&b.TOY.fetch.mode==='carry'&&k>60) break;} b.cam.yaw=-2.2; b.cam.pitch=.1; b.cam.dist=60; L.pos.set(150,0,40); for(let k=0;k<30;k++){b.step(1);b.meter=0;} return {fetch:b.TOY.fetch&&b.TOY.fetch.mode, toyAt:b.chars.dad.toyAt, dad:b.chars.dad.pos.toArray().map(v=>+v.toFixed(1)), mom:b.mom.pos.toArray().map(v=>+v.toFixed(0))}})()",
+  "wait": 200,
+  "shot": "t2_carry"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; for(let k=0;k<600;k++){b.step(1); b.meter=0; if(!b.TOY.fetch) break;} return {fetch:!!b.TOY.fetch, toyAt:b.chars.dad.toyAt, dad:b.chars.dad.pos.toArray().map(v=>+v.toFixed(1)), km:b.KM.mode, pm:document.querySelector('#pm-dad small').textContent}})()"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; const L=b.leader; const d=b.chars.dad; L.pos.set(d.pos.x+2,1.2,d.pos.z+1); L.vel.set(0,0,0); b.cam.yaw=0.4; b.cam.pitch=.7; b.cam.dist=20; for(let k=0;k<45;k++){b.step(1); b.meter=0;} return {hint:document.getElementById('hint').textContent, rt:d.rescueT}})()",
+  "wait": 200,
+  "shot": "t3_box"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; for(let k=0;k<60;k++){b.step(1); b.meter=0;} return {dad:b.chars.dad.frozen, toast:document.getElementById('toast').textContent}})()",
+  "wait": 200,
+  "shot": "t4_rescued"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; b.switchTo(b.chars.sq); for(let k=0;k<5;k++) b.step(1); const L=b.leader; b.toyFreeze('kid'); for(let k=0;k<160;k++){b.step(1); b.meter=0;} const p0=b.PROTO; b.press('KeyR'); b.step(2); return {who:L.id, frozen:L.frozen, p0, p1:b.PROTO, cap:L.stamMax, leader:b.leader.id, toast:document.getElementById('toast').textContent, pm:document.querySelector('#pm-sq small').textContent}})()",
+  "wait": 200,
+  "shot": "t5_proto"
+ },
+ {
+  "eval": "(()=>{const b=window.__bn; b.switchTo(b.chars.sq); for(let k=0;k<5;k++) b.step(1); const L=b.leader; L.pos.set(-70,0,97); for(let k=0;k<20;k++){b.step(1); b.meter=0;} return {cap:L.stamMax, st:Math.round(L.stamina), toast:document.getElementById('toast').textContent}})()",
+  "wait": 200,
+  "shot": "t6_crumb"
+ }
+]
