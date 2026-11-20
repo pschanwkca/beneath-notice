@@ -301,7 +301,7 @@ function updCam(dt) {
   const hitT = rayFirst(o, dir, d + 1); const want = Math.max(1.6, Math.min(d, hitT - .9));
   cam.curD = want < cam.curD ? want : damp(cam.curD, want, 5, dt);
   camera.position.copy(o).addScaledVector(dir, cam.curD);
-  if (camera.position.y < .6) camera.position.y = .6;
+  const fl = zoneFloor(L.pos); if (camera.position.y < fl + .6) camera.position.y = fl + .6;
   camera.lookAt(o);
   if (cam.shake > .001) { camera.position.x += (Math.random() - .5) * cam.shake; camera.position.y += (Math.random() - .5) * cam.shake; cam.shake = Math.max(0, cam.shake - dt * 3); }
   bokeh.uniforms.focus.value = cam.curD;

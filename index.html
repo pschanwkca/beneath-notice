@@ -619,11 +619,13 @@ function genScales() {
 const BO = V3(28, -336, -229), HO = V3(-400, -340, -94);
 const ZONES = {}, ZL = []; let WORLD = false;
 function zoneDef(id, o) { const Z = Object.assign({ id, off: V3(), core: [], lv: null, fx: null, cols: [], lights: [], beams: [], dust: null, env: null, near: false, prepped: false }, o); ZONES[id] = Z; ZL.push(Z); return Z; }
-zoneDef('kitchen', { core: [[-312, 920, -12, 300, -250, 250], [-432, -312, -2, 40, -126, -74]], env: 'kitchen' });
+zoneDef('kitchen', { floor: 0, core: [[-312, 920, -12, 300, -250, 250], [-432, -312, -2, 40, -126, -74]], env: 'kitchen' });
 // peek: spots in other places from which you can see in (through a mouse hole) — draw this place too
-zoneDef('wall', { off: HO, core: [[-530, -312, -360, -2, -140, -52]], peek: [[-282, -140, -345, -250, -160, 10], [-312, -160, -12, 90, -200, 0]], env: 'hub' });
-zoneDef('basement', { off: BO, core: [[-312, 338, -360, -60, -549, 33], [-282, -160, -60, 150, -549, -245]], peek: [[-390, -312, -345, -295, -130, -50]], env: 'basement' });
+zoneDef('wall', { floor: HO.y + 4, off: HO, core: [[-530, -312, -360, -2, -140, -52]], peek: [[-282, -140, -345, -250, -160, 10], [-312, -160, -12, 90, -200, 0]], env: 'hub' });
+zoneDef('basement', { floor: BO.y, off: BO, core: [[-312, 338, -360, -60, -549, 33], [-282, -160, -60, 150, -549, -245]], peek: [[-390, -312, -345, -295, -130, -50]], env: 'basement' });
 function inZone(Z, x, y, z, m = 0) { for (const b of Z.core) if (x > b[0] - m && x < b[1] + m && y > b[2] - m && y < b[3] + m && z > b[4] - m && z < b[5] + m) return true; return false; }
+// floor height of the place a point is in (the kitchen sits at 0, the basement and the wall far below)
+function zoneFloor(p) { if (!WORLD) return 0; const Z = zoneAt(p, 2) || ZONES[LEVEL]; return Z ? Z.floor : 0; }
 function zoneAt(p, m = 0) { for (const Z of ZL) if (inZone(Z, p.x, p.y, p.z, m)) return Z; return null; }
 
 // ---------- building ----------
@@ -1409,12 +1411,12 @@ function buildParticles() {
   for (let i = 0; i < PN; i++) pdat.push({ life: 0, p: V3(), v: V3(), c: new THREE.Color(), s: 0, g: 0, drag: 0 });
 }
 let pIdx = 0;
-function emit(p, v, c, s, life, g = 300, drag = 0) { const d = pdat[pIdx = (pIdx + 1) % PN]; d.p.copy(p); d.v.copy(v); d.c.copy(c); d.s = s; d.life = d.max = life; d.g = g; d.drag = drag; }
+function emit(p, v, c, s, life, g = 300, drag = 0) { const d = pdat[pIdx = (pIdx + 1) % PN]; d.fl = zoneFloor(p) + .2; d.p.copy(p); d.v.copy(v); d.c.copy(c); d.s = s; d.life = d.max = life; d.g = g; d.drag = drag; }
 function updParticles(dt) {
   const P = parts.geometry.attributes.position.array, C = parts.geometry.attributes.color.array, S = parts.geometry.attributes.size.array;
   for (let i = 0; i < PN; i++) {
     const d = pdat[i];
-    if (d.life > 0) { d.life -= dt; d.v.y -= d.g * dt; d.v.multiplyScalar(1 - d.drag * dt); d.p.addScaledVector(d.v, dt); if (d.p.y < 0.2 && d.g > 0) { d.p.y = .2; d.v.y *= -.3; d.v.x *= .5; d.v.z *= .5; } }
+    if (d.life > 0) { d.life -= dt; d.v.y -= d.g * dt; d.v.multiplyScalar(1 - d.drag * dt); d.p.addScaledVector(d.v, dt); if (d.p.y < d.fl && d.g > 0) { d.p.y = d.fl; d.v.y *= -.3; d.v.x *= .5; d.v.z *= .5; } }
     const k = Math.max(0, d.life / (d.max || 1));
     P[i * 3] = d.p.x; P[i * 3 + 1] = d.p.y; P[i * 3 + 2] = d.p.z; C[i * 3] = d.c.r * k; C[i * 3 + 1] = d.c.g * k; C[i * 3 + 2] = d.c.b * k; S[i] = d.life > 0 ? d.s * (0.4 + k * .6) : 0;
   }
@@ -1905,7 +1907,7 @@ function updCam(dt) {
   const hitT = rayFirst(o, dir, d + 1); const want = Math.max(1.6, Math.min(d, hitT - .9));
   cam.curD = want < cam.curD ? want : damp(cam.curD, want, 5, dt);
   camera.position.copy(o).addScaledVector(dir, cam.curD);
-  if (camera.position.y < .6) camera.position.y = .6;
+  const fl = zoneFloor(L.pos); if (camera.position.y < fl + .6) camera.position.y = fl + .6;
   camera.lookAt(o);
   if (cam.shake > .001) { camera.position.x += (Math.random() - .5) * cam.shake; camera.position.y += (Math.random() - .5) * cam.shake; cam.shake = Math.max(0, cam.shake - dt * 3); }
   bokeh.uniforms.focus.value = cam.curD;
@@ -3080,7 +3082,7 @@ function sqScout() {
   const C = leader; if (!C || C.id !== 'sq' || STATE !== 'play') return;
   if (LEVEL !== 'kitchen') { toast('這裡沒有人，不用偵察'); return; }
   if (SCOUT.cd > 0) { toast(`偵察冷卻中（${Math.ceil(SCOUT.cd)} 秒）`); return; }
-  scoutCones(); const high = C.pos.y > 40; SCOUT.t = high ? 10 : 5; SCOUT.cd = 14; SND.zapUp(); if (NET.on) nsend({ t: 'scout', d: SCOUT.t });
+  scoutCones(); const high = C.pos.y - zoneFloor(C.pos) > 40; SCOUT.t = high ? 10 : 5; SCOUT.cd = 14; SND.zapUp(); if (NET.on) nsend({ t: 'scout', d: SCOUT.t });
   toast(high ? '在高處偵察：顯示她們的視線範圍 10 秒' : '偵察：顯示她們的視線範圍 5 秒（站高一點看得更久）', 3);
 }
 function updScout(dt) {

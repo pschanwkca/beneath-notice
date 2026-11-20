@@ -16,11 +16,13 @@
 const BO = V3(28, -336, -229), HO = V3(-400, -340, -94);
 const ZONES = {}, ZL = []; let WORLD = false;
 function zoneDef(id, o) { const Z = Object.assign({ id, off: V3(), core: [], lv: null, fx: null, cols: [], lights: [], beams: [], dust: null, env: null, near: false, prepped: false }, o); ZONES[id] = Z; ZL.push(Z); return Z; }
-zoneDef('kitchen', { core: [[-312, 920, -12, 300, -250, 250], [-432, -312, -2, 40, -126, -74]], env: 'kitchen' });
+zoneDef('kitchen', { floor: 0, core: [[-312, 920, -12, 300, -250, 250], [-432, -312, -2, 40, -126, -74]], env: 'kitchen' });
 // peek: spots in other places from which you can see in (through a mouse hole) — draw this place too
-zoneDef('wall', { off: HO, core: [[-530, -312, -360, -2, -140, -52]], peek: [[-282, -140, -345, -250, -160, 10], [-312, -160, -12, 90, -200, 0]], env: 'hub' });
-zoneDef('basement', { off: BO, core: [[-312, 338, -360, -60, -549, 33], [-282, -160, -60, 150, -549, -245]], peek: [[-390, -312, -345, -295, -130, -50]], env: 'basement' });
+zoneDef('wall', { floor: HO.y + 4, off: HO, core: [[-530, -312, -360, -2, -140, -52]], peek: [[-282, -140, -345, -250, -160, 10], [-312, -160, -12, 90, -200, 0]], env: 'hub' });
+zoneDef('basement', { floor: BO.y, off: BO, core: [[-312, 338, -360, -60, -549, 33], [-282, -160, -60, 150, -549, -245]], peek: [[-390, -312, -345, -295, -130, -50]], env: 'basement' });
 function inZone(Z, x, y, z, m = 0) { for (const b of Z.core) if (x > b[0] - m && x < b[1] + m && y > b[2] - m && y < b[3] + m && z > b[4] - m && z < b[5] + m) return true; return false; }
+// floor height of the place a point is in (the kitchen sits at 0, the basement and the wall far below)
+function zoneFloor(p) { if (!WORLD) return 0; const Z = zoneAt(p, 2) || ZONES[LEVEL]; return Z ? Z.floor : 0; }
 function zoneAt(p, m = 0) { for (const Z of ZL) if (inZone(Z, p.x, p.y, p.z, m)) return Z; return null; }
 
 // ---------- building ----------

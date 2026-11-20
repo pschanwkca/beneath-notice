@@ -168,7 +168,7 @@ function sqScout() {
   const C = leader; if (!C || C.id !== 'sq' || STATE !== 'play') return;
   if (LEVEL !== 'kitchen') { toast('這裡沒有人，不用偵察'); return; }
   if (SCOUT.cd > 0) { toast(`偵察冷卻中（${Math.ceil(SCOUT.cd)} 秒）`); return; }
-  scoutCones(); const high = C.pos.y > 40; SCOUT.t = high ? 10 : 5; SCOUT.cd = 14; SND.zapUp(); if (NET.on) nsend({ t: 'scout', d: SCOUT.t });
+  scoutCones(); const high = C.pos.y - zoneFloor(C.pos) > 40; SCOUT.t = high ? 10 : 5; SCOUT.cd = 14; SND.zapUp(); if (NET.on) nsend({ t: 'scout', d: SCOUT.t });
   toast(high ? '在高處偵察：顯示她們的視線範圍 10 秒' : '偵察：顯示她們的視線範圍 5 秒（站高一點看得更久）', 3);
 }
 function updScout(dt) {

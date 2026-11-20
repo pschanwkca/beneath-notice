@@ -1,0 +1,6 @@
+[
+ {"click": "#go", "wait": 1500},
+ {"eval": "(async()=>{const b=window.__bn; for(let i=0;i<60 && b.state!=='play';i++){ b.press('Space'); await new Promise(r=>setTimeout(r,200));} window.__NODET=true; for(let k=0;k<40;k++) b.step(1); return {info:b.info(), cam:[window.__bn.cam.curD.toFixed(1)]}})()", "wait": 500, "shot": "d1_basement_play"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; const L=b.leader; L.pos.set(-290,0,40).add(W.BO); L.vel.set(0,0,0); for(const F of b.party) if(F!==L){F.pos.copy(L.pos); F.pos.x+=4; F.disp.copy(F.pos); F.queue=[];} b.cam.yaw=2.4; b.cam.pitch=.2; for(let k=0;k<60;k++) b.step(1); return b.info()})()", "wait": 500, "shot": "d2_basement_floor"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; const L=b.leader; L.pos.set(40,4,15).add(W.HO); L.vel.set(0,0,0); for(const F of b.party) if(F!==L){F.pos.copy(L.pos); F.pos.x+=4; F.disp.copy(F.pos); F.queue=[];} b.cam.yaw=Math.PI/2+.4; b.cam.pitch=.25; for(let k=0;k<90;k++) b.step(1); return {lvl:b.LEVEL, info:b.info()}})()", "wait": 500, "shot": "d3_hub"}
+]

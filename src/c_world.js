@@ -499,12 +499,12 @@ function buildParticles() {
   for (let i = 0; i < PN; i++) pdat.push({ life: 0, p: V3(), v: V3(), c: new THREE.Color(), s: 0, g: 0, drag: 0 });
 }
 let pIdx = 0;
-function emit(p, v, c, s, life, g = 300, drag = 0) { const d = pdat[pIdx = (pIdx + 1) % PN]; d.p.copy(p); d.v.copy(v); d.c.copy(c); d.s = s; d.life = d.max = life; d.g = g; d.drag = drag; }
+function emit(p, v, c, s, life, g = 300, drag = 0) { const d = pdat[pIdx = (pIdx + 1) % PN]; d.fl = zoneFloor(p) + .2; d.p.copy(p); d.v.copy(v); d.c.copy(c); d.s = s; d.life = d.max = life; d.g = g; d.drag = drag; }
 function updParticles(dt) {
   const P = parts.geometry.attributes.position.array, C = parts.geometry.attributes.color.array, S = parts.geometry.attributes.size.array;
   for (let i = 0; i < PN; i++) {
     const d = pdat[i];
-    if (d.life > 0) { d.life -= dt; d.v.y -= d.g * dt; d.v.multiplyScalar(1 - d.drag * dt); d.p.addScaledVector(d.v, dt); if (d.p.y < 0.2 && d.g > 0) { d.p.y = .2; d.v.y *= -.3; d.v.x *= .5; d.v.z *= .5; } }
+    if (d.life > 0) { d.life -= dt; d.v.y -= d.g * dt; d.v.multiplyScalar(1 - d.drag * dt); d.p.addScaledVector(d.v, dt); if (d.p.y < d.fl && d.g > 0) { d.p.y = d.fl; d.v.y *= -.3; d.v.x *= .5; d.v.z *= .5; } }
     const k = Math.max(0, d.life / (d.max || 1));
     P[i * 3] = d.p.x; P[i * 3 + 1] = d.p.y; P[i * 3 + 2] = d.p.z; C[i * 3] = d.c.r * k; C[i * 3 + 1] = d.c.g * k; C[i * 3 + 2] = d.c.b * k; S[i] = d.life > 0 ? d.s * (0.4 + k * .6) : 0;
   }
