@@ -125,7 +125,7 @@ function buildGarage() {
   box(1180, 1190, 100, 270, 140, 300, metal, { col: false });
   box(1150, 1220, 250, 268, 120, 160, new THREE.MeshStandardMaterial({ color: 0x6a6e72, roughness: .5 }), { col: false });
   // ---- the car ----
-  buildCar(1150, 50);
+  buildCar(1150, 70);   // nosed up close to the garage door, leaving a walkway in front of the bench
   // ---- workbench along the back wall (top 90 cm above the floor) ----
   const BT = GY + 90; GS.benchY = BT;
   box(1180, 1440, BT - 8, BT, -260, -196, wood, { uv: 80 });
@@ -250,19 +250,41 @@ function buildCar(cx, cz) {
 }
 
 // ---------- the man: patrol, inspect, investigate ----------
+// the car fills the middle of the garage, so his round goes down one side, across the walkway
+// in front of the bench, and down the other side (never through the car)
 const AG_PATH = [
-  { x: 1010, z: -140, stop: 3, look: [950, 120, 140], line: 'shelf' },
-  { x: 1010, z: 200 },
-  { x: 1290, z: 220, stop: 2.6, look: [1150, 60, 150], line: 'car' },
-  { x: 1320, z: 40 },
-  { x: 1300, z: -150, stop: 4, look: [1300, GY + 90, -240], line: 'bench' },
-  { x: 1150, z: -170 }
+  { x: 1000, z: -140, stop: 3, look: [950, 120, 140], line: 'shelf' },
+  { x: 1000, z: 236, stop: 2.4, look: [1150, 60, 160], line: 'car' },
+  { x: 1000, z: -176 },
+  { x: 1300, z: -176, stop: 4, look: [1300, GY + 90, -240], line: 'bench' },
+  { x: 1320, z: 236, stop: 2.4, look: [1150, 60, 160] },
+  { x: 1320, z: -176 },
+  { x: 1000, z: -176 }
 ];
+// 2D segment vs rectangle (slab test)
+function segRect(ax, az, bx, bz, x0, x1, z0, z1) {
+  let t0 = 0, t1 = 1; const dx = bx - ax, dz = bz - az;
+  for (const [p, q] of [[-dx, ax - x0], [dx, x1 - ax], [-dz, az - z0], [dz, z1 - az]]) {
+    if (p === 0) { if (q < 0) return false; continue; } const r = q / p;
+    if (p < 0) { if (r > t1) return false; if (r > t0) t0 = r; } else { if (r < t0) return false; if (r < t1) t1 = r; }
+  }
+  return true;
+}
+// where to head next on the way to (tx, tz) without walking into the car: up his own side, across the front, down the other side
+const CAR_M = 20;
+function agentWay(P, tx, tz) {
+  const C = GS.car, x0 = C.x0 - CAR_M, x1 = C.x1 + CAR_M, z0 = C.z0 - CAR_M, z1 = C.z1 + CAR_M, cx = (C.x0 + C.x1) / 2, zf = z0 - 6;
+  if (tx > x0 && tx < x1 && tz > z0 && tz < z1) { tx = tx < cx ? x0 - 4 : x1 + 4; }   // the spot is under/beside the car: stop at its side
+  if (!segRect(P.x, P.z, tx, tz, x0 + 1, x1 - 1, z0 + 1, z1 - 1)) return [tx, tz];
+  const myX = P.x < cx ? x0 - 6 : x1 + 6, toX = tx < cx ? x0 - 6 : x1 + 6;
+  if (P.z > zf + 3) return [myX, zf];
+  return [toX, zf];
+}
 const AG_LINES = { shelf: '教授的東西……會不會藏在這些箱裡？', car: '車裡面也查過了。', bench: '這張工作枱……他以前一定在這裡做實驗。' };
 function agentSay(k) { if (GS.said[k] && T - GS.said[k] < 40) return; GS.said[k] = T; sayW('Origin Dynamics 職員', AG_LINES[k] || k, '#9fb3c8', 3); }
 function updAgent(dt) {
   const H = GS.agent; if (!H) return; const P = H.pos; let moveD = 0;
-  const walkTo = (tx, tz, sp) => { const dx = tx - P.x, dz = tz - P.z, d = Math.hypot(dx, dz); const s = sp * dt; if (d < s + .5) { P.x = tx; P.z = tz; moveD = d; return true; } P.x += dx / d * s; P.z += dz / d * s; moveD = s; H.yaw = angDamp(H.yaw, Math.atan2(dx, dz), 5, dt); return false; };
+  const walkTo = (tx0, tz0, sp) => { const [tx, tz] = agentWay(P, tx0, tz0); const fin = tx === tx0 && tz === tz0; const dx = tx - P.x, dz = tz - P.z, d = Math.hypot(dx, dz); const s = sp * dt; if (d < s + .5) { P.x = tx; P.z = tz; moveD = d; return fin; } P.x += dx / d * s; P.z += dz / d * s; moveD = s; H.yaw = angDamp(H.yaw, Math.atan2(dx, dz), 5, dt); return false; };
   if (GS.mode === 'patrol') {
     const n = AG_PATH[GS.node % AG_PATH.length];
     if (walkTo(n.x, n.z, 52)) { if (n.stop) { GS.mode = 'look'; GS.wait = n.stop; GS.look = V3(...n.look); if (n.line && rnd() < .5) agentSay(n.line); } GS.node++; }
@@ -277,8 +299,8 @@ function updAgent(dt) {
     if (GS.trackT <= 0) { GS.mode = 'look'; GS.wait = 2.5; GS.look = tp.clone(); if (!GS.said.lost || T - GS.said.lost > 30) { GS.said.lost = T; sayW('Origin Dynamics 職員', '……是老鼠嗎？', '#9fb3c8', 2.4); } }
   }
   // keep him out of the car
-  const C = GS.car; if (P.x > C.x0 - 22 && P.x < C.x1 + 22 && P.z > C.z0 - 22 && P.z < C.z1 + 22) { const dl = P.x - (C.x0 - 22), dr = C.x1 + 22 - P.x, db = P.z - (C.z0 - 22), df = C.z1 + 22 - P.z; const m = Math.min(dl, dr, db, df); if (m === dl) P.x = C.x0 - 22; else if (m === dr) P.x = C.x1 + 22; else if (m === db) P.z = C.z0 - 22; else P.z = C.z1 + 22; }
-  P.x = clamp(P.x, 950, 1430); P.z = clamp(P.z, -180, 270); P.y = GY;
+  const C = GS.car, M = CAR_M - 2; if (P.x > C.x0 - M && P.x < C.x1 + M && P.z > C.z0 - M && P.z < C.z1 + M) { const dl = P.x - (C.x0 - M), dr = C.x1 + M - P.x, db = P.z - (C.z0 - M), df = C.z1 + M - P.z; const m = Math.min(dl, dr, db, df); if (m === dl) P.x = C.x0 - M; else if (m === dr) P.x = C.x1 + M; else if (m === db) P.z = C.z0 - M; else P.z = C.z1 + M; }
+  P.x = clamp(P.x, 950, 1430); P.z = clamp(P.z, -182, 270); P.y = GY;
   H.aim.lerp(H.aimT, 1 - Math.exp(-3 * dt));
   agentPose(H, moveD, dt);
 }
