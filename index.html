@@ -127,7 +127,32 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--fain
 .ch.lock{cursor:default;opacity:.46;transform:none;background:transparent;border-style:dashed}
 .ch.lock small{color:var(--dim)}
 @media (max-height:520px){.ch{padding:10px 12px}.ch b{font-size:15px;margin:3px 0 4px}.ch em{font-size:11px}}
-.pcard{max-width:520px}
+.pcard{max-width:520px;max-height:94vh;overflow-y:auto;overscroll-behavior:contain}
+.ch small i{font-style:normal;margin-left:8px;padding:1px 7px;border-radius:99px;border:1px solid rgba(110,220,230,.55);color:var(--cyan);letter-spacing:.08em;font-size:10px}
+.ch.tst{border-color:rgba(110,220,230,.28)}
+.mpact.chfoot{justify-content:space-between;padding-top:4px}
+body.paused #chap{opacity:0!important}
+.tsw{display:inline-flex;align-items:center;gap:9px;cursor:pointer;font:600 13px "Noto Sans TC";color:var(--ink);user-select:none}
+.tsw input{position:absolute;opacity:0;pointer-events:none}
+.tsw i{position:relative;width:36px;height:20px;border-radius:99px;background:rgba(245,240,230,.14);border:1px solid var(--faint);transition:background .18s,border-color .18s;flex:none}
+.tsw i::after{content:'';position:absolute;left:2px;top:2px;width:14px;height:14px;border-radius:50%;background:var(--dim);transition:transform .18s,background .18s}
+.tsw input:checked+i{background:rgba(110,220,230,.25);border-color:rgba(110,220,230,.7)}
+.tsw input:checked+i::after{transform:translateX(16px);background:var(--cyan)}
+.tsw input:focus-visible+i{outline:2px solid var(--cyan);outline-offset:2px}
+.tsw.sm{font-size:12px;font-weight:500;color:var(--dim)}
+.ptest{max-width:460px;margin:16px auto 0;padding-top:14px;border-top:1px dashed rgba(110,220,230,.35);text-align:left}
+.pth{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.pth b{font:700 14px "Noto Sans TC";color:var(--cyan);letter-spacing:.08em}
+.pth span{font-size:11px;color:var(--dim);line-height:1.5}
+.ptw{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.ptw .grp{grid-column:1/-1;font:600 10px "Noto Sans TC";letter-spacing:.2em;color:var(--amber);margin:6px 0 0}
+.ptw button{min-height:0;padding:7px 8px;border-radius:10px;font:500 12px "Noto Sans TC";text-align:left;box-shadow:none}
+.ptt{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin-top:12px}
+.ptt button{margin-left:auto}
+.testchip{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:6;font:600 11px "Noto Sans TC";letter-spacing:.14em;color:var(--cyan);padding:3px 12px;border-radius:99px;border:1px solid rgba(110,220,230,.5);background:rgba(8,12,16,.55);pointer-events:none}
+.testchip[hidden]{display:none}
+body.paused .testchip{display:none}
+html.touch .testchip{bottom:auto;top:8px}
 body.paused .hud{opacity:0}
 #pause{background:radial-gradient(ellipse at 50% 50%,rgba(7,9,12,.55),rgba(7,9,12,.88))}
 .ploc{margin:6px 0 0;font:600 13px "Noto Sans TC";letter-spacing:.06em;color:var(--amber)}
@@ -426,11 +451,13 @@ html.touch .mpchip{bottom:auto;top:62px}
   </div>
 </div>
 
+<div class="testchip" id="testChip" hidden>測試模式</div>
+
 <div class="ov" id="chaps" hidden>
   <div class="rbox panel cbox">
     <div class="mph"><b>章節</b><span id="chapsN"></span></div>
     <div class="clist" id="chapsList"></div>
-    <div class="mpact"><button id="chapsClose" class="ghost small">關閉</button></div>
+    <div class="mpact chfoot"><label class="tsw" title="全部章節開放，進度不會儲存；暫停選單會多出測試工具"><input type="checkbox" id="testOn"><i></i><span>測試模式</span></label><button id="chapsClose" class="ghost small">關閉</button></div>
   </div>
 </div>
 
@@ -454,6 +481,15 @@ html.touch .mpchip{bottom:auto;top:62px}
       <button class="ghost" id="pauseHelp"><b>操作說明</b><small>按鍵和每隻角色的能力</small></button>
       <button class="ghost" id="pauseCp"><b>回到存檔點</b><small>卡住了？由最近的存檔點再來</small></button>
       <button class="ghost" id="pauseTitle"><b>返回主畫面</b><small id="pauseTitleS">進度會由章節開頭重新開始</small></button>
+    </div>
+    <div class="ptest" id="pauseTest" hidden>
+      <div class="pth"><b>測試工具</b><span>跳到這些位置不會改變任務進度；要由章節開頭開始，請用主畫面的「選擇章節」</span></div>
+      <div class="ptw" id="testWarps"></div>
+      <div class="ptt">
+        <label class="tsw sm"><input type="checkbox" id="tNodet"><i></i><span>不會被發現</span></label>
+        <label class="tsw sm"><input type="checkbox" id="tStam"><i></i><span>無限體力</span></label>
+        <button class="ghost small" id="tAll">全部角色加入隊伍</button>
+      </div>
     </div>
     <div class="pset">
       <span>畫質</span>
@@ -871,7 +907,7 @@ function zoneTick(dt) {
   if (leader && mine(leader) && (STATE === 'play' || STATE === 'frozen')) {
     const cur = ZONES[LEVEL]; if (!cur || !inZone(cur, lp.x, lp.y, lp.z, 2)) { const nz = zoneAt(lp); if (nz && nz.id !== LEVEL) enterZone(nz.id); }
   }
-  updNpcWalk(dt); updBanner(dt); updSecCam(dt); updGarageWorld(dt); updYardWorld(dt); ncTick(dt);
+  updNpcWalk(dt); updBanner(dt); updSecCam(dt); updGarageWorld(dt); updYardWorld(dt); ncTick(dt); testTick();
 }
 // a place's rules take over (no loading, nothing moves)
 function enterZone(id, quiet) {
@@ -3569,7 +3605,7 @@ function isUnlocked(id) { const r = ROSTER.find(q => q.id === id); return !!r &&
 function unlockedCount() { return ROSTER.filter(r => isUnlocked(r.id)).length; }
 // single player progress unlocks characters for online games
 function unlockKey(key) {
-  if (NET.on || UNL[key]) return; UNL[key] = 1;
+  if (NET.on || UNL[key] || TEST.on) return; UNL[key] = 1;
   try { localStorage.setItem('bn_unlock_v1', JSON.stringify(UNL)); } catch (e) { }
   for (const r of ROSTER) if (r.key === key) UNLQ.push(r.id);
   if (!UNLQ.busy) { UNLQ.busy = true; setTimeout(nextUnlock, WC.banner > 0 ? WC.banner * 1000 + 400 : 300); }
@@ -3612,6 +3648,7 @@ function pauseRefresh() {
   $('pauseRosterN').textContent = `已解鎖 ${unlockedCount()} / ${ROSTER.length}`;
   $('pauseTitle').hidden = NET.on; $('pauseTitle').classList.remove('warn'); $('pauseTitleS').textContent = '進度會由章節開頭重新開始'; pauseTitleArm = 0;
   $('pauseCp').querySelector('small').textContent = NET.on ? '卡住了？只會把你自己送回存檔點' : '卡住了？由最近的存檔點再來';
+  testPauseRefresh();
 }
 let pauseTitleArm = 0;
 $('pauseRoster').addEventListener('click', () => openRoster());
@@ -3641,22 +3678,30 @@ function openHelp() {
 // ---------- chapter list (title screen) ----------
 const CHAPS = [
   { n: '序章', t: '地庫實驗室', d: '縮小實驗失控。由工作枱爬到地上，找出路。', go: () => startGame(0) },
-  { n: '第一、二章', t: '牆內・廚房・客廳', d: '穿過牆內的老鼠洞，避開太太、女兒和貓。', go: () => startGame(1) },
+  { n: '第一章', t: '牆內與廚房', d: '穿過牆內的老鼠洞，避開太太、女兒和貓，從雪櫃底拿回核心。', go: () => startGame(1) },
+  { n: '第二章', t: '客廳', d: '核心的光越來越弱。打開往客廳的門，拿遙控器的電池。', key: 'ch1', lock: '完成第一章解鎖', go: () => startChapter2() },
   { n: '第三章', t: '車房', d: 'Origin Dynamics 的人在搜車房。修好機座，從狗門逃出去。', key: 'ch2', lock: '完成第二章解鎖', go: () => startChapter('garage') },
   { n: '第四章', t: '後園與鄰居家', d: '穿過圍欄、避開陳伯的狗，到陽光房找控制晶片。', key: 'ch3', lock: '完成第三章解鎖', go: () => startChapter('yard') },
   { n: '第五章', t: '馬路', d: '製作中', future: true }
 ];
-function startChapter(name) { $('start').hidden = true; playT = 0; fails = 0; requestLock(); loadLevel(name); }
+function startChapter(name, opt) { $('start').hidden = true; $('chaps').hidden = true; playT = 0; fails = 0; requestLock(); return loadLevel(name, opt); }
+// chapter two starts in the kitchen, with the core already back at the mouse hole
+function startChapter2() {
+  return startChapter('kitchen', { chapter: '第二章', title: '客廳', after() {
+    KS.coreGot = true; KS.carried = false; KS.coreDrop = null; KS.home = true; KS.ch2 = true; KS.core.position.set(-306, 1.6, -100);
+    QUESTS = SP_Q2; setQuest(0); setTimeout(() => chapterBanner('第二章', '客廳'), 900);
+  } });
+}
 function openChapters() {
   const L = $('chapsList'); L.innerHTML = '';
   for (const c of CHAPS) {
-    const open = !c.future && (!c.key || !!UNL[c.key]); const b = document.createElement('button');
-    b.className = 'ch' + (open ? '' : ' lock'); b.disabled = !open;
-    b.innerHTML = `<small>${c.n}</small><b>${c.t}</b><em>${open ? c.d : c.future ? '製作中' : c.lock}</em>`;
+    const real = !c.future && (!c.key || !!UNL[c.key]), open = !c.future && (real || TEST.on); const b = document.createElement('button');
+    b.className = 'ch' + (open ? '' : ' lock') + (open && !real ? ' tst' : ''); b.disabled = !open;
+    b.innerHTML = `<small>${c.n}${open && !real ? '<i>測試</i>' : ''}</small><b>${c.t}</b><em>${open ? c.d : c.future ? '製作中' : c.lock}</em>`;
     if (open) b.addEventListener('click', () => { $('chaps').hidden = true; audioInit(); c.go(); });
     L.appendChild(b);
   }
-  $('chapsN').textContent = `${CHAPS.filter(c => !c.future && (!c.key || UNL[c.key])).length} / ${CHAPS.filter(c => !c.future).length} 已解鎖`;
+  $('chapsN').textContent = TEST.on ? '測試模式：全部章節開放，進度不會儲存' : `${CHAPS.filter(c => !c.future && (!c.key || UNL[c.key])).length} / ${CHAPS.filter(c => !c.future).length} 已解鎖`; $('testOn').checked = TEST.on;
   $('chaps').hidden = false;
 }
 $('goCh').addEventListener('click', () => { audioInit(); openChapters(); });
@@ -3982,15 +4027,15 @@ function tubeM(pts, r, mat, seg = 60) { const c = new THREE.CatmullRomCurve3(pts
 // ---------- chapter card ----------
 // Starting a game somewhere (title → chapter, or joining an online room). The whole world is already
 // built at start-up, so this only places everyone; moving between places later never comes back here.
-async function loadLevel(name) {
+async function loadLevel(name, opt) {
   window.__loads = (window.__loads || 0) + 1; if (NET.on && NET.host) nsend({ t: 'lvl', n: name });
   STATE = 'loading'; const D = LEVELS[name];
-  $('lvlA').textContent = D.chapter; $('lvlB').textContent = D.title; $('lvl').hidden = false; requestAnimationFrame(() => $('lvl').classList.add('on'));
+  $('lvlA').textContent = opt && opt.chapter || D.chapter; $('lvlB').textContent = opt && opt.title || D.title; $('lvl').hidden = false; requestAnimationFrame(() => $('lvl').classList.add('on'));
   $('end').hidden = true; $('dead').classList.remove('on');
   await new Promise(r => setTimeout(r, 700));
   if (!WORLD) await buildWorld();
   loadingNext = false; enterZone(name, true); LP.snap = true; meter = 0; trail = []; grade.uniforms.uCrys.value = 0;
-  stkClear(); toyUnfreezeAll(); D.spawn(); netAfterSpawn();
+  stkClear(); toyUnfreezeAll(); D.spawn(); if (opt && opt.after) opt.after(); netAfterSpawn();
   for (const C of party) { C.lastTrail = C.pos.clone(); C.disp = C.pos.clone(); C.queue = []; C.vel.set(0, 0, 0); C.climbing = false; C.mantle = null; C.tumble = 0; C.grounded = true; C.offK = 0; }
   assignGaps(); cam.tgt.set(leader.pos.x, leader.pos.y + leader.h * .8, leader.pos.z); cam.curD = cam.dist;
   for (const id in chars) animChar(chars[id], .016);
@@ -5833,6 +5878,82 @@ function ncHint(L) {
   if (L.id === 'tort' && L.shell) return `縮在殼裡：不會被看見，隊友可以踩上來 · ${TOUCH ? '再按「殼」' : '再按左鍵'}出來`;
   return '';
 }
+// =====================================================================
+//  TEST MODE — for trying any chapter without playing up to it
+//  · turned on from the chapter list on the title screen (or ?test in the address)
+//  · every chapter can be started; nothing you unlock while testing is saved
+//  · the pause menu gets test tools: jump to key spots in the world, never get seen,
+//    endless stamina, and bring the whole cast into the single-player team
+// =====================================================================
+const TEST = (() => { let s = {}; try { s = JSON.parse(localStorage.getItem('bn_test_v1') || '{}'); } catch (e) { } if (/[?&]test\b/.test(location.search)) s.on = true; return { on: !!s.on, nodet: !!s.nodet, stam: !!s.stam }; })();
+function testSave() { try { localStorage.setItem('bn_test_v1', JSON.stringify(TEST)); } catch (e) { } }
+function testApply() {
+  window.__NODET = TEST.on && TEST.nodet;
+  $('testChip').textContent = '測試模式' + (TEST.on && TEST.nodet ? ' · 不會被發現' : '') + (TEST.on && TEST.stam ? ' · 無限體力' : '');
+}
+// key spots, grouped by chapter (world coordinates; the hub and basement sit at an offset)
+const WARPS = [
+  ['序章', '地庫・工作枱', () => V3(BO.x + CPS_B[0][0], BO.y + CPS_B[0][1], BO.z + CPS_B[0][2]), 0],
+  ['序章', '地庫・老鼠洞', () => V3(BO.x - 282, BO.y, BO.z + 226), Math.PI / 2],
+  ['第一章', '牆內', () => V3(HO.x + 60, HO.y + 4, HO.z + 15), Math.PI / 2],
+  ['第一章', '廚房・老鼠洞', () => V3(-286, 0, -100), -Math.PI / 2],
+  ['第一章', '雪櫃前（核心）', () => V3(191, 0, -150), 0],
+  ['第二章', '客廳門口', () => V3(300, 0, -10), -Math.PI / 2],
+  ['第二章', '遙控器旁', () => V3(LIV.remote.cx - 30, 0, LIV.remote.cz + 20), 0],
+  ['第二章', '通風口', () => V3(880, 0, -200), -Math.PI / 2],
+  ['第三章', '車房・風管出口', () => V3(978, GY, -196), -Math.PI / 2],
+  ['第三章', '工作枱上', () => V3(1300, GS.benchY, -205), Math.PI],
+  ['第三章', '狗門', () => V3(1430, GY, 105), -Math.PI / 2],
+  ['第四章', '後園', () => V3(1480, GY, 105), -Math.PI / 2],
+  ['第四章', '圍欄爛板', () => V3(2085, GY, 109), -Math.PI / 2],
+  ['第四章', '陽光房', () => V3(2600, DECK, 100), -Math.PI / 2],
+  ['第四章', '書枱（晶片）', () => V3(2716, YS.chipP.y, 140), Math.PI]
+];
+function testWarp(w) {
+  if (NET.on || !WORLD || (STATE !== 'play' && STATE !== 'fail')) return;
+  const p = w[2](); stkClear(); toyUnfreezeAll();
+  const fx = -Math.sin(w[3]), fz = -Math.cos(w[3]);
+  party.forEach((C, i) => {
+    const b = i ? -1.2 - Math.floor((i - 1) / 2) * 1.6 : 0, s = i ? (i % 2 ? -1 : 1) * 3 : 0;
+    C.pos.set(p.x + fx * b * 3 - fz * s, p.y, p.z + fz * b * 3 + fx * s); C.vel.set(0, 0, 0);
+    C.climbing = false; C.mantle = null; C.roost = null; C.shell = false; C.hop = null; C.tumble = 0; C.grounded = true; C.crouch = false;
+    C.state = 'idle'; C.queue = []; C.qst = 'idle'; C.yaw = w[3] + Math.PI; if (C.disp) C.disp.copy(C.pos); C.lastTrail = C.pos.clone(); C.offK = 0;
+  });
+  trail = []; meter = 0; cam.yaw = w[3]; cam.pitch = .14; cam.tgt.set(leader.pos.x, leader.pos.y + leader.h * .8, leader.pos.z); cam.curD = cam.dist;
+  if (STATE === 'fail') STATE = 'play';
+  resume(); toast(`測試：跳到「${w[1]}」`, 2.2);
+}
+// everyone in the cast joins the single-player team, standing round the leader
+function testAll() {
+  if (NET.on || STATE !== 'play') return; const L = leader; let n = 0;
+  for (const id of IDS) {
+    const K = chars[id]; if (party.includes(K)) continue; n++;
+    const a = n * 1.1; K.pos.set(L.pos.x + Math.sin(a) * 6, L.pos.y, L.pos.z + Math.cos(a) * 6); K.yaw = L.yaw; K.state = 'idle'; K.shell = false; K.roost = null;
+    if (id === 'bat') NC.batT = 99; if (id === 'tort') NC.tortT = 99;
+    crewJoin(id, true);
+  }
+  toast(n ? `測試：${n} 隻角色加入隊伍（按數字鍵或點頭像切換）` : '全部角色已經在隊伍裡', 3);
+}
+function testTick() {
+  const chip = TEST.on && !NET.on && STATE !== 'title'; if ($('testChip').hidden === chip) $('testChip').hidden = !chip;
+  if (!TEST.on || NET.on) return;
+  if (TEST.stam) for (const C of party) C.stamina = C.stamMax || 100;
+}
+function testPauseRefresh() {
+  const show = TEST.on && !NET.on && !!WORLD && STATE !== 'title'; $('pauseTest').hidden = !show; if (!show) return;
+  $('tNodet').checked = TEST.nodet; $('tStam').checked = TEST.stam;
+  const box = $('testWarps'); if (box.childElementCount) return;
+  let g = '';
+  for (const w of WARPS) {
+    if (w[0] !== g) { g = w[0]; const h = document.createElement('div'); h.className = 'grp'; h.textContent = g; box.appendChild(h); }
+    const b = document.createElement('button'); b.className = 'ghost'; b.textContent = w[1]; b.addEventListener('click', () => testWarp(w)); box.appendChild(b);
+  }
+}
+$('testOn').addEventListener('change', e => { TEST.on = e.target.checked; testSave(); testApply(); openChapters(); });
+$('tNodet').addEventListener('change', e => { TEST.nodet = e.target.checked; testSave(); testApply(); });
+$('tStam').addEventListener('change', e => { TEST.stam = e.target.checked; testSave(); testApply(); });
+$('tAll').addEventListener('click', () => { testAll(); });
+testApply();
 
 // =====================================================================
 //  ONLINE CO-OP  (1–4 players, peer-to-peer over WebRTC — no game server)
@@ -6230,7 +6351,7 @@ $('mpCopy').addEventListener('click', () => { const l = mpLink(); (navigator.cli
 (() => { const m = location.search.match(/[?&]room=([A-Za-z0-9]{4})/); if (m) NET.autoJoin = m[1].toUpperCase(); })();
 requestAnimationFrame(frame);
 init().catch(e => { console.error(e); $('err').textContent = '載入失敗：' + (e && e.stack || e); });
-if (location.hash === '#dev') window.__bn = { scene, THREE, NC, batPing, tortShell, crewJoin, hideK, startGame, startChapter, openChapters, step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT, GS, YS, DECK, GY, WC, ventOpen, latchOpen, mpMarker, zoneFloor, KS }; }, info: () => ({ fps: $('fps').textContent, state: STATE, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
+if (location.hash === '#dev') window.__bn = { scene, THREE, pause, TEST, testWarp, WARPS, testAll, startChapter2, NC, batPing, tortShell, crewJoin, hideK, startGame, startChapter, openChapters, step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT, GS, YS, DECK, GY, WC, ventOpen, latchOpen, mpMarker, zoneFloor, KS }; }, info: () => ({ fps: $('fps').textContent, state: STATE, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
 </script>
 </body>
 </html>

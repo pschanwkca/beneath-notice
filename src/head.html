@@ -127,7 +127,32 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--fain
 .ch.lock{cursor:default;opacity:.46;transform:none;background:transparent;border-style:dashed}
 .ch.lock small{color:var(--dim)}
 @media (max-height:520px){.ch{padding:10px 12px}.ch b{font-size:15px;margin:3px 0 4px}.ch em{font-size:11px}}
-.pcard{max-width:520px}
+.pcard{max-width:520px;max-height:94vh;overflow-y:auto;overscroll-behavior:contain}
+.ch small i{font-style:normal;margin-left:8px;padding:1px 7px;border-radius:99px;border:1px solid rgba(110,220,230,.55);color:var(--cyan);letter-spacing:.08em;font-size:10px}
+.ch.tst{border-color:rgba(110,220,230,.28)}
+.mpact.chfoot{justify-content:space-between;padding-top:4px}
+body.paused #chap{opacity:0!important}
+.tsw{display:inline-flex;align-items:center;gap:9px;cursor:pointer;font:600 13px "Noto Sans TC";color:var(--ink);user-select:none}
+.tsw input{position:absolute;opacity:0;pointer-events:none}
+.tsw i{position:relative;width:36px;height:20px;border-radius:99px;background:rgba(245,240,230,.14);border:1px solid var(--faint);transition:background .18s,border-color .18s;flex:none}
+.tsw i::after{content:'';position:absolute;left:2px;top:2px;width:14px;height:14px;border-radius:50%;background:var(--dim);transition:transform .18s,background .18s}
+.tsw input:checked+i{background:rgba(110,220,230,.25);border-color:rgba(110,220,230,.7)}
+.tsw input:checked+i::after{transform:translateX(16px);background:var(--cyan)}
+.tsw input:focus-visible+i{outline:2px solid var(--cyan);outline-offset:2px}
+.tsw.sm{font-size:12px;font-weight:500;color:var(--dim)}
+.ptest{max-width:460px;margin:16px auto 0;padding-top:14px;border-top:1px dashed rgba(110,220,230,.35);text-align:left}
+.pth{display:flex;flex-direction:column;gap:2px;margin-bottom:10px}
+.pth b{font:700 14px "Noto Sans TC";color:var(--cyan);letter-spacing:.08em}
+.pth span{font-size:11px;color:var(--dim);line-height:1.5}
+.ptw{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}
+.ptw .grp{grid-column:1/-1;font:600 10px "Noto Sans TC";letter-spacing:.2em;color:var(--amber);margin:6px 0 0}
+.ptw button{min-height:0;padding:7px 8px;border-radius:10px;font:500 12px "Noto Sans TC";text-align:left;box-shadow:none}
+.ptt{display:flex;flex-wrap:wrap;align-items:center;gap:10px 18px;margin-top:12px}
+.ptt button{margin-left:auto}
+.testchip{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:6;font:600 11px "Noto Sans TC";letter-spacing:.14em;color:var(--cyan);padding:3px 12px;border-radius:99px;border:1px solid rgba(110,220,230,.5);background:rgba(8,12,16,.55);pointer-events:none}
+.testchip[hidden]{display:none}
+body.paused .testchip{display:none}
+html.touch .testchip{bottom:auto;top:8px}
 body.paused .hud{opacity:0}
 #pause{background:radial-gradient(ellipse at 50% 50%,rgba(7,9,12,.55),rgba(7,9,12,.88))}
 .ploc{margin:6px 0 0;font:600 13px "Noto Sans TC";letter-spacing:.06em;color:var(--amber)}
@@ -426,11 +451,13 @@ html.touch .mpchip{bottom:auto;top:62px}
   </div>
 </div>
 
+<div class="testchip" id="testChip" hidden>測試模式</div>
+
 <div class="ov" id="chaps" hidden>
   <div class="rbox panel cbox">
     <div class="mph"><b>章節</b><span id="chapsN"></span></div>
     <div class="clist" id="chapsList"></div>
-    <div class="mpact"><button id="chapsClose" class="ghost small">關閉</button></div>
+    <div class="mpact chfoot"><label class="tsw" title="全部章節開放，進度不會儲存；暫停選單會多出測試工具"><input type="checkbox" id="testOn"><i></i><span>測試模式</span></label><button id="chapsClose" class="ghost small">關閉</button></div>
   </div>
 </div>
 
@@ -454,6 +481,15 @@ html.touch .mpchip{bottom:auto;top:62px}
       <button class="ghost" id="pauseHelp"><b>操作說明</b><small>按鍵和每隻角色的能力</small></button>
       <button class="ghost" id="pauseCp"><b>回到存檔點</b><small>卡住了？由最近的存檔點再來</small></button>
       <button class="ghost" id="pauseTitle"><b>返回主畫面</b><small id="pauseTitleS">進度會由章節開頭重新開始</small></button>
+    </div>
+    <div class="ptest" id="pauseTest" hidden>
+      <div class="pth"><b>測試工具</b><span>跳到這些位置不會改變任務進度；要由章節開頭開始，請用主畫面的「選擇章節」</span></div>
+      <div class="ptw" id="testWarps"></div>
+      <div class="ptt">
+        <label class="tsw sm"><input type="checkbox" id="tNodet"><i></i><span>不會被發現</span></label>
+        <label class="tsw sm"><input type="checkbox" id="tStam"><i></i><span>無限體力</span></label>
+        <button class="ghost small" id="tAll">全部角色加入隊伍</button>
+      </div>
     </div>
     <div class="pset">
       <span>畫質</span>

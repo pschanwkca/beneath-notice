@@ -26,15 +26,15 @@ function tubeM(pts, r, mat, seg = 60) { const c = new THREE.CatmullRomCurve3(pts
 // ---------- chapter card ----------
 // Starting a game somewhere (title → chapter, or joining an online room). The whole world is already
 // built at start-up, so this only places everyone; moving between places later never comes back here.
-async function loadLevel(name) {
+async function loadLevel(name, opt) {
   window.__loads = (window.__loads || 0) + 1; if (NET.on && NET.host) nsend({ t: 'lvl', n: name });
   STATE = 'loading'; const D = LEVELS[name];
-  $('lvlA').textContent = D.chapter; $('lvlB').textContent = D.title; $('lvl').hidden = false; requestAnimationFrame(() => $('lvl').classList.add('on'));
+  $('lvlA').textContent = opt && opt.chapter || D.chapter; $('lvlB').textContent = opt && opt.title || D.title; $('lvl').hidden = false; requestAnimationFrame(() => $('lvl').classList.add('on'));
   $('end').hidden = true; $('dead').classList.remove('on');
   await new Promise(r => setTimeout(r, 700));
   if (!WORLD) await buildWorld();
   loadingNext = false; enterZone(name, true); LP.snap = true; meter = 0; trail = []; grade.uniforms.uCrys.value = 0;
-  stkClear(); toyUnfreezeAll(); D.spawn(); netAfterSpawn();
+  stkClear(); toyUnfreezeAll(); D.spawn(); if (opt && opt.after) opt.after(); netAfterSpawn();
   for (const C of party) { C.lastTrail = C.pos.clone(); C.disp = C.pos.clone(); C.queue = []; C.vel.set(0, 0, 0); C.climbing = false; C.mantle = null; C.tumble = 0; C.grounded = true; C.offK = 0; }
   assignGaps(); cam.tgt.set(leader.pos.x, leader.pos.y + leader.h * .8, leader.pos.z); cam.curD = cam.dist;
   for (const id in chars) animChar(chars[id], .016);

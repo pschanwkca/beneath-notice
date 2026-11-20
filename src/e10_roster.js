@@ -23,7 +23,7 @@ function isUnlocked(id) { const r = ROSTER.find(q => q.id === id); return !!r &&
 function unlockedCount() { return ROSTER.filter(r => isUnlocked(r.id)).length; }
 // single player progress unlocks characters for online games
 function unlockKey(key) {
-  if (NET.on || UNL[key]) return; UNL[key] = 1;
+  if (NET.on || UNL[key] || TEST.on) return; UNL[key] = 1;
   try { localStorage.setItem('bn_unlock_v1', JSON.stringify(UNL)); } catch (e) { }
   for (const r of ROSTER) if (r.key === key) UNLQ.push(r.id);
   if (!UNLQ.busy) { UNLQ.busy = true; setTimeout(nextUnlock, WC.banner > 0 ? WC.banner * 1000 + 400 : 300); }
@@ -66,6 +66,7 @@ function pauseRefresh() {
   $('pauseRosterN').textContent = `已解鎖 ${unlockedCount()} / ${ROSTER.length}`;
   $('pauseTitle').hidden = NET.on; $('pauseTitle').classList.remove('warn'); $('pauseTitleS').textContent = '進度會由章節開頭重新開始'; pauseTitleArm = 0;
   $('pauseCp').querySelector('small').textContent = NET.on ? '卡住了？只會把你自己送回存檔點' : '卡住了？由最近的存檔點再來';
+  testPauseRefresh();
 }
 let pauseTitleArm = 0;
 $('pauseRoster').addEventListener('click', () => openRoster());
@@ -95,22 +96,30 @@ function openHelp() {
 // ---------- chapter list (title screen) ----------
 const CHAPS = [
   { n: '序章', t: '地庫實驗室', d: '縮小實驗失控。由工作枱爬到地上，找出路。', go: () => startGame(0) },
-  { n: '第一、二章', t: '牆內・廚房・客廳', d: '穿過牆內的老鼠洞，避開太太、女兒和貓。', go: () => startGame(1) },
+  { n: '第一章', t: '牆內與廚房', d: '穿過牆內的老鼠洞，避開太太、女兒和貓，從雪櫃底拿回核心。', go: () => startGame(1) },
+  { n: '第二章', t: '客廳', d: '核心的光越來越弱。打開往客廳的門，拿遙控器的電池。', key: 'ch1', lock: '完成第一章解鎖', go: () => startChapter2() },
   { n: '第三章', t: '車房', d: 'Origin Dynamics 的人在搜車房。修好機座，從狗門逃出去。', key: 'ch2', lock: '完成第二章解鎖', go: () => startChapter('garage') },
   { n: '第四章', t: '後園與鄰居家', d: '穿過圍欄、避開陳伯的狗，到陽光房找控制晶片。', key: 'ch3', lock: '完成第三章解鎖', go: () => startChapter('yard') },
   { n: '第五章', t: '馬路', d: '製作中', future: true }
 ];
-function startChapter(name) { $('start').hidden = true; playT = 0; fails = 0; requestLock(); loadLevel(name); }
+function startChapter(name, opt) { $('start').hidden = true; $('chaps').hidden = true; playT = 0; fails = 0; requestLock(); return loadLevel(name, opt); }
+// chapter two starts in the kitchen, with the core already back at the mouse hole
+function startChapter2() {
+  return startChapter('kitchen', { chapter: '第二章', title: '客廳', after() {
+    KS.coreGot = true; KS.carried = false; KS.coreDrop = null; KS.home = true; KS.ch2 = true; KS.core.position.set(-306, 1.6, -100);
+    QUESTS = SP_Q2; setQuest(0); setTimeout(() => chapterBanner('第二章', '客廳'), 900);
+  } });
+}
 function openChapters() {
   const L = $('chapsList'); L.innerHTML = '';
   for (const c of CHAPS) {
-    const open = !c.future && (!c.key || !!UNL[c.key]); const b = document.createElement('button');
-    b.className = 'ch' + (open ? '' : ' lock'); b.disabled = !open;
-    b.innerHTML = `<small>${c.n}</small><b>${c.t}</b><em>${open ? c.d : c.future ? '製作中' : c.lock}</em>`;
+    const real = !c.future && (!c.key || !!UNL[c.key]), open = !c.future && (real || TEST.on); const b = document.createElement('button');
+    b.className = 'ch' + (open ? '' : ' lock') + (open && !real ? ' tst' : ''); b.disabled = !open;
+    b.innerHTML = `<small>${c.n}${open && !real ? '<i>測試</i>' : ''}</small><b>${c.t}</b><em>${open ? c.d : c.future ? '製作中' : c.lock}</em>`;
     if (open) b.addEventListener('click', () => { $('chaps').hidden = true; audioInit(); c.go(); });
     L.appendChild(b);
   }
-  $('chapsN').textContent = `${CHAPS.filter(c => !c.future && (!c.key || UNL[c.key])).length} / ${CHAPS.filter(c => !c.future).length} 已解鎖`;
+  $('chapsN').textContent = TEST.on ? '測試模式：全部章節開放，進度不會儲存' : `${CHAPS.filter(c => !c.future && (!c.key || UNL[c.key])).length} / ${CHAPS.filter(c => !c.future).length} 已解鎖`; $('testOn').checked = TEST.on;
   $('chaps').hidden = false;
 }
 $('goCh').addEventListener('click', () => { audioInit(); openChapters(); });
