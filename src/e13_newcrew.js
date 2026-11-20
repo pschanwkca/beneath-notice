@@ -164,6 +164,7 @@ function watchTargets() {
   if (mom.root) add(mom.root, 150, '太太'); add(KID.root, 95, '女兒'); add(CAT.root, 24, '貓');
   if (GS.agent) add(GS.agent.root, 165, '職員'); if (GS.cam && !GS.camBroken) out.push({ p: V3(GS.cam.cx, GS.cam.y0 + 12, GS.cam.cz), name: '監視鏡頭' });
   if (YS.dog) add(YS.dog.root, 26, '狗'); if (YS.old && YS.old.H) add(YS.old.H.root, 110, '陳伯');
+  if (ST.walker) add(ST.walker.H.root, 165, '行人'); if (ST.wdog) add(ST.wdog.root, 16, '小狗');
   return out;
 }
 let _pingTex = null;

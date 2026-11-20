@@ -14,9 +14,9 @@ const ROSTER = [
   { id: 'frog', key: 'bat6', how: '單人模式集齊全部鈕扣電池' },
   { id: 'bat', key: 'bat', how: '單人第三章：在車房找到阿蝠' },
   { id: 'tort', key: 'tort', how: '單人第四章：在陳伯的後園找到阿龜' },
-  { id: 'f1', future: true, how: '第五章：馬路（製作中）' },
-  { id: 'f2', future: true, how: '第六章：公園（製作中）' },
-  { id: 'f3', future: true, how: '第七章（製作中）' }
+  { id: 'f1', future: true, how: '第六章：公園（製作中）' },
+  { id: 'f2', future: true, how: '第七章（製作中）' },
+  { id: 'f3', future: true, how: '第八章（製作中）' }
 ];
 const UNL = (() => { try { return JSON.parse(localStorage.getItem('bn_unlock_v1') || '{}') || {}; } catch (e) { return {}; } })();
 function isUnlocked(id) { const r = ROSTER.find(q => q.id === id); return !!r && !r.future && (!r.key || !!UNL[r.key]); }
@@ -100,7 +100,8 @@ const CHAPS = [
   { n: '第二章', t: '客廳', d: '核心的光越來越弱。打開往客廳的門，拿遙控器的電池。', key: 'ch1', lock: '完成第一章解鎖', go: () => startChapter2() },
   { n: '第三章', t: '車房', d: 'Origin Dynamics 的人在搜車房。修好機座，從狗門逃出去。', key: 'ch2', lock: '完成第二章解鎖', go: () => startChapter('garage') },
   { n: '第四章', t: '後園與鄰居家', d: '穿過圍欄、避開陳伯的狗，到陽光房找控制晶片。', key: 'ch3', lock: '完成第三章解鎖', go: () => startChapter('yard') },
-  { n: '第五章', t: '馬路', d: '製作中', future: true }
+  { n: '第五章', t: '馬路', d: '從陳伯的前閘鑽出去，按過路燈，避開車輪，走到對面的公園。', key: 'ch4', lock: '完成第四章解鎖', go: () => startChapter('road') },
+  { n: '第六章', t: '公園', d: '製作中', future: true }
 ];
 function startChapter(name, opt) { $('start').hidden = true; $('chaps').hidden = true; playT = 0; fails = 0; requestLock(); return loadLevel(name, opt); }
 // chapter two starts in the kitchen, with the core already back at the mouse hole

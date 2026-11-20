@@ -24,7 +24,7 @@ function buildSky(cx, cz) {
   const N = 900, pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
   for (let i = 0; i < N; i++) { const u = rnd() * 2 - 1, a = rnd() * 6.283; const y = Math.abs(u) * .9 + .08; const r = Math.sqrt(1 - y * y); pos.set([cx + Math.cos(a) * r * 1800, y * 1800, cz + Math.sin(a) * r * 1800], i * 3); const k = R(.4, 1.6); col.set([k, k, k * 1.1], i * 3); }
   const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); sg.setAttribute('color', new THREE.BufferAttribute(col, 3));
-  const stars = new THREE.Points(sg, new THREE.PointsMaterial({ size: 3.2, sizeAttenuation: false, vertexColors: true, fog: false, depthWrite: false, transparent: true, opacity: .9 })); stars.frustumCulled = false; LV.add(stars);
+  const stars = new THREE.Points(sg, new THREE.PointsMaterial({ size: 1.5, sizeAttenuation: false, vertexColors: true, fog: false, depthWrite: false, transparent: true, opacity: .75 })); stars.frustumCulled = false; LV.add(stars);
   const moon = mesh(new THREE.CircleGeometry(60, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xf6ecd0).multiplyScalar(1.8), fog: false }), cx + 700, 1150, cz - 1250, { cast: false }); moon.lookAt(cx, 0, cz);
   const halo = mesh(new THREE.CircleGeometry(200, 40), new THREE.MeshBasicMaterial({ color: 0x8aa0c8, transparent: true, opacity: .12, fog: false, depthWrite: false, blending: THREE.AdditiveBlending }), cx + 690, 1145, cz - 1240, { cast: false }); halo.lookAt(cx, 0, cz);
 }
@@ -41,7 +41,7 @@ function buildGrassClumps(list) {
 function inGrass(p) { if (p.y > GY + 16) return false; for (const c of YS.clumps) if (Math.hypot(p.x - c.x, p.z - c.z) < c.r) return true; return false; }
 
 function buildYard() {
-  const K = kitchenMats(), M = MAT;
+  const K = kitchenMats(), M = MAT; buildNightSky();
   const gr = genGrass(); const grassM = new THREE.MeshStandardMaterial({ ...gr, roughness: .95, normalScale: new THREE.Vector2(.8, .8) });
   const soilM = new THREE.MeshStandardMaterial({ map: genSoil(), roughness: 1 });
   const fenceM = new THREE.MeshStandardMaterial({ ...genWood([150, 112, 76], [86, 60, 40], 521, 10), roughness: .9 });
@@ -51,7 +51,11 @@ function buildYard() {
   const X0 = 1460, X1 = 2760, Z0 = -440, Z1 = 640;
   // ground + boundaries
   box(X0 - 4, X1, GY - 10, GY, Z0, Z1, grassM, { uv: 90, cast: false });
-  box(X0, X1, GY, GY + 170, Z0 - 6, Z0, fenceM, { uv: 60 }); box(X0, X1, GY, GY + 170, Z1, Z1 + 6, fenceM, { uv: 60 });
+  box(X0, X1, GY, GY + 170, Z0 - 6, Z0, fenceM, { uv: 60 }); box(X0, 2588, GY, GY + 170, Z1, Z1 + 6, fenceM, { uv: 60 }); box(2652, X1, GY, GY + 170, Z1, Z1 + 6, fenceM, { uv: 60 });
+  // 陳伯's front gate: a picket gate hung a hand's width off the path — room to squeeze under
+  box(2588, 2594, GY, GY + 180, Z1 - 2, Z1 + 8, fenceM); box(2646, 2652, GY, GY + 180, Z1 - 2, Z1 + 8, fenceM);
+  box(2594, 2646, GY + 11, GY + 150, Z1 + 1, Z1 + 5, fenceM, { uv: 40 }); for (let x = 2598; x < 2644; x += 9) box(x, x + 5, GY + 150, GY + 160, Z1 + 1.5, Z1 + 4.5, fenceM, { col: false });
+  box(2594, 2646, GY, GY + .6, Z1 - 30, Z1 + 30, new THREE.MeshStandardMaterial({ color: 0x8a8278, roughness: .95 }), { col: false, cast: false });
   for (let x = X0; x < X1; x += 120) { box(x, x + 6, GY, GY + 176, Z0 - 8, Z0 - 2, fenceM, { col: false }); box(x, x + 6, GY, GY + 176, Z1 + 2, Z1 + 8, fenceM, { col: false }); }
   // our house's outside wall (the garage) and the fence beyond it
   box(X0 - 8, X0, GY, 270, -260, 56, sidingU, { uv: 120 }); box(X0 - 8, X0, GY, 270, 154, 310, sidingU, { uv: 120 }); box(X0 - 8, X0, 190, 270, 56, 154, sidingU, { uv: 120 }); box(X0 - 8, X0, GY, GY + 170, Z0, -260, fenceM, { uv: 60 }); box(X0 - 8, X0, GY, GY + 170, 310, Z1, fenceM, { uv: 60 });
@@ -175,10 +179,10 @@ function buildYard() {
 }
 
 // ---------- the neighbour's dog ----------
-function buildDog() {
-  const D = { pos: V3(2300, GY, 368), yaw: Math.PI, mode: 'sleep', t: 0, phase: 0, anchor: V3(2300, GY, 410), look: V3(), sleepK: 1, barkT: 0 };
-  const g = new THREE.Group(); scene.add(g); D.root = g;
-  const fur = furMat({ color: 0xd8a45a, belly: 0xf0d8a8, bellyAmt: .8, len: 1.4, den: 1.8, droop: .5, clump: .5, rimK: .07, root: .6 });
+function buildDog(o = {}) {
+  const D = { pos: o.pos || V3(2300, GY, 368), yaw: Math.PI, mode: 'sleep', t: 0, phase: 0, anchor: o.anchor === undefined ? V3(2300, GY, 410) : o.anchor, look: V3(), sleepK: 1, barkT: 0 };
+  const g = new THREE.Group(); scene.add(g); D.root = g; if (o.k) g.scale.setScalar(o.k);
+  const fur = furMat({ color: o.fur || 0xd8a45a, belly: o.belly || 0xf0d8a8, bellyAmt: .8, len: 1.4, den: 1.8, droop: .5, clump: .5, rimK: .07, root: .6 });
   const body = new THREE.Group(); body.position.y = 46; g.add(body); D.body = body;
   body.add(furMesh(ell(17, 17, 38, 40, 28), fur));
   const neck = new THREE.Group(); neck.position.set(0, 10, 32); body.add(neck); D.neck = neck;
@@ -190,10 +194,10 @@ function buildDog() {
     const ear = new THREE.Group(); ear.position.set(s * 9, 5, 0); ear.rotation.z = s * .35; head.add(ear); const em = furMesh(ell(3.2, 9, 6, 16, 12), fur); em.position.y = -7; ear.add(em);
   }
   const tongue = new THREE.Mesh(ell(2.4, .6, 4, 12, 8), new THREE.MeshStandardMaterial({ color: 0xe0707a, roughness: .5 })); tongue.position.set(0, -7, 14); head.add(tongue); D.tongue = tongue;
-  const collar = new THREE.Mesh(new THREE.TorusGeometry(9.5, 1.4, 8, 28), MAT.paintRed); collar.position.set(0, 2, 2); collar.rotation.x = Math.PI / 2 - .4; neck.add(collar);
+  const collar = new THREE.Mesh(new THREE.TorusGeometry(9.5, 1.4, 8, 28), o.collar ? new THREE.MeshStandardMaterial({ color: o.collar, roughness: .4 }) : MAT.paintRed); collar.position.set(0, 2, 2); collar.rotation.x = Math.PI / 2 - .4; neck.add(collar);
   D.legs = []; for (const [x, z] of [[-8, 26], [8, 26], [-8, -26], [8, -26]]) { const L = new THREE.Group(); L.position.set(x, -8, z); body.add(L); const lm = furMesh(capG(4.2, 26), fur); lm.position.y = -16; L.add(lm); const paw = furMesh(ell(4.4, 2.6, 5.4, 12, 8), fur); paw.position.set(0, -32, 1.4); L.add(paw); D.legs.push({ g: L, z }); }
   D.tail = new THREE.Group(); D.tail.position.set(0, 8, -36); body.add(D.tail); const tm = furMesh(capG(3, 26), fur); tm.position.set(0, 0, -14); tm.rotation.x = Math.PI / 2 + .5; D.tail.add(tm);
-  YS.dog = D;
+  if (!o.keep) YS.dog = D; return D;
 }
 function updDog(dt) {
   const D = YS.dog; if (!D) return; D.t -= dt; const P = D.pos; let sp = 0;
@@ -283,8 +287,11 @@ function chipGet(C) {
   if (YS.chip) return; YS.chip = true; YS.chipM.visible = false; YS.chipHalo.visible = false; SND.pick();
   for (let i = 0; i < 30; i++) emit(YS.chipP.clone().add(V3(0, 2, 0)), V3(R(-10, 10), R(4, 18), R(-10, 10)), new THREE.Color(.6, 2.2, 1), R(.15, .35), R(.4, 1), 30, 2);
   toastW(`${C.S.name}拿到了控制晶片！`, 3);
-  if (NET.on) { if (quest === 10) { STATE = 'end'; endT = 0; END_TXT = ['第三章（多人）· 完', '控制晶片', '晶片、零件、電池都齊了。下一站：馬路對面的公園。']; nsend({ t: 'end', e: END_TXT }); } }
-  else { say('爸爸', '找到了！有這塊晶片，縮小機就可以重新啟動……', '#f5f0e6', 3.4); setTimeout(() => say('陳伯', '……教授？是你嗎？', '#c8b8a0', 3), 3600); END_TXT = ['第四章 · 完', '控制晶片', '晶片到手了。陳伯好像早就知道教授會來……下一站：馬路對面的公園。']; unlockKey('ch4'); setTimeout(() => { if (STATE === 'play') { STATE = 'end'; endT = 0; } }, 7000); }
+  if (NET.on) { if (quest === 10) { setQuest(11); chapterBanner('第三章（多人）· 完', '控制晶片'); nsend({ t: 'ban', a: '第三章（多人）· 完', b: '控制晶片' }); } }
+  else {
+    say('爸爸', '找到了！有這塊晶片，縮小機就可以重新啟動……', '#f5f0e6', 3.4); setTimeout(() => say('陳伯', '……教授？是你嗎？', '#c8b8a0', 3), 3600); unlockKey('ch4');
+    setTimeout(() => { chapterBanner('第四章 · 完', '控制晶片'); QUESTS = YQ_SP2; setQuest(0); say('爸爸', '別讓他看見！由前園的閘底出去——公園就在馬路對面。', '#f5f0e6', 4); }, 7200);
+  }
 }
 const YQ_SP = [
   { t: '穿過後園，去圍欄的爛板', s: '圍欄最下面有塊爛板可以鑽過去。小心灑水器，長草可以躲' },
@@ -303,11 +310,12 @@ LEVELS.yard = {
   detect: detectYard, hear: yardHear, seen: yardSeen,
   update(dt) {
     lvT += dt; if (NET.on) return; const L = leader;
+    if (QUESTS === YQ_SP2) return;
     if (quest === 0 && L.pos.x > 2108) setQuest(1);
     if (quest === 1 && L.pos.x > 2562 && L.pos.y > DECK - 2) { setQuest(2); toast('進了陽光房'); }
   },
   win() { },
-  marker() { if (NET.on) return mpMarker(); return quest === 0 ? YS.gap : quest === 1 ? YS.flap : (YS.chip ? null : YS.chipP); },
+  marker() { if (NET.on) return mpMarker(); if (QUESTS === YQ_SP2) return ST.gate; return quest === 0 ? YS.gap : quest === 1 ? YS.flap : (YS.chip ? null : YS.chipP); },
   reset() { if (YS.dog) { YS.dog.mode = 'home'; } if (YS.old) { YS.old.mode = 'read'; YS.old.t = 8; } },
   eyeText: () => meter > .3 ? '被看見了！躲進長草' : '鄰居的狗和陳伯',
   hint(L) { if (inGrass(L.pos)) return '躲在長草裡——比較難被看見'; return ''; },
@@ -326,26 +334,37 @@ function mpObjectives() {
   if (quest === 7 && P.every(C => C.pos.x > 1462)) { setQuest(8); toastW('全隊出了後園！', 2.4); }
   if (quest === 8 && P.every(C => C.pos.x > 2108)) setQuest(9);
   if (quest === 9 && P.every(C => C.pos.x > 2562 && C.pos.y > DECK - 2)) { setQuest(10); toastW('全隊進了陽光房！', 2.4); }
+  if (quest === 11 && P.every(C => C.pos.z > 650)) { setQuest(12); toastW('全隊到了行人路！', 2.4); }
+  if (quest === 12 && ST.pressed) setQuest(13);
+  if ((quest === 12 || quest === 13) && P.every(C => C.pos.z > 1505 && C.pos.y > GY - 2)) { setQuest(14); toastW('全隊過了馬路！', 2.4); }
+  if (quest === 14 && P.every(C => C.pos.z > 1640 && C.pos.x > 1995 && C.pos.x < 2125) && STATE === 'play') { STATE = 'end'; endT = 0; END_TXT = ['第四章（多人）· 完', '馬路', '全隊安全過了馬路。公園裡面……好像有很多狗。（下一章：公園，製作中）']; nsend({ t: 'end', e: END_TXT }); }
 }
 function mpMarker() {
   const L = leader;
   if (quest === 0) { const p = LIV.parts.filter(q => !q.got).sort((a, b) => Math.hypot(a.x - L.pos.x, a.z - L.pos.z) - Math.hypot(b.x - L.pos.x, b.z - L.pos.z))[0]; return p ? V3(p.x, p.y + 2, p.z) : null; }
   if (quest === 1) return V3(LIV.wedge.cx, 4, LIV.wedge.cz); if (quest === 2) return V3(345, 0, -10); if (quest === 3) return V3(LIV.remote.cx, 46, LIV.remote.cz);
   if (quest === 4) return L.pos.x > 924 ? null : V3(896, 6, -200); if (quest === 5) return V3(GS.cam.cx, GS.cam.y0 + 14, GS.cam.cz); if (quest === 6) return GS.latchP; if (quest === 7) return L.pos.x > 1462 ? null : V3(1455, GY + 2, 105);
-  if (quest === 8) return L.pos.x > 2108 ? null : YS.gap; if (quest === 9) return L.pos.x > 2562 ? null : YS.flap; return YS.chip ? null : YS.chipP;
+  if (quest === 8) return L.pos.x > 2108 ? null : YS.gap; if (quest === 9) return L.pos.x > 2562 ? null : YS.flap; if (quest === 10) return YS.chip ? null : YS.chipP;
+  if (quest === 11) return L.pos.z > 650 ? null : ST.gate; if (quest === 12) return V3(1960, GY + 118, 770);
+  if (quest === 13) return L.pos.z < 1130 ? V3(2060, GY + 4, 1150) : V3(2060, GY + 4, 1560); return ST.parkP;
 }
 // what the host tells everyone about the garage and the yard
 function netWorldExtra(w) {
   const A = GS.agent, D = YS.dog, O = YS.old;
   w.ga = [+A.pos.x.toFixed(1), +A.pos.z.toFixed(1), +A.yaw.toFixed(3), +A.aimT.x.toFixed(1), +A.aimT.y.toFixed(1), +A.aimT.z.toFixed(1), GS.camBroken ? 1 : 0, GS.latch ? 1 : 0];
+  w.rd = [['go', 'wait', 'amber', 'red', 'walk', 'flash', 'clear'].indexOf(ST.phase), +ST.pt.toFixed(2), ST.req ? 1 : 0, ...ST.cars.flatMap(c => [c.alive ? 1 : 0, c.lane, Math.round(c.x), Math.round(c.v)])];
+  if (ST.walker) { const H = ST.walker.H, D = ST.wdog; w.wk = [+H.pos.x.toFixed(1), +H.yaw.toFixed(3), ST.walker.mode, +ST.walker.look.x.toFixed(0), +ST.walker.look.z.toFixed(0), +D.pos.x.toFixed(1), +D.pos.z.toFixed(1), +D.yaw.toFixed(3), D.mode]; }
   w.ya = [+D.pos.x.toFixed(1), +D.pos.z.toFixed(1), +D.yaw.toFixed(3), D.mode, +D.sleepK.toFixed(2), O.mode, +O.look.x.toFixed(0), +O.look.y.toFixed(0), +O.look.z.toFixed(0), YS.chip ? 1 : 0, LIV.ventOpen ? 1 : 0];
 }
 function netRecvExtra(w) {
+  if (w.rd) { ST.phase = ['go', 'wait', 'amber', 'red', 'walk', 'flash', 'clear'][w.rd[0]] || 'go'; ST.pt = w.rd[1]; ST.req = !!w.rd[2]; for (let i = 0; i < ST.cars.length; i++) { const c = ST.cars[i], b = 3 + i * 4; if (w.rd[b] == null) break; const was = c.alive; c.alive = !!w.rd[b]; c.lane = w.rd[b + 1]; if (!was || Math.abs(c.x - w.rd[b + 2]) > 160) c.x = w.rd[b + 2]; c.tx = w.rd[b + 2]; c.v = w.rd[b + 3]; if (!was && c.alive) c.gust.clear(); } }
   if (w.ga) { if (w.ga[6] && !GS.camBroken) { GS.cam.y0 = Math.min(GS.cam.y0, 150); } if (w.ga[7] && !GS.latch) latchOpen(null); }
   if (w.ya) { if (w.ya[9] && !YS.chip) { YS.chip = true; YS.chipM.visible = false; YS.chipHalo.visible = false; } if (w.ya[10] && !LIV.ventOpen) ventOpen(); }
 }
 function netNPCExtra(dt) {
   const w = NET.npc; if (!w) return;
+  for (const c of ST.cars) if (c.alive && c.tx != null) { c.x += LANES[c.lane].dir * c.v * dt; c.x += (c.tx - c.x) * (1 - Math.exp(-4 * dt)); }
+  if (w.wk && ST.walker) { const W = ST.walker, H = W.H, D = ST.wdog, k = w.wk; H.pos.x += (k[0] - H.pos.x) * (1 - Math.exp(-8 * dt)); H.yaw = angDamp(H.yaw, k[1], 8, dt); W.mode = k[2]; W.look.set(k[3], GY + 4, k[4]); D.pos.x += (k[5] - D.pos.x) * (1 - Math.exp(-8 * dt)); D.pos.z += (k[6] - D.pos.z) * (1 - Math.exp(-8 * dt)); D.yaw = angDamp(D.yaw, k[7], 8, dt); D.mode = k[8]; W.t = 99; }
   if (w.ga && GS.agent) { const A = GS.agent, g = w.ga, ox = A.pos.x, oz = A.pos.z; const k = 1 - Math.exp(-8 * dt); if (Math.hypot(g[0] - ox, g[1] - oz) > 80) { A.pos.x = g[0]; A.pos.z = g[1]; } else { A.pos.x += (g[0] - ox) * k; A.pos.z += (g[1] - oz) * k; } A.pos.y = GY; A.yaw = angDamp(A.yaw, g[2], 8, dt); A.aimT.set(g[3], g[4], g[5]); A.aim.lerp(A.aimT, 1 - Math.exp(-3 * dt)); agentPose(A, Math.hypot(A.pos.x - ox, A.pos.z - oz), dt); }
   if (w.ya && YS.dog) { const D = YS.dog, y = w.ya, ox = D.pos.x, oz = D.pos.z; const k = 1 - Math.exp(-8 * dt); D.pos.x += (y[0] - ox) * k; D.pos.z += (y[1] - oz) * k; D.yaw = angDamp(D.yaw, y[2], 8, dt); D.mode = y[3]; D.sleepK = y[4]; dogAnim(D, Math.hypot(D.pos.x - ox, D.pos.z - oz) / Math.max(dt, 1e-3), dt);
     const O = YS.old; O.mode = y[5]; O.t = 99; O.look.set(y[6], y[7], y[8]); updOldMan(dt); }

@@ -45,6 +45,7 @@ function toySay(who, fn) {
   else if (who === 'agent' || who === 'cam') fn('Origin Dynamics 職員', '……一隻玩具？剛才明明在動。', '#9fb3c8', 2.6);
   else if (who === 'dog') fn('鄰居的狗', '汪！（叼着玩具搖尾巴）', '#d8a45a', 2.2);
   else if (who === 'old') fn('陳伯', '咦，誰把玩具留在這裡？', '#c8b8a0', 2.4);
+  else if (who === 'walker' || who === 'wdog') fn('行人', '……誰把玩具丟在行人路上？', '#9ec4e8', 2.4);
   else fn('太太', '咦？……哪來的玩具？', '#f4bb72', 2.4);
 }
 function toyHandOff() {
