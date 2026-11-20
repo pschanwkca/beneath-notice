@@ -207,7 +207,7 @@ function netSendWorld() {
   const w = { t: 'w', lv: LEVEL, q: quest, cp, pr: PROTO, gb: gotBat, cm: cellMax };
   w.bat = batteries.map(b => b.got ? 1 : 0); w.vi = VIALS.map(v => v.got ? 1 : 0); w.cr = CRUMBS.map(c => c.got ? 1 : 0);
   w.res = resizables.map(r => [+r.cx.toFixed(2), +r.cz.toFixed(2), +r.y0.toFixed(2), +r.target.toFixed(3), r.gone ? 1 : 0]);
-  w.toy = IDS.map(id => { const C = chars[id]; return C.frozen ? [1, C.toyAt === 'hand' ? 2 : C.toyAt === 'box' ? 3 : 1, +(C.toyTilt || 0).toFixed(2), +(C.toyRoll || 0).toFixed(2), +(C.rescueT || 0).toFixed(2)] : 0; });
+  w.toy = IDS.map(id => { const C = chars[id]; return C.frozen ? [1, C.toyAt === 'hand' ? 2 : C.toyAt === 'box' ? 3 : 1, +(C.toyTilt || 0).toFixed(2), +(C.toyRoll || 0).toFixed(2), +(C.rescueT || 0).toFixed(2), Math.max(0, PLACES.indexOf(C.toyPlace || ''))] : 0; });
   netWorldExtra(w);
   {
     const F = TOY.fetch;
@@ -232,7 +232,7 @@ function netRecvWorld(w) {
   let changed = false;
   w.toy.forEach((t, i) => {
     const C = chars[IDS[i]];
-    if (t) { if (!C.frozen) { C.frozen = true; toyLook(C, true); changed = true; if (C === leader) { SND.heart(1); toyBurst(V3(C.pos.x, C.pos.y + C.h * .5, C.pos.z)); meter = 0; } } const at = ['', 'floor', 'hand', 'box'][t[1]]; if (at !== C.toyAt) { C.toyAt = at; changed = true; } C.toyTilt = t[2]; C.toyRoll = t[3]; C.rescueT = t[4]; }
+    if (t) { if (!C.frozen) { C.frozen = true; toyLook(C, true); changed = true; if (C === leader) { SND.heart(1); toyBurst(V3(C.pos.x, C.pos.y + C.h * .5, C.pos.z)); meter = 0; } } const at = ['', 'floor', 'hand', 'box'][t[1]]; if (at !== C.toyAt) { C.toyAt = at; changed = true; } C.toyTilt = t[2]; C.toyRoll = t[3]; C.rescueT = t[4]; C.toyPlace = PLACES[t[5] || 0] || null; }
     else if (C.frozen) { C.frozen = false; C.toyAt = null; toyLook(C, false); C.root.rotation.set(0, C.yaw, 0); changed = true; }
   });
   if (changed) refreshPartyHUD();
@@ -284,6 +284,7 @@ function netMsg(d, from) {
     case 'end': if (NET.on && !NET.host && STATE === 'play') { if (d.e) END_TXT = d.e; STATE = 'end'; endT = 0; } break;
     case 'ban': chapterBanner(d.a, d.b); break;
     case 'xbtn': if (NET.host) pressButton(null); break;
+    case 'drg': if (NET.host) { const r = resizables[d.i]; if (r && !r.gone) dragTo(r, d.x, d.z); } break;
     case 'fail': if (NET.on && !NET.host) { cp = d.cp; fail(); } break;
     case 'say': say(d.n, d.x, d.c, d.d); break;
     case 'toast': toast(d.x, d.d); break;
@@ -367,15 +368,16 @@ function hostFreeze(C, who) {
   C.frozen = true; C.toyAt = 'floor'; C.climbing = false; C.mantle = null; C.vel.set(0, 0, 0); C.tumble = 0; C.toyVy = 0; C.crouch = false; C.toyTilt = 0; C.toyRoll = 0; C.stk = false; C.carried = false;
   toyLook(C, true); toyBurst(V3(C.pos.x, C.pos.y + C.h * .5, C.pos.z)); SND.heart(1); tone(1800, 600, .8, .08, 'triangle');
   toySay(who, sayW);
-  const inK = zoneAt(C.pos, 4); if (!inK || inK.id === 'kitchen') { if (KM.mode === 'sus') KM.mode = 'goto'; if (toyReachable(C)) TOY.fetchQ.push(C); }
+  const inK = zoneAt(C.pos, 4); if (!inK || inK.id === 'kitchen') { if (KM.mode === 'sus') KM.mode = 'goto'; if (toyReachable(C)) TOY.fetchQ.push(C); } else takeQueue(C);
   toastW(`${C.S.name}被看見，變成了玩具！`, 3);
   refreshPartyHUD();
   if (playerChars().every(q => q.frozen)) { fail(); nsend({ t: 'fail', cp }); }
 }
 function hostProto(id, from) {
-  const by = chars[id]; if (!PROTO) { nsend({ t: 'toast', x: '沒有 Prototype 了——去玩具箱把隊友救出來' }, from); return; }
+  const by = chars[id]; if (!PROTO) { const x = '沒有 Prototype——要先找到 Prototype 藥水'; if (from) nsend({ t: 'toast', x }, from); else toast(x); return; }
   const fz = party.filter(C => C.frozen); if (!fz.length) { nsend({ t: 'toast', x: '隊友都好好的，Prototype 留着之後用' }, from); return; }
-  fz.sort((a, b) => a.pos.distanceTo(by.pos) - b.pos.distanceTo(by.pos)); PROTO--; toyRevive(fz[0], true, by);
+  const tg = protoTarget(by); if (!tg) { const n = frozenNear(by); const x = `要走到${n ? n.S.name : '隊友'}旁邊、面向他，才可以用 Prototype`; if (from) nsend({ t: 'toast', x }, from); else toast(x); return; }
+  PROTO--; toyRevive(tg, true, by);
 }
 function netApplyRevive(d) {
   const C = chars[d.id]; C.frozen = false; C.toyAt = null; toyLook(C, false); C.root.rotation.set(0, C.yaw, 0); C.owner = C.baseOwner;

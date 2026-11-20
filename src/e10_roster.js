@@ -51,11 +51,12 @@ $('goRoster').addEventListener('click', () => { audioInit(); openRoster(); });
 $('rosterClose').addEventListener('click', () => { $('roster').hidden = true; });
 
 // ---------- settings (kept on this device) ----------
-const SET = Object.assign({ sens: 1, vol: 1, inv: false }, (() => { try { return JSON.parse(localStorage.getItem('bn_set_v1') || '{}') || {}; } catch (e) { return {}; } })());
+const SET = Object.assign({ sens: 1, vol: 1, mus: .6, inv: false }, (() => { try { return JSON.parse(localStorage.getItem('bn_set_v1') || '{}') || {}; } catch (e) { return {}; } })());
 function saveSet() { try { localStorage.setItem('bn_set_v1', JSON.stringify(SET)); } catch (e) { } }
-$('setSens').value = SET.sens; $('setVol').value = SET.vol; $('setInv').checked = !!SET.inv;
+$('setSens').value = SET.sens; $('setVol').value = SET.vol; $('setMus').value = SET.mus; $('setInv').checked = !!SET.inv;
 $('setSens').addEventListener('input', e => { SET.sens = +e.target.value; saveSet(); });
 $('setVol').addEventListener('input', e => { SET.vol = +e.target.value; if (AU.out) AU.out.gain.value = .85 * SET.vol; saveSet(); });
+$('setMus').addEventListener('input', e => { SET.mus = +e.target.value; saveSet(); });
 $('setInv').addEventListener('change', e => { SET.inv = e.target.checked; saveSet(); });
 
 // ---------- pause menu ----------

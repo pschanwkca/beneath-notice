@@ -72,8 +72,8 @@ canvas.addEventListener('mousedown', e => {
   if (!dragMode) { requestLock(); return; }
   mbtn = e.button; dragDist = 0;
 });
-addEventListener('mouseup', e => { if (e.button === 0) keys.Mouse0 = false; if (dragMode && mbtn >= 0 && dragDist < 6 && STATE === 'play') { primaryDown(mbtn); keys.Mouse0 = false; } mbtn = -1; });
-function primaryDown(btn) { const L = leader; if (!L) return; if (L.id === 'bear') { if (btn === 0) { keys.Mouse0 = true; bearShove(); } return; } if (L.id === 'cham') { if (btn === 0) chamTongue(); return; } if (L.id === 'sq') { if (btn === 0) sqCarry(); else if (btn === 2) sqScout(); return; } if (L.id === 'hog') { if (btn === 0) hogRoll(); return; } if (L.id === 'coon') { if (btn === 0) coonThrow(); return; } if (L.id === 'rab' || L.id === 'frog') { if (btn === 0) keys.Mouse0 = true; else if (btn === 2 && L.id === 'frog') frogSwitch(); return; } if (L.id === 'bat') { if (btn === 0) batPing(); return; } if (L.id === 'tort') { if (btn === 0) tortShell(); return; } fireGun(btn === 0); }
+addEventListener('mouseup', e => { if (e.button === 0) keys.Mouse0 = false; if (e.button === 2) keys.Mouse2 = false; if (dragMode && mbtn >= 0 && dragDist < 6 && STATE === 'play') { primaryDown(mbtn); keys.Mouse0 = false; } mbtn = -1; });
+function primaryDown(btn) { const L = leader; if (!L) return; if (L.id === 'bear') { if (btn === 0) { keys.Mouse0 = true; bearShove(); } else if (btn === 2) keys.Mouse2 = true; return; } if (L.id === 'cham') { if (btn === 0) chamTongue(); return; } if (L.id === 'sq') { if (btn === 0) sqCarry(); else if (btn === 2) sqScout(); return; } if (L.id === 'hog') { if (btn === 0) hogRoll(); return; } if (L.id === 'coon') { if (btn === 0) coonThrow(); return; } if (L.id === 'rab' || L.id === 'frog') { if (btn === 0) keys.Mouse0 = true; else if (btn === 2 && L.id === 'frog') frogSwitch(); return; } if (L.id === 'bat') { if (btn === 0) batPing(); return; } if (L.id === 'tort') { if (btn === 0) tortShell(); return; } fireGun(btn === 0); }
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 addEventListener('wheel', e => { cam.dist = clamp(cam.dist + e.deltaY * .012, 8, 42); }, { passive: true });
 
@@ -142,7 +142,7 @@ function land(C, imp) {
   else if (imp > 45) { C.squash = clamp(imp / 160, .25, .75); SND.land(clamp(imp / 130, .2, .8)); }
   else SND.step(.6);
 }
-function speedOf(C, run) { return (C.crouch ? 6.5 : run ? 25 : 13.5) * C.S.spd * (C.slow || 1) * (C.carry ? 1 - .22 * carryWeight(C) : 1) * (C.stackN ? (C.stackN > 1 ? .6 : .76) : 1); }
+function speedOf(C, run) { return (C.crouch ? 6.5 : run && !C.drag ? 25 : 13.5) * (C.drag ? C.drag.slow : 1) * C.S.spd * (C.slow || 1) * (C.carry ? 1 - .22 * carryWeight(C) : 1) * (C.stackN ? (C.stackN > 1 ? .6 : .76) : 1); }
 const joy = { id: null, x: 0, y: 0, ox: 0, oy: 0, on: false };
 function readMove() {
   if (joy.on && Math.hypot(joy.x, joy.y) > .1) { const m = Math.min(1, Math.hypot(joy.x, joy.y)); return { x: joy.x, y: joy.y, m, run: m > .93 }; }
@@ -179,7 +179,7 @@ function updLeader(C, dt) {
   if (C.tumble > 0) { if (C.grounded) { C.vel.x *= 1 - 5 * dt; C.vel.z *= 1 - 5 * dt; } } else { C.vel.x += dvx; C.vel.z += dvz; }
   if (wl > 0 && !(C.tumble > 0)) C.yaw = angDamp(C.yaw, Math.atan2(wx, wz), 13, dt);
   if (ctl && pressed.Space && C.grounded && base) { if (!C.noJumpT || T - C.noJumpT > 3) { C.noJumpT = T; toast('頭上有人，跳唔到——叫佢哋先落嚟'); } }
-  else if (ctl && pressed.Space && C.grounded) { C.vel.y = 47 * C.S.jmp; C.grounded = false; C.squash = -.55; C.crouch = false; SND.jump(); }
+  else if (ctl && pressed.Space && C.grounded && !C.drag) { C.vel.y = 47 * C.S.jmp; C.grounded = false; C.squash = -.55; C.crouch = false; SND.jump(); }
   else if (ctl && pressed.Space && C.id === 'bat' && !C.grounded && !base) batFlap(C);
   if (C.dashT > 0) hogDash(C, dt); chargeJump(C, dt, ctl);
   C.vel.y -= G * dt; const wasGl = C.gliding; C.gliding = false;
@@ -253,8 +253,11 @@ function updClimb(C, dt, inX, inY, ctl, run) {
 
 // ---------- followers (they retrace the leader's exact path, so they climb and jump too) ----------
 function pushTrail(L) {
+  // only the bat can hang under things: while it roosts (and until it is back on its feet) the others wait where it left the ground
+  if (L.roost || (L.roostGap && !L.grounded && !L.climbing)) return;
   if (L.pos.distanceTo(L.lastTrail) < .35) return; L.lastTrail.copy(L.pos);
   const pt = { x: L.pos.x, y: L.pos.y, z: L.pos.z, yaw: L.yaw, st: L.state };
+  if (L.roostGap) { L.roostGap = false; pt.st = 'warp'; }
   trail.push(pt); if (trail.length > 9000) trail.splice(0, 3000);
   for (const F of party) if (F !== L && !F.frozen) { F.queue.push(pt); if (F.queue.length > 7000) F.queue.splice(0, 2000); }
 }
@@ -264,12 +267,13 @@ function updFollower(F, L, dt) {
   let Lp = pathLen(F, L);
   if (Lp > 150 && F.queue.length > 30) { while (F.queue.length > 2 && Lp > 70) { const q = F.queue.shift(); Lp -= Math.hypot(q.x - F.pos.x, q.y - F.pos.y, q.z - F.pos.z); F.pos.set(q.x, q.y, q.z); } }
   const [sup] = supportAt(F.pos.x, F.pos.z, F.r * .55, F.pos.y + .05);
-  const floating = F.pos.y - sup > .35 && F.qst !== 'climb' && F.qst !== 'roost';
+  const floating = F.pos.y - sup > .35 && F.qst !== 'climb';
   let moved = 0;
   if (Lp > F.gap || (floating && F.queue.length)) {
     let move = Math.min(Math.max(Lp - F.gap, floating ? 30 * dt : 0), (Lp - F.gap > 14 || floating ? 32 : 17) * F.S.spd * dt); const m0 = move;
     while (move > 1e-4 && F.queue.length) {
       const q = F.queue[0]; const dx = q.x - F.pos.x, dy = q.y - F.pos.y, dz = q.z - F.pos.z; const d = Math.hypot(dx, dy, dz);
+      if (q.st === 'warp') { F.queue.shift(); F.pos.set(q.x, q.y, q.z); F.qst = 'walk'; F.offK = 0; for (let i = 0; i < 8; i++) emit(V3(q.x, q.y + 1, q.z), V3(R(-6, 6), R(2, 8), R(-6, 6)), new THREE.Color(.5, .5, .5), R(.2, .4), R(.3, .6), 20, 2); continue; }
       F.qst = q.st; F.qyaw = q.yaw;
       if (d <= move) { F.pos.set(q.x, q.y, q.z); move -= d; F.queue.shift(); if (Math.hypot(dx, dz) > .3) F.tyaw = Math.atan2(dx, dz); }
       else { const k = move / d; F.pos.x += dx * k; F.pos.y += dy * k; F.pos.z += dz * k; move = 0; if (Math.hypot(dx, dz) > .3) F.tyaw = Math.atan2(dx, dz); }
@@ -278,7 +282,7 @@ function updFollower(F, L, dt) {
   }
   F.spd = moved;
   const st = F.qst || 'idle';
-  if ((st === 'climb' || st === 'roost') && (moved > .3 || floating || F.pos.y - sup > .35)) { F.state = st; F.yaw = angDamp(F.yaw, F.qyaw, 10, dt); }
+  if (st === 'climb' && (moved > .3 || floating || F.pos.y - sup > .35)) { F.state = 'climb'; F.yaw = angDamp(F.yaw, F.qyaw, 10, dt); }
   else if (moved > .5) { F.state = (st === 'air' || st === 'glide' || st === 'tumble') ? (F.id === 'sq' && st === 'glide' ? 'glide' : 'air') : (st === 'sneak' ? 'sneak' : 'walk'); if (F.tyaw !== undefined) F.yaw = angDamp(F.yaw, F.tyaw, 10, dt); }
   else { F.state = L.crouch ? 'crouch' : 'idle'; const dx = L.pos.x - F.pos.x, dz = L.pos.z - F.pos.z; if (Math.hypot(dx, dz) > 5) F.yaw = angDamp(F.yaw, Math.atan2(dx, dz), 2, dt); }
   F.crouch = F.state === 'crouch' || F.state === 'sneak';
@@ -533,8 +537,8 @@ function updHUD(dt) {
   const cap = (L.stamMax || 100) / 100; const showSt = L.climbing || L.stamina < cap * 100 - .5 || cap < 1;
   $('stcap').style.strokeDasharray = `${(94.25 * (1 - cap)).toFixed(1)} 200`; $('stcap').style.transform = `rotate(${(-90 + 360 * cap).toFixed(1)}deg)`;
   $('protw').style.display = LVL.toys ? '' : 'none'; $('protn').textContent = PROTO;
-  const fz = party.find(C => C.frozen);
-  $('touch').classList.toggle('proto', !!fz && PROTO > 0);
+  const fz = party.find(C => C.frozen); const ptg = fz && !L.frozen ? protoTarget(L) : null;
+  $('touch').classList.toggle('proto', !!ptg && PROTO > 0);
   $('stam').classList.toggle('on', showSt && L.id !== 'gecko'); $('stam').classList.toggle('low', L.stamina < 30);
   if (showSt) { project(V3(L.pos.x, L.pos.y + L.h * .9, L.pos.z), $('stam'), 46, -10); $('stc').style.strokeDashoffset = (94.25 * (1 - L.stamina / 100)).toFixed(1); }
   const mkp = LVL.marker ? LVL.marker() : null;
@@ -543,17 +547,20 @@ function updHUD(dt) {
   $('cells').innerHTML = Array.from({ length: cellMax }, (_, i) => `<i class="${i < cells ? 'f' : ''}"></i>`).join('');
   let h = '';
   const ph = L.id === 'bear' && !STK ? pushTarget(L) : null;
-  if (NET.on && L.frozen) h = PROTO > 0 ? '你變成了玩具！等隊友來搖醒你，或者讓他們用 Prototype（R）' : '你變成了玩具！等隊友來玩具箱搖醒你';
+  if (NET.on && L.frozen) h = L.toyAt === 'box' ? `你被收在${L.toyPlace || '某處'}裡——要隊友帶 Prototype 走過來救你` : L.toyAt === 'hand' ? '你正被拿走……' : '你變成了玩具！趁還沒被收走，隊友走到你旁邊就能搖醒你';
   else if (NET.on && !mine(L)) h = '隊友正在帶着你行動……';
   else if (stackHintK && stackHintText()) h = stackHintText();
   else if (TOY.rescuing) h = `正在搖醒${TOY.rescuing.S.name}…… ${Math.min(99, Math.round(TOY.rescuing.rescueT / 1.4 * 100))}%`;
-  else if (fz && PROTO > 0 && !L.climbing) h = TOUCH ? `按「復活」用 Prototype 救回${fz.S.name}（體力上限 -20%），或者去玩具箱救他` : `<kbd>R</kbd> 用 Prototype 救回${fz.S.name}（體力上限 -20%）· 或者去玩具箱救他`;
-  else if (fz && !L.climbing && fz.toyAt === 'box') h = `${fz.S.name}在玩具箱裡——爬進去碰一下就能救回來`;
+  else if (ptg && PROTO > 0 && !L.climbing) h = TOUCH ? `按「復活」用 Prototype 救回${ptg.S.name}（體力上限 -20%）` : `<kbd>R</kbd> 用 Prototype 救回${ptg.S.name}（體力上限 -20%）`;
+  else if (fz && !L.climbing && fz.toyAt === 'box') h = PROTO > 0 ? `${fz.S.name}被收在${fz.toyPlace || '某處'}裡——帶着 Prototype 走到他旁邊、面向他按 ${TOUCH ? '「復活」' : '<kbd>R</kbd>'}` : `${fz.S.name}被收在${fz.toyPlace || '某處'}裡——要先找到 Prototype 藥水才救得回`;
+  else if (fz && !L.climbing && fz.toyAt === 'hand') h = `${fz.S.name}正被拿走！`;
+  else if (fz && !L.climbing && fz.toyAt === 'floor') h = `${fz.S.name}變成了玩具——趁還沒被收走，走到他旁邊就能搖醒他`;
   else if (L.id === 'cham' && tongueAim && !L.climbing) h = tongueAim.item ? (TOUCH ? '按「舌」用舌頭拿過來' : '左鍵 用舌頭拿過來') : (TOUCH ? '按「舌」黐住那裡飛過去' : '左鍵 吐舌頭黐住那裡飛過去');
   else if (L.id === 'cham' && L.camo > .85) h = '變色中——停着不動很難被看見';
   else if (L.id === 'sq' && L.carry) h = TOUCH ? `抱着${L.carry.S.name}——跳起按住「跳」一起滑翔 · 再按「抱」放下` : `抱着${L.carry.S.name}——跳起按住 <kbd>Space</kbd> 一起滑翔 · 左鍵放下`;
   else if (crewHint(L)) h = crewHint(L);
-  else if (ph) h = TOUCH ? `按「推」推動「${ph.name}」` : `左鍵 推「${ph.name}」 · 按住左鍵 推着走`;
+  else if (L.drag) h = TOUCH ? `拉住「${L.drag.r.name}」——向後行拖住走 · 再按「拉」放手` : `拉住「${L.drag.r.name}」——向後行拖住走 · 放開右鍵放手`;
+  else if (ph) h = TOUCH ? `按「推」推動「${ph.name}」 · 按「拉」抓住拖走` : `左鍵 推「${ph.name}」 · 按住左鍵 推着走 · 按住右鍵 拉`;
   else if (TOUCH) {
     if (L.climbing) h = '推搖桿上下左右攀爬 · 按「跳」跳開';
     else if (L.id === 'sq' && !L.grounded) h = '按住「跳」滑翔';
@@ -703,7 +710,7 @@ function update(dt) {
     if (pressed.KeyH) { hudOn = !hudOn; $('hud').classList.toggle('off', !hudOn); }
     if (pressed.KeyF) stackPress(); crewInput(leader, !leader.frozen && mine(leader));
     const lockL = !mine(leader) || leader.frozen || !!leader.on || !!leader.hop || leader.pullT > 0;
-    if (!lockL) { const sub = dt > 1 / 30 ? 2 : 1; for (let s = 0; s < sub; s++) updLeader(leader, dt / sub); }
+    if (!lockL) { const sub = dt > 1 / 30 ? 2 : 1; for (let s = 0; s < sub; s++) updLeader(leader, dt / sub); bearDrag(dt); }
     updHops(dt); stackInput(); stackSolve(dt);
     if (!lockL) pushTrail(leader); for (const F of party) if (F !== leader && !F.on && !F.hop && !F.drop && !F.frozen && !F.carried && mine(F) && !isBase(F)) updFollower(F, leader, dt);
     updCarry(dt); updTongueAim(); updVentFx(dt);
@@ -740,7 +747,7 @@ function update(dt) {
 }
 let last = performance.now();
 function frame(now) {
-  requestAnimationFrame(frame);
+  requestAnimationFrame(frame); musicFrame();
   const dt = Math.min(.05, (now - last) / 1000); last = now;
   { const [w, h] = viewSize(); if (w !== RS.w || h !== RS.h) onResize(); }
   if (STATE === 'load') return;
@@ -812,6 +819,7 @@ function setupTouch() {
   hold('tbAct', () => { const id = leader.id; if (id === 'cham') chamTongue(); else if (id === 'sq') sqCarry(); else if (id === 'hog') hogRoll(); else if (id === 'coon') coonThrow(); else if (id === 'rab' || id === 'frog') keys.Mouse0 = true; else if (id === 'bat') batPing(); else if (id === 'tort') tortShell(); }, () => { keys.Mouse0 = false; });
   hold('tbScout', () => { if (leader.id === 'frog') frogSwitch(); else sqScout(); });
   hold('tbPush', () => { keys.TPush = true; bearShove(); }, () => { keys.TPush = false; });
+  hold('tbPull', () => { keys.TPull = !keys.TPull; $('tbPull').classList.toggle('on', keys.TPull); }, () => { });
   hold('tbPause', () => { if (STATE === 'play' || STATE === 'intro') pause(); });
   T.addEventListener('contextmenu', e => e.preventDefault());
 }

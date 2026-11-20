@@ -96,6 +96,7 @@ function tortExtras(C, S, head, body, k, plain) {
 
 // ---------- animation hooks (called at the end of animChar) ----------
 function ncAnim(C, dt, st) {
+  if (C.drag) { for (const a of C.arms) { const s = a.userData.s; a.rotation.set(-1.45, 0, s * .12); } C.body.rotation.x = -.28; }
   if (C.id === 'bat') {
     C.flapT = Math.max(0, (C.flapT || 0) - dt);
     const roost = st === 'roost', air = st === 'air' || st === 'tumble';
@@ -115,9 +116,6 @@ function ncAnim(C, dt, st) {
       C.body.rotation.x = lerp(C.body.rotation.x, 1.42, s); C.body.position.y = lerp(C.body.position.y, .46 * C.k, s);
       const v = Math.max(.02, 1 - s * 1.05); C.head.scale.setScalar(v); for (const a of C.arms) a.scale.setScalar(v); for (const l of C.legs) l.scale.setScalar(v); for (const t of C.tail) t.scale.setScalar(v);
     } else if (C.head.scale.x !== 1) { C.head.scale.setScalar(1); for (const a of C.arms) a.scale.setScalar(1); for (const l of C.legs) l.scale.setScalar(1); for (const t of C.tail) t.scale.setScalar(1); }
-  } else if (st === 'roost') {
-    // a teammate following the bat under a table: hang there by the hands
-    for (const a of C.arms) { const s = a.userData.s; a.rotation.set(-2.95, 0, s * .22); } C.legs[0].rotation.set(-.12 + Math.sin(C.t * 11) * .3, 0, 0); C.legs[1].rotation.set(-.12 - Math.sin(C.t * 11) * .3, 0, 0);
   }
 }
 
@@ -136,6 +134,14 @@ function undersideAt(x, top, z) {
 function roostOn(C, c) {
   if (!c || c.slick || c.y0 < -900) return false;
   C.roost = { c }; C.climbing = false; C.mantle = null; C.vel.set(0, 0, 0); C.grounded = false; C.flaps = 0; C.pos.y = c.y0 - C.h; C.state = 'roost'; SND.step(.6);
+  if (C === leader) {
+    // the others don't follow it up: drop the jump/climb that led here from their paths, and bring anyone already up in the air back down
+    C.roostGap = true;
+    const up = q => q.st === 'air' || q.st === 'climb' || q.st === 'glide' || q.st === 'roost';
+    while (trail.length && up(trail[trail.length - 1])) trail.pop();
+    for (const F of party) { if (F === C || F.frozen) continue; while (F.queue.length && up(F.queue[F.queue.length - 1])) F.queue.pop();
+      const [sup] = supportAt(F.pos.x, F.pos.z, F.r * .55, F.pos.y + .05); if (F.pos.y - sup > .35 && !F.queue.length) F.queue.push({ x: F.pos.x, y: sup, z: F.pos.z, yaw: F.yaw, st: 'air' }); }
+  }
   if (!NC.said.roost && C === leader) { NC.said.roost = 1; toast('倒吊中：慢慢休息回體力 · 移動就沿着底面爬，爬到邊會翻上面 · Space 放手', 4.2); }
   return true;
 }

@@ -232,7 +232,9 @@ html.touch .desk{display:none}
 #tbGrow{right:84px;bottom:84px}
 #tbShrink{right:150px;bottom:150px;width:52px;height:52px}
 #tbPush{display:none;right:84px;bottom:84px;border-color:rgba(217,166,117,.7);color:#e9bf8f}
-.touchui.bear #tbPush{display:block}
+.touchui.bear #tbPush,.touchui.bear #tbPull{display:block}
+#tbPull{display:none;right:150px;bottom:150px;width:52px;height:52px;border-color:rgba(217,166,117,.7);color:#e9bf8f}
+#tbPull.on{background:rgba(217,166,117,.35)}
 #tbStack{right:176px;bottom:74px;width:52px;height:52px}
 #tbProto{display:none;right:14px;bottom:188px;width:56px;height:56px;border-color:rgba(95,242,230,.7);color:#5ff2e6;font-size:12px}
 .touchui.proto #tbProto{display:block}
@@ -334,6 +336,7 @@ html.touch .mpchip{bottom:auto;top:62px}
     <button class="tb" id="tbGrow">放大</button>
     <button class="tb" id="tbShrink">縮小</button>
     <button class="tb" id="tbPush">推</button>
+    <button class="tb" id="tbPull">拉</button>
     <button class="tb" id="tbStack">疊</button>
     <button class="tb" id="tbProto">復活</button>
     <button class="tb" id="tbAct">抱</button>
@@ -496,6 +499,7 @@ html.touch .mpchip{bottom:auto;top:62px}
       <div class="sel" id="qsel2" role="group" aria-label="畫質"><button data-q="high">高</button><button data-q="med">中</button><button data-q="low">低</button></div>
       <label for="setSens">視角靈敏度</label><input type="range" id="setSens" min="0.4" max="2.2" step="0.1">
       <label for="setVol">音量</label><input type="range" id="setVol" min="0" max="1" step="0.05">
+      <label for="setMus">音樂</label><input type="range" id="setMus" min="0" max="1" step="0.05">
       <label for="setInv">上下視角反轉</label><input type="checkbox" id="setInv">
     </div>
     <div class="pmp" id="pauseMP" hidden>
@@ -1839,8 +1843,8 @@ canvas.addEventListener('mousedown', e => {
   if (!dragMode) { requestLock(); return; }
   mbtn = e.button; dragDist = 0;
 });
-addEventListener('mouseup', e => { if (e.button === 0) keys.Mouse0 = false; if (dragMode && mbtn >= 0 && dragDist < 6 && STATE === 'play') { primaryDown(mbtn); keys.Mouse0 = false; } mbtn = -1; });
-function primaryDown(btn) { const L = leader; if (!L) return; if (L.id === 'bear') { if (btn === 0) { keys.Mouse0 = true; bearShove(); } return; } if (L.id === 'cham') { if (btn === 0) chamTongue(); return; } if (L.id === 'sq') { if (btn === 0) sqCarry(); else if (btn === 2) sqScout(); return; } if (L.id === 'hog') { if (btn === 0) hogRoll(); return; } if (L.id === 'coon') { if (btn === 0) coonThrow(); return; } if (L.id === 'rab' || L.id === 'frog') { if (btn === 0) keys.Mouse0 = true; else if (btn === 2 && L.id === 'frog') frogSwitch(); return; } if (L.id === 'bat') { if (btn === 0) batPing(); return; } if (L.id === 'tort') { if (btn === 0) tortShell(); return; } fireGun(btn === 0); }
+addEventListener('mouseup', e => { if (e.button === 0) keys.Mouse0 = false; if (e.button === 2) keys.Mouse2 = false; if (dragMode && mbtn >= 0 && dragDist < 6 && STATE === 'play') { primaryDown(mbtn); keys.Mouse0 = false; } mbtn = -1; });
+function primaryDown(btn) { const L = leader; if (!L) return; if (L.id === 'bear') { if (btn === 0) { keys.Mouse0 = true; bearShove(); } else if (btn === 2) keys.Mouse2 = true; return; } if (L.id === 'cham') { if (btn === 0) chamTongue(); return; } if (L.id === 'sq') { if (btn === 0) sqCarry(); else if (btn === 2) sqScout(); return; } if (L.id === 'hog') { if (btn === 0) hogRoll(); return; } if (L.id === 'coon') { if (btn === 0) coonThrow(); return; } if (L.id === 'rab' || L.id === 'frog') { if (btn === 0) keys.Mouse0 = true; else if (btn === 2 && L.id === 'frog') frogSwitch(); return; } if (L.id === 'bat') { if (btn === 0) batPing(); return; } if (L.id === 'tort') { if (btn === 0) tortShell(); return; } fireGun(btn === 0); }
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 addEventListener('wheel', e => { cam.dist = clamp(cam.dist + e.deltaY * .012, 8, 42); }, { passive: true });
 
@@ -1909,7 +1913,7 @@ function land(C, imp) {
   else if (imp > 45) { C.squash = clamp(imp / 160, .25, .75); SND.land(clamp(imp / 130, .2, .8)); }
   else SND.step(.6);
 }
-function speedOf(C, run) { return (C.crouch ? 6.5 : run ? 25 : 13.5) * C.S.spd * (C.slow || 1) * (C.carry ? 1 - .22 * carryWeight(C) : 1) * (C.stackN ? (C.stackN > 1 ? .6 : .76) : 1); }
+function speedOf(C, run) { return (C.crouch ? 6.5 : run && !C.drag ? 25 : 13.5) * (C.drag ? C.drag.slow : 1) * C.S.spd * (C.slow || 1) * (C.carry ? 1 - .22 * carryWeight(C) : 1) * (C.stackN ? (C.stackN > 1 ? .6 : .76) : 1); }
 const joy = { id: null, x: 0, y: 0, ox: 0, oy: 0, on: false };
 function readMove() {
   if (joy.on && Math.hypot(joy.x, joy.y) > .1) { const m = Math.min(1, Math.hypot(joy.x, joy.y)); return { x: joy.x, y: joy.y, m, run: m > .93 }; }
@@ -1946,7 +1950,7 @@ function updLeader(C, dt) {
   if (C.tumble > 0) { if (C.grounded) { C.vel.x *= 1 - 5 * dt; C.vel.z *= 1 - 5 * dt; } } else { C.vel.x += dvx; C.vel.z += dvz; }
   if (wl > 0 && !(C.tumble > 0)) C.yaw = angDamp(C.yaw, Math.atan2(wx, wz), 13, dt);
   if (ctl && pressed.Space && C.grounded && base) { if (!C.noJumpT || T - C.noJumpT > 3) { C.noJumpT = T; toast('頭上有人，跳唔到——叫佢哋先落嚟'); } }
-  else if (ctl && pressed.Space && C.grounded) { C.vel.y = 47 * C.S.jmp; C.grounded = false; C.squash = -.55; C.crouch = false; SND.jump(); }
+  else if (ctl && pressed.Space && C.grounded && !C.drag) { C.vel.y = 47 * C.S.jmp; C.grounded = false; C.squash = -.55; C.crouch = false; SND.jump(); }
   else if (ctl && pressed.Space && C.id === 'bat' && !C.grounded && !base) batFlap(C);
   if (C.dashT > 0) hogDash(C, dt); chargeJump(C, dt, ctl);
   C.vel.y -= G * dt; const wasGl = C.gliding; C.gliding = false;
@@ -2020,8 +2024,11 @@ function updClimb(C, dt, inX, inY, ctl, run) {
 
 // ---------- followers (they retrace the leader's exact path, so they climb and jump too) ----------
 function pushTrail(L) {
+  // only the bat can hang under things: while it roosts (and until it is back on its feet) the others wait where it left the ground
+  if (L.roost || (L.roostGap && !L.grounded && !L.climbing)) return;
   if (L.pos.distanceTo(L.lastTrail) < .35) return; L.lastTrail.copy(L.pos);
   const pt = { x: L.pos.x, y: L.pos.y, z: L.pos.z, yaw: L.yaw, st: L.state };
+  if (L.roostGap) { L.roostGap = false; pt.st = 'warp'; }
   trail.push(pt); if (trail.length > 9000) trail.splice(0, 3000);
   for (const F of party) if (F !== L && !F.frozen) { F.queue.push(pt); if (F.queue.length > 7000) F.queue.splice(0, 2000); }
 }
@@ -2031,12 +2038,13 @@ function updFollower(F, L, dt) {
   let Lp = pathLen(F, L);
   if (Lp > 150 && F.queue.length > 30) { while (F.queue.length > 2 && Lp > 70) { const q = F.queue.shift(); Lp -= Math.hypot(q.x - F.pos.x, q.y - F.pos.y, q.z - F.pos.z); F.pos.set(q.x, q.y, q.z); } }
   const [sup] = supportAt(F.pos.x, F.pos.z, F.r * .55, F.pos.y + .05);
-  const floating = F.pos.y - sup > .35 && F.qst !== 'climb' && F.qst !== 'roost';
+  const floating = F.pos.y - sup > .35 && F.qst !== 'climb';
   let moved = 0;
   if (Lp > F.gap || (floating && F.queue.length)) {
     let move = Math.min(Math.max(Lp - F.gap, floating ? 30 * dt : 0), (Lp - F.gap > 14 || floating ? 32 : 17) * F.S.spd * dt); const m0 = move;
     while (move > 1e-4 && F.queue.length) {
       const q = F.queue[0]; const dx = q.x - F.pos.x, dy = q.y - F.pos.y, dz = q.z - F.pos.z; const d = Math.hypot(dx, dy, dz);
+      if (q.st === 'warp') { F.queue.shift(); F.pos.set(q.x, q.y, q.z); F.qst = 'walk'; F.offK = 0; for (let i = 0; i < 8; i++) emit(V3(q.x, q.y + 1, q.z), V3(R(-6, 6), R(2, 8), R(-6, 6)), new THREE.Color(.5, .5, .5), R(.2, .4), R(.3, .6), 20, 2); continue; }
       F.qst = q.st; F.qyaw = q.yaw;
       if (d <= move) { F.pos.set(q.x, q.y, q.z); move -= d; F.queue.shift(); if (Math.hypot(dx, dz) > .3) F.tyaw = Math.atan2(dx, dz); }
       else { const k = move / d; F.pos.x += dx * k; F.pos.y += dy * k; F.pos.z += dz * k; move = 0; if (Math.hypot(dx, dz) > .3) F.tyaw = Math.atan2(dx, dz); }
@@ -2045,7 +2053,7 @@ function updFollower(F, L, dt) {
   }
   F.spd = moved;
   const st = F.qst || 'idle';
-  if ((st === 'climb' || st === 'roost') && (moved > .3 || floating || F.pos.y - sup > .35)) { F.state = st; F.yaw = angDamp(F.yaw, F.qyaw, 10, dt); }
+  if (st === 'climb' && (moved > .3 || floating || F.pos.y - sup > .35)) { F.state = 'climb'; F.yaw = angDamp(F.yaw, F.qyaw, 10, dt); }
   else if (moved > .5) { F.state = (st === 'air' || st === 'glide' || st === 'tumble') ? (F.id === 'sq' && st === 'glide' ? 'glide' : 'air') : (st === 'sneak' ? 'sneak' : 'walk'); if (F.tyaw !== undefined) F.yaw = angDamp(F.yaw, F.tyaw, 10, dt); }
   else { F.state = L.crouch ? 'crouch' : 'idle'; const dx = L.pos.x - F.pos.x, dz = L.pos.z - F.pos.z; if (Math.hypot(dx, dz) > 5) F.yaw = angDamp(F.yaw, Math.atan2(dx, dz), 2, dt); }
   F.crouch = F.state === 'crouch' || F.state === 'sneak';
@@ -2300,8 +2308,8 @@ function updHUD(dt) {
   const cap = (L.stamMax || 100) / 100; const showSt = L.climbing || L.stamina < cap * 100 - .5 || cap < 1;
   $('stcap').style.strokeDasharray = `${(94.25 * (1 - cap)).toFixed(1)} 200`; $('stcap').style.transform = `rotate(${(-90 + 360 * cap).toFixed(1)}deg)`;
   $('protw').style.display = LVL.toys ? '' : 'none'; $('protn').textContent = PROTO;
-  const fz = party.find(C => C.frozen);
-  $('touch').classList.toggle('proto', !!fz && PROTO > 0);
+  const fz = party.find(C => C.frozen); const ptg = fz && !L.frozen ? protoTarget(L) : null;
+  $('touch').classList.toggle('proto', !!ptg && PROTO > 0);
   $('stam').classList.toggle('on', showSt && L.id !== 'gecko'); $('stam').classList.toggle('low', L.stamina < 30);
   if (showSt) { project(V3(L.pos.x, L.pos.y + L.h * .9, L.pos.z), $('stam'), 46, -10); $('stc').style.strokeDashoffset = (94.25 * (1 - L.stamina / 100)).toFixed(1); }
   const mkp = LVL.marker ? LVL.marker() : null;
@@ -2310,17 +2318,20 @@ function updHUD(dt) {
   $('cells').innerHTML = Array.from({ length: cellMax }, (_, i) => `<i class="${i < cells ? 'f' : ''}"></i>`).join('');
   let h = '';
   const ph = L.id === 'bear' && !STK ? pushTarget(L) : null;
-  if (NET.on && L.frozen) h = PROTO > 0 ? '你變成了玩具！等隊友來搖醒你，或者讓他們用 Prototype（R）' : '你變成了玩具！等隊友來玩具箱搖醒你';
+  if (NET.on && L.frozen) h = L.toyAt === 'box' ? `你被收在${L.toyPlace || '某處'}裡——要隊友帶 Prototype 走過來救你` : L.toyAt === 'hand' ? '你正被拿走……' : '你變成了玩具！趁還沒被收走，隊友走到你旁邊就能搖醒你';
   else if (NET.on && !mine(L)) h = '隊友正在帶着你行動……';
   else if (stackHintK && stackHintText()) h = stackHintText();
   else if (TOY.rescuing) h = `正在搖醒${TOY.rescuing.S.name}…… ${Math.min(99, Math.round(TOY.rescuing.rescueT / 1.4 * 100))}%`;
-  else if (fz && PROTO > 0 && !L.climbing) h = TOUCH ? `按「復活」用 Prototype 救回${fz.S.name}（體力上限 -20%），或者去玩具箱救他` : `<kbd>R</kbd> 用 Prototype 救回${fz.S.name}（體力上限 -20%）· 或者去玩具箱救他`;
-  else if (fz && !L.climbing && fz.toyAt === 'box') h = `${fz.S.name}在玩具箱裡——爬進去碰一下就能救回來`;
+  else if (ptg && PROTO > 0 && !L.climbing) h = TOUCH ? `按「復活」用 Prototype 救回${ptg.S.name}（體力上限 -20%）` : `<kbd>R</kbd> 用 Prototype 救回${ptg.S.name}（體力上限 -20%）`;
+  else if (fz && !L.climbing && fz.toyAt === 'box') h = PROTO > 0 ? `${fz.S.name}被收在${fz.toyPlace || '某處'}裡——帶着 Prototype 走到他旁邊、面向他按 ${TOUCH ? '「復活」' : '<kbd>R</kbd>'}` : `${fz.S.name}被收在${fz.toyPlace || '某處'}裡——要先找到 Prototype 藥水才救得回`;
+  else if (fz && !L.climbing && fz.toyAt === 'hand') h = `${fz.S.name}正被拿走！`;
+  else if (fz && !L.climbing && fz.toyAt === 'floor') h = `${fz.S.name}變成了玩具——趁還沒被收走，走到他旁邊就能搖醒他`;
   else if (L.id === 'cham' && tongueAim && !L.climbing) h = tongueAim.item ? (TOUCH ? '按「舌」用舌頭拿過來' : '左鍵 用舌頭拿過來') : (TOUCH ? '按「舌」黐住那裡飛過去' : '左鍵 吐舌頭黐住那裡飛過去');
   else if (L.id === 'cham' && L.camo > .85) h = '變色中——停着不動很難被看見';
   else if (L.id === 'sq' && L.carry) h = TOUCH ? `抱着${L.carry.S.name}——跳起按住「跳」一起滑翔 · 再按「抱」放下` : `抱着${L.carry.S.name}——跳起按住 <kbd>Space</kbd> 一起滑翔 · 左鍵放下`;
   else if (crewHint(L)) h = crewHint(L);
-  else if (ph) h = TOUCH ? `按「推」推動「${ph.name}」` : `左鍵 推「${ph.name}」 · 按住左鍵 推着走`;
+  else if (L.drag) h = TOUCH ? `拉住「${L.drag.r.name}」——向後行拖住走 · 再按「拉」放手` : `拉住「${L.drag.r.name}」——向後行拖住走 · 放開右鍵放手`;
+  else if (ph) h = TOUCH ? `按「推」推動「${ph.name}」 · 按「拉」抓住拖走` : `左鍵 推「${ph.name}」 · 按住左鍵 推着走 · 按住右鍵 拉`;
   else if (TOUCH) {
     if (L.climbing) h = '推搖桿上下左右攀爬 · 按「跳」跳開';
     else if (L.id === 'sq' && !L.grounded) h = '按住「跳」滑翔';
@@ -2470,7 +2481,7 @@ function update(dt) {
     if (pressed.KeyH) { hudOn = !hudOn; $('hud').classList.toggle('off', !hudOn); }
     if (pressed.KeyF) stackPress(); crewInput(leader, !leader.frozen && mine(leader));
     const lockL = !mine(leader) || leader.frozen || !!leader.on || !!leader.hop || leader.pullT > 0;
-    if (!lockL) { const sub = dt > 1 / 30 ? 2 : 1; for (let s = 0; s < sub; s++) updLeader(leader, dt / sub); }
+    if (!lockL) { const sub = dt > 1 / 30 ? 2 : 1; for (let s = 0; s < sub; s++) updLeader(leader, dt / sub); bearDrag(dt); }
     updHops(dt); stackInput(); stackSolve(dt);
     if (!lockL) pushTrail(leader); for (const F of party) if (F !== leader && !F.on && !F.hop && !F.drop && !F.frozen && !F.carried && mine(F) && !isBase(F)) updFollower(F, leader, dt);
     updCarry(dt); updTongueAim(); updVentFx(dt);
@@ -2507,7 +2518,7 @@ function update(dt) {
 }
 let last = performance.now();
 function frame(now) {
-  requestAnimationFrame(frame);
+  requestAnimationFrame(frame); musicFrame();
   const dt = Math.min(.05, (now - last) / 1000); last = now;
   { const [w, h] = viewSize(); if (w !== RS.w || h !== RS.h) onResize(); }
   if (STATE === 'load') return;
@@ -2579,6 +2590,7 @@ function setupTouch() {
   hold('tbAct', () => { const id = leader.id; if (id === 'cham') chamTongue(); else if (id === 'sq') sqCarry(); else if (id === 'hog') hogRoll(); else if (id === 'coon') coonThrow(); else if (id === 'rab' || id === 'frog') keys.Mouse0 = true; else if (id === 'bat') batPing(); else if (id === 'tort') tortShell(); }, () => { keys.Mouse0 = false; });
   hold('tbScout', () => { if (leader.id === 'frog') frogSwitch(); else sqScout(); });
   hold('tbPush', () => { keys.TPush = true; bearShove(); }, () => { keys.TPush = false; });
+  hold('tbPull', () => { keys.TPull = !keys.TPull; $('tbPull').classList.toggle('on', keys.TPull); }, () => { });
   hold('tbPause', () => { if (STATE === 'play' || STATE === 'intro') pause(); });
   T.addEventListener('contextmenu', e => e.preventDefault());
 }
@@ -2825,6 +2837,36 @@ function bearShove() {
 function shoveRes(r, vx, vz) { r.svx = (r.svx || 0) + vx; r.svz = (r.svz || 0) + vz; if (r === LIV.wedge) LIV.loose = true; }
 function slideFree(c, dx, dz) { const nb = [c.x0 + dx, c.x1 + dx, c.z0 + dz, c.z1 + dz, c.y0 + .05, c.y1]; for (const o of colsNear((c.x0 + c.x1) / 2, c.y0 + .1, (c.z0 + c.z1) / 2)) { if (o === c || o.y1 <= nb[4] || o.y0 >= nb[5]) continue; const b = colBounds(o); if (b[1] > nb[0] && b[0] < nb[1] && b[5] > nb[2] && b[4] < nb[3]) return false; } return true; }
 function bearHold(dt) { shoveCD = Math.max(0, shoveCD - dt); const L = leader; if (L && L.id === 'bear' && mine(L) && !L.frozen && pushHeld() && shoveCD <= 0 && !(Math.hypot(L.vel.x, L.vel.z) > 2 && L.pushing)) bearShove(); }
+// ---------- bear: grab hold and drag (hold right click / touch 拉) ----------
+function dragHeld() { return !!(keys.Mouse2 || keys.TPull); }
+function dragTo(r, tx, tz) {
+  const c = r.c, dx = tx - r.cx, dz = tz - r.cz; let mx = 0, mz = 0;
+  if (Math.abs(dx) > 1e-4 && slideFree(c, dx, 0)) { r.cx += dx; mx = dx; applyResize(r); }
+  if (Math.abs(dz) > 1e-4 && slideFree(c, 0, dz)) { r.cz += dz; mz = dz; applyResize(r); }
+  return [mx, mz];
+}
+function bearDrag(dt) {
+  const L = leader; if (!L || L.id !== 'bear') return;
+  if (!mine(L) || L.frozen || STATE !== 'play' || !dragHeld() || L.climbing || L.mantle || L.on || isBase(L)) { if (L.drag) { L.drag = null; SND.push(); } return; }
+  if (!L.drag) {
+    const r = pushTarget(L);
+    if (!r) { keys.TPull = false; $('tbPull').classList.remove('on'); if (!L.noDragT || T - L.noDragT > 5) { L.noDragT = T; toast('前面沒有拉得動的東西——要正面對着它'); } keys.Mouse2 = false; return; }
+    const vol = r.sx * r.sy * r.sz * r.s ** 3;
+    L.drag = { r, ox: r.cx - L.pos.x, oz: r.cz - L.pos.z, slow: clamp(.72 - Math.cbrt(Math.max(1, vol)) / 140, .3, .65), sendT: 0 }; SND.push(); SND.thud(.1);
+    if (!L.saidDrag) { L.saidDrag = 1; toast(`抓住了「${r.name}」——向後行就拖住走，${TOUCH ? '再按「拉」' : '放開右鍵'}放手`, 3.4); }
+  }
+  const D = L.drag, r = D.r; if (r.gone) { L.drag = null; return; }
+  L.yaw = Math.atan2(D.ox, D.oz);
+  const tx = L.pos.x + D.ox, tz = L.pos.z + D.oz;
+  if (Math.hypot(tx - r.cx, tz - r.cz) < .02) return;
+  dragTo(r, tx, tz);
+  // whatever it couldn't follow holds the bear back
+  L.pos.x = r.cx - D.ox; L.pos.z = r.cz - D.oz;
+  // online: move it here straight away; the host does the same and keeps everyone in step
+  if (NET.client) { D.sendT -= dt; if (D.sendT <= 0) { D.sendT = .07; nsend({ t: 'drg', i: resizables.indexOf(r), x: +r.cx.toFixed(2), z: +r.cz.toFixed(2) }, NET.hostId); } }
+  if (rnd() < dt * 9) emit(V3(r.cx, r.y0 + .2, r.cz), V3(R(-3, 3), R(1, 3), R(-3, 3)), new THREE.Color(.28, .25, .22), R(.15, .3), R(.3, .5), 20, 2);
+  if (rnd() < dt * 3) SND.push();
+}
 function updSlides(dt) {
   for (const r of resizables) {
     if (!r.svx && !r.svz) continue; const c = r.c;
@@ -2874,7 +2916,7 @@ function toyFreeze(who) {
   toyLook(L, true); meter = 0; STATE = 'frozen'; failT = 0; TOY.focus = L;
   SND.heart(1); tone(1800, 600, .8, .08, 'triangle'); nz(1.2, 4200, 1, .08, 'highpass'); toyBurst(V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z));
   toySay(who, say);
-  if (LEVEL === 'kitchen') { if (KM.mode === 'sus') KM.mode = 'goto'; if (toyReachable(L)) TOY.fetchQ.push(L); }
+  const zk = zoneAt(L.pos, 4); if (!zk || zk.id === 'kitchen') { if (KM.mode === 'sus') KM.mode = 'goto'; if (toyReachable(L)) TOY.fetchQ.push(L); } else takeQueue(L);
   refreshPartyHUD();
 }
 // what whoever saw it says when a teammate turns into a toy
@@ -2908,15 +2950,17 @@ function toyRevive(C, proto, by = leader) {
   C.disp.copy(C.pos); C.queue = []; C.vel.set(0, 0, 0); C.state = 'idle'; C.qst = 'idle'; C.offK = 0; C.lastTrail = C.pos.clone();
   if (NET.on) { netUnlease([{ id: C.id, x: C.pos.x, y: C.pos.y, z: C.pos.z }]); nsend({ t: 'rev', id: C.id, x: C.pos.x, y: C.pos.y, z: C.pos.z, sm: C.stamMax, pr: proto ? 1 : 0 }); if (C === leader) { TOY.grace = 1.5; meter = 0; } }
   assignGaps(); refreshPartyHUD(); toyBurst(V3(C.pos.x, C.pos.y + C.h * .5, C.pos.z)); SND.pick();
-  toastW(proto ? `用 Prototype 救回了${C.S.name}！體力上限變成 ${C.stamMax}%` : `從玩具箱救回了${C.S.name}！`, 3.2);
-  sayW(C.S.name, proto ? '……我回來了？身體好重。' : '謝了！還以為要一直做玩具……', C.S.col, 2.4);
+  toastW(proto ? `用 Prototype 救回了${C.S.name}！體力上限變成 ${C.stamMax}%` : `把${C.S.name}搖醒了！`, 3.2); C.toyPlace = null;
+  sayW(C.S.name, proto ? '……我回來了？身體好重。' : '謝了！差點就被收起來……', C.S.col, 2.4);
 }
 function useProto() {
   if (NET.on) { if (STATE !== 'play') return; if (leader.frozen) { toast('你變成了玩具，要等隊友救你'); return; } if (NET.host) hostProto(leader.id, null); else nsend({ t: 'proto', id: leader.id }, NET.hostId); return; }
   const fz = party.filter(C => C.frozen); if (STATE !== 'play') return;
   if (!fz.length) { toast(PROTO ? '隊友都好好的，Prototype 留着之後用' : '沒有 Prototype'); return; }
-  if (!PROTO) { toast('沒有 Prototype 了——去玩具箱把隊友救出來'); return; }
-  PROTO--; toyRevive(fz[0], true);
+  const tg = protoTarget(leader);
+  if (!tg) { const n = frozenNear(leader); toast(n && n.toyAt === 'hand' ? `${n.S.name}正被拿走——等放下了再救` : `要走到${n ? n.S.name : '隊友'}旁邊、面向他，才可以用 Prototype`, 3); return; }
+  if (!PROTO) { toast(tg.toyAt === 'box' ? '沒有 Prototype——要先找到 Prototype 藥水才救得回' : '沒有 Prototype——站在他旁邊一會就能把他搖醒', 3); return; }
+  PROTO--; toyRevive(tg, true);
 }
 function toyUnfreezeAll() { for (const C of party) if (C.frozen) { C.frozen = false; C.toyAt = null; toyLook(C, false); C.root.rotation.set(0, C.yaw, 0); } TOY.fetch = null; TOY.fetchQ = []; }
 function toyHand() { const p = V3(); mom.arms[1].hand.getWorldPosition(p); return p; }
@@ -2948,7 +2992,7 @@ function momFetch(dt) {
   if (F.mode === 'drop') {
     F.t += dt; const B = TOY.box; mom.yaw = angDamp(mom.yaw, Math.atan2(B.cx - P.x, B.cz - P.z), 5, dt); mom.aimT.set(B.cx, 6, B.cz);
     if (F.t < .5) C.pos.copy(toyHand()).add(V3(0, -C.h * .4, 0));
-    else if (C.toyAt === 'hand') { C.toyAt = 'box'; C.pos.set(R(B.x0 + 4, B.x1 - 4), 24, R(B.z0 + 4, B.z1 - 4)); C.toyVy = -20; C.yaw = R(0, 6.28); C.toyTilt = R(-1.3, 1.3); C.toyRoll = R(-.4, .4); refreshPartyHUD(); }
+    else if (C.toyAt === 'hand') { C.toyAt = 'box'; C.toyPlace = '玩具箱'; C.pos.set(R(B.x0 + 4, B.x1 - 4), 24, R(B.z0 + 4, B.z1 - 4)); C.toyVy = -20; C.yaw = R(0, 6.28); C.toyTilt = R(-1.3, 1.3); C.toyRoll = R(-.4, .4); refreshPartyHUD(); }
     if (F.t > 1.3) { TOY.fetch = null; KM.mode = 'goto'; }
     return 0;
   }
@@ -2961,7 +3005,7 @@ function toyApproach(p) {
   return V3(clamp(x, -270, 270), 0, clamp(z, -134, 200));
 }
 function updToys(dt) {
-  const L = leader; TOY.rescuing = null; if (TOY.grace > 0) TOY.grace -= dt;
+  const L = leader; TOY.rescuing = null; if (TOY.grace > 0) TOY.grace -= dt; takeTick();
   if (NET.client) { for (const C of party) if (C.frozen && C.rescueT > 0 && !L.frozen && Math.hypot(L.pos.x - C.pos.x, L.pos.z - C.pos.z) < 4.6) TOY.rescuing = C; }
   else for (const C of party) {
     if (!C.frozen) continue;
@@ -2969,7 +3013,7 @@ function updToys(dt) {
       const [s] = supportAt(C.pos.x, C.pos.z, C.r * .5, C.pos.y + .05);
       if (C.pos.y > s + .01 || C.toyVy > 0) { C.toyVy = (C.toyVy || 0) - G * dt; C.pos.y = Math.max(s, C.pos.y + C.toyVy * dt); if (C.pos.y <= s) { if (C.toyVy < -60) SND.land(.4); C.toyVy = 0; } }
     }
-    const rs = STATE === 'play' && C.toyAt !== 'hand' ? (NET.on ? playerChars() : [L]).find(q => q !== C && !q.frozen && Math.hypot(q.pos.x - C.pos.x, q.pos.z - C.pos.z) < 4.6 && Math.abs(q.pos.y - C.pos.y) < 4) : null;
+    const rs = STATE === 'play' && C.toyAt === 'floor' ? (NET.on ? playerChars() : [L]).find(q => q !== C && !q.frozen && Math.hypot(q.pos.x - C.pos.x, q.pos.z - C.pos.z) < 4.6 && Math.abs(q.pos.y - C.pos.y) < 4) : null;
     if (rs) {
       C.rescueT = (C.rescueT || 0) + dt; if (rs === L) TOY.rescuing = C; C.toyRoll = Math.sin(T * 34) * .12 * Math.min(1, C.rescueT * 2); if (rnd() < dt * 8) SND.step(.5);
       if (C.rescueT >= 1.4) { C.rescueT = 0; toyRevive(C, false, rs); }
@@ -3636,11 +3680,12 @@ $('goRoster').addEventListener('click', () => { audioInit(); openRoster(); });
 $('rosterClose').addEventListener('click', () => { $('roster').hidden = true; });
 
 // ---------- settings (kept on this device) ----------
-const SET = Object.assign({ sens: 1, vol: 1, inv: false }, (() => { try { return JSON.parse(localStorage.getItem('bn_set_v1') || '{}') || {}; } catch (e) { return {}; } })());
+const SET = Object.assign({ sens: 1, vol: 1, mus: .6, inv: false }, (() => { try { return JSON.parse(localStorage.getItem('bn_set_v1') || '{}') || {}; } catch (e) { return {}; } })());
 function saveSet() { try { localStorage.setItem('bn_set_v1', JSON.stringify(SET)); } catch (e) { } }
-$('setSens').value = SET.sens; $('setVol').value = SET.vol; $('setInv').checked = !!SET.inv;
+$('setSens').value = SET.sens; $('setVol').value = SET.vol; $('setMus').value = SET.mus; $('setInv').checked = !!SET.inv;
 $('setSens').addEventListener('input', e => { SET.sens = +e.target.value; saveSet(); });
 $('setVol').addEventListener('input', e => { SET.vol = +e.target.value; if (AU.out) AU.out.gain.value = .85 * SET.vol; saveSet(); });
+$('setMus').addEventListener('input', e => { SET.mus = +e.target.value; saveSet(); });
 $('setInv').addEventListener('change', e => { SET.inv = e.target.checked; saveSet(); });
 
 // ---------- pause menu ----------
@@ -4975,7 +5020,7 @@ function buildGarage() {
   box(1180, 1190, 100, 270, 140, 300, metal, { col: false });
   box(1150, 1220, 250, 268, 120, 160, new THREE.MeshStandardMaterial({ color: 0x6a6e72, roughness: .5 }), { col: false });
   // ---- the car ----
-  buildCar(1150, 70);   // nosed up close to the garage door, leaving a walkway in front of the bench
+  buildCar(1150, 70); buildEvidenceBox();   // nosed up close to the garage door, leaving a walkway in front of the bench
   // ---- workbench along the back wall (top 90 cm above the floor) ----
   const BT = GY + 90; GS.benchY = BT;
   box(1180, 1440, BT - 8, BT, -260, -196, wood, { uv: 80 });
@@ -5135,7 +5180,9 @@ function agentSay(k) { if (GS.said[k] && T - GS.said[k] < 40) return; GS.said[k]
 function updAgent(dt) {
   const H = GS.agent; if (!H) return; const P = H.pos; let moveD = 0;
   const walkTo = (tx0, tz0, sp) => { const [tx, tz] = agentWay(P, tx0, tz0); const fin = tx === tx0 && tz === tz0; const dx = tx - P.x, dz = tz - P.z, d = Math.hypot(dx, dz); const s = sp * dt; if (d < s + .5) { P.x = tx; P.z = tz; moveD = d; return fin; } P.x += dx / d * s; P.z += dz / d * s; moveD = s; H.yaw = angDamp(H.yaw, Math.atan2(dx, dz), 5, dt); return false; };
-  if (GS.mode === 'patrol') {
+  const J = TAKE.job && TAKE.job.who === 'agent' ? TAKE.job : null;
+  if (J) agentTake(J, H, walkTo, dt);
+  else if (GS.mode === 'patrol') {
     const n = AG_PATH[GS.node % AG_PATH.length];
     if (walkTo(n.x, n.z, 52)) { if (n.stop) { GS.mode = 'look'; GS.wait = n.stop; GS.look = V3(...n.look); if (n.line && rnd() < .5) agentSay(n.line); } GS.node++; }
     const fx = Math.sin(H.yaw), fz = Math.cos(H.yaw); H.aimT.set(P.x + fx * 150 + Math.sin(T * .8) * 40, GY, P.z + fz * 150 + Math.cos(T * .7) * 30);
@@ -5153,6 +5200,7 @@ function updAgent(dt) {
   P.x = clamp(P.x, 950, 1430); P.z = clamp(P.z, -182, 270); P.y = GY;
   H.aim.lerp(H.aimT, 1 - Math.exp(-3 * dt));
   agentPose(H, moveD, dt);
+  takeBend(H, J ? J.bend : 0, J ? 1 : 0);
 }
 function agentPose(H, moveD, dt) {
   const step = humanAnim(H, moveD, dt); const A0 = H.arms[0]; A0.sh.rotation.x = Math.sin(H.phase) * .3 * (H.amp / .42); A0.el.rotation.x = -.25;
@@ -5469,11 +5517,11 @@ function buildDog(o = {}) {
   if (!o.keep) YS.dog = D; return D;
 }
 function updDog(dt) {
-  const D = YS.dog; if (!D) return; D.t -= dt; const P = D.pos; let sp = 0;
+  const D = YS.dog; if (!D) return; if (TAKE.job && TAKE.job.who === 'dog') { dogTake(TAKE.job, D, dt); return; } D.t -= dt; const P = D.pos; let sp = 0;
   if (D.mode === 'sleep') { D.sleepK = damp(D.sleepK, 1, 2, dt); if (D.t <= 0 && rnd() < dt * .03) { D.mode = 'sniff'; D.t = R(8, 14); D.target = dogSpot(); } }
   else {
     D.sleepK = damp(D.sleepK, 0, 3, dt);
-    if (D.mode === 'sniff') { if (moveDog(D, D.target, 26, dt)) { D.target = dogSpot(); sp = 0; } else sp = 26; if (D.t <= 0) { D.mode = 'home'; } }
+    if (D.mode === 'sniff') { if (!D.target) D.target = dogSpot(); if (moveDog(D, D.target, 26, dt)) { D.target = dogSpot(); sp = 0; } else sp = 26; if (D.t <= 0) { D.mode = 'home'; } }
     else if (D.mode === 'alert' || D.mode === 'bark') { const dx = D.look.x - P.x, dz = D.look.z - P.z; D.yaw = angDamp(D.yaw, Math.atan2(dx, dz), 4, dt); if (D.mode === 'alert' && Math.hypot(dx, dz) > 60) { moveDog(D, D.look, 40, dt); sp = 40; } if (D.t <= 0) { D.mode = 'sniff'; D.t = R(5, 9); D.target = dogSpot(); } if (D.mode === 'bark' && (D.barkT -= dt) <= 0) { D.barkT = .45; dogBark(); } }
     else if (D.mode === 'home') { const h = V3(2300, GY, 368); if (moveDog(D, h, 28, dt)) { D.mode = 'sleep'; D.t = R(10, 20); D.yaw = Math.PI; } else sp = 28; }
   }
@@ -5522,6 +5570,7 @@ function updOldMan(dt) {
   H.root.updateMatrixWorld(true); const hp = V3(); H.head.getWorldPosition(hp); const ad = V3().subVectors(O.look, hp); const yr0 = Math.atan2(ad.x, ad.z) - H.yaw; const yr = Math.atan2(Math.sin(yr0), Math.cos(yr0)); const pitch = Math.atan2(-ad.y, Math.hypot(ad.x, ad.z));
   H.head.rotation.y = damp(H.head.rotation.y, clamp(yr, -.9, .9) * O.lookK, 3, dt); H.head.rotation.x = damp(H.head.rotation.x, lerp(.55, clamp(pitch * .6, -.3, .5), O.lookK), 3, dt);
   for (const A of H.arms) { A.sh.rotation.x = lerp(-1.1, -.5, O.lookK); A.sh.rotation.z = A.s * -.25; A.el.rotation.x = lerp(-.9, -.6, O.lookK); }
+  if (TAKE.job && TAKE.job.who === 'old') oldTake(TAKE.job, dt); else if (O.grab) O.grab.visible = false;
 }
 // sprinkler: one jet sweeping round; whoever it hits gets knocked over
 function updSprinkler(dt) {
@@ -5736,6 +5785,7 @@ function tortExtras(C, S, head, body, k, plain) {
 
 // ---------- animation hooks (called at the end of animChar) ----------
 function ncAnim(C, dt, st) {
+  if (C.drag) { for (const a of C.arms) { const s = a.userData.s; a.rotation.set(-1.45, 0, s * .12); } C.body.rotation.x = -.28; }
   if (C.id === 'bat') {
     C.flapT = Math.max(0, (C.flapT || 0) - dt);
     const roost = st === 'roost', air = st === 'air' || st === 'tumble';
@@ -5755,9 +5805,6 @@ function ncAnim(C, dt, st) {
       C.body.rotation.x = lerp(C.body.rotation.x, 1.42, s); C.body.position.y = lerp(C.body.position.y, .46 * C.k, s);
       const v = Math.max(.02, 1 - s * 1.05); C.head.scale.setScalar(v); for (const a of C.arms) a.scale.setScalar(v); for (const l of C.legs) l.scale.setScalar(v); for (const t of C.tail) t.scale.setScalar(v);
     } else if (C.head.scale.x !== 1) { C.head.scale.setScalar(1); for (const a of C.arms) a.scale.setScalar(1); for (const l of C.legs) l.scale.setScalar(1); for (const t of C.tail) t.scale.setScalar(1); }
-  } else if (st === 'roost') {
-    // a teammate following the bat under a table: hang there by the hands
-    for (const a of C.arms) { const s = a.userData.s; a.rotation.set(-2.95, 0, s * .22); } C.legs[0].rotation.set(-.12 + Math.sin(C.t * 11) * .3, 0, 0); C.legs[1].rotation.set(-.12 - Math.sin(C.t * 11) * .3, 0, 0);
   }
 }
 
@@ -5776,6 +5823,14 @@ function undersideAt(x, top, z) {
 function roostOn(C, c) {
   if (!c || c.slick || c.y0 < -900) return false;
   C.roost = { c }; C.climbing = false; C.mantle = null; C.vel.set(0, 0, 0); C.grounded = false; C.flaps = 0; C.pos.y = c.y0 - C.h; C.state = 'roost'; SND.step(.6);
+  if (C === leader) {
+    // the others don't follow it up: drop the jump/climb that led here from their paths, and bring anyone already up in the air back down
+    C.roostGap = true;
+    const up = q => q.st === 'air' || q.st === 'climb' || q.st === 'glide' || q.st === 'roost';
+    while (trail.length && up(trail[trail.length - 1])) trail.pop();
+    for (const F of party) { if (F === C || F.frozen) continue; while (F.queue.length && up(F.queue[F.queue.length - 1])) F.queue.pop();
+      const [sup] = supportAt(F.pos.x, F.pos.z, F.r * .55, F.pos.y + .05); if (F.pos.y - sup > .35 && !F.queue.length) F.queue.push({ x: F.pos.x, y: sup, z: F.pos.z, yaw: F.yaw, st: 'air' }); }
+  }
   if (!NC.said.roost && C === leader) { NC.said.roost = 1; toast('倒吊中：慢慢休息回體力 · 移動就沿着底面爬，爬到邊會翻上面 · Space 放手', 4.2); }
   return true;
 }
@@ -6094,8 +6149,10 @@ function buildWalker() {
 }
 function updWalker(dt) {
   const W = ST.walker, D = ST.wdog; if (!W) return; const H = W.H, P = H.pos; let moveD = 0;
-  W.t -= dt;
-  if (W.mode === 'walk') {
+  W.t -= dt; const J = TAKE.job && TAKE.job.who === 'walker' ? TAKE.job : null;
+  if (J) walkerTake(J, W, dt);
+  else {
+  if (W.mode === 'walk') { P.z = damp(P.z, 712, 2, dt);
     const tx = W.dir > 0 ? 2950 : 1450, sp = 46, dx = tx - P.x; const s = sp * dt;
     if (Math.abs(dx) < s + 1) { P.x = tx; W.mode = 'turn'; W.t = 2.4; W.dir = -W.dir; }
     else { P.x += Math.sign(dx) * s; moveD = s; H.yaw = angDamp(H.yaw, W.dir > 0 ? Math.PI / 2 : -Math.PI / 2, 4, dt); }
@@ -6112,6 +6169,7 @@ function updWalker(dt) {
   // right arm holds the phone up in front of the chest (lowered while he looks around)
   const A = H.arms[1]; A.sh.rotation.set(lerp(-.95, -.3, W.lookK), -.25, 0); A.el.rotation.x = lerp(-1.35, -.4, W.lookK); H.head.rotation.x = lerp(.45, H.head.rotation.x, W.lookK);
   H.arms[0].sh.rotation.set(-.35 + Math.sin(H.phase) * .12, .1, 0); H.arms[0].el.rotation.x = -.3;
+  }
   // the dog trots a little ahead on the leash, stopping to sniff
   if (D) {
     D.sniffT -= dt; const ahead = W.mode === 'walk' ? 70 : 46; const tx = P.x + W.dir * ahead, tz = P.z + 16 + D.offs; let sp = 0;
@@ -6227,7 +6285,13 @@ function buildRoad() {
   cyl(2380, 742, 15, GY, GY + 330, trunk, { seg: 14 }); for (let i = 0; i < 5; i++) mesh(new THREE.IcosahedronGeometry(R(80, 110), 1), leafM, 2380 + R(-70, 70), GY + R(300, 420), 742 + R(-60, 60));
   // mailbox (a battery on the top), recycling bins put out for collection
   box(2557, 2563, GY, GY + 96, 702, 708, metal); box(2540, 2580, GY + 96, GY + 128, 692, 718, new THREE.MeshStandardMaterial({ color: 0x2a4a6a, roughness: .5, metalness: .4 }));
-  for (const [x, c] of [[2690, 0x1f5a9a], [2752, 0x2e6a32]]) { const bm = new THREE.MeshStandardMaterial({ color: c, roughness: .6 }); box(x, x + 54, GY + 6, GY + 104, 728, 780, bm); box(x - 2, x + 56, GY + 104, GY + 110, 726, 784, bm); for (const s of [x + 8, x + 46]) { const w = mesh(new THREE.CylinderGeometry(6, 6, 4, 14), ST.mats.tire, s, GY + 6, 782); w.rotation.z = Math.PI / 2; } }
+  // recycling bins put out for collection: the blue one stands open (that's where the walker tidies a stray toy), the green one is shut
+  { const x = 2690, bm = new THREE.MeshStandardMaterial({ color: 0x1f5a9a, roughness: .6 }), W = 2.4;
+    box(x, x + 54, GY + 6, GY + 8, 728, 780, bm); box(x, x + 54, GY + 6, GY + 104, 728, 728 + W, bm); box(x, x + 54, GY + 6, GY + 104, 780 - W, 780, bm); box(x, x + W, GY + 6, GY + 104, 728 + W, 780 - W, bm); box(x + 54 - W, x + 54, GY + 6, GY + 104, 728 + W, 780 - W, bm);
+    const lid = new THREE.Group(); lid.position.set(x + 27, GY + 104, 728); lid.rotation.x = -1.9; LV.add(lid); mesh(new THREE.BoxGeometry(58, 6, 58), bm, 0, 3, 29, { parent: lid });
+    for (const s of [x + 8, x + 46]) { const w = mesh(new THREE.CylinderGeometry(6, 6, 4, 14), ST.mats.tire, s, GY + 6, 782); w.rotation.z = Math.PI / 2; }
+    ST.bin = { cx: x + 27, cz: 754, ap: V3(x + 27, 0, 712) }; }
+  { const x = 2752, bm = new THREE.MeshStandardMaterial({ color: 0x2e6a32, roughness: .6 }); box(x, x + 54, GY + 6, GY + 104, 728, 780, bm); box(x - 2, x + 56, GY + 104, GY + 110, 726, 784, bm); for (const s of [x + 8, x + 46]) { const w = mesh(new THREE.CylinderGeometry(6, 6, 4, 14), ST.mats.tire, s, GY + 6, 782); w.rotation.z = Math.PI / 2; } }
   // a fallen-leaf carpet along the pavement and gutter
   { const ls = new THREE.Shape(); ls.moveTo(0, -1.4); ls.quadraticCurveTo(1.1, -.4, 0, 1.6); ls.quadraticCurveTo(-1.1, -.4, 0, -1.4); const leaf = new THREE.ShapeGeometry(ls, 6); leaf.rotateX(-Math.PI / 2); const lm = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .85, side: THREE.DoubleSide }); const N = 520; const IM = new THREE.InstancedMesh(leaf, lm, N); const q = new THREE.Quaternion(), e = new THREE.Euler(), s = V3(), t = V3(), col = new THREE.Color();
     for (let i = 0; i < N; i++) { const onRoad = rnd() < .35; t.set(R(1400, 2900), (onRoad ? RY : GY) + .25, onRoad ? R(802, 840) : R(650, 790)); e.set(R(-.2, .2), rnd() * 6.28, R(-.2, .2)); q.setFromEuler(e); const k = R(.7, 1.3); s.set(k, 1, k); m4.compose(t, q, s); IM.setMatrixAt(i, m4); col.setHSL(R(.03, .1), R(.35, .6), R(.12, .26)); IM.setColorAt(i, col); }
@@ -6399,6 +6463,272 @@ function roadWin() {
   END_TXT = ['第五章 · 完', '馬路', '終於過了馬路。公園裡面……好像有很多狗。（第六章：公園，製作中）'];
   STATE = 'end'; endT = 0;
 }
+// =====================================================================
+//  TOYS GET TIDIED AWAY — in every chapter, not just the kitchen
+//  kitchen : Mom puts the toy in the toy box (e3_toy)
+//  garage  : the Origin Dynamics man drops it in his evidence box
+//  yard    : 陳伯's dog carries it to its kennel; in the sunroom 陳伯 picks it up with his
+//            reacher grabber and puts it on his desk
+//  street  : the man walking his dog drops it in the blue recycling bin
+//  A toy still lying where it fell can be shaken awake by a teammate standing next to it.
+//  Once it has been put away, only a Prototype brings it back — and only used right next to it,
+//  facing it.
+// =====================================================================
+const TAKE = { job: null, q: [] };
+const PLACES = ['', '玩具箱', '證物箱', '狗屋', '書枱', '回收桶'];
+function takeEligible(C) {
+  const p = C.pos, Z = zoneAt(p, 4), id = Z && Z.id;
+  if (id === 'garage' && GS.agent) {
+    const c = GS.car; if (p.x > c.x0 - 6 && p.x < c.x1 + 6 && p.z > c.z0 - 6 && p.z < c.z1 + 6) return null;   // on, under or against the car: he can't get at it
+    if (p.y > GY + 200) return null; return { who: 'agent', place: '證物箱' };
+  }
+  if (id === 'yard') {
+    if (YS.old && p.x > 2558 && p.x < 2752 && p.z > -60 && p.z < 220 && p.y > DECK - 2) return { who: 'old', place: '書枱' };
+    if (YS.dog && p.x > 2108 && p.y < DECK + 8 && Math.hypot(p.x - 2300, p.z - 410) < 200) return { who: 'dog', place: '狗屋' };
+    return null;
+  }
+  if (id === 'road' && ST.walker && p.z > 640 && p.z < 796 && p.y < GY + 30 && p.x > 1400 && p.x < 3000) return { who: 'walker', place: '回收桶' };
+  return null;
+}
+function takeQueue(C) { if (NET.client) return; if (takeEligible(C)) TAKE.q.push(C); }
+function takeTick() {
+  if (NET.client) return;
+  const J = TAKE.job;
+  if (J) { if (!J.C.frozen || STATE === 'fail') { if (J.C.frozen && J.C.toyAt === 'hand') J.C.toyAt = 'floor'; TAKE.job = null; } return; }
+  while (TAKE.q.length) { const C = TAKE.q.shift(); if (!C.frozen || C.toyAt !== 'floor') continue; const e = takeEligible(C); if (!e) continue; TAKE.job = Object.assign({ C, mode: 'go', t: 0, bend: 0 }, e); break; }
+}
+const handW = (H, i) => H.arms[i].hand.getWorldPosition(V3());
+function takeHold(C, p) { if (C.toyAt !== 'hand') { C.toyAt = 'hand'; refreshPartyHUD(); } C.pos.copy(p).add(V3(0, -C.h * .45, 0)); C.toyTilt = .5; C.toyVy = 0; }
+function takeDrop(J, p) {
+  const C = J.C; C.toyAt = 'box'; C.toyPlace = J.place; C.pos.copy(p); C.toyVy = -10; C.yaw = R(0, 6.28); C.toyTilt = R(-1.2, 1.2); C.toyRoll = R(-.4, .4);
+  TAKE.job = null; refreshPartyHUD(); SND.thud(.3);
+  toastW(`${C.S.name}被收在${J.place}裡！要帶 Prototype 走過去、面向他才救得回`, 3.6);
+}
+function takeApproach(from, to, d) { const dx = from.x - to.x, dz = from.z - to.z, l = Math.hypot(dx, dz) || 1; return V3(to.x + dx / l * d, 0, to.z + dz / l * d); }
+// how much a person bends down to pick something off the floor (0 → upright)
+function takeBend(H, b, armK) {
+  H.chest.rotation.x = b * .95; H.pelvis.position.y -= b * 26;
+  for (const L of H.legs) { L.hip.rotation.x -= b * .55; L.knee.rotation.x += b * 1.05; L.ankle.rotation.x -= b * .4; }
+  if (armK > 0) { const A = H.arms[0]; A.sh.rotation.set(-(.55 + b * .8) * armK, 0, 0); A.el.rotation.x = -.35 * armK; }
+}
+
+// ---------- the Origin Dynamics man ----------
+function agentTake(J, H, walkTo, dt) {
+  const P = H.pos, C = J.C, B = GS.ev;
+  if (J.mode === 'go') {
+    const a = takeApproach(P, C.pos, 24); H.aimT.copy(C.pos);
+    if (walkTo(a.x, a.z, 64) || Math.hypot(C.pos.x - P.x, C.pos.z - P.z) < 30) { J.mode = 'grab'; J.t = 0; J.from = C.pos.clone(); }
+  } else if (J.mode === 'grab') {
+    J.t += dt; H.yaw = angDamp(H.yaw, Math.atan2(J.from.x - P.x, J.from.z - P.z), 6, dt); H.aimT.copy(J.from);
+    const k = clamp((J.t - .55) / .45, 0, 1); if (k > 0) { const hp = handW(H, 0).add(V3(0, -C.h * .45, 0)); if (C.toyAt !== 'hand') { C.toyAt = 'hand'; refreshPartyHUD(); } C.pos.lerpVectors(J.from, hp, easeIO(k)); }
+    if (J.t > 1.35) { J.mode = 'carry'; if (!GS.said.take || T - GS.said.take > 30) { GS.said.take = T; sayW('Origin Dynamics 職員', '……先收起來，帶回公司化驗。', '#9fb3c8', 2.8); } }
+  } else if (J.mode === 'carry') {
+    H.aimT.set(B.cx, GY + 20, B.cz); if (walkTo(B.ap.x, B.ap.z, 56)) { J.mode = 'drop'; J.t = 0; } takeHold(C, handW(H, 0));
+  } else if (J.mode === 'drop') {
+    J.t += dt; H.yaw = angDamp(H.yaw, Math.atan2(B.cx - P.x, B.cz - P.z), 6, dt); H.aimT.set(B.cx, GY, B.cz);
+    if (J.t < .65) takeHold(C, handW(H, 0)); else { takeDrop(J, V3(R(B.x0 + 6, B.x1 - 6), B.y + 14, R(B.z0 + 6, B.z1 - 6))); GS.mode = 'look'; GS.wait = 1.6; GS.look = V3(B.cx, GY, B.cz); }
+  }
+  J.bend = J.mode === 'grab' ? sstep(.05, .55, J.t) * (1 - sstep(.95, 1.35, J.t)) : J.mode === 'drop' ? sstep(0, .45, J.t) * (1 - sstep(.6, .65, J.t)) * .8 : 0;
+}
+function buildEvidenceBox() {
+  const B = GS.ev = { x0: 1352, x1: 1400, z0: 248, z1: 288, y: GY, cx: 1376, cz: 268, ap: V3(1376, 0, 220) };
+  const pm = new THREE.MeshPhysicalMaterial({ color: 0xd8e4ea, roughness: .25, transmission: .55, thickness: .8, transparent: true, opacity: .62, clearcoat: .6 });
+  const W = 1.4, Hh = 24;
+  box(B.x0, B.x1, GY, GY + 1, B.z0, B.z1, pm); box(B.x0, B.x1, GY, GY + Hh, B.z0, B.z0 + W, pm); box(B.x0, B.x1, GY, GY + Hh, B.z1 - W, B.z1, pm); box(B.x0, B.x0 + W, GY, GY + Hh, B.z0 + W, B.z1 - W, pm); box(B.x1 - W, B.x1, GY, GY + Hh, B.z0 + W, B.z1 - W, pm);
+  const lid = mesh(new THREE.BoxGeometry(48, 1.2, 40), pm, B.x1 + 2, GY + 12, B.cz, { cast: false }); lid.rotation.z = 1.35;
+  const [c, x] = cnv(512, 128); x.fillStyle = '#f2d23a'; x.fillRect(0, 0, 512, 128); x.fillStyle = '#111'; for (let i = -2; i < 16; i++) { x.beginPath(); x.moveTo(i * 40, 0); x.lineTo(i * 40 + 20, 0); x.lineTo(i * 40 - 10, 128); x.lineTo(i * 40 - 30, 128); x.fill(); }
+  x.fillStyle = '#f2d23a'; x.fillRect(20, 24, 472, 80); x.fillStyle = '#111'; x.textAlign = 'center'; x.font = '800 40px "Fredoka", sans-serif'; x.fillText('ORIGIN DYNAMICS', 256, 64); x.font = '700 30px "Noto Sans TC", sans-serif'; x.fillText('證物 · 請勿觸碰', 256, 98);
+  const lab = mesh(new THREE.PlaneGeometry(40, 10), new THREE.MeshStandardMaterial({ map: tex(c), roughness: .6 }), B.cx, GY + 12, B.z0 - .1, { cast: false }); lab.rotation.y = Math.PI;
+}
+
+// ---------- 陳伯's dog: carries it home to the kennel ----------
+function dogTake(J, D, dt) {
+  const C = J.C; D.sleepK = damp(D.sleepK, 0, 4, dt); let sp = 0;
+  const mouth = () => { const p = V3(); D.head.getWorldPosition(p); return p.add(V3(Math.sin(D.yaw) * 11 * (D.root.scale.x || 1), -6, Math.cos(D.yaw) * 11 * (D.root.scale.x || 1))); };
+  if (J.mode === 'go') { if (moveDog(D, C.pos, 48, dt)) { J.mode = 'grab'; J.t = 0; J.from = C.pos.clone(); } else sp = 48; if (Math.hypot(C.pos.x - D.pos.x, C.pos.z - D.pos.z) < 26) { J.mode = 'grab'; J.t = 0; J.from = C.pos.clone(); } }
+  else if (J.mode === 'grab') { J.t += dt; D.yaw = angDamp(D.yaw, Math.atan2(J.from.x - D.pos.x, J.from.z - D.pos.z), 6, dt); D.neck.rotation.x = .9; const k = clamp((J.t - .3) / .35, 0, 1); if (k > 0) { if (C.toyAt !== 'hand') { C.toyAt = 'hand'; refreshPartyHUD(); } C.pos.lerpVectors(J.from, mouth().add(V3(0, -C.h * .45, 0)), k); } if (J.t > .8) { J.mode = 'carry'; sayW('鄰居的狗', '（叼着玩具，尾巴搖個不停）', '#d8a45a', 2); } }
+  else if (J.mode === 'carry') { if (moveDog(D, V3(2300, GY, 362), 40, dt)) { J.mode = 'drop'; J.t = 0; } else sp = 40; takeHold(C, mouth()); }
+  else if (J.mode === 'drop') { J.t += dt; D.yaw = angDamp(D.yaw, 0, 5, dt); if (J.t < .5) takeHold(C, mouth()); else { takeDrop(J, V3(2300 + R(-24, 24), GY + 6, 412 + R(-6, 14))); D.mode = 'home'; D.t = 0; } }
+  const ax = D.pos.x - D.anchor.x, az = D.pos.z - D.anchor.z, ad = Math.hypot(ax, az); if (ad > 175) { D.pos.x = D.anchor.x + ax / ad * 175; D.pos.z = D.anchor.z + az / ad * 175; }
+  const m0 = D.mode; if (TAKE.job === J) D.mode = 'sniff'; dogAnim(D, sp, dt); if (TAKE.job === J) D.mode = m0 === 'sleep' ? 'sniff' : m0; D.tail.rotation.y = Math.sin(T * 16) * .6; D.tongue.visible = false;
+  if (TAKE.job !== J) D.mode = 'home';
+}
+
+// ---------- 陳伯: reaches out with his grabber and puts it on his desk ----------
+function oldTake(J, dt) {
+  const O = YS.old, H = O.H, C = J.C; J.t += dt;
+  if (!O.grab) { const g = new THREE.Group(); const stick = new THREE.Mesh(new THREE.CylinderGeometry(.6, .6, 80, 8), new THREE.MeshStandardMaterial({ color: 0x8a9098, metalness: .7, roughness: .4 })); stick.position.y = -40; g.add(stick); const jaw = new THREE.Mesh(new THREE.BoxGeometry(3, 4, 2), new THREE.MeshStandardMaterial({ color: 0xd04030, roughness: .5 })); jaw.position.y = -81; g.add(jaw); H.arms[1].hand.add(g); O.grab = g; O.grabTip = jaw; }
+  O.grab.visible = true; O.lookK = damp(O.lookK, 1, 4, dt); O.look.copy(J.mode === 'place' ? V3(2716, 60, 180) : C.pos);
+  const A = H.arms[1], tip = () => O.grabTip.getWorldPosition(V3());
+  const tgt = J.mode === 'place' ? V3(2716, 60, 180) : C.pos; const dx = tgt.x - H.pos.x, dz = tgt.z - H.pos.z, dy = tgt.y - (H.pos.y + 100);
+  const yaw = Math.atan2(dx, dz) - H.yaw; const pitch = Math.atan2(-dy, Math.hypot(dx, dz));
+  A.sh.rotation.set(-Math.PI / 2 + pitch * .8, clamp(Math.atan2(Math.sin(yaw), Math.cos(yaw)), -1.2, 1.2), 0); A.el.rotation.x = -.15;
+  if (J.mode === 'go') { if (!J.from) J.from = C.pos.clone(); if (J.t > .9) { J.mode = 'lift'; J.t = 0; if (!YS.said.grab || T - YS.said.grab > 30) { YS.said.grab = T; sayW('陳伯', '小朋友的玩具……先放好。', '#c8b8a0', 2.4); } } }
+  else if (J.mode === 'lift') { const k = clamp(J.t / .45, 0, 1); if (C.toyAt !== 'hand') { C.toyAt = 'hand'; refreshPartyHUD(); } C.pos.lerpVectors(J.from, tip().add(V3(0, -C.h * .7, 0)), easeIO(k)); if (J.t > .5) { J.mode = 'place'; J.t = 0; } }
+  else if (J.mode === 'place') { takeHold(C, tip().add(V3(0, -C.h * .3, 0))); if (J.t > 1.1) { takeDrop(J, V3(2704 + R(-6, 6), 60, 186 + R(-6, 6))); O.grab.visible = false; O.mode = 'read'; O.t = R(6, 10); } }
+}
+
+// ---------- the man walking his dog: into the recycling bin ----------
+function walkerTake(J, W, dt) {
+  const H = W.H, P = H.pos, C = J.C; let moveD = 0; const BIN = ST.bin;
+  const go = (tx, tz, sp) => { const dx = tx - P.x, dz = tz - P.z, d = Math.hypot(dx, dz), s = sp * dt; if (d < s + .5) { P.x = tx; P.z = tz; moveD = d; return true; } P.x += dx / d * s; P.z += dz / d * s; moveD = s; H.yaw = angDamp(H.yaw, Math.atan2(dx, dz), 5, dt); return false; };
+  if (J.mode === 'go') { const a = takeApproach(P, C.pos, 22); a.z = clamp(a.z, 676, 770); H.aimT.copy(C.pos); if (go(a.x, a.z, 60)) { J.mode = 'grab'; J.t = 0; J.from = C.pos.clone(); } }
+  else if (J.mode === 'grab') { J.t += dt; H.yaw = angDamp(H.yaw, Math.atan2(J.from.x - P.x, J.from.z - P.z), 6, dt); H.aimT.copy(J.from); const k = clamp((J.t - .55) / .45, 0, 1); if (k > 0) { if (C.toyAt !== 'hand') { C.toyAt = 'hand'; refreshPartyHUD(); } C.pos.lerpVectors(J.from, handW(H, 0).add(V3(0, -C.h * .45, 0)), easeIO(k)); } if (J.t > 1.35) { J.mode = 'carry'; sayW('行人', '誰亂丟玩具……丟進回收桶好了。', '#9ec4e8', 2.6); } }
+  else if (J.mode === 'carry') { H.aimT.set(BIN.cx, GY + 100, BIN.cz); if (go(BIN.ap.x, BIN.ap.z, 50)) { J.mode = 'drop'; J.t = 0; } takeHold(C, handW(H, 0)); }
+  else if (J.mode === 'drop') { J.t += dt; H.yaw = angDamp(H.yaw, Math.atan2(BIN.cx - P.x, BIN.cz - P.z), 6, dt); H.aimT.set(BIN.cx, GY + 110, BIN.cz); if (J.t < .7) takeHold(C, V3(BIN.cx, GY + 116, BIN.cz).lerp(handW(H, 0), 1 - J.t / .7)); else { takeDrop(J, V3(BIN.cx + R(-12, 12), GY + 30, BIN.cz + R(-10, 10))); W.mode = 'stop'; W.t = 1.5; } }
+  H.aim.lerp(H.aimT, 1 - Math.exp(-3 * dt));
+  humanAnim(H, moveD, dt); humanAimArm(H, 0, dt);
+  J.bend = J.mode === 'grab' ? sstep(.05, .55, J.t) * (1 - sstep(.95, 1.35, J.t)) : 0;
+  takeBend(H, J.bend, J.mode === 'carry' || J.mode === 'drop' ? 1 : J.mode === 'grab' ? 1 : 0);
+  if (J.mode === 'drop') { const A = H.arms[0]; A.sh.rotation.set(-1.9, 0, 0); A.el.rotation.x = -.2; }
+}
+
+// ---------- Prototype: only next to the toy, facing it ----------
+function protoTarget(by) {
+  let best = null, bd = 1e9;
+  for (const C of party) {
+    if (!C.frozen || C === by || C.toyAt === 'hand') continue;
+    const dx = C.pos.x - by.pos.x, dz = C.pos.z - by.pos.z, dy = C.pos.y - by.pos.y, d = Math.hypot(dx, dz);
+    if (d > 10 || Math.abs(dy) > 7) continue;
+    const f = (Math.sin(by.yaw) * dx + Math.cos(by.yaw) * dz) / Math.max(d, .01);
+    // must face the toy; right up close the angle is allowed to be wider (it's under your nose)
+    if (d > .6 && f < (d < 2.6 ? .1 : .45)) continue;
+    if (d < bd) { bd = d; best = C; }
+  }
+  return best;
+}
+function frozenNear(by) { return party.filter(C => C.frozen && C !== by).sort((a, b) => a.pos.distanceTo(by.pos) - b.pos.distanceTo(by.pos))[0] || null; }
+// =====================================================================
+//  MUSIC — written live by the browser (no audio files), one mood per place:
+//  title (warm piano) · basement lab (mysterious bells) · inside the wall (cosy) · kitchen & living room
+//  (sneaky marimba and a walking bass) · garage (tense pulse) · the yards at night (nocturne + crickets)
+//  · the street (lo-fi night). A low heartbeat and a thin string cluster creep in while you're being seen.
+//  Themes cross-fade on the next bar as you walk from one place into the next.
+// =====================================================================
+const MUS = { ahead: .22, lastS: 0, lastT: 0, bus: null, send: null, cur: null, curName: '', want: '', fadeG: null, next: 0, step: 0, bar: 0, ten: 0, tenG: null, timer: 0, duck: 1, ok: false };
+const mtof = m => 440 * Math.pow(2, (m - 69) / 12);
+const THEMES = {
+  title: { bpm: 70, ch: [[48, 55, 60, 64, 71], [45, 52, 57, 60, 67], [41, 48, 53, 57, 64], [43, 50, 55, 59, 62]], sc: [60, 62, 64, 67, 69, 72, 74, 76, 79], lead: 'piano', pad: .5, bass: 1, arp: 'up', dr: 0, vol: 1 },
+  lab: { bpm: 62, ch: [[38, 45, 50, 53, 57], [34, 41, 46, 50, 57], [31, 38, 43, 46, 50], [33, 40, 45, 49, 52]], sc: [62, 64, 65, 67, 69, 70, 72, 74, 76], lead: 'bell', pad: .75, bass: 1, arp: 'sparse', dr: 0, vol: .9 },
+  hub: { bpm: 76, ch: [[41, 48, 53, 57, 64], [38, 45, 50, 53, 60], [34, 41, 46, 50, 57], [36, 43, 48, 52, 58]], sc: [65, 67, 69, 72, 74, 76, 77, 79, 81], lead: 'piano', pad: .45, bass: 1, arp: 'up', dr: 0, vol: .9 },
+  sneak: { bpm: 100, ch: [[40, 47, 52, 55, 59], [40, 47, 52, 55, 59], [36, 43, 48, 52, 55], [35, 42, 47, 51, 54]], sc: [64, 66, 67, 69, 71, 72, 74, 75, 76], lead: 'marimba', pad: .22, bass: 2, arp: 'sneak', dr: 1, vol: .85 },
+  tense: { bpm: 88, ch: [[33, 40, 45, 48, 52], [33, 40, 45, 48, 52], [29, 36, 41, 45, 48], [31, 38, 43, 47, 50]], sc: [57, 59, 60, 62, 64, 65, 67, 69, 72], lead: 'bell', pad: .55, bass: 3, arp: 'sparse', dr: 2, vol: .9 },
+  night: { bpm: 66, ch: [[43, 50, 55, 59, 62], [40, 47, 52, 55, 62], [36, 43, 48, 52, 59], [38, 45, 50, 54, 57]], sc: [67, 69, 71, 74, 76, 78, 79, 81, 83], lead: 'piano', pad: .5, bass: 1, arp: 'flow', dr: 0, crick: 1, vol: .9 },
+  street: { bpm: 80, ch: [[41, 48, 52, 57, 64], [40, 47, 50, 55, 62], [38, 45, 48, 53, 60], [36, 43, 47, 52, 59]], sc: [65, 67, 69, 72, 74, 76, 77, 79, 81], lead: 'keys', pad: .5, bass: 1, arp: 'lofi', dr: 3, vol: .9 }
+};
+const mrand = (a, b) => { let n = (a * 7919 + b * 104729) | 0; n = Math.imul(n ^ (n >>> 13), 1274126177); n ^= n >>> 16; return (n >>> 0) / 4294967295; };
+
+function musicInit() {
+  const C = AU.ctx; if (!C || MUS.ok) return; MUS.ok = true;
+  MUS.bus = C.createGain(); MUS.bus.gain.value = 0; MUS.bus.connect(AU.out);
+  // a little space: two filtered feedback delays standing in for a room
+  MUS.send = C.createGain(); MUS.send.gain.value = .32;
+  for (const [t, fb] of [[.29, .42], [.43, .3]]) { const d = C.createDelay(1); d.delayTime.value = t; const f = C.createGain(); f.gain.value = fb; const lp = C.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 2300; MUS.send.connect(d); d.connect(lp); lp.connect(f); f.connect(d); lp.connect(MUS.bus); }
+  // the "you're being watched" layer: a slow cluster that swells with the eye meter
+  MUS.tenG = C.createGain(); MUS.tenG.gain.value = 0; const tlp = C.createBiquadFilter(); tlp.type = 'lowpass'; tlp.frequency.value = 1400; MUS.tenG.connect(tlp); tlp.connect(MUS.bus);
+  for (const [m, dt] of [[76, 0], [77, 3], [71, -4]]) { const o = C.createOscillator(); o.type = 'sawtooth'; o.frequency.value = mtof(m); o.detune.value = dt; const g = C.createGain(); g.gain.value = .05; const lfo = C.createOscillator(); lfo.frequency.value = 5.2 + dt * .1; const lg = C.createGain(); lg.gain.value = .03; lfo.connect(lg); lg.connect(g.gain); o.connect(g); g.connect(MUS.tenG); o.start(); lfo.start(); }
+  MUS.timer = setInterval(musicSched, 40);
+}
+function musVol() { return .95 * (SET.mus ?? .6); }
+// ---------- instruments ----------
+function mNote(t, m, dur, vol, kind, pan = 0) {
+  const C = AU.ctx; const f = mtof(m); const g = C.createGain();
+  // voice → (pad: a slow-opening lowpass) → (pan) → theme bus, plus a send into the room
+  let tail = g; if (kind === 'pad') { const lp = C.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.setValueAtTime(500, t); lp.frequency.linearRampToValueAtTime(1100, t + dur * .5); lp.frequency.linearRampToValueAtTime(600, t + dur); g.connect(lp); tail = lp; }
+  let out = tail; if (pan && C.createStereoPanner) { const p = C.createStereoPanner(); p.pan.value = pan; tail.connect(p); out = p; }
+  out.connect(MUS.cur.g); if (kind !== 'bass') { const s = C.createGain(); s.gain.value = kind === 'pad' ? .5 : .8; tail.connect(s); s.connect(MUS.send); }
+  const osc = (type, fr, k) => { const o = C.createOscillator(); o.type = type; o.frequency.value = fr; const og = C.createGain(); og.gain.value = k; o.connect(og); og.connect(g); o.start(t); o.stop(t + dur + .1); return o; };
+  const env = (a, d) => { g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(vol, t + a); g.gain.exponentialRampToValueAtTime(.0001, t + d); };
+  if (kind === 'piano') { osc('triangle', f, .7); osc('sine', f * 2, .25); osc('sine', f * 3.01, .06); env(.006, dur); }
+  else if (kind === 'keys') { osc('sine', f, .8); osc('triangle', f * 2.001, .14); osc('sine', f * 7, .03); env(.01, dur); }
+  else if (kind === 'bell') { osc('sine', f, .6); osc('sine', f * 2.76, .22); osc('sine', f * 5.4, .08); env(.004, dur * 1.4); }
+  else if (kind === 'marimba') { osc('sine', f, .8); osc('sine', f * 4, .12); env(.003, Math.min(dur, .32)); }
+  else if (kind === 'bass') { osc('sine', f, .9); osc('triangle', f * 2, .15); env(.01, dur); }
+  else if (kind === 'pad') {
+    for (const dt of [-7, 6]) { const o = C.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = dt; const og = C.createGain(); og.gain.value = .5; o.connect(og); og.connect(g); o.start(t); o.stop(t + dur + .2); }
+    g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(vol, t + dur * .35); g.gain.linearRampToValueAtTime(vol * .8, t + dur * .8); g.gain.linearRampToValueAtTime(.0001, t + dur + .15);
+  }
+}
+function mDrum(t, kind, vol) {
+  const C = AU.ctx; const g = C.createGain(); g.connect(MUS.cur.g);
+  if (kind === 'kick' || kind === 'heart') { const o = C.createOscillator(); o.type = 'sine'; o.frequency.setValueAtTime(kind === 'heart' ? 70 : 110, t); o.frequency.exponentialRampToValueAtTime(kind === 'heart' ? 38 : 44, t + .16); o.connect(g); g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + .28); o.start(t); o.stop(t + .32); return; }
+  const s = C.createBufferSource(); s.buffer = AU.noise; const f = C.createBiquadFilter();
+  if (kind === 'hat') { f.type = 'highpass'; f.frequency.value = 7000; g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + .05); }
+  else if (kind === 'snare') { f.type = 'bandpass'; f.frequency.value = 1800; f.Q.value = .7; g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + .16); }
+  else if (kind === 'rim') { f.type = 'bandpass'; f.frequency.value = 3200; f.Q.value = 4; g.gain.setValueAtTime(vol, t); g.gain.exponentialRampToValueAtTime(.0001, t + .03); }
+  else if (kind === 'crick') { f.type = 'bandpass'; f.frequency.value = 4600 + mrand(t * 100, 3) * 600; f.Q.value = 18; g.gain.setValueAtTime(.0001, t); for (let i = 0; i < 3; i++) { g.gain.setValueAtTime(vol, t + i * .045); g.gain.setValueAtTime(.0001, t + i * .045 + .022); } }
+  s.connect(f); f.connect(g); s.start(t, mrand(t, 9) * 1.5); s.stop(t + .25);
+}
+// ---------- one eighth-note step of the current theme ----------
+function musStep(t) {
+  const M = MUS.cur, th = M.th, st = MUS.step % 8, bar = MUS.bar, ch = th.ch[bar % th.ch.length], beat = 60 / th.bpm, e = beat / 2, V = th.vol;
+  const r = k => mrand(bar * 13 + st, k + M.seed);
+  if (st === 0) {
+    if (th.pad) for (const m of ch.slice(1, 4)) mNote(t, m + 12, beat * 4, .045 * th.pad * V, 'pad', (m % 3 - 1) * .3);
+    if (th.bass === 1) { mNote(t, ch[0], beat * 2, .16 * V, 'bass'); }
+  }
+  if (th.bass === 1 && st === 4) mNote(t, ch[0] + (bar % 2 ? 7 : 0), beat * 2, .12 * V, 'bass');
+  if (th.bass === 2) { const walk = [0, 7, 12, 10, 0, 7, 3, 6]; if (st % 2 === 0 || r(1) < .3) mNote(t, ch[0] + walk[st], e * .7, .15 * V, 'bass'); }
+  if (th.bass === 3) mNote(t, ch[0] + (st === 6 ? 12 : 0), e * .8, (st % 2 ? .07 : .12) * V, 'bass');
+  // the tune
+  const L = th.lead, sc = th.sc;
+  if (th.arp === 'up') { if (st !== 1 && st !== 5 || r(2) < .4) { const tones = [ch[2] + 12, ch[3] + 12, ch[4] + 12, ch[2] + 24, ch[4] + 12, ch[3] + 12, ch[2] + 12, ch[1] + 12]; mNote(t, tones[st], beat * 1.6, .055 * V, L, st % 2 ? .25 : -.25); } if ((st === 2 || st === 6) && r(3) < .5) mNote(t + e * .5, sc[Math.floor(r(4) * sc.length)] + 12, beat, .04 * V, L, .1); }
+  else if (th.arp === 'flow') { const tones = [ch[1] + 12, ch[2] + 12, ch[3] + 12, ch[4] + 12, ch[3] + 24, ch[4] + 12, ch[3] + 12, ch[2] + 12]; if (r(5) < .82) mNote(t, tones[st], beat * 2, .05 * V, L, st % 2 ? .3 : -.3); if (st === 0 && bar % 2 === 1) mNote(t + beat * 1.5, sc[Math.floor(r(6) * sc.length)] + 12, beat * 2.5, .045 * V, L, 0); }
+  else if (th.arp === 'sparse') { if (r(7) < .22) mNote(t, sc[Math.floor(r(8) * sc.length)] + 12, beat * 3, .05 * V, L, (r(9) - .5) * .8); }
+  else if (th.arp === 'sneak') {
+    // a creeping motif: short, staccato, with a chromatic step at the end of each phrase
+    const ph = [0, -1, 2, -1, 4, 3, -1, 2], idx = ph[st]; if (idx >= 0 && (bar % 4 !== 3 || st < 4)) mNote(t, sc[(idx + (bar % 2) * 2) % sc.length] + (bar % 4 === 2 ? 12 : 0), e * .9, .085 * V, L, (st - 3.5) * .08);
+    if (bar % 4 === 3 && st >= 4) mNote(t, sc[7 - (st - 4)] - (st === 7 ? 1 : 0), e * .8, .08 * V, L, .2);
+  }
+  else if (th.arp === 'lofi') { if (st === 0 || st === 3) for (const m of ch.slice(1)) mNote(t + (st === 3 ? .02 : 0), m + 12, beat * (st === 0 ? 1.4 : 1), .03 * V, L); if (st === 5 && r(10) < .7) mNote(t, sc[Math.floor(r(11) * 6) + 2] + 12, beat * 1.5, .05 * V, L, .2); if (st === 7 && r(12) < .4) mNote(t, sc[Math.floor(r(13) * 6) + 2] + 12, beat, .04 * V, L, -.2); }
+  // percussion
+  if (th.dr === 1) { if (st % 2 === 1) mDrum(t, 'rim', .05 * V); if (st === 0) mDrum(t, 'kick', .1 * V); }
+  else if (th.dr === 2) { if (st === 0 || st === 3) mDrum(t, 'heart', .16 * V); if (st % 2 === 1 && r(14) < .5) mDrum(t, 'hat', .02 * V); }
+  else if (th.dr === 3) { if (st === 0 || st === 5) mDrum(t, 'kick', .15 * V); if (st === 2 || st === 6) mDrum(t, 'snare', .05 * V); mDrum(t + (st % 2 ? e * .12 : 0), 'hat', (st % 2 ? .016 : .025) * V); }
+  if (th.crick && st % 2 === 0 && r(15) < .6) mDrum(t + r(16) * e, 'crick', .012 * V);
+  // being watched: a heartbeat under everything
+  if (MUS.ten > .3 && (st === 0 || st === 4 || (MUS.ten > .75 && st % 2 === 0))) { mDrum(t, 'heart', .24 * MUS.ten); mDrum(t + .17, 'heart', .16 * MUS.ten); }
+}
+function musicSched() {
+  const C = AU.ctx; if (!C || !MUS.cur) return;
+  const now = C.currentTime;
+  // slow machine or a heavy frame: look further ahead so the notes are already queued when the main thread is busy
+  const pn = performance.now(), gap = MUS.lastS ? (pn - MUS.lastS) / 1000 : .03; MUS.lastS = pn;
+  MUS.ahead = Math.max(clamp(gap * 3, .22, 1.2), MUS.ahead * .97);
+  // after a long frame (loading a place, a hidden tab) skip the missed steps silently so the beat stays on its grid
+  if (now - MUS.next > 2) MUS.next = now + .05;
+  while (MUS.next < now + MUS.ahead) {
+    const th = MUS.cur.th, e = 30 / th.bpm, late = MUS.next < now - .03;
+    if (MUS.step % 8 === 0 && MUS.want !== MUS.curName) { musicSwitch(MUS.want, Math.max(MUS.next, now)); }
+    if (!late) musStep(MUS.next); MUS.step++; if (MUS.step % 8 === 0) MUS.bar++; MUS.next += e;
+  }
+}
+function musicSwitch(name, t) {
+  const C = AU.ctx, th = THEMES[name]; if (!th) return;
+  const old = MUS.cur; if (old) { old.g.gain.cancelScheduledValues(t); old.g.gain.setValueAtTime(old.g.gain.value, t); old.g.gain.linearRampToValueAtTime(.0001, t + 2.2); setTimeout(() => { try { old.g.disconnect(); } catch (e) { } }, 4000); }
+  const g = C.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.linearRampToValueAtTime(1, t + 2.4); g.connect(MUS.bus);
+  MUS.cur = { th, g, seed: Math.floor(Math.random() * 1000) }; MUS.curName = name; MUS.bar = 0;
+}
+// which theme fits right now
+function musicWant() {
+  if (MUS.force) return MUS.force;
+  if (STATE === 'title' || STATE === 'load' || STATE === 'intro') return 'title';
+  if (STATE === 'end') return 'title';
+  return ({ basement: 'lab', wall: 'hub', kitchen: 'sneak', garage: 'tense', yard: 'night', road: 'street' })[LEVEL] || 'title';
+}
+function musicTick(dt) {
+  const C = AU.ctx; if (!C) return; if (!MUS.ok) musicInit();
+  MUS.want = musicWant();
+  if (!MUS.cur) { MUS.next = C.currentTime + .1; MUS.step = 0; musicSwitch(MUS.want, MUS.next); }
+  MUS.ten = damp(MUS.ten, STATE === 'play' ? clamp((meter - .15) / .7, 0, 1) : 0, 3, dt);
+  const duck = (PAUSED ? .45 : 1) * (STATE === 'frozen' || STATE === 'fail' ? .35 : 1);
+  MUS.duck = damp(MUS.duck, duck, 3, dt);
+  MUS.bus.gain.setTargetAtTime(musVol() * MUS.duck, C.currentTime, .1);
+  MUS.tenG.gain.setTargetAtTime(MUS.ten * .5, C.currentTime, .3);
+}
+// driven by the game's frames, with a timer as a fallback when frames stop (title fade, a hidden tab)
+function musicFrame() { if (!AU.ctx) return; const pn = performance.now(); musicSched(); if (pn - MUS.lastT > 100) { musicTick(Math.min(.5, MUS.lastT ? (pn - MUS.lastT) / 1000 : .1)); MUS.lastT = pn; } }
+setInterval(musicFrame, 250);
 
 // =====================================================================
 //  ONLINE CO-OP  (1–4 players, peer-to-peer over WebRTC — no game server)
@@ -6608,7 +6938,7 @@ function netSendWorld() {
   const w = { t: 'w', lv: LEVEL, q: quest, cp, pr: PROTO, gb: gotBat, cm: cellMax };
   w.bat = batteries.map(b => b.got ? 1 : 0); w.vi = VIALS.map(v => v.got ? 1 : 0); w.cr = CRUMBS.map(c => c.got ? 1 : 0);
   w.res = resizables.map(r => [+r.cx.toFixed(2), +r.cz.toFixed(2), +r.y0.toFixed(2), +r.target.toFixed(3), r.gone ? 1 : 0]);
-  w.toy = IDS.map(id => { const C = chars[id]; return C.frozen ? [1, C.toyAt === 'hand' ? 2 : C.toyAt === 'box' ? 3 : 1, +(C.toyTilt || 0).toFixed(2), +(C.toyRoll || 0).toFixed(2), +(C.rescueT || 0).toFixed(2)] : 0; });
+  w.toy = IDS.map(id => { const C = chars[id]; return C.frozen ? [1, C.toyAt === 'hand' ? 2 : C.toyAt === 'box' ? 3 : 1, +(C.toyTilt || 0).toFixed(2), +(C.toyRoll || 0).toFixed(2), +(C.rescueT || 0).toFixed(2), Math.max(0, PLACES.indexOf(C.toyPlace || ''))] : 0; });
   netWorldExtra(w);
   {
     const F = TOY.fetch;
@@ -6633,7 +6963,7 @@ function netRecvWorld(w) {
   let changed = false;
   w.toy.forEach((t, i) => {
     const C = chars[IDS[i]];
-    if (t) { if (!C.frozen) { C.frozen = true; toyLook(C, true); changed = true; if (C === leader) { SND.heart(1); toyBurst(V3(C.pos.x, C.pos.y + C.h * .5, C.pos.z)); meter = 0; } } const at = ['', 'floor', 'hand', 'box'][t[1]]; if (at !== C.toyAt) { C.toyAt = at; changed = true; } C.toyTilt = t[2]; C.toyRoll = t[3]; C.rescueT = t[4]; }
+    if (t) { if (!C.frozen) { C.frozen = true; toyLook(C, true); changed = true; if (C === leader) { SND.heart(1); toyBurst(V3(C.pos.x, C.pos.y + C.h * .5, C.pos.z)); meter = 0; } } const at = ['', 'floor', 'hand', 'box'][t[1]]; if (at !== C.toyAt) { C.toyAt = at; changed = true; } C.toyTilt = t[2]; C.toyRoll = t[3]; C.rescueT = t[4]; C.toyPlace = PLACES[t[5] || 0] || null; }
     else if (C.frozen) { C.frozen = false; C.toyAt = null; toyLook(C, false); C.root.rotation.set(0, C.yaw, 0); changed = true; }
   });
   if (changed) refreshPartyHUD();
@@ -6685,6 +7015,7 @@ function netMsg(d, from) {
     case 'end': if (NET.on && !NET.host && STATE === 'play') { if (d.e) END_TXT = d.e; STATE = 'end'; endT = 0; } break;
     case 'ban': chapterBanner(d.a, d.b); break;
     case 'xbtn': if (NET.host) pressButton(null); break;
+    case 'drg': if (NET.host) { const r = resizables[d.i]; if (r && !r.gone) dragTo(r, d.x, d.z); } break;
     case 'fail': if (NET.on && !NET.host) { cp = d.cp; fail(); } break;
     case 'say': say(d.n, d.x, d.c, d.d); break;
     case 'toast': toast(d.x, d.d); break;
@@ -6768,15 +7099,16 @@ function hostFreeze(C, who) {
   C.frozen = true; C.toyAt = 'floor'; C.climbing = false; C.mantle = null; C.vel.set(0, 0, 0); C.tumble = 0; C.toyVy = 0; C.crouch = false; C.toyTilt = 0; C.toyRoll = 0; C.stk = false; C.carried = false;
   toyLook(C, true); toyBurst(V3(C.pos.x, C.pos.y + C.h * .5, C.pos.z)); SND.heart(1); tone(1800, 600, .8, .08, 'triangle');
   toySay(who, sayW);
-  const inK = zoneAt(C.pos, 4); if (!inK || inK.id === 'kitchen') { if (KM.mode === 'sus') KM.mode = 'goto'; if (toyReachable(C)) TOY.fetchQ.push(C); }
+  const inK = zoneAt(C.pos, 4); if (!inK || inK.id === 'kitchen') { if (KM.mode === 'sus') KM.mode = 'goto'; if (toyReachable(C)) TOY.fetchQ.push(C); } else takeQueue(C);
   toastW(`${C.S.name}被看見，變成了玩具！`, 3);
   refreshPartyHUD();
   if (playerChars().every(q => q.frozen)) { fail(); nsend({ t: 'fail', cp }); }
 }
 function hostProto(id, from) {
-  const by = chars[id]; if (!PROTO) { nsend({ t: 'toast', x: '沒有 Prototype 了——去玩具箱把隊友救出來' }, from); return; }
+  const by = chars[id]; if (!PROTO) { const x = '沒有 Prototype——要先找到 Prototype 藥水'; if (from) nsend({ t: 'toast', x }, from); else toast(x); return; }
   const fz = party.filter(C => C.frozen); if (!fz.length) { nsend({ t: 'toast', x: '隊友都好好的，Prototype 留着之後用' }, from); return; }
-  fz.sort((a, b) => a.pos.distanceTo(by.pos) - b.pos.distanceTo(by.pos)); PROTO--; toyRevive(fz[0], true, by);
+  const tg = protoTarget(by); if (!tg) { const n = frozenNear(by); const x = `要走到${n ? n.S.name : '隊友'}旁邊、面向他，才可以用 Prototype`; if (from) nsend({ t: 'toast', x }, from); else toast(x); return; }
+  PROTO--; toyRevive(tg, true, by);
 }
 function netApplyRevive(d) {
   const C = chars[d.id]; C.frozen = false; C.toyAt = null; toyLook(C, false); C.root.rotation.set(0, C.yaw, 0); C.owner = C.baseOwner;
@@ -6798,7 +7130,7 @@ $('mpCopy').addEventListener('click', () => { const l = mpLink(); (navigator.cli
 (() => { const m = location.search.match(/[?&]room=([A-Za-z0-9]{4})/); if (m) NET.autoJoin = m[1].toUpperCase(); })();
 requestAnimationFrame(frame);
 init().catch(e => { console.error(e); $('err').textContent = '載入失敗：' + (e && e.stack || e); });
-if (location.hash === '#dev') window.__bn = { scene, THREE, ST, pressButton, LANES, pause, garageHear, TEST, testWarp, WARPS, testAll, startChapter2, NC, batPing, tortShell, crewJoin, hideK, startGame, startChapter, openChapters, step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT, GS, YS, DECK, GY, WC, ventOpen, latchOpen, mpMarker, zoneFloor, KS }; }, info: () => ({ fps: $('fps').textContent, state: STATE, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
+if (location.hash === '#dev') window.__bn = { scene, THREE, MUS, THEMES, AU, SET, toyFreeze, useProto, TAKE, protoTarget, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, ST, pressButton, LANES, pause, garageHear, TEST, testWarp, WARPS, testAll, startChapter2, NC, batPing, tortShell, crewJoin, hideK, startGame, startChapter, openChapters, step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT, GS, YS, DECK, GY, WC, ventOpen, latchOpen, mpMarker, zoneFloor, KS }; }, info: () => ({ fps: $('fps').textContent, state: STATE, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
 </script>
 </body>
 </html>

@@ -232,7 +232,9 @@ html.touch .desk{display:none}
 #tbGrow{right:84px;bottom:84px}
 #tbShrink{right:150px;bottom:150px;width:52px;height:52px}
 #tbPush{display:none;right:84px;bottom:84px;border-color:rgba(217,166,117,.7);color:#e9bf8f}
-.touchui.bear #tbPush{display:block}
+.touchui.bear #tbPush,.touchui.bear #tbPull{display:block}
+#tbPull{display:none;right:150px;bottom:150px;width:52px;height:52px;border-color:rgba(217,166,117,.7);color:#e9bf8f}
+#tbPull.on{background:rgba(217,166,117,.35)}
 #tbStack{right:176px;bottom:74px;width:52px;height:52px}
 #tbProto{display:none;right:14px;bottom:188px;width:56px;height:56px;border-color:rgba(95,242,230,.7);color:#5ff2e6;font-size:12px}
 .touchui.proto #tbProto{display:block}
@@ -334,6 +336,7 @@ html.touch .mpchip{bottom:auto;top:62px}
     <button class="tb" id="tbGrow">放大</button>
     <button class="tb" id="tbShrink">縮小</button>
     <button class="tb" id="tbPush">推</button>
+    <button class="tb" id="tbPull">拉</button>
     <button class="tb" id="tbStack">疊</button>
     <button class="tb" id="tbProto">復活</button>
     <button class="tb" id="tbAct">抱</button>
@@ -496,6 +499,7 @@ html.touch .mpchip{bottom:auto;top:62px}
       <div class="sel" id="qsel2" role="group" aria-label="畫質"><button data-q="high">高</button><button data-q="med">中</button><button data-q="low">低</button></div>
       <label for="setSens">視角靈敏度</label><input type="range" id="setSens" min="0.4" max="2.2" step="0.1">
       <label for="setVol">音量</label><input type="range" id="setVol" min="0" max="1" step="0.05">
+      <label for="setMus">音樂</label><input type="range" id="setMus" min="0" max="1" step="0.05">
       <label for="setInv">上下視角反轉</label><input type="checkbox" id="setInv">
     </div>
     <div class="pmp" id="pauseMP" hidden>

@@ -84,8 +84,10 @@ function buildWalker() {
 }
 function updWalker(dt) {
   const W = ST.walker, D = ST.wdog; if (!W) return; const H = W.H, P = H.pos; let moveD = 0;
-  W.t -= dt;
-  if (W.mode === 'walk') {
+  W.t -= dt; const J = TAKE.job && TAKE.job.who === 'walker' ? TAKE.job : null;
+  if (J) walkerTake(J, W, dt);
+  else {
+  if (W.mode === 'walk') { P.z = damp(P.z, 712, 2, dt);
     const tx = W.dir > 0 ? 2950 : 1450, sp = 46, dx = tx - P.x; const s = sp * dt;
     if (Math.abs(dx) < s + 1) { P.x = tx; W.mode = 'turn'; W.t = 2.4; W.dir = -W.dir; }
     else { P.x += Math.sign(dx) * s; moveD = s; H.yaw = angDamp(H.yaw, W.dir > 0 ? Math.PI / 2 : -Math.PI / 2, 4, dt); }
@@ -102,6 +104,7 @@ function updWalker(dt) {
   // right arm holds the phone up in front of the chest (lowered while he looks around)
   const A = H.arms[1]; A.sh.rotation.set(lerp(-.95, -.3, W.lookK), -.25, 0); A.el.rotation.x = lerp(-1.35, -.4, W.lookK); H.head.rotation.x = lerp(.45, H.head.rotation.x, W.lookK);
   H.arms[0].sh.rotation.set(-.35 + Math.sin(H.phase) * .12, .1, 0); H.arms[0].el.rotation.x = -.3;
+  }
   // the dog trots a little ahead on the leash, stopping to sniff
   if (D) {
     D.sniffT -= dt; const ahead = W.mode === 'walk' ? 70 : 46; const tx = P.x + W.dir * ahead, tz = P.z + 16 + D.offs; let sp = 0;
@@ -217,7 +220,13 @@ function buildRoad() {
   cyl(2380, 742, 15, GY, GY + 330, trunk, { seg: 14 }); for (let i = 0; i < 5; i++) mesh(new THREE.IcosahedronGeometry(R(80, 110), 1), leafM, 2380 + R(-70, 70), GY + R(300, 420), 742 + R(-60, 60));
   // mailbox (a battery on the top), recycling bins put out for collection
   box(2557, 2563, GY, GY + 96, 702, 708, metal); box(2540, 2580, GY + 96, GY + 128, 692, 718, new THREE.MeshStandardMaterial({ color: 0x2a4a6a, roughness: .5, metalness: .4 }));
-  for (const [x, c] of [[2690, 0x1f5a9a], [2752, 0x2e6a32]]) { const bm = new THREE.MeshStandardMaterial({ color: c, roughness: .6 }); box(x, x + 54, GY + 6, GY + 104, 728, 780, bm); box(x - 2, x + 56, GY + 104, GY + 110, 726, 784, bm); for (const s of [x + 8, x + 46]) { const w = mesh(new THREE.CylinderGeometry(6, 6, 4, 14), ST.mats.tire, s, GY + 6, 782); w.rotation.z = Math.PI / 2; } }
+  // recycling bins put out for collection: the blue one stands open (that's where the walker tidies a stray toy), the green one is shut
+  { const x = 2690, bm = new THREE.MeshStandardMaterial({ color: 0x1f5a9a, roughness: .6 }), W = 2.4;
+    box(x, x + 54, GY + 6, GY + 8, 728, 780, bm); box(x, x + 54, GY + 6, GY + 104, 728, 728 + W, bm); box(x, x + 54, GY + 6, GY + 104, 780 - W, 780, bm); box(x, x + W, GY + 6, GY + 104, 728 + W, 780 - W, bm); box(x + 54 - W, x + 54, GY + 6, GY + 104, 728 + W, 780 - W, bm);
+    const lid = new THREE.Group(); lid.position.set(x + 27, GY + 104, 728); lid.rotation.x = -1.9; LV.add(lid); mesh(new THREE.BoxGeometry(58, 6, 58), bm, 0, 3, 29, { parent: lid });
+    for (const s of [x + 8, x + 46]) { const w = mesh(new THREE.CylinderGeometry(6, 6, 4, 14), ST.mats.tire, s, GY + 6, 782); w.rotation.z = Math.PI / 2; }
+    ST.bin = { cx: x + 27, cz: 754, ap: V3(x + 27, 0, 712) }; }
+  { const x = 2752, bm = new THREE.MeshStandardMaterial({ color: 0x2e6a32, roughness: .6 }); box(x, x + 54, GY + 6, GY + 104, 728, 780, bm); box(x - 2, x + 56, GY + 104, GY + 110, 726, 784, bm); for (const s of [x + 8, x + 46]) { const w = mesh(new THREE.CylinderGeometry(6, 6, 4, 14), ST.mats.tire, s, GY + 6, 782); w.rotation.z = Math.PI / 2; } }
   // a fallen-leaf carpet along the pavement and gutter
   { const ls = new THREE.Shape(); ls.moveTo(0, -1.4); ls.quadraticCurveTo(1.1, -.4, 0, 1.6); ls.quadraticCurveTo(-1.1, -.4, 0, -1.4); const leaf = new THREE.ShapeGeometry(ls, 6); leaf.rotateX(-Math.PI / 2); const lm = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .85, side: THREE.DoubleSide }); const N = 520; const IM = new THREE.InstancedMesh(leaf, lm, N); const q = new THREE.Quaternion(), e = new THREE.Euler(), s = V3(), t = V3(), col = new THREE.Color();
     for (let i = 0; i < N; i++) { const onRoad = rnd() < .35; t.set(R(1400, 2900), (onRoad ? RY : GY) + .25, onRoad ? R(802, 840) : R(650, 790)); e.set(R(-.2, .2), rnd() * 6.28, R(-.2, .2)); q.setFromEuler(e); const k = R(.7, 1.3); s.set(k, 1, k); m4.compose(t, q, s); IM.setMatrixAt(i, m4); col.setHSL(R(.03, .1), R(.35, .6), R(.12, .26)); IM.setColorAt(i, col); }

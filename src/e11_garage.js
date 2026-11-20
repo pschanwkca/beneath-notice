@@ -125,7 +125,7 @@ function buildGarage() {
   box(1180, 1190, 100, 270, 140, 300, metal, { col: false });
   box(1150, 1220, 250, 268, 120, 160, new THREE.MeshStandardMaterial({ color: 0x6a6e72, roughness: .5 }), { col: false });
   // ---- the car ----
-  buildCar(1150, 70);   // nosed up close to the garage door, leaving a walkway in front of the bench
+  buildCar(1150, 70); buildEvidenceBox();   // nosed up close to the garage door, leaving a walkway in front of the bench
   // ---- workbench along the back wall (top 90 cm above the floor) ----
   const BT = GY + 90; GS.benchY = BT;
   box(1180, 1440, BT - 8, BT, -260, -196, wood, { uv: 80 });
@@ -285,7 +285,9 @@ function agentSay(k) { if (GS.said[k] && T - GS.said[k] < 40) return; GS.said[k]
 function updAgent(dt) {
   const H = GS.agent; if (!H) return; const P = H.pos; let moveD = 0;
   const walkTo = (tx0, tz0, sp) => { const [tx, tz] = agentWay(P, tx0, tz0); const fin = tx === tx0 && tz === tz0; const dx = tx - P.x, dz = tz - P.z, d = Math.hypot(dx, dz); const s = sp * dt; if (d < s + .5) { P.x = tx; P.z = tz; moveD = d; return fin; } P.x += dx / d * s; P.z += dz / d * s; moveD = s; H.yaw = angDamp(H.yaw, Math.atan2(dx, dz), 5, dt); return false; };
-  if (GS.mode === 'patrol') {
+  const J = TAKE.job && TAKE.job.who === 'agent' ? TAKE.job : null;
+  if (J) agentTake(J, H, walkTo, dt);
+  else if (GS.mode === 'patrol') {
     const n = AG_PATH[GS.node % AG_PATH.length];
     if (walkTo(n.x, n.z, 52)) { if (n.stop) { GS.mode = 'look'; GS.wait = n.stop; GS.look = V3(...n.look); if (n.line && rnd() < .5) agentSay(n.line); } GS.node++; }
     const fx = Math.sin(H.yaw), fz = Math.cos(H.yaw); H.aimT.set(P.x + fx * 150 + Math.sin(T * .8) * 40, GY, P.z + fz * 150 + Math.cos(T * .7) * 30);
@@ -303,6 +305,7 @@ function updAgent(dt) {
   P.x = clamp(P.x, 950, 1430); P.z = clamp(P.z, -182, 270); P.y = GY;
   H.aim.lerp(H.aimT, 1 - Math.exp(-3 * dt));
   agentPose(H, moveD, dt);
+  takeBend(H, J ? J.bend : 0, J ? 1 : 0);
 }
 function agentPose(H, moveD, dt) {
   const step = humanAnim(H, moveD, dt); const A0 = H.arms[0]; A0.sh.rotation.x = Math.sin(H.phase) * .3 * (H.amp / .42); A0.el.rotation.x = -.25;

@@ -200,11 +200,11 @@ function buildDog(o = {}) {
   if (!o.keep) YS.dog = D; return D;
 }
 function updDog(dt) {
-  const D = YS.dog; if (!D) return; D.t -= dt; const P = D.pos; let sp = 0;
+  const D = YS.dog; if (!D) return; if (TAKE.job && TAKE.job.who === 'dog') { dogTake(TAKE.job, D, dt); return; } D.t -= dt; const P = D.pos; let sp = 0;
   if (D.mode === 'sleep') { D.sleepK = damp(D.sleepK, 1, 2, dt); if (D.t <= 0 && rnd() < dt * .03) { D.mode = 'sniff'; D.t = R(8, 14); D.target = dogSpot(); } }
   else {
     D.sleepK = damp(D.sleepK, 0, 3, dt);
-    if (D.mode === 'sniff') { if (moveDog(D, D.target, 26, dt)) { D.target = dogSpot(); sp = 0; } else sp = 26; if (D.t <= 0) { D.mode = 'home'; } }
+    if (D.mode === 'sniff') { if (!D.target) D.target = dogSpot(); if (moveDog(D, D.target, 26, dt)) { D.target = dogSpot(); sp = 0; } else sp = 26; if (D.t <= 0) { D.mode = 'home'; } }
     else if (D.mode === 'alert' || D.mode === 'bark') { const dx = D.look.x - P.x, dz = D.look.z - P.z; D.yaw = angDamp(D.yaw, Math.atan2(dx, dz), 4, dt); if (D.mode === 'alert' && Math.hypot(dx, dz) > 60) { moveDog(D, D.look, 40, dt); sp = 40; } if (D.t <= 0) { D.mode = 'sniff'; D.t = R(5, 9); D.target = dogSpot(); } if (D.mode === 'bark' && (D.barkT -= dt) <= 0) { D.barkT = .45; dogBark(); } }
     else if (D.mode === 'home') { const h = V3(2300, GY, 368); if (moveDog(D, h, 28, dt)) { D.mode = 'sleep'; D.t = R(10, 20); D.yaw = Math.PI; } else sp = 28; }
   }
@@ -253,6 +253,7 @@ function updOldMan(dt) {
   H.root.updateMatrixWorld(true); const hp = V3(); H.head.getWorldPosition(hp); const ad = V3().subVectors(O.look, hp); const yr0 = Math.atan2(ad.x, ad.z) - H.yaw; const yr = Math.atan2(Math.sin(yr0), Math.cos(yr0)); const pitch = Math.atan2(-ad.y, Math.hypot(ad.x, ad.z));
   H.head.rotation.y = damp(H.head.rotation.y, clamp(yr, -.9, .9) * O.lookK, 3, dt); H.head.rotation.x = damp(H.head.rotation.x, lerp(.55, clamp(pitch * .6, -.3, .5), O.lookK), 3, dt);
   for (const A of H.arms) { A.sh.rotation.x = lerp(-1.1, -.5, O.lookK); A.sh.rotation.z = A.s * -.25; A.el.rotation.x = lerp(-.9, -.6, O.lookK); }
+  if (TAKE.job && TAKE.job.who === 'old') oldTake(TAKE.job, dt); else if (O.grab) O.grab.visible = false;
 }
 // sprinkler: one jet sweeping round; whoever it hits gets knocked over
 function updSprinkler(dt) {

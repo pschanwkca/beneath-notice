@@ -201,6 +201,36 @@ function bearShove() {
 function shoveRes(r, vx, vz) { r.svx = (r.svx || 0) + vx; r.svz = (r.svz || 0) + vz; if (r === LIV.wedge) LIV.loose = true; }
 function slideFree(c, dx, dz) { const nb = [c.x0 + dx, c.x1 + dx, c.z0 + dz, c.z1 + dz, c.y0 + .05, c.y1]; for (const o of colsNear((c.x0 + c.x1) / 2, c.y0 + .1, (c.z0 + c.z1) / 2)) { if (o === c || o.y1 <= nb[4] || o.y0 >= nb[5]) continue; const b = colBounds(o); if (b[1] > nb[0] && b[0] < nb[1] && b[5] > nb[2] && b[4] < nb[3]) return false; } return true; }
 function bearHold(dt) { shoveCD = Math.max(0, shoveCD - dt); const L = leader; if (L && L.id === 'bear' && mine(L) && !L.frozen && pushHeld() && shoveCD <= 0 && !(Math.hypot(L.vel.x, L.vel.z) > 2 && L.pushing)) bearShove(); }
+// ---------- bear: grab hold and drag (hold right click / touch 拉) ----------
+function dragHeld() { return !!(keys.Mouse2 || keys.TPull); }
+function dragTo(r, tx, tz) {
+  const c = r.c, dx = tx - r.cx, dz = tz - r.cz; let mx = 0, mz = 0;
+  if (Math.abs(dx) > 1e-4 && slideFree(c, dx, 0)) { r.cx += dx; mx = dx; applyResize(r); }
+  if (Math.abs(dz) > 1e-4 && slideFree(c, 0, dz)) { r.cz += dz; mz = dz; applyResize(r); }
+  return [mx, mz];
+}
+function bearDrag(dt) {
+  const L = leader; if (!L || L.id !== 'bear') return;
+  if (!mine(L) || L.frozen || STATE !== 'play' || !dragHeld() || L.climbing || L.mantle || L.on || isBase(L)) { if (L.drag) { L.drag = null; SND.push(); } return; }
+  if (!L.drag) {
+    const r = pushTarget(L);
+    if (!r) { keys.TPull = false; $('tbPull').classList.remove('on'); if (!L.noDragT || T - L.noDragT > 5) { L.noDragT = T; toast('前面沒有拉得動的東西——要正面對着它'); } keys.Mouse2 = false; return; }
+    const vol = r.sx * r.sy * r.sz * r.s ** 3;
+    L.drag = { r, ox: r.cx - L.pos.x, oz: r.cz - L.pos.z, slow: clamp(.72 - Math.cbrt(Math.max(1, vol)) / 140, .3, .65), sendT: 0 }; SND.push(); SND.thud(.1);
+    if (!L.saidDrag) { L.saidDrag = 1; toast(`抓住了「${r.name}」——向後行就拖住走，${TOUCH ? '再按「拉」' : '放開右鍵'}放手`, 3.4); }
+  }
+  const D = L.drag, r = D.r; if (r.gone) { L.drag = null; return; }
+  L.yaw = Math.atan2(D.ox, D.oz);
+  const tx = L.pos.x + D.ox, tz = L.pos.z + D.oz;
+  if (Math.hypot(tx - r.cx, tz - r.cz) < .02) return;
+  dragTo(r, tx, tz);
+  // whatever it couldn't follow holds the bear back
+  L.pos.x = r.cx - D.ox; L.pos.z = r.cz - D.oz;
+  // online: move it here straight away; the host does the same and keeps everyone in step
+  if (NET.client) { D.sendT -= dt; if (D.sendT <= 0) { D.sendT = .07; nsend({ t: 'drg', i: resizables.indexOf(r), x: +r.cx.toFixed(2), z: +r.cz.toFixed(2) }, NET.hostId); } }
+  if (rnd() < dt * 9) emit(V3(r.cx, r.y0 + .2, r.cz), V3(R(-3, 3), R(1, 3), R(-3, 3)), new THREE.Color(.28, .25, .22), R(.15, .3), R(.3, .5), 20, 2);
+  if (rnd() < dt * 3) SND.push();
+}
 function updSlides(dt) {
   for (const r of resizables) {
     if (!r.svx && !r.svz) continue; const c = r.c;
