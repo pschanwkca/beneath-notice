@@ -48,6 +48,7 @@ function crewEar(C, S, g, s, k, part, plain, fm) {
     part(ell(.4 * k, .52 * k, .15 * k, 24, 16), fm(0), g, 0, .1 * k, 0);
     plain(ell(.26 * k, .36 * k, .06 * k, 20, 12), M.mask, g, 0, .06 * k, .11 * k);
     plain(ell(.42 * k, .12 * k, .1 * k, 16, 8), M.white, g, 0, .52 * k, 0);
+  } else if (S.ear === 'bat') { batEar(g, s, k, part, plain, fm);
   } else if (S.ear === 'nub') {
     g.position.set(s * .86 * k, .84 * k, .05 * k); g.rotation.set(0, s * -.4, s * -.4);
     part(ell(.3 * k, .3 * k, .14 * k, 20, 12), fm(0), g, 0, 0, 0);
@@ -70,6 +71,7 @@ function crewTail(C, S, tailRoot, k, part, fm) {
 // faces, spines, outfits
 function crewExtras(C, S, head, body, k, part, plain) {
   const M = crewMats();
+  if (S.bat) batExtras(C, S, head, body, k, plain); if (S.tort) tortExtras(C, S, head, body, k, plain);
   const badge = (y = 1.16, z = .98) => { const b = plain(new THREE.CircleGeometry(.17 * k, 24), M.badge, body, -.42 * k, y * k, z * k); b.rotation.y = -.38; b.castShadow = false; };
   const lathe = (pts, mat, sz = .95) => { const m = plain(new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0] * k, p[1] * k)), 48), mat, body, 0, 0, 0); m.scale.z = sz; return m; };
   if (S.spines) {
@@ -239,7 +241,7 @@ function crewInput(L, ctl) {
   if (pressed.KeyE && L.id === 'frog') frogSwitch();
 }
 function crewHint(L) {
-  if (!L) return '';
+  if (!L) return ''; const nh = ncHint(L); if (nh) return nh;
   if (L.id === 'frog') { const s = swNear(L); if (s) return s.until > T ? `${s.name}：已經熄了` : s.cd > T ? `${s.name}：電路冷卻中` : `${TOUCH ? '按「電」' : '<kbd>E</kbd>'} 搞電器：${s.name}（附近熄燈 20 秒）`; }
   if ((L.id === 'rab' || L.id === 'frog') && L.charge > 0) return `蓄力 ${Math.round(L.charge * 100)}%……放手${L.id === 'rab' ? '起跳' : '跳出去'}`;
   return '';

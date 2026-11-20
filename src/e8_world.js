@@ -55,6 +55,7 @@ async function buildWorld(prog) {
   for (const id of ['basement', 'wall', 'kitchen', 'garage', 'yard']) { if (prog) await prog(id); buildZone(ZONES[id]); }
   ZONES.garage.prepped = ZONES.yard.prepped = true;
   MP_CPS = [...LEVELS.kitchen.cps, ...LEVELS.garage.cps, ...LEVELS.yard.cps];
+  ncPlace();
   for (let i = furMeshes.length - 1; i >= 0; i--) if (!inScene(furMeshes[i])) furMeshes.splice(i, 1);
   partitionCols(); setupLightPool(); WORLD = true;
 }
@@ -171,7 +172,7 @@ function zoneTick(dt) {
   if (leader && mine(leader) && (STATE === 'play' || STATE === 'frozen')) {
     const cur = ZONES[LEVEL]; if (!cur || !inZone(cur, lp.x, lp.y, lp.z, 2)) { const nz = zoneAt(lp); if (nz && nz.id !== LEVEL) enterZone(nz.id); }
   }
-  updNpcWalk(dt); updBanner(dt); updSecCam(dt); updGarageWorld(dt); updYardWorld(dt);
+  updNpcWalk(dt); updBanner(dt); updSecCam(dt); updGarageWorld(dt); updYardWorld(dt); ncTick(dt);
 }
 // a place's rules take over (no loading, nothing moves)
 function enterZone(id, quiet) {

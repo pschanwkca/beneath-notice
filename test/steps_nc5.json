@@ -1,0 +1,4 @@
+[
+ {"eval": "(async()=>{ const b=window.__bn; b.startChapter('garage'); for(let i=0;i<80 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); window.__NODET=true; document.querySelectorAll('#hud').forEach(e=>e.style.opacity=0); b.step(30); const W=b.W; const L=b.leader; L.pos.set(1215,W.GY,-188); for(const F of b.party) if(F!==L){F.pos.set(1100,W.GY,-140); F.disp&&F.disp.copy(F.pos); F.queue=[];} b.cam.yaw=-Math.PI*.5; b.cam.pitch=-.75; b.cam.dist=30; b.step(20); return b.chars.bat.state})()", "wait": 200, "shot": "n1_bat_roost"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; b.crewJoin('bat',true); const B=b.chars.bat; b.switchTo(B); const L=b.leader; L.pos.set(1100,W.GY,-60); L.yaw=Math.PI*.85; for(const F of b.party) if(F!==L){F.pos.set(1050,W.GY,-40); F.disp&&F.disp.copy(F.pos); F.queue=[];} b.cam.yaw=Math.PI*.85; b.cam.pitch=.12; b.cam.dist=11; b.step(30); return 1})()", "wait": 200, "shot": "n2_bat_front"}
+]

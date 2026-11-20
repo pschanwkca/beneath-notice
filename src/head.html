@@ -214,7 +214,7 @@ html.touch .desk{display:none}
 #tbAct,#tbScout{display:none;border-color:rgba(159,216,107,.7);color:#bfe89a}
 #tbAct{right:84px;bottom:84px}
 #tbScout{right:150px;bottom:150px;width:52px;height:52px;font-size:12px}
-.touchui.sq #tbAct,.touchui.cham #tbAct,.touchui.sq #tbScout,.touchui.hog #tbAct,.touchui.rab #tbAct,.touchui.coon #tbAct,.touchui.frog #tbAct,.touchui.frog #tbScout{display:block}
+.touchui.sq #tbAct,.touchui.cham #tbAct,.touchui.sq #tbScout,.touchui.hog #tbAct,.touchui.rab #tbAct,.touchui.coon #tbAct,.touchui.frog #tbAct,.touchui.frog #tbScout,.touchui.bat #tbAct,.touchui.tort #tbAct{display:block}
 #watch{position:fixed;z-index:6;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;transition:opacity .2s;pointer-events:none}
 #watch.on{opacity:1}
 #watch i{display:block;width:0;height:0;border-left:16px solid #ff8f9f;border-top:11px solid transparent;border-bottom:11px solid transparent;filter:drop-shadow(0 0 6px rgba(255,143,159,.8))}
@@ -269,7 +269,7 @@ button.small{font-size:14px;padding:6px 16px;min-height:34px}
 .mpcode{display:flex;align-items:center;justify-content:center;gap:12px;margin:2px 0 16px}
 .mpcode span{color:var(--dim);font-size:13px}
 .mpcode b{font:700 30px "Fredoka",monospace;letter-spacing:.28em;color:var(--cyan)}
-.mpslots{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.mpslots{display:grid;grid-template-columns:repeat(5,1fr);gap:9px}
 .mps{display:flex;flex-direction:column;align-items:center;gap:3px;padding:9px 4px 8px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--faint);color:var(--ink);box-shadow:none;min-height:0;font:600 14px "Noto Sans TC"}
 .mps:hover{transform:translateY(-2px);box-shadow:none;border-color:rgba(245,240,230,.4)}
 .mps .ph{width:50px;height:50px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 35%,#2b3442,#121820);display:grid;place-items:center}
@@ -290,7 +290,7 @@ button.small{font-size:14px;padding:6px 16px;min-height:34px}
 .mpchip b{font:600 12px "Fredoka";letter-spacing:.15em;color:var(--cyan)}
 .ptag{position:absolute;transform:translate(-50%,-100%);font:700 11px "Noto Sans TC";padding:2px 8px;border-radius:99px;background:rgba(10,13,18,.6);white-space:nowrap;opacity:0;transition:opacity .2s;pointer-events:none}
 .ptag.on{opacity:1}
-html.touch .mpslots{grid-template-columns:repeat(4,1fr);gap:6px}
+html.touch .mpslots{grid-template-columns:repeat(5,1fr);gap:6px}
 @media (max-height:520px){.mps .ph{width:40px;height:40px}.mps small,.mps em{display:none}.mpbox{padding:14px 18px 12px}}
 html.touch .mps .ph{width:48px;height:48px}
 html.touch .mpchip{bottom:auto;top:62px}

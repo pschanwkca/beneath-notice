@@ -267,7 +267,7 @@ function detectYard(dt) {
   if (seen > 0) {
     const p = V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z); let lit = litAtList(p, YS.lights, .6) * (inDark(L.pos) ? .6 : 1); if (inGrass(L.pos)) lit *= .3;
     const mv = L.spd > 1.5 ? 1 : .5; const cr = L.crouch ? .55 : 1;
-    meter += seen * lit * mv * cr * (L.id === 'cham' ? 1 - .82 * L.camo : 1) * dt;
+    meter += seen * lit * mv * cr * hideK(L) * dt;
     if (meter > .3) netSeen(V3(L.pos.x, L.pos.y + 2, L.pos.z), who);
   } else meter -= dt * .24;
   meter = clamp(meter, 0, 1); if (meter >= 1) toyFreeze(who);
@@ -297,7 +297,7 @@ LEVELS.yard = {
   toys: true, npcNear: true, build: buildYard,
   cps: [[1480, GY, 105], [1900, GY, 112], [2130, GY, 109], [2420, DECK, 100], [2600, DECK, 140]],
   quests: YQ_SP,
-  spawn() { spawnSP(this.cps[0], -Math.PI / 2, 5); if (!GS.latch) { GS.latch = true; } if (!LIV.ventOpen) { LIV.ventOpen = true; LIV.ventCol.y0 = -999; LIV.ventCol.y1 = -998; } },
+  spawn() { if (!NET.on) crewJoin('bat', true); spawnSP(this.cps[0], -Math.PI / 2, 5); if (!GS.latch) { GS.latch = true; } if (!LIV.ventOpen) { LIV.ventOpen = true; LIV.ventCol.y0 = -999; LIV.ventCol.y1 = -998; } },
   enter(prev, again) { if (!again && !NET.on && prev === 'garage' && STATE === 'play') unlockKey('ch3'); if (again || NET.on) return; setTimeout(() => say('爸爸', '陳伯就住隔籬，那邊的玻璃屋……小心他的狗。', '#f5f0e6', 3.6), 1500); },
   npc(dt) { if (STATE === 'play' || STATE === 'fail' || STATE === 'frozen' || STATE === 'end') { updDog(dt); updOldMan(dt); } },
   detect: detectYard, hear: yardHear, seen: yardSeen,

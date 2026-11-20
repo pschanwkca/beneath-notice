@@ -120,6 +120,7 @@ function updChip() { const el = $('mpChip'); if (!NET.on) { el.hidden = true; re
 function mpStartGame() { if (!NET.host || $('mpStart').disabled) return; NET.started = true; nsend({ t: 'start', slots: NET.slots, order: NET.order }); netBegin(); }
 function netBegin() {
   NET.on = true; NET.started = true; NET.client = !NET.host; NET.my = IDS.find(id => NET.slots[id] === NET.me);
+  for (const id of ['bat', 'tort']) if (!NET.slots[id]) { const K = chars[id]; K.root.visible = false; K.pos.set(0, -900, 0); K.state = 'idle'; K.shell = false; K.roost = null; }
   for (const id of IDS) { const C = chars[id]; C.owner = C.baseOwner = NET.slots[id] || NET.hostId; C.net = null; }
   audioInit(); $('mp').hidden = true; $('start').hidden = true; updChip();
   joinCham(); syncParty(); playT = 0; fails = 0; PROTO = 0;

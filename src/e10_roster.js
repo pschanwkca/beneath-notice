@@ -3,6 +3,7 @@
 //  CHARACTER ROSTER & UNLOCKS
 //  The four leads are always available online. Origin Dynamics staff are unlocked by playing the
 //  single-player story on this device; locked ones show as a black silhouette with a "?".
+//  阿蝠 and 阿龜 are met in chapters 3 and 4 and join the single-player team there.
 //  More characters arrive with later chapters (shown as "?" placeholders).
 // =====================================================================
 const ROSTER = [
@@ -11,10 +12,11 @@ const ROSTER = [
   { id: 'rab', key: 'ch1', how: '完成第一章（把核心帶回牆腳）' },
   { id: 'coon', key: 'ch2', how: '完成第二章（客廳的電池）' },
   { id: 'frog', key: 'bat6', how: '單人模式集齊全部鈕扣電池' },
+  { id: 'bat', key: 'bat', how: '單人第三章：在車房找到阿蝠' },
+  { id: 'tort', key: 'tort', how: '單人第四章：在陳伯的後園找到阿龜' },
   { id: 'f1', future: true, how: '第五章：馬路（製作中）' },
   { id: 'f2', future: true, how: '第六章：公園（製作中）' },
-  { id: 'f3', future: true, how: '第七章（製作中）' },
-  { id: 'f4', future: true, how: '第八章（製作中）' }
+  { id: 'f3', future: true, how: '第七章（製作中）' }
 ];
 const UNL = (() => { try { return JSON.parse(localStorage.getItem('bn_unlock_v1') || '{}') || {}; } catch (e) { return {}; } })();
 function isUnlocked(id) { const r = ROSTER.find(q => q.id === id); return !!r && !r.future && (!r.key || !!UNL[r.key]); }

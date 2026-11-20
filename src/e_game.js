@@ -73,7 +73,7 @@ canvas.addEventListener('mousedown', e => {
   mbtn = e.button; dragDist = 0;
 });
 addEventListener('mouseup', e => { if (e.button === 0) keys.Mouse0 = false; if (dragMode && mbtn >= 0 && dragDist < 6 && STATE === 'play') { primaryDown(mbtn); keys.Mouse0 = false; } mbtn = -1; });
-function primaryDown(btn) { const L = leader; if (!L) return; if (L.id === 'bear') { if (btn === 0) { keys.Mouse0 = true; bearShove(); } return; } if (L.id === 'cham') { if (btn === 0) chamTongue(); return; } if (L.id === 'sq') { if (btn === 0) sqCarry(); else if (btn === 2) sqScout(); return; } if (L.id === 'hog') { if (btn === 0) hogRoll(); return; } if (L.id === 'coon') { if (btn === 0) coonThrow(); return; } if (L.id === 'rab' || L.id === 'frog') { if (btn === 0) keys.Mouse0 = true; else if (btn === 2 && L.id === 'frog') frogSwitch(); return; } fireGun(btn === 0); }
+function primaryDown(btn) { const L = leader; if (!L) return; if (L.id === 'bear') { if (btn === 0) { keys.Mouse0 = true; bearShove(); } return; } if (L.id === 'cham') { if (btn === 0) chamTongue(); return; } if (L.id === 'sq') { if (btn === 0) sqCarry(); else if (btn === 2) sqScout(); return; } if (L.id === 'hog') { if (btn === 0) hogRoll(); return; } if (L.id === 'coon') { if (btn === 0) coonThrow(); return; } if (L.id === 'rab' || L.id === 'frog') { if (btn === 0) keys.Mouse0 = true; else if (btn === 2 && L.id === 'frog') frogSwitch(); return; } if (L.id === 'bat') { if (btn === 0) batPing(); return; } if (L.id === 'tort') { if (btn === 0) tortShell(); return; } fireGun(btn === 0); }
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 addEventListener('wheel', e => { cam.dist = clamp(cam.dist + e.deltaY * .012, 8, 42); }, { passive: true });
 
@@ -118,7 +118,7 @@ function moveVert(C, dt) {
   const wasG = C.grounded; C.grounded = false;
   if (C.pos.y <= sup + .001) { const imp = -C.vel.y; C.pos.y = sup; if (C.vel.y < 0) C.vel.y = 0; C.grounded = true; C.ground = sc; if (!wasG) land(C, imp); if (sc && sc.bouncy && imp > 22 && !wasG) { C.vel.y = clamp(imp * .82, 45, 150); C.grounded = false; C.squash = -.6; tone(260, 520, .16, .05, 'sine'); } }
   else if (wasG && C.vel.y <= 0 && C.pos.y - sup < .3) { C.pos.y = sup; C.vel.y = 0; C.grounded = true; C.ground = sc; }
-  ceil(C);
+  C.ceilHit = ceil(C);
 }
 function ceil(C) {
   let hit = null;
@@ -171,6 +171,8 @@ function updLeader(C, dt) {
   }
   if (C.zip) { updZip(C, dt); return; }
   if (C.climbing) { updClimb(C, dt, inX, inY, ctl, mv.run); return; }
+  if (C.roost) { updRoost(C, dt, wx, wz, wl, ctl); return; }
+  if (C.shell) { C.state = 'shell'; C.vel.set(0, 0, 0); C.spd = 0; C.stamina = Math.min(C.stamMax || 100, C.stamina + 30 * dt); if (ctl && pressed.Space) { C.shell = false; C.state = 'idle'; } return; }
   if (C.leapT > 0) C.leapT -= dt;
   const sp = speedOf(C, mv.run) * (joy.on ? clamp(mv.m / .85, .35, 1) : 1); const tx = wx * sp, tz = wz * sp; const acc = (C.grounded ? 150 : C.leapT > 0 ? 9 : 50) * dt;
   let dvx = tx - C.vel.x, dvz = tz - C.vel.z; const dl = Math.hypot(dvx, dvz); if (dl > acc) { dvx *= acc / dl; dvz *= acc / dl; }
@@ -178,6 +180,7 @@ function updLeader(C, dt) {
   if (wl > 0 && !(C.tumble > 0)) C.yaw = angDamp(C.yaw, Math.atan2(wx, wz), 13, dt);
   if (ctl && pressed.Space && C.grounded && base) { if (!C.noJumpT || T - C.noJumpT > 3) { C.noJumpT = T; toast('頭上有人，跳唔到——叫佢哋先落嚟'); } }
   else if (ctl && pressed.Space && C.grounded) { C.vel.y = 47 * C.S.jmp; C.grounded = false; C.squash = -.55; C.crouch = false; SND.jump(); }
+  else if (ctl && pressed.Space && C.id === 'bat' && !C.grounded && !base) batFlap(C);
   if (C.dashT > 0) hogDash(C, dt); chargeJump(C, dt, ctl);
   C.vel.y -= G * dt; const wasGl = C.gliding; C.gliding = false;
   if (C.id === 'sq' && ctl && !C.grounded && keys.Space && (C.vel.y < 0 || wasGl)) {
@@ -185,10 +188,13 @@ function updLeader(C, dt) {
     const ud = updraftAt(C.pos); if (ud) { C.vel.y = Math.min(C.vel.y + G * dt + 300 * dt, 40 - 10 * w); if (!C.saidUd) { C.saidUd = 1; toast('暖風把你托上去了！'); } }
     C.vel.x = damp(C.vel.x, hx * (30 - 8 * w) + wx * 4, 2.5, dt); C.vel.z = damp(C.vel.z, hz * (30 - 8 * w) + wz * 4, 2.5, dt);
   }
+  if (C.id === 'bat' && ctl && !C.grounded && keys.Space && C.vel.y < -14 && !C.gliding) C.vel.y = -14;   // flutter down slowly
   if (C.vel.y < TERM) C.vel.y = TERM;
   C.pos.x += C.vel.x * dt; C.pos.z += C.vel.z * dt;
   const hit = resolveH(C, true);
   moveVert(C, dt);
+  if (C.grounded) C.flaps = 0;
+  if (C.id === 'bat' && ctl && !C.grounded && keys.Space && C.ceilHit && roostOn(C, C.ceilHit)) return;
   if (hit && ctl && !base && !hit.c.slick && C.climbCD <= 0 && !C.crouch && (C.stamina > 8 || C.id === 'gecko')) { if (-(wx * hit.nx + wz * hit.nz) > .5) startClimb(C, hit); }
   if (C.grounded && !C.cold) C.stamina = Math.min(C.stamMax || 100, C.stamina + 45 * dt);
   const hs = Math.hypot(C.vel.x, C.vel.z); C.spd = hs;
@@ -219,7 +225,7 @@ function updClimb(C, dt, inX, inY, ctl, run) {
   const ox = C.pos.x, oz = C.pos.z;
   C.pos.y += inY * sp * dt; C.pos.x += sx * inX * sp * .8 * dt; C.pos.z += sz * inX * sp * .8 * dt;
   if (inY < 0) { const [sup] = supportAt(C.pos.x, C.pos.z, C.r * .55, C.pos.y + .3); if (C.pos.y <= sup + .05) { C.pos.y = sup; detach(C, 0, 0, true); C.state = 'idle'; return; } }
-  const yb = C.pos.y; const cc = ceil(C); if (inY > 0 && C.pos.y < yb - .01) { C.overhang = 1.4; if (lipGrab(C, n, cc)) { C.overhang = 0; return; } }
+  const yb = C.pos.y; const cc = ceil(C); if (inY > 0 && C.pos.y < yb - .01) { C.overhang = 1.4; if (C.id === 'bat' && roostOn(C, cc)) { C.overhang = 0; return; } if (lipGrab(C, n, cc)) { C.overhang = 0; return; } }
   C.pos.x -= n.x * .35; C.pos.z -= n.z * .35;
   let hit = resolveClimb(C);
   if (!hit && inX !== 0) { C.pos.x = ox - n.x * .35; C.pos.z = oz - n.z * .35; hit = resolveClimb(C); }
@@ -254,10 +260,11 @@ function pushTrail(L) {
 }
 function pathLen(F, L) { let s = 0, px = F.pos.x, py = F.pos.y, pz = F.pos.z; for (const q of F.queue) { s += Math.hypot(q.x - px, q.y - py, q.z - pz); px = q.x; py = q.y; pz = q.z; } return s + Math.hypot(L.pos.x - px, L.pos.y - py, L.pos.z - pz); }
 function updFollower(F, L, dt) {
+  if (F.shell || F.roost) { F.spd = 0; F.state = F.shell ? 'shell' : 'roost'; F.disp && F.disp.copy(F.pos); return; }
   let Lp = pathLen(F, L);
   if (Lp > 150 && F.queue.length > 30) { while (F.queue.length > 2 && Lp > 70) { const q = F.queue.shift(); Lp -= Math.hypot(q.x - F.pos.x, q.y - F.pos.y, q.z - F.pos.z); F.pos.set(q.x, q.y, q.z); } }
   const [sup] = supportAt(F.pos.x, F.pos.z, F.r * .55, F.pos.y + .05);
-  const floating = F.pos.y - sup > .35 && F.qst !== 'climb';
+  const floating = F.pos.y - sup > .35 && F.qst !== 'climb' && F.qst !== 'roost';
   let moved = 0;
   if (Lp > F.gap || (floating && F.queue.length)) {
     let move = Math.min(Math.max(Lp - F.gap, floating ? 30 * dt : 0), (Lp - F.gap > 14 || floating ? 32 : 17) * F.S.spd * dt); const m0 = move;
@@ -271,7 +278,7 @@ function updFollower(F, L, dt) {
   }
   F.spd = moved;
   const st = F.qst || 'idle';
-  if (st === 'climb' && (moved > .3 || floating || F.pos.y - sup > .35)) { F.state = 'climb'; F.yaw = angDamp(F.yaw, F.qyaw, 10, dt); }
+  if ((st === 'climb' || st === 'roost') && (moved > .3 || floating || F.pos.y - sup > .35)) { F.state = st; F.yaw = angDamp(F.yaw, F.qyaw, 10, dt); }
   else if (moved > .5) { F.state = (st === 'air' || st === 'glide' || st === 'tumble') ? (F.id === 'sq' && st === 'glide' ? 'glide' : 'air') : (st === 'sneak' ? 'sneak' : 'walk'); if (F.tyaw !== undefined) F.yaw = angDamp(F.yaw, F.tyaw, 10, dt); }
   else { F.state = L.crouch ? 'crouch' : 'idle'; const dx = L.pos.x - F.pos.x, dz = L.pos.z - F.pos.z; if (Math.hypot(dx, dz) > 5) F.yaw = angDamp(F.yaw, Math.atan2(dx, dz), 2, dt); }
   F.crouch = F.state === 'crouch' || F.state === 'sneak';
@@ -486,7 +493,7 @@ function say(name, text, color, dur = 3) { $('subn').textContent = name; $('subn
 function toast(t, dur = 2.6) { $('toast').textContent = t; $('toast').classList.add('on'); toastT = dur; }
 function refreshPartyHUD() {
   for (const id of IDS) { const el = $('pm-' + id); if (!el) continue; const C = chars[id]; el.classList.toggle('on', leader && leader.id === id); el.classList.toggle('toy', !!C.frozen); const sm = el.querySelector('small'); if (sm && party.includes(C)) sm.textContent = C.frozen ? (C.toyAt === 'box' ? '在玩具箱' : C.toyAt === 'hand' ? '被拿走了' : '變成玩具') : NET.on ? playerLabel(id) + ((C.stamMax || 100) < 100 ? ` · ${C.stamMax}%` : '') : (C.stamMax || 100) < 100 ? `體力 ${C.stamMax}%` : SP[id].role; }
-  if (!leader) return; for (const id of IDS) $('touch').classList.toggle(id, leader.id === id); $('tbAct').textContent = ({ cham: '舌', sq: '抱', hog: '滾', coon: '彈', rab: '跳', frog: '跳' })[leader.id] || '抱'; $('tbScout').textContent = leader.id === 'frog' ? '電' : '偵察'; $('tbCrouch').classList.toggle('dn', !!leader.crouch); $('an').textContent = leader.S.abil; $('ad').textContent = leader.S.desc; $('cells').style.display = leader.id === 'dad' ? 'flex' : 'none';
+  if (!leader) return; for (const id of IDS) $('touch').classList.toggle(id, leader.id === id); $('tbAct').textContent = ({ cham: '舌', sq: '抱', hog: '滾', coon: '彈', rab: '跳', frog: '跳', bat: '聲', tort: '殼' })[leader.id] || '抱'; $('tbScout').textContent = leader.id === 'frog' ? '電' : '偵察'; $('tbCrouch').classList.toggle('dn', !!leader.crouch); $('an').textContent = leader.S.abil; $('ad').textContent = leader.S.desc; $('cells').style.display = leader.id === 'dad' ? 'flex' : 'none';
 }
 function buildPartyHUD() {
   const has = id => party.includes(chars[id]); const order = IDS.filter(has).map((id, i) => [id, i + 1]);
@@ -570,7 +577,7 @@ function animChar(C, dt) {
   if (C.frozen) { C.root.position.copy(C.pos); C.root.rotation.set(C.toyTilt || 0, C.yaw, C.toyRoll || 0); return; }
   if (C !== leader && C.tumble > 0) C.tumble = Math.max(0, C.tumble - dt);
   C.t += dt; const k = C.k, b = C.body, st = C.state, spd = C.spd || 0;
-  C.root.position.copy(C !== leader && C.disp && party.includes(C) ? C.disp : C.pos); C.root.rotation.y = C.yaw;
+  C.root.position.copy(C !== leader && C.disp && party.includes(C) ? C.disp : C.pos); C.root.rotation.set(0, C.yaw, 0);
   let legA = 0, armA = 0, bob = 0, lean = 0, roll = 0, armZ = 0, legZ = 0, armX = 0, legT = 0, armAlt = 0;
   if (st === 'walk' || st === 'sneak' || st === 'stackwalk') {
     const prev = C.phase; C.phase += dt * spd / (.95 * k) * 1.25; const s = Math.sin(C.phase); const a = clamp(spd / 13, .35, 1);
@@ -607,6 +614,7 @@ function animChar(C, dt) {
   const bl = C.blinkT > 0 ? (C.blinkT -= dt, .08) : 1.12; for (const e of C.eyes) e.scale.y = bl;
   if (C.S.cham) chamAnim(C, dt);
   if (C.wing) { C.glideK = damp(C.glideK, st === 'glide' ? 1 : 0, 10, dt); for (const w of C.wing) { w.visible = C.glideK > .02; w.scale.y = Math.max(.01, C.glideK); } }
+  ncAnim(C, dt, st);
 }
 
 // ---------- flow ----------
@@ -801,7 +809,7 @@ function setupTouch() {
   hold('tbGrow', () => fireGun(true)); hold('tbShrink', () => fireGun(false));
   hold('tbStack', () => { pressed.KeyF = true; });
   hold('tbProto', () => { pressed.KeyR = true; });
-  hold('tbAct', () => { const id = leader.id; if (id === 'cham') chamTongue(); else if (id === 'sq') sqCarry(); else if (id === 'hog') hogRoll(); else if (id === 'coon') coonThrow(); else if (id === 'rab' || id === 'frog') keys.Mouse0 = true; }, () => { keys.Mouse0 = false; });
+  hold('tbAct', () => { const id = leader.id; if (id === 'cham') chamTongue(); else if (id === 'sq') sqCarry(); else if (id === 'hog') hogRoll(); else if (id === 'coon') coonThrow(); else if (id === 'rab' || id === 'frog') keys.Mouse0 = true; else if (id === 'bat') batPing(); else if (id === 'tort') tortShell(); }, () => { keys.Mouse0 = false; });
   hold('tbScout', () => { if (leader.id === 'frog') frogSwitch(); else sqScout(); });
   hold('tbPush', () => { keys.TPush = true; bearShove(); }, () => { keys.TPush = false; });
   hold('tbPause', () => { if (STATE === 'play' || STATE === 'intro') pause(); });
@@ -815,9 +823,9 @@ function makePortraits() {
     const key = new THREE.DirectionalLight(0xffe2c0, 2.4); key.position.set(3, 5, 6); ps.add(key); const rim = new THREE.DirectionalLight(0x9fc6ff, 2.6); rim.position.set(-4, 3, -5); ps.add(rim);
     const pc = new THREE.PerspectiveCamera(24, 1, .1, 100);
     for (const id of IDS) {
-      const C = chars[id]; const par = C.root.parent; const pp = C.root.position.clone(), ry = C.root.rotation.y, vis = C.root.visible; C.root.visible = true; ps.add(C.root); C.root.position.set(0, 0, 0); C.root.rotation.y = -.35;
+      const C = chars[id]; const par = C.root.parent; const pp = C.root.position.clone(), rr = C.root.rotation.clone(), vis = C.root.visible, st = C.state; C.root.visible = true; if (st === 'roost' || st === 'shell') { C.state = 'idle'; C.shellK = 0; animChar(C, .016); } ps.add(C.root); C.root.position.set(0, 0, 0); C.root.rotation.set(0, -.35, 0);
       const hy = 3.55 * C.k; pc.position.set(1.4 * C.k, hy + .5 * C.k, 9 * C.k); pc.lookAt(0, hy - .1 * C.k, 0); pr.render(ps, pc); PORTRAITS[id] = pr.domElement.toDataURL('image/png');
-      par.add(C.root); C.root.position.copy(pp); C.root.rotation.y = ry; C.root.visible = vis;
+      par.add(C.root); C.root.position.copy(pp); C.root.rotation.copy(rr); C.root.visible = vis; C.state = st;
     }
     pm.dispose(); pr.dispose(); pr.forceContextLoss && pr.forceContextLoss();
   } catch (e) { console.warn('portraits', e); }
@@ -829,8 +837,8 @@ async function init() {
   try { await Promise.race([Promise.all(['500 20px "LXGW WenKai TC"', '700 20px "Noto Sans TC"', '600 20px Fredoka', '600 20px Caveat'].map(f => document.fonts.load(f, '爸爸最棒第測試縮小態被觀測ABC'))), new Promise(r => setTimeout(r, 3500))]); } catch (e) { }
   setLoad(.15, '生成材質…'); await tick(); makeMaterials();
   setLoad(.3, '喚醒角色…'); await tick();
-  for (const id of ['dad', 'sq', 'bear', 'gecko', 'cham', 'hog', 'rab', 'coon', 'frog']) chars[id] = makeChar(id);
-  for (const id of ['hog', 'rab', 'coon', 'frog']) { chars[id].root.visible = false; chars[id].pos.set(0, -900, 0); }
+  for (const id of ['dad', 'sq', 'bear', 'gecko', 'cham', 'hog', 'rab', 'coon', 'frog', 'bat', 'tort']) chars[id] = makeChar(id);
+  for (const id of ['hog', 'rab', 'coon', 'frog', 'bat', 'tort']) { chars[id].root.visible = false; chars[id].pos.set(0, -900, 0); }
   party.push(chars.dad, chars.sq, chars.bear); buildMom();
   // the whole house is built now, once: walking from room to room never loads anything
   const WL = { basement: [.42, '搭建地庫…'], wall: [.52, '搭建牆內…'], kitchen: [.58, '搭建廚房和客廳…'], garage: [.64, '搭建車房…'], yard: [.7, '搭建後園和陽光房…'] };

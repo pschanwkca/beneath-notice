@@ -327,7 +327,7 @@ function detectGarage(dt) {
     const lit = Math.max(litAtList(V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z), GS.lights), who === 'agent' && H.lightPos && seeFrom(H.lightPos, H.lightDir, Math.cos(.34), 520) > 0 ? 1 : 0) * (inDark(L.pos) ? .6 : 1);
     const under = L.pos.y < 0 && L.pos.x > GS.car.x0 && L.pos.x < GS.car.x1 && L.pos.z > GS.car.z0 && L.pos.z < GS.car.z1 ? .35 : 1;
     const mv = L.spd > 1.5 ? 1 : .5; const cr = L.crouch ? .55 : 1;
-    meter += seen * lit * mv * cr * under * (L.id === 'cham' ? 1 - .82 * L.camo : 1) * dt;
+    meter += seen * lit * mv * cr * under * hideK(L) * dt;
     if (meter > .32) netSeen(V3(L.pos.x, L.pos.y + 2, L.pos.z), who);
   } else meter -= dt * .24;
   meter = clamp(meter, 0, 1); if (meter >= 1) toyFreeze(who);

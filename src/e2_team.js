@@ -43,7 +43,7 @@ function towerSize(C) { let n = 1, t = towerBottom(C), g = 0, k; while ((k = isB
 function topPos(B) { return V3(B.pos.x, B.pos.y + B.h * STK_ON, B.pos.z); }
 function stkClear() { for (const C of party) { C.on = null; C.hop = null; C.drop = false; C.pullT = 0; } }
 function stackPress() {
-  const L = leader; if (STATE !== 'play' || L.frozen || !mine(L) || L.hop || L.mantle || L.zip || L.tumble > 0) return;
+  const L = leader; if (STATE !== 'play' || L.frozen || !mine(L) || L.hop || L.mantle || L.zip || L.tumble > 0 || L.roost || L.shell) return;
   if (L.carry) sqDrop(L);
   if (L.on) { stackOff(L); return; }
   if (isBase(L)) { toast('有人企喺你頭上，要佢哋先落嚟'); return; }
@@ -51,7 +51,7 @@ function stackPress() {
   let best = null, bd = STACK_R;
   for (const F of party) {
     if (F === L || F.frozen || F.carried || F.hop || F.drop) continue; const b = towerBottom(F); if (b === L) continue;
-    const d = Math.hypot(b.pos.x - L.pos.x, b.pos.z - L.pos.z); if (d < bd && Math.abs(b.pos.y - L.pos.y) < 3 && b.state !== 'climb') { bd = d; best = b; }
+    const d = Math.hypot(b.pos.x - L.pos.x, b.pos.z - L.pos.z); if (d < bd && Math.abs(b.pos.y - L.pos.y) < 3 && b.state !== 'climb' && b.state !== 'shell' && b.state !== 'roost') { bd = d; best = b; }
   }
   if (!best) { toast(`要走近隊友（${STACK_R} 公分內）先可以爬上去`); return; }
   if (towerSize(best) >= 6) { toast('太高了，再疊上去會倒'); return; }

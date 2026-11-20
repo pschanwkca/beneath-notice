@@ -1,8 +1,1 @@
-[
- {"eval": "(()=>{ location.href = location.pathname + '?net=local#dev'; return 1 })()", "wait": 45000},
- {"eval": "(async()=>{ for(let i=0;i<200 && (!window.__bn || document.getElementById('start').hidden);i++) await new Promise(r=>setTimeout(r,300)); const b=window.__bn; b.unlockKey('prologue'); return b.isUnlocked('hog') })()", "wait": 6000},
- {"click": "#goMP", "wait": 300},
- {"click": "#mpCreate", "wait": 3000, "shot": "r3_lobby"},
- {"eval": "(()=>{ const b=window.__bn; b.mpPick('rab'); const r1=b.NET.slots.rab||null; b.mpPick('hog'); return [r1, !!b.NET.slots.hog] })()", "wait": 800, "shot": "r4_lobby_pick"},
- {"eval": "(()=>{ document.getElementById('mp').hidden=true; window.__bn.openRoster(); return 1 })()", "wait": 500, "shot": "r5_roster"}
-]
+[{"eval": "(()=>{ localStorage.setItem('bn_unlock_v1', JSON.stringify({prologue:1,ch1:1,ch2:1,bat:1})); location.href=location.pathname+'?net=local#dev'; })()", "wait": 100}, {"wait": 25000}, {"eval": "(async()=>{ for(let i=0;i<200 && document.getElementById('start').hidden;i++) await new Promise(r=>setTimeout(r,300)); document.getElementById('goMP').click(); await new Promise(r=>setTimeout(r,300)); document.getElementById('mpCreate').click(); await new Promise(r=>setTimeout(r,2500)); return document.querySelectorAll('#mpSlots > *').length })()", "wait": 1000, "shot": "l1_lobby"}]

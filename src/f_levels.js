@@ -718,7 +718,7 @@ function detectKitchen(dt) {
   const kd = Math.hypot(L.pos.x - KID.root.position.x, L.pos.z - KID.root.position.z); if (kd < 45 && L.pos.y < 40 && L.spd > 2 && !L.crouch && KID.mode !== 'read') { seen = Math.max(seen, .3); who = who || 'kid'; }
   if (seen > 0) {
     const lit = litAt(V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z)) * (inDark(L.pos) ? .6 : 1); const mv = L.spd > 1.5 ? 1 : .5; const cr = L.crouch ? .55 : 1; const glow = KS.carried && (!NET.on || KS.carrier === L.id) ? 1.35 : 1;
-    const k = seen * lit * mv * cr * glow * (L.id === 'cham' ? 1 - .82 * L.camo : 1); meter += k * dt * 1.0;
+    const k = seen * lit * mv * cr * glow * hideK(L); meter += k * dt * 1.0;
     const tp = V3(L.pos.x, L.pos.y + 2, L.pos.z);
     if (meter > .32) netSeen(tp, who);
   } else meter -= dt * .24;
