@@ -116,6 +116,27 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--fain
 .chap i{display:block;width:72px;height:1px;margin:14px auto 0;background:linear-gradient(90deg,transparent,var(--amber),transparent)}
 .pmp{margin-top:22px;padding-top:18px;border-top:1px solid var(--faint);display:grid;gap:12px;justify-items:center}
 .pmp[hidden]{display:none}
+#roster,#help{z-index:30}
+.pcard{max-width:520px}
+body.paused .hud{opacity:0}
+#pause{background:radial-gradient(ellipse at 50% 50%,rgba(7,9,12,.55),rgba(7,9,12,.88))}
+.ploc{margin:6px 0 0;font:600 13px "Noto Sans TC";letter-spacing:.06em;color:var(--amber)}
+.pmenu{display:grid;grid-template-columns:1fr 1fr;gap:10px;max-width:460px;margin:18px auto 0}
+.pmenu button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;padding:11px 16px;min-height:0;border-radius:14px;text-align:left}
+.pmenu button[hidden]{display:none}
+.pmenu b{font-size:15px}.pmenu small{font:500 11px "Noto Sans TC";color:var(--dim)}
+.pmenu button.warn{border-color:rgba(255,143,159,.6)}.pmenu button.warn small{color:var(--rose)}
+.pset{display:grid;grid-template-columns:auto 1fr;gap:12px 18px;align-items:center;max-width:460px;margin:18px auto 0;padding-top:16px;border-top:1px solid var(--faint);text-align:left;font-size:13px;color:var(--dim)}
+.pset .sel{justify-self:start}
+.pset input[type=range]{width:100%;accent-color:var(--amber)}
+.pset input[type=checkbox]{justify-self:start;width:20px;height:20px;accent-color:var(--amber)}
+.hbox{width:min(720px,94vw)}
+.hkeys{margin:4px auto 16px;max-width:none}
+.habil{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px;margin-bottom:14px;text-align:left}
+.habil div{display:flex;gap:10px;align-items:center;padding:8px 10px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--faint)}
+.habil img{width:40px;height:40px;border-radius:50%;flex:none;background:#121820}
+.habil b{display:block;font-size:13px}.habil small{display:block;font-size:11px;color:var(--dim);line-height:1.4}
+@media (max-height:520px){.pmenu{gap:6px;margin-top:10px}.pmenu button{padding:7px 12px}.pmenu small{display:none}.pset{gap:8px 14px;margin-top:10px;padding-top:10px}.ploc{display:none}}
 .rbox{width:min(880px,94vw);max-height:calc(100vh - 56px);overflow:auto;padding:18px 22px 16px;text-align:center}
 .rtip{font-size:12px;color:var(--dim);margin:0 0 14px;line-height:1.5}
 .rgrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-bottom:12px}
@@ -405,19 +426,37 @@ html.touch .mpchip{bottom:auto;top:62px}
 </div>
 
 <div class="ov" id="pause" hidden>
-  <div class="card">
+  <div class="card pcard">
     <div class="logo" style="font-size:44px">暫停</div>
-    <p class="tag">點擊繼續。滑鼠會被鎖定用來轉視角，按 Esc 可以再次暫停。</p>
-    <div class="row">
-      <button id="resume">繼續</button>
-      <div class="sel" id="qsel2" role="group" aria-label="畫質">
-        <button data-q="high">高畫質</button><button data-q="med">中</button><button data-q="low">低</button>
-      </div>
+    <p class="ploc" id="pauseLoc"></p>
+    <p class="tag" id="pauseTip">按「繼續」回到遊戲。</p>
+    <div class="row"><button id="resume">繼續</button></div>
+    <div class="pmenu">
+      <button class="ghost" id="pauseRoster"><b>角色</b><small id="pauseRosterN">已解鎖角色</small></button>
+      <button class="ghost" id="pauseHelp"><b>操作說明</b><small>按鍵和每隻角色的能力</small></button>
+      <button class="ghost" id="pauseCp"><b>回到存檔點</b><small>卡住了？由最近的存檔點再來</small></button>
+      <button class="ghost" id="pauseTitle"><b>返回主畫面</b><small id="pauseTitleS">進度會由章節開頭重新開始</small></button>
+    </div>
+    <div class="pset">
+      <span>畫質</span>
+      <div class="sel" id="qsel2" role="group" aria-label="畫質"><button data-q="high">高</button><button data-q="med">中</button><button data-q="low">低</button></div>
+      <label for="setSens">視角靈敏度</label><input type="range" id="setSens" min="0.4" max="2.2" step="0.1">
+      <label for="setVol">音量</label><input type="range" id="setVol" min="0" max="1" step="0.05">
+      <label for="setInv">上下視角反轉</label><input type="checkbox" id="setInv">
     </div>
     <div class="pmp" id="pauseMP" hidden>
       <div class="code">房號<b id="pauseCode">----</b></div>
       <div class="row"><button class="ghost small" id="pauseCopy">複製邀請連結</button><button class="ghost small" id="pauseLeave">離開房間，返回主畫面</button></div>
     </div>
+  </div>
+</div>
+
+<div class="ov" id="help" hidden>
+  <div class="rbox panel hbox">
+    <div class="mph"><b>操作說明</b><span>任何時候都可以在暫停選單打開</span></div>
+    <div class="keys hkeys" id="helpKeys"></div>
+    <div class="habil" id="helpAbil"></div>
+    <div class="mpact"><button id="helpClose" class="ghost small">關閉</button></div>
   </div>
 </div>
 
@@ -1668,7 +1707,7 @@ const AU = { ctx: null };
 function audioInit() {
   if (AU.ctx) { AU.ctx.resume?.(); return; }
   try {
-    const C = new (window.AudioContext || window.webkitAudioContext)(); AU.ctx = C; AU.out = C.createGain(); AU.out.gain.value = .85; AU.out.connect(C.destination);
+    const C = new (window.AudioContext || window.webkitAudioContext)(); AU.ctx = C; AU.out = C.createGain(); AU.out.gain.value = .85 * SET.vol; AU.out.connect(C.destination);
     const nb = C.createBuffer(1, C.sampleRate * 2, C.sampleRate); const d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; AU.noise = nb;
     const o1 = C.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = 55; const o2 = C.createOscillator(); o2.frequency.value = 110.6;
     const lp = C.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 230; const hg = C.createGain(); hg.gain.value = .03; o1.connect(lp); o2.connect(lp); lp.connect(hg); hg.connect(AU.out); o1.start(); o2.start(); AU.hum = hg;
@@ -1955,7 +1994,7 @@ function switchTo(N) {
 
 // ---------- camera ----------
 function updCam(dt) {
-  if (STATE === 'play' && !PAUSED) { cam.yaw -= mouseDX * .0024; cam.pitch = clamp(cam.pitch + mouseDY * .0022, -.45, 1.25); }
+  if (STATE === 'play' && !PAUSED) { cam.yaw -= mouseDX * .0024 * SET.sens; cam.pitch = clamp(cam.pitch + mouseDY * .0022 * SET.sens * (SET.inv ? -1 : 1), -.45, 1.25); }
   mouseDX = mouseDY = 0;
   const L = leader; const ty = L.pos.y + L.h * (L.crouch ? .62 : .8);
   cam.tgt.x = damp(cam.tgt.x, L.pos.x, 16, dt); cam.tgt.y = damp(cam.tgt.y, ty, 10, dt); cam.tgt.z = damp(cam.tgt.z, L.pos.z, 16, dt);
@@ -2395,8 +2434,8 @@ function applyQ(q) {
   renderer.setPixelRatio(P[0]); composer.setPixelRatio(P[0]); onResize(); gtao.enabled = P[1]; bokeh.enabled = P[2]; setShells(P[3]);
   document.querySelectorAll('.sel button').forEach(b => b.classList.toggle('on', b.dataset.q === q));
 }
-function pause() { PAUSED = true; $('pause').hidden = false; $('pauseMP').hidden = !NET.on; if (NET.on) { $('pauseCode').textContent = NET.code; $('pause').querySelector('.tag').textContent = '多人遊戲不會暫停——其他人還在玩。點「繼續」回到遊戲。'; } }
-function resume() { PAUSED = false; $('pause').hidden = true; last = performance.now(); requestLock(); }
+function pause() { PAUSED = true; $('pause').hidden = false; document.body.classList.add('paused'); $('pauseMP').hidden = !NET.on; if (NET.on) $('pauseCode').textContent = NET.code; pauseRefresh(); }
+function resume() { PAUSED = false; $('pause').hidden = true; document.body.classList.remove('paused'); $('help').hidden = true; $('roster').hidden = true; last = performance.now(); requestLock(); }
 document.querySelectorAll('.sel button').forEach(b => b.addEventListener('click', () => applyQ(b.dataset.q)));
 $('go').addEventListener('click', () => { audioInit(); startGame(0); });
 $('go1').addEventListener('click', () => { audioInit(); startGame(1); });
@@ -3474,6 +3513,48 @@ function openRoster() {
 $('goRoster').addEventListener('click', () => { audioInit(); openRoster(); });
 $('rosterClose').addEventListener('click', () => { $('roster').hidden = true; });
 
+// ---------- settings (kept on this device) ----------
+const SET = Object.assign({ sens: 1, vol: 1, inv: false }, (() => { try { return JSON.parse(localStorage.getItem('bn_set_v1') || '{}') || {}; } catch (e) { return {}; } })());
+function saveSet() { try { localStorage.setItem('bn_set_v1', JSON.stringify(SET)); } catch (e) { } }
+$('setSens').value = SET.sens; $('setVol').value = SET.vol; $('setInv').checked = !!SET.inv;
+$('setSens').addEventListener('input', e => { SET.sens = +e.target.value; saveSet(); });
+$('setVol').addEventListener('input', e => { SET.vol = +e.target.value; if (AU.out) AU.out.gain.value = .85 * SET.vol; saveSet(); });
+$('setInv').addEventListener('change', e => { SET.inv = e.target.checked; saveSet(); });
+
+// ---------- pause menu ----------
+function pauseRefresh() {
+  const D = LEVELS[LEVEL]; const where = NET.on ? '多人 · ' : '';
+  $('pauseLoc').textContent = STATE === 'title' || !D ? '' : `${where}${D.chapter} · ${D.title}`;
+  $('pauseTip').textContent = NET.on ? '多人遊戲不會暫停，其他人還在玩。按「繼續」回到遊戲。' : TOUCH ? '按「繼續」回到遊戲。' : '按「繼續」回到遊戲，滑鼠會再次鎖定來轉視角。';
+  $('pauseRosterN').textContent = `已解鎖 ${unlockedCount()} / ${ROSTER.length}`;
+  $('pauseTitle').hidden = NET.on; $('pauseTitle').classList.remove('warn'); $('pauseTitleS').textContent = '進度會由章節開頭重新開始'; pauseTitleArm = 0;
+  $('pauseCp').querySelector('small').textContent = NET.on ? '卡住了？只會把你自己送回存檔點' : '卡住了？由最近的存檔點再來';
+}
+let pauseTitleArm = 0;
+$('pauseRoster').addEventListener('click', () => openRoster());
+$('pauseHelp').addEventListener('click', () => openHelp());
+$('helpClose').addEventListener('click', () => { $('help').hidden = true; });
+$('pauseCp').addEventListener('click', () => {
+  if (STATE !== 'play' || !CPS) return;
+  if (NET.on) { const L = leader; if (!L || L.frozen) return; const p = CPS[cp] || CPS[0]; L.pos.set(p[0] + IDS.indexOf(L.id) * 3, p[1], p[2]); L.vel.set(0, 0, 0); L.climbing = false; L.mantle = null; L.on = null; L.hop = null; trail = []; L.lastTrail.copy(L.pos); cam.tgt.copy(L.pos); }
+  else respawn();
+  resume(); toast('回到存檔點', 2);
+});
+$('pauseTitle').addEventListener('click', () => {
+  if (pauseTitleArm && performance.now() - pauseTitleArm < 3500) { location.href = location.pathname + location.search.replace(/[?&]room=[^&]*/, ''); return; }
+  pauseTitleArm = performance.now(); $('pauseTitle').classList.add('warn'); $('pauseTitleS').textContent = '再按一次確認返回主畫面';
+  setTimeout(() => { if (pauseTitleArm && performance.now() - pauseTitleArm >= 3400) { $('pauseTitle').classList.remove('warn'); $('pauseTitleS').textContent = '進度會由章節開頭重新開始'; pauseTitleArm = 0; } }, 3600);
+});
+// controls + what each character in the party can do
+function openHelp() {
+  const K = TOUCH ? [['移動', '左邊拖動搖桿'], ['視角', '右邊拖動'], ['跳／攀爬時跳開', '「跳」'], ['攀爬', '推搖桿撞向牆壁'], ['潛行', '「潛行」'], ['疊羅漢', '「疊」'], ['換角色', '「換人」或點頭像'], ['角色能力', '右下角的能力按鈕'], ['救隊友', '「復活」用 Prototype']]
+    : [['移動', '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>'], ['視角', '滑鼠'], ['跑', '<kbd>Shift</kbd>'], ['潛行', '<kbd>C</kbd>'], ['跳／攀爬時跳開', '<kbd>Space</kbd>'], ['攀爬', '走向牆壁按住 <kbd>W</kbd>'], ['換角色', NET.on ? '多人模式不能換' : '<kbd>Tab</kbd> 或數字鍵'], ['角色能力', '左鍵／右鍵'], ['疊羅漢', '<kbd>F</kbd>（只疊最近的隊友）'], ['用 Prototype 救隊友', '<kbd>R</kbd>'], ['阿蛙搞電器', '<kbd>E</kbd>'], ['隱藏介面', '<kbd>H</kbd>'], ['暫停選單', '<kbd>Esc</kbd>']];
+  $('helpKeys').innerHTML = K.map(([a, b]) => `<div><span>${a}</span><span>${b}</span></div>`).join('');
+  const who = (party.length ? IDS.filter(id => party.includes(chars[id])) : CORE);
+  $('helpAbil').innerHTML = who.map(id => { const S = SP[id]; return `<div>${PORTRAITS[id] ? `<img alt="" src="${PORTRAITS[id]}">` : ''}<span><b style="color:${S.col}">${S.name} · ${S.abil}</b><small>${S.desc}</small></span></div>`; }).join('');
+  $('help').hidden = false;
+}
+
 // =====================================================================
 //  KITCHEN, second pass
 //  - routes up to the worktops (appliance cords hanging to floor sockets)
@@ -4038,7 +4119,7 @@ LEVELS.wall = {
   },
   // walked in from the basement
   enter(prev, again) {
-    if (prev === 'basement' && !again) { unlockKey('prologue'); momReset(); chars.cham.root.visible = true; chars.cham.pos.set(-30, 4, 12).add(HO); chars.cham.yaw = -2.2; }
+    if (prev === 'basement' && !again) { if (STATE === 'play') unlockKey('prologue'); momReset(); chars.cham.root.visible = true; chars.cham.pos.set(-30, 4, 12).add(HO); chars.cham.yaw = -2.2; }
     LEVELS.kitchen.prep();
   },
   leave() { },

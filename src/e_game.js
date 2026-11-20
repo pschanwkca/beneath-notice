@@ -4,7 +4,7 @@ const AU = { ctx: null };
 function audioInit() {
   if (AU.ctx) { AU.ctx.resume?.(); return; }
   try {
-    const C = new (window.AudioContext || window.webkitAudioContext)(); AU.ctx = C; AU.out = C.createGain(); AU.out.gain.value = .85; AU.out.connect(C.destination);
+    const C = new (window.AudioContext || window.webkitAudioContext)(); AU.ctx = C; AU.out = C.createGain(); AU.out.gain.value = .85 * SET.vol; AU.out.connect(C.destination);
     const nb = C.createBuffer(1, C.sampleRate * 2, C.sampleRate); const d = nb.getChannelData(0); for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1; AU.noise = nb;
     const o1 = C.createOscillator(); o1.type = 'sawtooth'; o1.frequency.value = 55; const o2 = C.createOscillator(); o2.frequency.value = 110.6;
     const lp = C.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 230; const hg = C.createGain(); hg.gain.value = .03; o1.connect(lp); o2.connect(lp); lp.connect(hg); hg.connect(AU.out); o1.start(); o2.start(); AU.hum = hg;
@@ -291,7 +291,7 @@ function switchTo(N) {
 
 // ---------- camera ----------
 function updCam(dt) {
-  if (STATE === 'play' && !PAUSED) { cam.yaw -= mouseDX * .0024; cam.pitch = clamp(cam.pitch + mouseDY * .0022, -.45, 1.25); }
+  if (STATE === 'play' && !PAUSED) { cam.yaw -= mouseDX * .0024 * SET.sens; cam.pitch = clamp(cam.pitch + mouseDY * .0022 * SET.sens * (SET.inv ? -1 : 1), -.45, 1.25); }
   mouseDX = mouseDY = 0;
   const L = leader; const ty = L.pos.y + L.h * (L.crouch ? .62 : .8);
   cam.tgt.x = damp(cam.tgt.x, L.pos.x, 16, dt); cam.tgt.y = damp(cam.tgt.y, ty, 10, dt); cam.tgt.z = damp(cam.tgt.z, L.pos.z, 16, dt);
@@ -731,8 +731,8 @@ function applyQ(q) {
   renderer.setPixelRatio(P[0]); composer.setPixelRatio(P[0]); onResize(); gtao.enabled = P[1]; bokeh.enabled = P[2]; setShells(P[3]);
   document.querySelectorAll('.sel button').forEach(b => b.classList.toggle('on', b.dataset.q === q));
 }
-function pause() { PAUSED = true; $('pause').hidden = false; $('pauseMP').hidden = !NET.on; if (NET.on) { $('pauseCode').textContent = NET.code; $('pause').querySelector('.tag').textContent = '多人遊戲不會暫停——其他人還在玩。點「繼續」回到遊戲。'; } }
-function resume() { PAUSED = false; $('pause').hidden = true; last = performance.now(); requestLock(); }
+function pause() { PAUSED = true; $('pause').hidden = false; document.body.classList.add('paused'); $('pauseMP').hidden = !NET.on; if (NET.on) $('pauseCode').textContent = NET.code; pauseRefresh(); }
+function resume() { PAUSED = false; $('pause').hidden = true; document.body.classList.remove('paused'); $('help').hidden = true; $('roster').hidden = true; last = performance.now(); requestLock(); }
 document.querySelectorAll('.sel button').forEach(b => b.addEventListener('click', () => applyQ(b.dataset.q)));
 $('go').addEventListener('click', () => { audioInit(); startGame(0); });
 $('go1').addEventListener('click', () => { audioInit(); startGame(1); });

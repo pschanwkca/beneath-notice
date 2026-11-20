@@ -278,7 +278,7 @@ LEVELS.wall = {
   },
   // walked in from the basement
   enter(prev, again) {
-    if (prev === 'basement' && !again) { unlockKey('prologue'); momReset(); chars.cham.root.visible = true; chars.cham.pos.set(-30, 4, 12).add(HO); chars.cham.yaw = -2.2; }
+    if (prev === 'basement' && !again) { if (STATE === 'play') unlockKey('prologue'); momReset(); chars.cham.root.visible = true; chars.cham.pos.set(-30, 4, 12).add(HO); chars.cham.yaw = -2.2; }
     LEVELS.kitchen.prep();
   },
   leave() { },

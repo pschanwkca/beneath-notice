@@ -1,0 +1,7 @@
+[
+ {"click": "#go1", "wait": 3000},
+ {"eval": "(async()=>{const b=window.__bn; for(let i=0;i<300 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,200)); b.step(30); b.pauseNow(); return !document.getElementById('pause').hidden})()", "wait": 500, "shot": "p0_pause"},
+ {"eval": "(()=>{document.getElementById('pauseRoster').click(); return document.getElementById('roster').hidden})()", "wait": 500, "shot": "p1_pause_roster"},
+ {"eval": "(()=>{document.getElementById('rosterClose').click(); document.getElementById('pauseHelp').click(); return [document.getElementById('roster').hidden, document.getElementById('help').hidden]})()", "wait": 500, "shot": "p2_help"},
+ {"eval": "(()=>{document.getElementById('helpClose').click(); const b=window.__bn; const L=b.leader; const p0=L.pos.toArray(); L.pos.x+=40; document.getElementById('pauseCp').click(); return [p0.map(v=>+v.toFixed(1)), L.pos.toArray().map(v=>+v.toFixed(1)), document.getElementById('pause').hidden]})()"}
+]
