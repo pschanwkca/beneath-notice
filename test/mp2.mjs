@@ -1,4 +1,4 @@
-// Two players in one browser (BroadcastChannel transport): lobby → hub → kitchen,
+// Two players in one browser (BroadcastChannel transport): lobby → kitchen → living room → vent opens,
 // movement/NPC sync, toy freeze + rescue, cross-player stacking, Prototype from a client.
 import { chromium } from '/opt/npm-tools/node_modules/playwright/index.mjs';
 import fs from 'fs'; import path from 'path';
@@ -55,11 +55,6 @@ log('in living', await until(A, () => window.__bn.quest === 3, 8000));
 log('positions', await ev(A, () => { const b = window.__bn; return [b.state, b.LEVEL, b.quest, b.chars.dad.pos.toArray().map(v => +v.toFixed(1)), b.chars.bear.pos.toArray().map(v => +v.toFixed(1)), b.chars.bear.frozen, Object.keys(b.NET.slots).filter(k => b.NET.slots[k])]; }));
 await ev(B, () => { const b = window.__bn; const r = b.W.LIV.remote; const L = b.leader; L.pos.set(r.cx + 1, r.y0 + r.sy, r.cz); L.vel.set(0, 0, 0); });
 log('remote', [await until(A, () => window.__bn.W.LIV.remoteGot && window.__bn.quest === 4, 8000), await until(B, () => window.__bn.quest === 4, 5000)]);
-await ev(A, () => { const L = window.__bn.leader; L.pos.set(890, 0, -195); L.vel.set(0, 0, 0); });
-await ev(B, () => { const L = window.__bn.leader; L.pos.set(888, 0, -204); L.vel.set(0, 0, 0); });
-log('end', [await until(A, () => window.__bn.state === 'end', 10000), await until(B, () => window.__bn.state === 'end', 10000)]);
-await wait(4500);
-log('end card', await ev(B, () => [document.getElementById('endA').textContent, document.getElementById('end').hidden]));
-await shot(B, 'mp6_end');
+log('vent open', [await until(A, () => window.__bn.W.LIV.ventCol.y0 < -900, 8000), await until(B, () => window.__bn.W.LIV.ventCol.y0 < -900, 8000)]);
 console.log(logs.slice(0, 30).join('\n'));
 await browser.close();

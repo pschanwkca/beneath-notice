@@ -1,5 +1,5 @@
 [
- {"click": "#go1", "wait": 3000},
+ {"eval": "window.__bn.startGame(1)", "wait": 3000},
  {"eval": "(async()=>{const b=window.__bn; for(let i=0;i<300 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,200)); b.step(30); b.pauseNow(); return !document.getElementById('pause').hidden})()", "wait": 500, "shot": "p0_pause"},
  {"eval": "(()=>{document.getElementById('pauseRoster').click(); return document.getElementById('roster').hidden})()", "wait": 500, "shot": "p1_pause_roster"},
  {"eval": "(()=>{document.getElementById('rosterClose').click(); document.getElementById('pauseHelp').click(); return [document.getElementById('roster').hidden, document.getElementById('help').hidden]})()", "wait": 500, "shot": "p2_help"},

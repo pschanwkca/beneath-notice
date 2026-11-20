@@ -1,6 +1,6 @@
 [
  {
-  "click": "#go1",
+  "eval": "window.__bn.startGame(1)",
   "wait": 4000
  },
  {

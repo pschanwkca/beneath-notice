@@ -35,10 +35,17 @@ function toyFreeze(who) {
   L.frozen = true; L.toyAt = 'floor'; L.climbing = false; L.mantle = null; L.vel.set(0, 0, 0); L.tumble = 0; L.toyVy = 0; L.crouch = false; L.toyTilt = 0; L.toyRoll = 0;
   toyLook(L, true); meter = 0; STATE = 'frozen'; failT = 0; TOY.focus = L;
   SND.heart(1); tone(1800, 600, .8, .08, 'triangle'); nz(1.2, 4200, 1, .08, 'highpass'); toyBurst(V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z));
-  if (who === 'kid') { say('女兒', '媽媽！那裡有隻玩具！', '#e8a0c0', 2.6); } else say('太太', '咦？……哪來的玩具？', '#f4bb72', 2.4);
-  if (KM.mode === 'sus') KM.mode = 'goto';
-  if (toyReachable(L)) TOY.fetchQ.push(L);
+  toySay(who, say);
+  if (LEVEL === 'kitchen') { if (KM.mode === 'sus') KM.mode = 'goto'; if (toyReachable(L)) TOY.fetchQ.push(L); }
   refreshPartyHUD();
+}
+// what whoever saw it says when a teammate turns into a toy
+function toySay(who, fn) {
+  if (who === 'kid') fn('女兒', '媽媽！那裡有隻玩具！', '#e8a0c0', 2.6);
+  else if (who === 'agent' || who === 'cam') fn('Origin Dynamics 職員', '……一隻玩具？剛才明明在動。', '#9fb3c8', 2.6);
+  else if (who === 'dog') fn('鄰居的狗', '汪！（叼着玩具搖尾巴）', '#d8a45a', 2.2);
+  else if (who === 'old') fn('陳伯', '咦，誰把玩具留在這裡？', '#c8b8a0', 2.4);
+  else fn('太太', '咦？……哪來的玩具？', '#f4bb72', 2.4);
 }
 function toyHandOff() {
   const F = TOY.focus; const cand = party.filter(C => !C.frozen).sort((a, b) => a.pos.distanceTo(F.pos) - b.pos.distanceTo(F.pos)); const N = cand[0];

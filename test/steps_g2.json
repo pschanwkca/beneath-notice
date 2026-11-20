@@ -1,0 +1,11 @@
+[
+ {"click": "#go", "wait": 1000},
+ {"eval": "(async()=>{const b=window.__bn; for(let i=0;i<60 && b.state!=='play';i++){ b.press('Space'); await new Promise(r=>setTimeout(r,200));} window.__NODET=true; for(let k=0;k<20;k++) b.step(1); return b.info().state})()"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; window.T=(x,y,z)=>{const L=b.leader; L.pos.set(x,y,z); L.vel.set(0,0,0); L.climbing=false; L.mantle=null; L.stamina=100; for(const F of b.party) if(F!==L){F.pos.copy(L.pos); F.pos.x-=4; F.disp&&F.disp.copy(F.pos); F.queue=[];}}; window.H=(k,n)=>{b.keys[k]=true; const o=[]; for(let i=0;i<n;i++){ b.step(1); if(i%15==14) o.push(b.leader.pos.toArray().map(v=>+v.toFixed(1)).concat([b.leader.state])); } b.keys[k]=false; return o}; T(1000,W.GY,-150); b.step(30); b.cam.yaw=-Math.PI/2; const p0=b.leader.pos.x; H('KeyW',20); return {lvl:b.LEVEL,q:b.quest,dx:+(b.leader.pos.x-p0).toFixed(1)}})()"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W,G=W.GS; T(1300,G.benchY+.5,-205); b.step(20); const q1=b.quest; T(G.coilP.x,G.coilP.y,G.coilP.z); b.step(5); const q2=b.quest; T(1380,G.benchY,-208); b.step(5); return {q1,q2,q3:b.quest,dock:G.dock,unl:JSON.stringify(b.UNL)}})()"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W,G=W.GS; T(G.latchP.x,G.latchP.y-4,G.latchP.z); b.step(3); const q=b.quest; T(1440,W.GY,105); b.step(10); b.cam.yaw=-Math.PI/2; b.cam.pitch=.1; const tr=H('KeyW',150); return {latch:G.latch,q,tr,lvl:b.LEVEL,q2:b.quest}})()", "shot": "s1_flap"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; T(2080,W.GY,109); b.step(10); b.cam.yaw=-Math.PI/2; const tr=H('KeyW',120); return {tr,lvl:b.LEVEL,q:b.quest}})()"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; T(2385,W.GY,70); b.step(10); b.cam.yaw=-Math.PI/2; const tr=H('KeyW',780); return {tr,lvl:b.LEVEL,q:b.quest}})()"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; T(2717,W.DECK,80); b.step(10); b.cam.yaw=Math.PI; b.cam.pitch=.2; const tr=H('KeyW',420); return {tr,q:b.quest,chip:W.YS.chip,bookTop:W.YS.bookTop}})()"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; const tr=H('KeyW',300); b.step(30); return {tr,q:b.quest,chip:W.YS.chip,state:b.state,unl:JSON.stringify(b.UNL)}})()", "shot": "s5_desk"}
+]

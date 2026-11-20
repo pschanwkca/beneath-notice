@@ -1,5 +1,5 @@
 [
- {"click": "#go1", "wait": 3000},
+ {"eval": "window.__bn.startGame(1)", "wait": 3000},
  {"eval": "(async()=>{const b=window.__bn; for(let i=0;i<300 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,200)); b.loadLevel('kitchen'); await new Promise(r=>setTimeout(r,1500)); for(let i=0;i<300 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,200)); window.__NODET=true; const c=b.chars; b.switchTo(c.bear); const B=b.leader; B.pos.set(-60,0,40); B.yaw=0; c.sq.pos.set(-58,0,40); c.dad.pos.set(-62,0,42); for(const k of ['sq','dad','cham']){c[k].disp.copy(c[k].pos); c[k].queue=[];} b.step(10); c.sq.on='bear'; c.dad.on='sq'; b.step(20); return {bear:B.state, sq:[c.sq.on, c.sq.pos.y.toFixed(1)], dad:[c.dad.on, c.dad.pos.y.toFixed(1)]}})()"},
  {"eval": "(()=>{const b=window.__bn; b.cam.yaw=Math.PI; b.cam.pitch=.2; b.cam.dist=22; b.step(5); return 1})()"},
  {"down": "KeyW", "wait": 50},

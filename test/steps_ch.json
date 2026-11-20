@@ -1,0 +1,6 @@
+[
+ {"eval": "(()=>{ localStorage.setItem('bn_unlock_v1', JSON.stringify({prologue:1,ch1:1,ch2:1})); location.reload(); })()", "wait": 100},
+ {"wait": 25000},
+ {"eval": "(async()=>{ for(let i=0;i<200 && document.getElementById('start').hidden;i++) await new Promise(r=>setTimeout(r,300)); document.getElementById('goCh').click(); return [...document.querySelectorAll('#chapsList .ch')].map(b=>b.className+'|'+b.textContent) })()", "wait": 600, "shot": "c1_chapters"},
+ {"eval": "(async()=>{ document.querySelectorAll('#chapsList .ch')[2].click(); const b=window.__bn; for(let i=0;i<80 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); window.__NODET=true; b.step(60); return {st:b.state, lvl:b.LEVEL, q:b.quest, party:b.party.map(c=>c.id+':'+c.pos.toArray().map(v=>+v.toFixed(0)).join(',')), cam:[b.cam.yaw]} })()", "wait": 1500, "shot": "c2_ch3start"}
+]

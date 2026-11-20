@@ -51,8 +51,9 @@ function scheduleLines(list, dt = 1 / 60) { for (const L of list) if (lvT - dt <
 // ---------- noise (distractions) ----------
 function noise(p, loud, clang) {
   noiseRing(p); if (NET.on && NET.host) nsend({ t: 'ring', p: [p.x, p.y, p.z], v: clang || 0 });
-  if (LEVEL !== 'kitchen' || NET.client) return;
-  momHear(p, loud); catHear(p, loud); kidHear(p);
+  if (NET.client) return; const Z = WORLD ? zoneAt(p, 4) : null;
+  if (!Z || Z.id === 'kitchen') { momHear(p, loud); catHear(p, loud); kidHear(p); }
+  else if (LEVELS[Z.id].hear) LEVELS[Z.id].hear(p, loud);
 }
 function noiseRing(p) {
   const ring = new THREE.Mesh(new THREE.RingGeometry(1, 1.6, 48), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xf4bb72).multiplyScalar(2), transparent: true, opacity: .8, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
@@ -806,7 +807,8 @@ LEVELS.kitchen = {
   },
   marker() {
     const t = toyMarker(); if (t) return t;
-    if (KS.mp) { if (quest === 0) { const p = LIV.parts.filter(q => !q.got).sort((a, b) => Math.hypot(a.x - leader.pos.x, a.z - leader.pos.z) - Math.hypot(b.x - leader.pos.x, b.z - leader.pos.z))[0]; return p ? V3(p.x, p.y + 2, p.z) : null; } if (quest === 1) return V3(LIV.wedge.cx, 4, LIV.wedge.cz); if (quest === 2) return V3(345, 0, -10); if (quest === 3) return V3(LIV.remote.cx, 46, LIV.remote.cz); return LIV.vent; }
+    if (KS.mp) return mpMarker();
+    if (KS.ch3) return V3(896, 6, -200);
     if (KS.ch2) return quest === 0 ? V3(LIV.wedge.cx, 4, LIV.wedge.cz) : (LIV.remoteGot ? null : V3(LIV.remote.cx, 46, LIV.remote.cz));
     if (KS.coreDrop) return KS.coreDrop; return quest >= 2 ? STATIC.home : (KS.coreGot ? null : V3(212, 2, -194));
   },

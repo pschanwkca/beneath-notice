@@ -1,6 +1,6 @@
 [
  {"eval": "(()=>({touch: document.documentElement.classList.contains('touch')}))()"},
- {"click": "#go1", "wait": 3000},
+ {"eval": "window.__bn.startGame(1)", "wait": 3000},
  {"eval": "(async()=>{const b=window.__bn; for(let i=0;i<300 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,200)); window.__NODET=true; b.step(600, 1/30); return {lvl:b.LEVEL, party:b.party.map(c=>c.id), lines:'ok'}})()", "wait": 400, "shot": "m1_hub"},
  {"eval": "(()=>{const b=window.__bn; const W=b.W; const L=b.leader; b.cam.yaw=Math.PI/2+.6; b.cam.pitch=.3; const out=[]; for(let k=0;k<6;k++){ L.pos.set(60-k*14,4,10).add(W.HO); b.step(12,1/30); out.push(W.LP.pt.map(s=>s.cur?s.cur.uuid.slice(0,4):'-').join(',')+' | '+W.LP.sh.map(s=>s.cur?s.cur.uuid.slice(0,4):'-').join(',')); } return out})()", "wait": 300, "shot": "m2_hub2"},
  {"eval": "(()=>{const b=window.__bn; const W=b.W; b.loadLevel('kitchen'); return 1})()", "wait": 3500},

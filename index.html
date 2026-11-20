@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>BENEATH NOTICE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -116,7 +116,17 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--fain
 .chap i{display:block;width:72px;height:1px;margin:14px auto 0;background:linear-gradient(90deg,transparent,var(--amber),transparent)}
 .pmp{margin-top:22px;padding-top:18px;border-top:1px solid var(--faint);display:grid;gap:12px;justify-items:center}
 .pmp[hidden]{display:none}
-#roster,#help{z-index:30}
+#roster,#help,#chaps{z-index:30}
+.cbox{width:min(760px,94vw)}
+.clist{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px;margin-bottom:6px}
+.ch{display:block;width:100%;text-align:left;padding:14px 14px 13px;border-radius:12px;border:1px solid var(--faint);background:rgba(245,240,230,.03);color:var(--ink);box-shadow:none;font:inherit;cursor:pointer;transition:transform .16s,border-color .16s,background .16s}
+.ch:hover{transform:translateY(-2px);border-color:rgba(244,187,114,.55);background:rgba(244,187,114,.07)}
+.ch small{display:block;font:600 11px "Noto Sans TC";letter-spacing:.2em;color:var(--amber)}
+.ch b{display:block;font:700 17px/1.3 "Noto Sans TC";margin:5px 0 6px}
+.ch em{display:block;font-style:normal;font-size:12px;line-height:1.5;color:var(--dim)}
+.ch.lock{cursor:default;opacity:.46;transform:none;background:transparent;border-style:dashed}
+.ch.lock small{color:var(--dim)}
+@media (max-height:520px){.ch{padding:10px 12px}.ch b{font-size:15px;margin:3px 0 4px}.ch em{font-size:11px}}
 .pcard{max-width:520px}
 body.paused .hud{opacity:0}
 #pause{background:radial-gradient(ellipse at 50% 50%,rgba(7,9,12,.55),rgba(7,9,12,.88))}
@@ -187,7 +197,7 @@ html.touch .desk{display:none}
 .tb:hover{transform:none;box-shadow:none}
 .tb.pr{transform:scale(.92);background:rgba(244,187,114,.9);color:#10131a}
 .tb.dn{border-color:var(--amber);color:var(--amber)}
-.tbtns{position:absolute;right:calc(16px + env(safe-area-inset-right));bottom:16px;width:230px;height:230px;pointer-events:none}
+.tbtns{position:absolute;right:calc(16px + env(safe-area-inset-right));bottom:calc(10px + env(safe-area-inset-bottom));width:230px;height:230px;pointer-events:none}
 .tbtns .tb{pointer-events:auto}
 #tbJump{right:0;bottom:0;width:86px;height:86px;font-size:17px}
 #tbCrouch{right:113px;bottom:13px}
@@ -367,7 +377,7 @@ html.touch .mpchip{bottom:auto;top:62px}
     <p class="tag">一次失控的縮小實驗，你只剩 5 公分高。<br>家人就在樓上找你，但絕對不能被他們看見。</p>
     <div class="row">
       <button id="go">序章：地庫</button>
-      <button id="go1" class="ghost">第一章：牆內與廚房</button>
+      <button id="goCh" class="ghost">選擇章節</button>
       <button id="goMP" class="ghost mpbtn">多人連線 · 最多 8 人</button>
       <button id="goRoster" class="ghost">角色</button>
       <div class="sel" id="qsel" role="group" aria-label="畫質">
@@ -413,6 +423,14 @@ html.touch .mpchip{bottom:auto;top:62px}
       <div id="mpErr" class="mperr"></div>
       <div class="mpact"><button id="mpStart" disabled>開始</button><button id="mpLeave" class="ghost small">離開房間</button></div>
     </div>
+  </div>
+</div>
+
+<div class="ov" id="chaps" hidden>
+  <div class="rbox panel cbox">
+    <div class="mph"><b>章節</b><span id="chapsN"></span></div>
+    <div class="clist" id="chapsList"></div>
+    <div class="mpact"><button id="chapsClose" class="ghost small">關閉</button></div>
   </div>
 </div>
 
@@ -694,12 +712,14 @@ function genScales() {
 //   basement lab   = its old coordinates + BO  (directly under the kitchen)
 //   the wall (hub) = its old coordinates + HO  (a cavity running from the basement floor up to the kitchen floor)
 // =====================================================================
-const BO = V3(28, -336, -229), HO = V3(-400, -340, -94);
+const BO = V3(28, -336, -229), HO = V3(-400, -340, -94); let MP_CPS = null;
 const ZONES = {}, ZL = []; let WORLD = false;
 function zoneDef(id, o) { const Z = Object.assign({ id, off: V3(), core: [], lv: null, fx: null, cols: [], lights: [], beams: [], dust: null, env: null, near: false, prepped: false }, o); ZONES[id] = Z; ZL.push(Z); return Z; }
-zoneDef('kitchen', { floor: 0, core: [[-312, 920, -12, 300, -250, 250], [-432, -312, -2, 40, -126, -74]], env: 'kitchen' });
+zoneDef('kitchen', { floor: 0, core: [[-312, 912, -12, 300, -250, 250], [-432, -312, -2, 40, -126, -74]], peek: [[930, 1060, -40, 60, -260, -120]], env: 'kitchen' });
 // peek: spots in other places from which you can see in (through a mouse hole) — draw this place too
 zoneDef('wall', { floor: HO.y + 4, off: HO, core: [[-530, -312, -360, -2, -140, -52]], peek: [[-282, -140, -345, -250, -160, 10], [-312, -160, -12, 90, -200, 0]], env: 'hub' });
+zoneDef('garage', { floor: -20, core: [[912, 1460, -40, 300, -270, 312]], peek: [[820, 912, -10, 70, -240, -150], [1460, 1640, -40, 120, 20, 200]], env: 'garage' });
+zoneDef('yard', { floor: -20, core: [[1460, 2770, -40, 1000, -460, 660]], env: 'yard' });
 zoneDef('basement', { floor: BO.y, off: BO, core: [[-312, 338, -360, -60, -549, 33], [-282, -160, -60, 150, -549, -245]], peek: [[-390, -312, -345, -295, -130, -50]], env: 'basement' });
 function inZone(Z, x, y, z, m = 0) { for (const b of Z.core) if (x > b[0] - m && x < b[1] + m && y > b[2] - m && y < b[3] + m && z > b[4] - m && z < b[5] + m) return true; return false; }
 // floor height of the place a point is in (the kitchen sits at 0, the basement and the wall far below)
@@ -731,7 +751,9 @@ function buildZone(Z) {
 }
 async function buildWorld(prog) {
   if (WORLD) return;
-  for (const id of ['basement', 'wall', 'kitchen']) { if (prog) await prog(id); buildZone(ZONES[id]); }
+  for (const id of ['basement', 'wall', 'kitchen', 'garage', 'yard']) { if (prog) await prog(id); buildZone(ZONES[id]); }
+  ZONES.garage.prepped = ZONES.yard.prepped = true;
+  MP_CPS = [...LEVELS.kitchen.cps, ...LEVELS.garage.cps, ...LEVELS.yard.cps];
   for (let i = furMeshes.length - 1; i >= 0; i--) if (!inScene(furMeshes[i])) furMeshes.splice(i, 1);
   partitionCols(); setupLightPool(); WORLD = true;
 }
@@ -845,10 +867,10 @@ function zoneTick(dt) {
   for (const Z of ZL) if (Z.near && Z.dust) { const U = Z.dust.material.uniforms; U.uT.value = T; for (let i = 0; i < 4; i++) U.uBK.value[i] = Z.beams[i] ? Z.beams[i].k : 0; }
   swTick(); lightTick(dt);
   // single player: the rules of the place the leader walks into take over
-  if (!NET.on && leader && (STATE === 'play' || STATE === 'frozen')) {
+  if (leader && mine(leader) && (STATE === 'play' || STATE === 'frozen')) {
     const cur = ZONES[LEVEL]; if (!cur || !inZone(cur, lp.x, lp.y, lp.z, 2)) { const nz = zoneAt(lp); if (nz && nz.id !== LEVEL) enterZone(nz.id); }
   }
-  updNpcWalk(dt); updBanner(dt);
+  updNpcWalk(dt); updBanner(dt); updSecCam(dt); updGarageWorld(dt); updYardWorld(dt);
 }
 // a place's rules take over (no loading, nothing moves)
 function enterZone(id, quiet) {
@@ -856,6 +878,7 @@ function enterZone(id, quiet) {
   if (P && prev !== id) { P.save = { qs: QUESTS, q: quest, cp, lvT }; if (LVL && LVL.leave) LVL.leave(id); }
   LEVEL = id; LVL = D; LV = Z.lv; LVFX = Z.fx; beams = Z.beams; dust = Z.dust; CPS = D.cps;
   const again = !quiet && !!Z.save;   // walking back into a place you've been: carry on where you left off
+  if (NET.on && MP_CPS) { CPS = MP_CPS; QUESTS = MP_QUESTS; setQuest(quest); if (!quiet && !Z.mpSeen) { Z.mpSeen = true; if (D.mpChapter) chapterBanner(D.mpChapter, D.title); } if (party.length && PORTRAITS.dad) buildPartyHUD(); return; }
   if (again) { QUESTS = Z.save.qs; cp = Z.save.cp; lvT = Z.save.lvT; setQuest(Z.save.q); } else { QUESTS = D.quests; cp = 0; lvT = 0; setQuest(0); }
   if (D.enter) D.enter(prev, again);
   if (!quiet && !again) chapterBanner(D.chapter, D.title);
@@ -1069,6 +1092,8 @@ function buildEnv(kind = 'basement') {
   const room = new THREE.Mesh(new THREE.BoxGeometry(10, 5, 10), new THREE.MeshBasicMaterial({ color: 0x10141c, side: THREE.BackSide })); es.add(room);
   const panel = (c, k, w, h, x, y, z, ry = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(k), side: THREE.DoubleSide })); m.position.set(x, y, z); m.rotation.y = ry; es.add(m); };
   if (kind === 'kitchen') { room.material.color.setHex(0x3a2e24); panel(0xffd2a0, 5, 3, .5, 0, 2.45, 0); panel(0xffc890, 3, 1, 1, -1, 2.2, 2); panel(0x6a86c8, 2.2, 2, 1, -1, 1.6, -4.9); panel(0xfff4e6, 2.5, 1, 2, 3, 1, -4.5); panel(0x4a3a2c, 1, 10, 3, 0, -2.4, 0); }
+  else if (kind === 'garage') { room.material.color.setHex(0x16191d); panel(0xdfe8ff, 4, 3, .3, 0, 2.45, 0); panel(0xffa860, 2, 4, .2, 0, -.2, 4.9); panel(0x2a2c30, 1, 10, 3, 0, -2.4, 0); }
+  else if (kind === 'yard') { room.material.color.setHex(0x0a1020); panel(0x3a5a9a, 1.6, 10, 10, 0, 2.48, 0); panel(0xb8c8ff, 3, 1, 1, 3, 2, -4); panel(0xffc890, 2.2, .6, .6, 4.9, .6, 0, Math.PI / 2); panel(0x14200f, 1, 10, 3, 0, -2.4, 0); }
   else if (kind === 'hub') { room.material.color.setHex(0x1a1410); panel(0xffb066, 4, .6, .6, -1, .2, 0); panel(0xffd0a0, 6, 1, 1, 0, 2.4, 0); panel(0x3a2a22, 1, 10, 3, 0, -2.4, 0); }
   else { panel(0x9db8ff, 3.2, 2, 1, 1, 2, -4.9); panel(0xffc27a, 6, .6, .6, -1, .5, -3); panel(0x5ff4ee, 3, .8, .8, -2, .3, -3.4);
   panel(0xffb066, 1.4, 1.6, 2.2, -4.9, 2, -2, Math.PI / 2); panel(0x2a3346, 1, 10, 3, 0, -2.4, 0); }
@@ -1824,7 +1849,20 @@ function moveVert(C, dt) {
   ceil(C);
 }
 function ceil(C) {
-  for (const c of colsNear(C.pos.x, C.pos.y + 1, C.pos.z)) { if (c.y0 < C.pos.y + C.h * .55 || C.pos.y + C.h <= c.y0) continue; if (!xzHit(c, C.pos.x, C.pos.z, C.r * .7, _h)) continue; C.pos.y = c.y0 - C.h; if (C.vel.y > 0) C.vel.y = 0; }
+  let hit = null;
+  for (const c of colsNear(C.pos.x, C.pos.y + 1, C.pos.z)) { if (c.y0 < C.pos.y + C.h * .55 || C.pos.y + C.h <= c.y0) continue; if (!xzHit(c, C.pos.x, C.pos.z, C.r * .7, _h)) continue; C.pos.y = c.y0 - C.h; if (C.vel.y > 0) C.vel.y = 0; hit = c; }
+  return hit;
+}
+// climbing up into a thin overhang (a table top over its leg, a counter lip): reach round the edge and pull up onto it
+function xzIn(c, x, z) { return c.t === 'b' ? x > c.x0 && x < c.x1 && z > c.z0 && z < c.z1 : Math.hypot(x - c.x, z - c.z) < c.r; }
+function lipGrab(C, n, c) {
+  if (!c || c.slick || c.y1 - c.y0 > 6.5 || c.y0 < -900) return false;
+  const reach = C.r + 5; if (xzIn(c, C.pos.x + n.x * reach, C.pos.z + n.z * reach)) return false;   // the lip sticks out too far
+  let ox = 0; while (ox < reach && xzIn(c, C.pos.x + n.x * ox, C.pos.z + n.z * ox)) ox += .5;   // how far out its edge is
+  const px = C.pos.x - n.x * (C.r + .7), pz = C.pos.z - n.z * (C.r + .7);
+  if (!xzIn(c, px, pz) || solidAt(px, c.y1 + .3, pz) || solidAt(px, c.y1 + C.h * .5, pz)) return false;
+  C.mantle = { from: C.pos.clone(), to: V3(px, c.y1, pz), t: 0, out: V3(n.x * (ox + C.r * .6), 0, n.z * (ox + C.r * .6)), dur: .5 };
+  return true;
 }
 function land(C, imp) {
   if (C !== leader) return;
@@ -1852,8 +1890,9 @@ function updLeader(C, dt) {
   C.climbCD = Math.max(0, (C.climbCD || 0) - dt); if (C.rollT > 0) C.rollT -= dt; C.overhang = Math.max(0, (C.overhang || 0) - dt); C.pushing = false;
   if (C.tumble > 0) C.tumble -= dt;
   if (C.mantle) {
-    const M = C.mantle; M.t += dt / .3; const t = Math.min(1, M.t);
+    const M = C.mantle; M.t += dt / (M.dur || .3); const t = Math.min(1, M.t);
     C.pos.lerpVectors(M.from, M.to, sstep(0, 1, t)); C.pos.y = lerp(M.from.y, M.to.y, Math.min(1, t * 1.6));
+    if (M.out) { const s = Math.sin(Math.PI * Math.min(1, t * 1.25)); C.pos.x += M.out.x * s; C.pos.z += M.out.z * s; }
     C.state = 'climb'; C.spd = 6;
     if (t >= 1) { C.mantle = null; C.climbing = false; C.grounded = true; C.vel.set(0, 0, 0); C.squash = .35; C.state = 'idle'; }
     return;
@@ -1878,7 +1917,7 @@ function updLeader(C, dt) {
   C.pos.x += C.vel.x * dt; C.pos.z += C.vel.z * dt;
   const hit = resolveH(C, true);
   moveVert(C, dt);
-  if (hit && ctl && !base && C.climbCD <= 0 && !C.crouch && (C.stamina > 8 || C.id === 'gecko')) { if (-(wx * hit.nx + wz * hit.nz) > .5) startClimb(C, hit); }
+  if (hit && ctl && !base && !hit.c.slick && C.climbCD <= 0 && !C.crouch && (C.stamina > 8 || C.id === 'gecko')) { if (-(wx * hit.nx + wz * hit.nz) > .5) startClimb(C, hit); }
   if (C.grounded && !C.cold) C.stamina = Math.min(C.stamMax || 100, C.stamina + 45 * dt);
   const hs = Math.hypot(C.vel.x, C.vel.z); C.spd = hs;
   C.state = base && C.grounded ? (hs > .8 ? 'stackwalk' : 'stack') : C.dashT > 0 ? 'roll' : C.tumble > 0 ? 'tumble' : C.gliding ? 'glide' : !C.grounded ? 'air' : hs > .8 ? (C.crouch ? 'sneak' : 'walk') : (C.crouch ? 'crouch' : 'idle');
@@ -1908,7 +1947,7 @@ function updClimb(C, dt, inX, inY, ctl, run) {
   const ox = C.pos.x, oz = C.pos.z;
   C.pos.y += inY * sp * dt; C.pos.x += sx * inX * sp * .8 * dt; C.pos.z += sz * inX * sp * .8 * dt;
   if (inY < 0) { const [sup] = supportAt(C.pos.x, C.pos.z, C.r * .55, C.pos.y + .3); if (C.pos.y <= sup + .05) { C.pos.y = sup; detach(C, 0, 0, true); C.state = 'idle'; return; } }
-  const yb = C.pos.y; ceil(C); if (inY > 0 && C.pos.y < yb - .01) C.overhang = 1.4;
+  const yb = C.pos.y; const cc = ceil(C); if (inY > 0 && C.pos.y < yb - .01) { C.overhang = 1.4; if (lipGrab(C, n, cc)) { C.overhang = 0; return; } }
   C.pos.x -= n.x * .35; C.pos.z -= n.z * .35;
   let hit = resolveClimb(C);
   if (!hit && inX !== 0) { C.pos.x = ox - n.x * .35; C.pos.z = oz - n.z * .35; hit = resolveClimb(C); }
@@ -1918,7 +1957,9 @@ function updClimb(C, dt, inX, inY, ctl, run) {
     if (inY >= 0 && C.pos.y + C.h * .42 > hit.c.y1) {
       const px = C.pos.x - n.x * (C.r + .7), pz = C.pos.z - n.z * (C.r + .7);
       if (!solidAt(px, hit.c.y1 + C.h * .5, pz)) { C.mantle = { from: C.pos.clone(), to: V3(px, hit.c.y1, pz), t: 0 }; return; }
-      C.pos.y = Math.min(C.pos.y, hit.c.y1 - C.h * .42);
+      // another block sits right on top of this one (a pile, stacked cupboards): keep climbing up its face
+      const wx = C.pos.x - n.x * (C.r + .3), wz = C.pos.z - n.z * (C.r + .3), up = solidAt(wx, hit.c.y1 + .3, wz);
+      if (!(up && up !== hit.c && !up.slick && up.y0 <= hit.c.y1 + .6)) C.pos.y = Math.min(C.pos.y, hit.c.y1 - C.h * .42);
     }
     if (inX !== 0) { // step sideways onto a ledge beside you
       const qx = C.pos.x + sx * inX * (C.r + 1.2) - n.x * .8, qz = C.pos.z + sz * inX * (C.r + 1.2) - n.z * .8; const c2 = solidAt(qx, C.pos.y + .3, qz);
@@ -2402,11 +2443,12 @@ function update(dt) {
     endT += dt; updCam(dt); if (STK) stkClear(); for (const F of party) if (F !== leader && !F.frozen) updFollower(F, leader, dt); hideOccluders();
     if (endT > 3.6 && $('end').hidden) { const E = END_TXT || (NET.on ? ['第一章（多人）· 完', '零件與電池', '三個零件和電池都齊了。從通風口爬出去——下一站：車房的工作枱。'] : ['第一章 · 完', '找回核心', '核心找回來了，但它的光越來越弱。']); $('endA').textContent = E[0]; $('endB').textContent = E[1]; $('endC').textContent = E[2]; $('st3l').textContent = '鈕扣電池（總數）'; $('st3').textContent = gotBat;
       $('end').hidden = false; $('hud').classList.add('off'); $('touch').hidden = true; if (document.pointerLockElement) document.exitPointerLock();
-      const m = Math.floor(playT / 60), s = Math.floor(playT % 60); $('st1').textContent = `${m}:${String(s).padStart(2, '0')}`; $('st2').textContent = fails; $('st3').textContent = `${gotBat}/3`;
+      const m = Math.floor(playT / 60), s = Math.floor(playT % 60); $('st1').textContent = `${m}:${String(s).padStart(2, '0')}`; $('st2').textContent = fails; $('st3').textContent = `${gotBat}/${batteries.length}`;
     }
   }
   zoneTick(dt); if (WORLD && (ZONES.kitchen.near || LEVEL === 'kitchen')) updLiving(dt);
-  if (NET.client) netNPC(dt); else for (const Z of ZL) { const D = LEVELS[Z.id]; if (D && (Z.id === LEVEL || (Z.near && Z.prepped && D.npcNear))) D.npc(dt); }
+  if (NET.client) netNPC(dt); else for (const Z of ZL) { const D = LEVELS[Z.id]; if (!D || !D.npc) continue; if (Z.id === LEVEL || (Z.near && Z.prepped && D.npcNear) || (NET.on && Z.prepped && D.npcNear && playerChars().some(C => inZone(Z, C.pos.x, C.pos.y, C.pos.z, 60)))) D.npc(dt); }
+  mpObjectives();
   const cr = STATE === 'frozen' ? clamp(1 - failT / 2.3, 0, 1) * .8 : STATE === 'fail' ? clamp(failT / .7, 0, 1) * (failT < 2.4 ? 1 : clamp(1 - (failT - 2.4) / .8, 0, 1)) : meter * .55;
   grade.uniforms.uCrys.value = damp(grade.uniforms.uCrys.value, cr, 8, dt);
   grade.uniforms.uFlash.value = STATE === 'fail' && failT > .6 && failT < 1.1 ? (1 - Math.abs(failT - .85) / .25) * .5 : 0;
@@ -2420,6 +2462,7 @@ let last = performance.now();
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(.05, (now - last) / 1000); last = now;
+  { const [w, h] = viewSize(); if (w !== RS.w || h !== RS.h) onResize(); }
   if (STATE === 'load') return;
   if (!PAUSED || NET.on) update(dt);
   if (!window.__NR) composer.render();
@@ -2430,12 +2473,16 @@ function frame(now) {
     if (STATE === 'play' && !PAUSED) { if ((QUAL === 'high' && fps < 30) || (QUAL === 'med' && fps < 22)) { if (++fpsLow >= 2) { applyQ(QUAL === 'high' ? 'med' : 'low'); toast('畫質已自動調低，保持流暢'); fpsLow = 0; } } else fpsLow = 0; }
   }
 }
+// phones report stale sizes around a rotation: the canvas always fills the screen by CSS, and the
+// drawing size is re-checked every frame so it settles on the real size
+const RS = { w: 0, h: 0 };
+function viewSize() { const w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight; return [Math.max(1, w), Math.max(1, h)]; }
 function onResize() {
-  const w = innerWidth, h = innerHeight; renderer.setSize(w, h); composer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
+  const [w, h] = viewSize(); RS.w = w; RS.h = h; renderer.setSize(w, h, false); composer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
   grade.uniforms.uRes.value.set(w * renderer.getPixelRatio(), h * renderer.getPixelRatio()); fxaa.material.uniforms.resolution.value.set(1 / (w * renderer.getPixelRatio()), 1 / (h * renderer.getPixelRatio()));
   const sc = h * renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2)); onResizeDust(sc); if (parts) parts.material.uniforms.uScale.value = sc;
 }
-addEventListener('resize', onResize);
+addEventListener('resize', onResize); addEventListener('orientationchange', () => { onResize(); setTimeout(onResize, 250); setTimeout(onResize, 700); }); if (window.visualViewport) visualViewport.addEventListener('resize', onResize);
 function applyQ(q) {
   QUAL = q; const P = { high: [Math.min(devicePixelRatio, 1.5), true, true, 16], med: [Math.min(devicePixelRatio, 1.1), true, false, 12], low: [TOUCH ? Math.min(devicePixelRatio, 1.25) * DYN.k : .85, false, false, TOUCH ? 6 : 8] }[q];
   BLOOM_K = q === 'low' ? .5 : 1; fxaa.enabled = TOUCH || q === 'low'; grade.uniforms.uGrain.value = TOUCH ? .014 : .035;
@@ -2446,7 +2493,6 @@ function pause() { PAUSED = true; $('pause').hidden = false; document.body.class
 function resume() { PAUSED = false; $('pause').hidden = true; document.body.classList.remove('paused'); $('help').hidden = true; $('roster').hidden = true; last = performance.now(); requestLock(); }
 document.querySelectorAll('.sel button').forEach(b => b.addEventListener('click', () => applyQ(b.dataset.q)));
 $('go').addEventListener('click', () => { audioInit(); startGame(0); });
-$('go1').addEventListener('click', () => { audioInit(); startGame(1); });
 $('resume').addEventListener('click', () => { audioInit(); resume(); });
 $('again').addEventListener('click', () => location.reload());
 
@@ -2515,7 +2561,7 @@ async function init() {
   for (const id of ['hog', 'rab', 'coon', 'frog']) { chars[id].root.visible = false; chars[id].pos.set(0, -900, 0); }
   party.push(chars.dad, chars.sq, chars.bear); buildMom();
   // the whole house is built now, once: walking from room to room never loads anything
-  const WL = { basement: [.42, '搭建地庫…'], wall: [.52, '搭建牆內…'], kitchen: [.6, '搭建廚房和客廳…'] };
+  const WL = { basement: [.42, '搭建地庫…'], wall: [.52, '搭建牆內…'], kitchen: [.58, '搭建廚房和客廳…'], garage: [.64, '搭建車房…'], yard: [.7, '搭建後園和陽光房…'] };
   await buildWorld(async id => { setLoad(...WL[id]); await tick(); });
   buildParticles(); enterZone('basement', true); scene.environment = ZONES.basement.envTex; placeStart();
   for (const id in chars) animChar(chars[id], .016);
@@ -2780,10 +2826,17 @@ function toyFreeze(who) {
   L.frozen = true; L.toyAt = 'floor'; L.climbing = false; L.mantle = null; L.vel.set(0, 0, 0); L.tumble = 0; L.toyVy = 0; L.crouch = false; L.toyTilt = 0; L.toyRoll = 0;
   toyLook(L, true); meter = 0; STATE = 'frozen'; failT = 0; TOY.focus = L;
   SND.heart(1); tone(1800, 600, .8, .08, 'triangle'); nz(1.2, 4200, 1, .08, 'highpass'); toyBurst(V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z));
-  if (who === 'kid') { say('女兒', '媽媽！那裡有隻玩具！', '#e8a0c0', 2.6); } else say('太太', '咦？……哪來的玩具？', '#f4bb72', 2.4);
-  if (KM.mode === 'sus') KM.mode = 'goto';
-  if (toyReachable(L)) TOY.fetchQ.push(L);
+  toySay(who, say);
+  if (LEVEL === 'kitchen') { if (KM.mode === 'sus') KM.mode = 'goto'; if (toyReachable(L)) TOY.fetchQ.push(L); }
   refreshPartyHUD();
+}
+// what whoever saw it says when a teammate turns into a toy
+function toySay(who, fn) {
+  if (who === 'kid') fn('女兒', '媽媽！那裡有隻玩具！', '#e8a0c0', 2.6);
+  else if (who === 'agent' || who === 'cam') fn('Origin Dynamics 職員', '……一隻玩具？剛才明明在動。', '#9fb3c8', 2.6);
+  else if (who === 'dog') fn('鄰居的狗', '汪！（叼着玩具搖尾巴）', '#d8a45a', 2.2);
+  else if (who === 'old') fn('陳伯', '咦，誰把玩具留在這裡？', '#c8b8a0', 2.4);
+  else fn('太太', '咦？……哪來的玩具？', '#f4bb72', 2.4);
 }
 function toyHandOff() {
   const F = TOY.focus; const cand = party.filter(C => !C.frozen).sort((a, b) => a.pos.distanceTo(F.pos) - b.pos.distanceTo(F.pos)); const N = cand[0];
@@ -3427,14 +3480,14 @@ function updPebbles(dt) {
 // frog: lights out near a socket / lamp / TV
 function addSwitch(name, p, c, R, opts = {}) { CREW.sw.push({ name, p: V3(...p), c: V3(...c), R, until: 0, cd: 0, lights: null, specs: null, ...opts }); }
 function swResolve(s) {
-  if (s.lights) return; const Z = ZONES.kitchen;
+  if (s.lights) return; const Z = ZONES[s.list] || ZONES.kitchen; const specList = s.list === 'garage' ? GS.lights : s.list === 'yard' ? YS.lights : KS.lights;
   s.lights = Z.lights.filter(l => !l.isHemisphereLight && l.intensity >= 150 && l !== KS.coreLight && l !== KS.fridgeLight && l !== LIV.gapLight && (() => { const p = l.getWorldPosition(V3()); return Math.hypot(p.x - s.c.x, p.z - s.c.z) < s.R; })());
   s.orig = s.lights.map(l => l.intensity);
-  s.specs = KS.lights.filter(q => q !== KS.fridgeL && Math.hypot(q.p.x - s.c.x, q.p.z - s.c.z) < s.R);
+  s.specs = specList.filter(q => q !== KS.fridgeL && Math.hypot(q.p.x - s.c.x, q.p.z - s.c.z) < s.R);
 }
 function swNear(C) { let best = null, bd = 9; for (const s of CREW.sw) { const d = C.pos.distanceTo(s.p); if (d < bd) { bd = d; best = s; } } return best; }
 function frogSwitch() {
-  const C = leader; if (!C || C.id !== 'frog' || STATE !== 'play' || LEVEL !== 'kitchen') return;
+  const C = leader; if (!C || C.id !== 'frog' || STATE !== 'play') return;
   const s = swNear(C); if (!s) { toast('附近沒有插座、燈或電器'); return; }
   if (s.until > T) { toast('這裡已經黑了'); return; } if (s.cd > T) { toast(`電路還在冷卻（${Math.ceil(s.cd - T)} 秒）`); return; }
   if (NET.client) nsend({ t: 'swr', i: CREW.sw.indexOf(s), id: C.id }, NET.hostId); else hostSwitch(CREW.sw.indexOf(s), C.id);
@@ -3476,7 +3529,7 @@ function crewInput(L, ctl) {
 }
 function crewHint(L) {
   if (!L) return '';
-  if (L.id === 'frog' && LEVEL === 'kitchen') { const s = swNear(L); if (s) return s.until > T ? `${s.name}：已經熄了` : s.cd > T ? `${s.name}：電路冷卻中` : `${TOUCH ? '按「電」' : '<kbd>E</kbd>'} 搞電器：${s.name}（附近熄燈 20 秒）`; }
+  if (L.id === 'frog') { const s = swNear(L); if (s) return s.until > T ? `${s.name}：已經熄了` : s.cd > T ? `${s.name}：電路冷卻中` : `${TOUCH ? '按「電」' : '<kbd>E</kbd>'} 搞電器：${s.name}（附近熄燈 20 秒）`; }
   if ((L.id === 'rab' || L.id === 'frog') && L.charge > 0) return `蓄力 ${Math.round(L.charge * 100)}%……放手${L.id === 'rab' ? '起跳' : '跳出去'}`;
   return '';
 }
@@ -3492,11 +3545,11 @@ const ROSTER = [
   { id: 'hog', key: 'prologue', how: '完成序章（地庫實驗室）' },
   { id: 'rab', key: 'ch1', how: '完成第一章（把核心帶回牆腳）' },
   { id: 'coon', key: 'ch2', how: '完成第二章（客廳的電池）' },
-  { id: 'frog', key: 'bat6', how: '單人模式集齊 6 粒鈕扣電池' },
-  { id: 'f1', future: true, how: '第三章：車房（製作中）' },
-  { id: 'f2', future: true, how: '第四章：鄰居家（製作中）' },
-  { id: 'f3', future: true, how: '第五章：馬路（製作中）' },
-  { id: 'f4', future: true, how: '第六章：公園（製作中）' }
+  { id: 'frog', key: 'bat6', how: '單人模式集齊全部鈕扣電池' },
+  { id: 'f1', future: true, how: '第五章：馬路（製作中）' },
+  { id: 'f2', future: true, how: '第六章：公園（製作中）' },
+  { id: 'f3', future: true, how: '第七章（製作中）' },
+  { id: 'f4', future: true, how: '第八章（製作中）' }
 ];
 const UNL = (() => { try { return JSON.parse(localStorage.getItem('bn_unlock_v1') || '{}') || {}; } catch (e) { return {}; } })();
 function isUnlocked(id) { const r = ROSTER.find(q => q.id === id); return !!r && !r.future && (!r.key || !!UNL[r.key]); }
@@ -3571,6 +3624,30 @@ function openHelp() {
   $('helpAbil').innerHTML = who.map(id => { const S = SP[id]; return `<div>${PORTRAITS[id] ? `<img alt="" src="${PORTRAITS[id]}">` : ''}<span><b style="color:${S.col}">${S.name} · ${S.abil}</b><small>${S.desc}</small></span></div>`; }).join('');
   $('help').hidden = false;
 }
+
+// ---------- chapter list (title screen) ----------
+const CHAPS = [
+  { n: '序章', t: '地庫實驗室', d: '縮小實驗失控。由工作枱爬到地上，找出路。', go: () => startGame(0) },
+  { n: '第一、二章', t: '牆內・廚房・客廳', d: '穿過牆內的老鼠洞，避開太太、女兒和貓。', go: () => startGame(1) },
+  { n: '第三章', t: '車房', d: 'Origin Dynamics 的人在搜車房。修好機座，從狗門逃出去。', key: 'ch2', lock: '完成第二章解鎖', go: () => startChapter('garage') },
+  { n: '第四章', t: '後園與鄰居家', d: '穿過圍欄、避開陳伯的狗，到陽光房找控制晶片。', key: 'ch3', lock: '完成第三章解鎖', go: () => startChapter('yard') },
+  { n: '第五章', t: '馬路', d: '製作中', future: true }
+];
+function startChapter(name) { $('start').hidden = true; playT = 0; fails = 0; requestLock(); loadLevel(name); }
+function openChapters() {
+  const L = $('chapsList'); L.innerHTML = '';
+  for (const c of CHAPS) {
+    const open = !c.future && (!c.key || !!UNL[c.key]); const b = document.createElement('button');
+    b.className = 'ch' + (open ? '' : ' lock'); b.disabled = !open;
+    b.innerHTML = `<small>${c.n}</small><b>${c.t}</b><em>${open ? c.d : c.future ? '製作中' : c.lock}</em>`;
+    if (open) b.addEventListener('click', () => { $('chaps').hidden = true; audioInit(); c.go(); });
+    L.appendChild(b);
+  }
+  $('chapsN').textContent = `${CHAPS.filter(c => !c.future && (!c.key || UNL[c.key])).length} / ${CHAPS.filter(c => !c.future).length} 已解鎖`;
+  $('chaps').hidden = false;
+}
+$('goCh').addEventListener('click', () => { audioInit(); openChapters(); });
+$('chapsClose').addEventListener('click', () => { $('chaps').hidden = true; });
 
 // =====================================================================
 //  KITCHEN, second pass
@@ -3682,7 +3759,8 @@ function buildLivingRoom(K) {
   const floorM = new THREE.MeshStandardMaterial({ color: 0x8a5c3a, roughness: .7, map: K.floor.map || null });
   box(X0 - 2, X1 + 12, -10, 0, -240, 240, floorM, { uv: 140, cast: false });
   box(X0 - 2, X1 + 12, 260, 270, -240, 240, K.ceil, { cast: false });
-  box(X0, X1 + 12, 0, 260, -244, -232, wallM, { uv: 120 }); box(X1, X1 + 12, 0, 260, -232, 232, wallM, { uv: 120 });
+  box(X0, X1 + 12, 0, 260, -244, -232, wallM, { uv: 120 }); // far wall: the vent near the floor leads through a duct into the garage
+  box(X1, X1 + 12, 0, 260, -232, -214, wallM, { uv: 120 }); box(X1, X1 + 12, 0, 260, -186, 232, wallM, { uv: 120 }); box(X1, X1 + 12, 0, 4, -214, -186, wallM, { uv: 120 }); box(X1, X1 + 12, 24, 260, -214, -186, wallM, { uv: 120 });
   // front wall with the window opening (x 700–850, y 100–210)
   box(X0, 700, 0, 260, 232, 244, wallM, { uv: 120 }); box(850, X1 + 12, 0, 260, 232, 244, wallM, { uv: 120 }); box(700, 850, 0, 100, 232, 244, wallM, { uv: 120 }); box(700, 850, 210, 260, 232, 244, wallM, { uv: 120 });
   box(X0, X1, 0, 9, -232, -230.5, M.white, { col: false }); box(X0, X1, 0, 9, 230.5, 232, M.white, { col: false }); box(X1 - 1.5, X1, 0, 9, -230, 230, M.white, { col: false });
@@ -3766,7 +3844,11 @@ function buildLivingRoom(K) {
   // pendant over the dining table (shadow-casting)
   cyl(490, -130, .3, 200, 260, M.black, { col: false, seg: 6 }); mesh(new THREE.SphereGeometry(16, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2), K.shade, 490, 195, -130); spotL(0xffd2a0, 52000, V3(490, 190, -130), V3(490, 0, -130), .95, .7, 1024, 10, 500);
   // the vent out (online co-op exit)
-  box(899, 900, 4, 24, -214, -186, M.black, { col: false }); for (let i = 0; i < 6; i++) box(898.4, 899.4, 6 + i * 3.2, 7.2 + i * 3.2, -213, -187, M.dsteel, { col: false });
+  // vent grille: hinged at the top, swings up once the way on is open
+  { const g = new THREE.Group(); g.position.set(898.6, 24, -200); LV.add(g); LIV.grille = g; const gm = new THREE.MeshStandardMaterial({ color: 0xd8dde2, metalness: .8, roughness: .35 });
+    mesh(new THREE.BoxGeometry(1.2, 21, 30), gm, 0, -10.5, 0, { parent: g }).visible = false; for (let i = 0; i < 6; i++) mesh(new THREE.BoxGeometry(1.4, 1.4, 27), gm, .2, -2.6 - i * 3.2, 0, { parent: g }); for (const z of [-14, 14]) mesh(new THREE.BoxGeometry(1.6, 21, 1.6), gm, 0, -10.5, z, { parent: g }); mesh(new THREE.BoxGeometry(1.6, 1.6, 30), gm, 0, -.8, 0, { parent: g }); mesh(new THREE.BoxGeometry(1.6, 1.6, 30), gm, 0, -20.2, 0, { parent: g });
+    LIV.ventCol = { t: 'b', x0: 897.6, x1: 900, y0: 4, y1: 24, z0: -214, z1: -186 }; cols.push(LIV.ventCol); }
+  box(900, 912, 3.4, 4, -214, -186, new THREE.MeshStandardMaterial({ color: 0xb8bec4, metalness: .85, roughness: .4 }), { col: false });
   // houseplant + toy ball for good measure
   cyl(860, -150, 14, 0, 26, new THREE.MeshPhysicalMaterial({ color: 0xe8e2d6, roughness: .4 }), { seg: 28 }); const leaf = furMat({ color: 0x3f7a33, len: 3, den: .45, droop: -.2, clump: .7, rimK: .12, root: .45 }); const lf = furMesh(new THREE.SphereGeometry(18, 28, 18), leaf); lf.position.set(860, 46, -150); LV.add(lf); cols.push({ t: 'c', x: 860, z: -150, r: 18, y0: 28, y1: 64 });
   const pb = new THREE.MeshPhysicalMaterial({ color: 0x4ab0e0, roughness: .3, clearcoat: .8 }); resGroup(cmGroup(14, 14, 14, ({ part }) => { part(new THREE.SphereGeometry(7, 28, 20), pb, 0, 0, 0); }, [pb]), 640, 120, 0, 14, 14, 14, .3, 5, '皮球', true);
@@ -3798,6 +3880,7 @@ function updLiving(dt) {
   const tgt = LIV.open ? .62 : .025; const pa = LIV.a; LIV.a = damp(LIV.a, tgt, LIV.open ? 1.3 : 6, dt); LIV.door.rotation.y = LIV.a;
   if (Math.abs(LIV.a - pa) > 1e-5) updDoorSegs();
   LIV.gapLight.intensity = 300 + LIV.a * 4000;
+  if (LIV.grille) LIV.grille.rotation.z = damp(LIV.grille.rotation.z, LIV.ventOpen ? 1.45 : 0, 3, dt);
   for (const f of LIV.fish) { f.ph += dt * .5; f.m.position.set(670 + Math.cos(f.ph) * f.r * 1.6, f.y + Math.sin(f.ph * 2.3) * 2, -207 + Math.sin(f.ph) * 10); f.m.rotation.y = -f.ph + Math.PI; }
   if (LIV.tvMat) { if (LIV.tvOff) { LIV.tvMat.color.setRGB(.015, .016, .02); LIV.tvLight.intensity = 0; } else { const fl = .8 + Math.sin(T * 7) * .1 + (rnd() < .05 ? .3 : 0); LIV.tvMat.color.setRGB(.35 * fl, .5 * fl, .75 * fl); LIV.tvLight.intensity = 2200 * fl; } }
   // pickups for the objectives
@@ -3825,9 +3908,9 @@ function livingGet(d, C) {
     for (let i = 0; i < 30; i++) emit(V3(r.cx, r.y0 + 3, r.cz), V3(R(-10, 10), R(4, 20), R(-10, 10)), new THREE.Color(.6, 2, 1.9), R(.15, .35), R(.4, 1), 30, 2);
     if (KS.mp) { setQuest(4); toastW('電池到手！全隊到客廳最裡面的通風口集合', 3.4); sayW(C.S.name, '電池拿到了！去通風口！', C.S.col, 2.6); }
     else {
-      say('爸爸', '兩粒電池……夠核心撐一陣子了。', '#f5f0e6', 3.2);
-      END_TXT = ['第二章（試玩）· 完', '遙控器的電池', '核心又亮起來了。下一站：魚缸——還有車房裡的工作枱。']; unlockKey('ch2');
-      setTimeout(() => { if (STATE === 'play') { STATE = 'end'; endT = 0; } }, 1800);
+      say('爸爸', '兩粒電池……夠核心撐一陣子了。', '#f5f0e6', 3.2); unlockKey('ch2');
+      // chapter two is done; the vent behind the TV cabinet leads on to the garage — no stopping
+      setTimeout(() => { chapterBanner('第二章 · 完', '核心又亮起來了'); ventOpen(); QUESTS = SP_Q2B; setQuest(0); KS.ch3 = true; say('爸爸', '客廳盡頭的通風口通去車房。我以前的工作枱在那裡——可以修好縮小機。', '#f5f0e6', 4.2); }, 2600);
     }
   }
 }
@@ -3847,15 +3930,17 @@ const MP_QUESTS = [
   { t: '打開通往客廳的門', s: '門被門擋卡住了——熊可以推開門擋，或者爸爸把它縮小' },
   { t: '全隊進入客廳', s: '所有玩家都要走過去（電腦隊友會跟着）' },
   { t: '拿走遙控器的電池', s: '遙控器在客廳的咖啡枱上' },
-  { t: '從通風口離開', s: '客廳最裡面的牆腳有通風口，全隊一齊到就可以離開' }
+  { t: '爬過通風口去車房', s: '電池到手，通風口的蓋打開了——全隊一齊爬過去' },
+  { t: '弄跌監視鏡頭', s: '鐵架頂有部 Origin Dynamics 的監視鏡頭——爬上去把它推跌（熊推、阿刺撞都得）' },
+  { t: '打開狗門的門扣', s: '側門下面有狗門，門扣太高——疊羅漢、跳跳跳上去，或者推木箱過去墊腳' },
+  { t: '全隊由狗門出去後園', s: '所有玩家都要出去' },
+  { t: '全隊穿過圍欄的爛板', s: '去隔籬陳伯的後園。小心灑水器，長草可以躲' },
+  { t: '全隊從貓門進入陽光房', s: '鄰居的狗會吠，陳伯會望出來' },
+  { t: '拿走書枱上的控制晶片', s: '陳伯的書枱在陽光房最入面' }
 ];
-function livingHost() {
-  if (!NET.on || NET.client || STATE !== 'play' || LEVEL !== 'kitchen') return;
-  const P = playerChars().filter(C => !C.frozen);
-  if (quest === 2 && P.length && P.every(C => C.pos.x > 316)) { setQuest(3); toastW('全隊到齊客廳！', 2.4); }
-  if (quest === 4 && P.length && P.every(C => C.pos.distanceTo(LIV.vent) < 30)) { STATE = 'end'; endT = 0; sayW('小彩', '出去了！電池和零件都齊了。', '#9fd86b', 3); nsend({ t: 'end' }); }
-  else if (quest === 4 && P.some(C => C.pos.distanceTo(LIV.vent) < 30) && (!LIV.waitT || T - LIV.waitT > 6)) { LIV.waitT = T; toastW('通風口：要全隊一齊到才可以離開', 2.6); }
-}
+const SP_Q2B = [{ t: '爬過通風口去車房', s: '爸爸：車房的工作枱有我以前的工具，可以修好縮小機' }];
+function ventOpen() { if (LIV.ventOpen) return; LIV.ventOpen = true; LIV.ventCol.y0 = -999; LIV.ventCol.y1 = -998; SND.creak(); toastW('通風口的蓋打開了！', 2.6); }
+function livingHost() { }
 
 // =====================================================================
 //  LEVEL SYSTEM  (序章 basement → 第一章 wall hub → kitchen)
@@ -3909,8 +3994,9 @@ function scheduleLines(list, dt = 1 / 60) { for (const L of list) if (lvT - dt <
 // ---------- noise (distractions) ----------
 function noise(p, loud, clang) {
   noiseRing(p); if (NET.on && NET.host) nsend({ t: 'ring', p: [p.x, p.y, p.z], v: clang || 0 });
-  if (LEVEL !== 'kitchen' || NET.client) return;
-  momHear(p, loud); catHear(p, loud); kidHear(p);
+  if (NET.client) return; const Z = WORLD ? zoneAt(p, 4) : null;
+  if (!Z || Z.id === 'kitchen') { momHear(p, loud); catHear(p, loud); kidHear(p); }
+  else if (LEVELS[Z.id].hear) LEVELS[Z.id].hear(p, loud);
 }
 function noiseRing(p) {
   const ring = new THREE.Mesh(new THREE.RingGeometry(1, 1.6, 48), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xf4bb72).multiplyScalar(2), transparent: true, opacity: .8, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
@@ -4664,7 +4750,8 @@ LEVELS.kitchen = {
   },
   marker() {
     const t = toyMarker(); if (t) return t;
-    if (KS.mp) { if (quest === 0) { const p = LIV.parts.filter(q => !q.got).sort((a, b) => Math.hypot(a.x - leader.pos.x, a.z - leader.pos.z) - Math.hypot(b.x - leader.pos.x, b.z - leader.pos.z))[0]; return p ? V3(p.x, p.y + 2, p.z) : null; } if (quest === 1) return V3(LIV.wedge.cx, 4, LIV.wedge.cz); if (quest === 2) return V3(345, 0, -10); if (quest === 3) return V3(LIV.remote.cx, 46, LIV.remote.cz); return LIV.vent; }
+    if (KS.mp) return mpMarker();
+    if (KS.ch3) return V3(896, 6, -200);
     if (KS.ch2) return quest === 0 ? V3(LIV.wedge.cx, 4, LIV.wedge.cz) : (LIV.remoteGot ? null : V3(LIV.remote.cx, 46, LIV.remote.cz));
     if (KS.coreDrop) return KS.coreDrop; return quest >= 2 ? STATIC.home : (KS.coreGot ? null : V3(212, 2, -194));
   },
@@ -4695,6 +4782,755 @@ LEVELS.basement = {
   eyeText: () => meter > .3 ? '她在看這邊！快躲起來' : mom.mode === 'door' ? '樓上的門打開了' : '太太在地庫', hint: () => ''
 };
 LVL = LEVELS.basement;
+
+// =====================================================================
+//  第三章 · 車房 — through the vent duct at the far end of the living room
+//  A man from Origin Dynamics is searching the garage with a torch, and a security camera
+//  sweeps the room from the top of the metal shelving.
+//  Single player: up to the workbench → take the coil from the old radio → fit it to Dad's old
+//  machine base → out through the dog flap in the side door (its latch is too high for one person).
+//  Online: knock the camera off the shelf → open the dog-flap latch → everyone out to the yard.
+// =====================================================================
+const GY = -20; // garage floor
+const GS = { agent: null, cam: null, camBroken: false, latch: false, flapA: 0, coil: false, dock: false, lights: [], said: {}, mode: 'patrol', node: 0, wait: 0, trackT: 0 };
+function slick() { cols[cols.length - 1].slick = true; }
+function noRay() { cols[cols.length - 1].noRay = true; }
+
+// ---------- a full-size person (the Origin Dynamics man, the neighbour) ----------
+function buildHuman(o) {
+  const H = { pos: V3(), yaw: 0, phase: 0, amp: 0, legs: [], arms: [], aim: V3(), aimT: V3() };
+  const g = new THREE.Group(); scene.add(g); H.root = g;
+  const mk = (geo, mat, parent, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m; };
+  const pelvis = new THREE.Group(); pelvis.position.y = 90; g.add(pelvis); H.pelvis = pelvis;
+  mk(ell(18, 12, 12, 32, 20), o.pants, pelvis, 0, 0, 0);
+  for (const s of [-1, 1]) {
+    const hip = new THREE.Group(); hip.position.set(s * 9.5, -2, 0); pelvis.add(hip); mk(capG(8, 30), o.pants, hip, 0, -22, 0);
+    const knee = new THREE.Group(); knee.position.y = -44; hip.add(knee); mk(capG(6, 30), o.pants, knee, 0, -20, 0);
+    const ankle = new THREE.Group(); ankle.position.y = -40; knee.add(ankle); mk(ell(6, 4.6, 14, 24, 14), o.shoe, ankle, 0, -2.5, 4.5);
+    H.legs.push({ hip, knee, ankle, s });
+  }
+  const chest = new THREE.Group(); chest.position.y = 4; pelvis.add(chest); H.chest = chest;
+  const tp = [[16, 0], [17.5, 10], [18, 24], [19.5, 40], [17, 50], [8, 56]].map(p => new THREE.Vector2(p[0], p[1]));
+  const torso = mk(new THREE.LatheGeometry(tp, 40), o.top, chest, 0, 0, 0); torso.scale.z = .66;
+  mk(new THREE.CylinderGeometry(4.8, 5.2, 9, 20), o.skin, chest, 0, 59, 0);
+  const head = new THREE.Group(); head.position.y = 70; chest.add(head); H.head = head;
+  mk(ell(9, 11.4, 10.2, 40, 28), o.skin, head, 0, 0, 1);
+  if (o.hair) { const hm = furMat({ color: o.hair, len: .9, den: 2, droop: .6, clump: .5, rimK: .08, root: .5, rough: .7 }); const h = furMesh(ell(9.5, o.bald ? 6 : 10.6, 10.6, 40, 28), hm); h.position.set(0, o.bald ? -1 : 2, -1.6); head.add(h); }
+  if (o.cap) { mk(new THREE.SphereGeometry(10.2, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), o.cap, head, 0, 3, -.5).scale.y = .75; const pk = mk(new THREE.CylinderGeometry(8, 8, .8, 24, 1, false, -Math.PI / 2, Math.PI), o.cap, head, 0, 3.2, 6); pk.rotation.x = .12; if (o.badge) { const b = mk(new THREE.CircleGeometry(2.2, 20), o.badge, head, 0, 7.4, 9.6); b.rotation.x = -.5; } }
+  if (o.glasses) for (const s of [-1, 1]) mk(new THREE.TorusGeometry(2.2, .3, 6, 20), MAT.dsteel, head, s * 3.6, 1.5, 9.8);
+  for (const s of [-1, 1]) {
+    const sh = new THREE.Group(); sh.position.set(s * 19.5, 46, 0); chest.add(sh); mk(capG(4.8, 21), o.top, sh, 0, -13, 0);
+    const el = new THREE.Group(); el.position.y = -28; sh.add(el); mk(capG(4, 18), o.top, el, 0, -11, 0);
+    const hand = mk(ell(3.3, 4.8, 2.2, 16, 12), o.skin, el, 0, -25, 0); H.arms.push({ sh, el, hand, s });
+  }
+  if (o.badge) { const b = mk(new THREE.CircleGeometry(3.2, 24), o.badge, chest, -9, 40, 12.2); b.rotation.y = -.35; }
+  return H;
+}
+// walking / standing animation shared by the people
+function humanAnim(H, moveD, dt) {
+  H.root.position.copy(H.pos); H.root.rotation.y = H.yaw;
+  H.phase += moveD / 64 * Math.PI; const ph = H.phase; const walking = moveD > 0; H.amp = walking ? .42 : damp(H.amp, 0, 4, dt); const a = H.amp / .42;
+  for (const L of H.legs) { const x = Math.sin(ph) * L.s * H.amp; L.hip.rotation.x = -x; L.knee.rotation.x = .08 + Math.max(0, Math.cos(ph) * L.s) * .75 * a; L.ankle.rotation.x = -(L.hip.rotation.x + L.knee.rotation.x) * .6; }
+  H.pelvis.position.y = 90 + Math.abs(Math.cos(ph)) * 1.6 * a - .8;
+  return Math.floor((ph - moveD / 64 * Math.PI) / Math.PI) !== Math.floor(ph / Math.PI) && walking;
+}
+// head / torch-arm aim toward H.aim
+function humanAimArm(H, arm, dt) {
+  H.root.updateMatrixWorld(true);
+  const hp = V3(); H.head.getWorldPosition(hp); const ad = V3().subVectors(H.aim, hp); const yr0 = Math.atan2(ad.x, ad.z) - H.yaw; const yr = Math.atan2(Math.sin(yr0), Math.cos(yr0)); const pitch = Math.atan2(-ad.y, Math.hypot(ad.x, ad.z));
+  H.head.rotation.y = damp(H.head.rotation.y, clamp(yr, -.9, .9), 4, dt); H.head.rotation.x = damp(H.head.rotation.x, clamp(pitch * .6, -.3, .7), 4, dt);
+  if (arm) { const A = H.arms[arm]; A.sh.rotation.set(-.62 - clamp(-pitch, -.5, .9) * .35, clamp(yr, -.7, .7) * .5, 0); A.el.rotation.x = -1.05 + clamp(pitch, -.2, 1.1) * .45; }
+  return { yr, pitch };
+}
+// "can this eye see the leader?" with an explicit eye position and forward direction
+function seeFrom(eye, fwd, fovCos, range) {
+  const L = leader; const tp = V3(L.pos.x, L.pos.y + L.h * .55, L.pos.z); const d = V3().subVectors(tp, eye); const dist = d.length(); d.divideScalar(dist);
+  const c = d.dot(fwd); if (dist > range || c < fovCos) return 0; if (rayBlocked(eye, d, dist - 1.2, false)) return 0;
+  return clamp(1.25 - dist / range, .2, 1) * (.5 + .5 * sstep(fovCos, 1, c));
+}
+function litAtList(p, list, dark) { for (const l of list) { if (l.on === false || (l.I && l.I() <= 0)) continue; const d = V3().subVectors(p, l.p); const dist = d.length(); if (dist > l.range) continue; d.divideScalar(dist); if (l.cos && d.dot(l.dir) < l.cos) continue; if (!rayBlocked(l.p, d, dist - 1, false)) return 1; } return dark ?? .3; }
+
+// ---------- textures ----------
+function genGarageConcrete() {
+  const W = 512, n = noiseField(W, W, 5, 4, 401), n2 = noiseField(W, W, 2, 48, 402), st = noiseField(W, W, 3, 2, 403); const h = new Float32Array(W * W);
+  const c = fromFn(W, W, (x, y, i, o) => { let v = .62 + (n[i] - .5) * .16 + (n2[i] - .5) * .08; if (hashI(i * 13 + 7) > .985) v -= .12; const oil = sstep(.62, .78, st[i]) * .22; v -= oil; if (x % 256 < 2 || y % 256 < 2) v -= .18; o[0] = v * 168; o[1] = v * 166; o[2] = v * 160; h[i] = n2[i] * .6 + (x % 256 < 2 || y % 256 < 2 ? -.4 : 0); });
+  return { map: tex(c), normalMap: normalTex(h, W, W, 1.2) };
+}
+function genPeg() { const W = 256; const [c, x] = cnv(W, W); x.fillStyle = '#b89a72'; x.fillRect(0, 0, W, W); x.fillStyle = 'rgba(40,28,16,.85)'; for (let i = 8; i < W; i += 16) for (let j = 8; j < W; j += 16) { x.beginPath(); x.arc(i, j, 2.6, 0, 7); x.fill(); } return tex(c); }
+function genPlate(t) { const [c, x] = cnv(256, 128); x.fillStyle = '#f2f0e8'; x.fillRect(0, 0, 256, 128); x.strokeStyle = '#2a3c6a'; x.lineWidth = 6; x.strokeRect(6, 6, 244, 116); x.fillStyle = '#2a3c6a'; x.font = '700 64px Fredoka,sans-serif'; x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText(t, 128, 70); x.font = '600 16px Fredoka'; x.fillText('ONTARIO', 128, 22); return new THREE.MeshStandardMaterial({ map: tex(c), roughness: .4, metalness: .3 }); }
+function genSiding(col, sd) { const W = 512, n = noiseField(W, W, 3, 8, sd); const h = new Float32Array(W * W); const b = hex(col); const c = fromFn(W, W, (x, y, i, o) => { const r = y % 64; const sh = r < 4 ? .7 : .92 + r / 64 * .1; const v = sh + (n[i] - .5) * .06; o[0] = b[0] * v; o[1] = b[1] * v; o[2] = b[2] * v; h[i] = r / 64; }); return { map: tex(c), normalMap: normalTex(h, W, W, 2) }; }
+
+// lines the single-player team up at a point (used when a chapter is started from the list)
+function spawnSP(p, camYaw, gap) {
+  if (!NET.on && !party.includes(chars.cham)) joinCham(); PROTO = Math.max(PROTO, 1);
+  const fx = -Math.sin(camYaw), fz = -Math.cos(camYaw), OFF = [[0, 0], [.3, -1.4], [.3, 1.4], [-.2, -2.8], [-.2, 2.8], [-1.2, -.7], [-1.2, .7], [-1.4, 2]];
+  party.forEach((C, i) => { const [b, s] = OFF[i % 8]; C.pos.set(p[0] + fx * b * gap - fz * s * gap * .8, p[1], p[2] + fz * b * gap + fx * s * gap * .8); C.yaw = camYaw + Math.PI; C.state = 'idle'; C.wave = false; C.root.visible = true; C.lieK = 0; });
+  if (party.includes(chars.dad)) leader = chars.dad; mom.root.visible = false; momReset();
+  cam.yaw = camYaw; cam.pitch = .14;
+}
+// ---------- build ----------
+function buildGarage() {
+  const K = kitchenMats(), M = MAT;
+  const con = genGarageConcrete();
+  const floorM = new THREE.MeshStandardMaterial({ ...con, roughness: .85, normalScale: new THREE.Vector2(.6, .6) });
+  const wallM = new THREE.MeshStandardMaterial({ ...genPlaster(0xbfc2bf, 411), roughness: .95 });
+  const ceilM = new THREE.MeshStandardMaterial({ color: 0x9a9c9a, roughness: 1 });
+  const doorM = new THREE.MeshStandardMaterial({ color: 0xd8d6cf, roughness: .55, metalness: .2 });
+  const metal = new THREE.MeshStandardMaterial({ color: 0x8a9096, metalness: .8, roughness: .45 });
+  const wood = new THREE.MeshStandardMaterial({ ...genWood([168, 128, 86], [96, 68, 44], 421), roughness: .7 });
+  const X0 = 912, X1 = 1460, Z0 = -260, Z1 = 310;
+  // ---- shell ----
+  box(X0, X1, GY - 10, GY, Z0, Z1, floorM, { uv: 160, cast: false });
+  box(X0, X1, 270, 280, Z0, Z1, ceilM, { cast: false });
+  // west wall, with the duct from the living room's vent (z -214…-186, y 4…24)
+  box(X0, 920, GY, 270, Z0, -214, wallM, { uv: 120 }); box(X0, 920, GY, 270, -186, Z1, wallM, { uv: 120 }); box(X0, 920, GY, 4, -214, -186, wallM, { uv: 120 }); box(X0, 920, 24, 270, -214, -186, wallM, { uv: 120 });
+  const ductM = new THREE.MeshStandardMaterial({ color: 0xb8bec4, metalness: .85, roughness: .4 });
+  box(920, 922, 1, 4, -216, -184, ductM, { col: false }); box(920, 922, 24, 27, -216, -184, ductM, { col: false }); box(920, 922, 4, 24, -217, -214, ductM, { col: false }); box(920, 922, 4, 24, -186, -183, ductM, { col: false });
+  box(X0, X1, GY, 270, Z0 - 8, Z0, wallM, { uv: 120 });
+  // east wall with the side door (z 60…150) — the door is metal: too smooth to climb
+  box(1452, X1, GY, 270, Z0, 60, wallM, { uv: 120 }); box(1452, X1, GY, 270, 150, Z1, wallM, { uv: 120 }); box(1452, X1, 190, 270, 60, 150, wallM, { uv: 120 });
+  box(1453, 1457, 18, 190, 60, 150, doorM); slick(); box(1453, 1457, GY, 18, 60, 90, doorM); slick(); box(1453, 1457, GY, 18, 120, 150, doorM); slick();
+  box(1451.5, 1453, 186, 190, 58, 152, M.white, { col: false }); box(1451.5, 1453, GY, 190, 56, 60, M.white, { col: false }); box(1451.5, 1453, GY, 190, 150, 154, M.white, { col: false });
+  const knob = mesh(new THREE.SphereGeometry(3, 16, 12), K.brass, 1450, 80, 140); knob.scale.set(.7, 1, 1);
+  // dog flap: a hinged plastic flap, held shut by a latch above it
+  const fg = new THREE.Group(); fg.position.set(1455, 18, 105); LV.add(fg); GS.flap = fg;
+  const fm = new THREE.MeshPhysicalMaterial({ color: 0x3a3a40, roughness: .3, transparent: true, opacity: .82 });
+  mesh(new THREE.BoxGeometry(1.2, 37, 29), fm, 0, -18.5, 0, { parent: fg }); box(1450.5, 1457.5, 17, 19, 89, 121, M.dsteel, { col: false }); box(1450.5, 1457.5, GY, 19, 88, 90, M.dsteel, { col: false }); box(1450.5, 1457.5, GY, 19, 120, 122, M.dsteel, { col: false });
+  GS.flapCol = { t: 'b', x0: 1452, x1: 1458, y0: GY, y1: 18, z0: 90, z1: 120, slick: true }; cols.push(GS.flapCol);
+  const lg = new THREE.Group(); lg.position.set(1451.6, GY + 13, 123); LV.add(lg); GS.latchM = lg;
+  mesh(new THREE.BoxGeometry(1.2, 2.2, 8), K.brass, 0, 0, -3, { parent: lg }); mesh(new THREE.TorusGeometry(1.4, .4, 6, 14), K.brass, 0, 0, 1.4, { parent: lg }).rotation.y = Math.PI / 2;
+  GS.latchP = V3(1449, GY + 13, 121);
+  // south wall: the big sectional garage door (street light leaks under it)
+  box(X0, 940, GY, 270, 302, Z1, wallM, { uv: 120 }); box(1430, X1, GY, 270, 302, Z1, wallM, { uv: 120 }); box(940, 1430, 200, 270, 302, Z1, wallM, { uv: 120 });
+  box(940, 1430, GY + 2, 200, 300, 304, doorM, { uv: 0 }); cols.push({ t: 'b', x0: 940, x1: 1430, y0: GY, y1: GY + 2, z0: 300, z1: 304 });
+  for (let i = 0; i < 4; i++) { const y = GY + 4 + i * 54; box(944, 1426, y + 46, y + 48, 299, 300, metal, { col: false }); for (let j = 0; j < 6; j++) box(950 + j * 80, 1020 + j * 80, y + 8, y + 40, 299.4, 300, new THREE.MeshStandardMaterial({ color: 0xc8c6bf, roughness: .6 }), { col: false, cast: false }); }
+  mesh(new THREE.PlaneGeometry(488, 2), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffb070).multiplyScalar(2.2) }), 1185, GY + 1, 299.8, { cast: false }).rotation.y = Math.PI;
+  box(1175, 1195, 40, 100, 297, 300, metal, { col: false }); // opener track
+  box(1180, 1190, 100, 270, 140, 300, metal, { col: false });
+  box(1150, 1220, 250, 268, 120, 160, new THREE.MeshStandardMaterial({ color: 0x6a6e72, roughness: .5 }), { col: false });
+  // ---- the car ----
+  buildCar(1150, 50);
+  // ---- workbench along the back wall (top 90 cm above the floor) ----
+  const BT = GY + 90; GS.benchY = BT;
+  box(1180, 1440, BT - 8, BT, -260, -196, wood, { uv: 80 });
+  for (const x of [1184, 1430]) { box(x, x + 6, GY, BT - 8, -202, -196, wood); box(x, x + 6, GY, BT - 8, -258, -252, wood); }
+  box(1184, 1436, GY + 18, GY + 22, -258, -198, wood, { uv: 80 });
+  for (let i = 0; i < 3; i++) box(1196 + i * 66, 1250 + i * 66, GY + 22, GY + 52, -254, -210, i === 1 ? M.cardC : M.cardB, { uv: 0 });
+  box(1180, 1440, BT + 8, 210, -260, -258, new THREE.MeshStandardMaterial({ map: genPeg(), roughness: .9 }), { uv: 0 });
+  // tools hanging on the pegboard
+  const toolM = new THREE.MeshStandardMaterial({ color: 0xc23a2a, roughness: .5 }); const handleM = new THREE.MeshStandardMaterial({ color: 0x2a2a2e, roughness: .6 });
+  box(1210, 1214, 130, 170, -257.5, -255.5, handleM, { col: false }); box(1202, 1222, 168, 176, -257.5, -254.5, metal, { col: false });
+  box(1250, 1256, 120, 175, -257.5, -256.5, metal, { col: false }); box(1246, 1260, 172, 182, -257.5, -256.5, metal, { col: false });
+  for (let i = 0; i < 5; i++) { box(1290 + i * 9, 1293 + i * 9, 130, 150, -257.5, -255.5, i % 2 ? toolM : M.capRed, { col: false }); box(1290.8 + i * 9, 1292.2 + i * 9, 150, 172, -257.5, -256.5, metal, { col: false }); }
+  box(1350, 1420, 140, 180, -257.8, -257.2, metal, { col: false }); box(1350, 1362, 132, 182, -257.6, -255.6, handleM, { col: false });
+  box(1180, 1440, 210, 214, -260, -236, wood);
+  box(1190, 1240, 214, 244, -258, -238, M.cardB, { uv: 0 }); box(1330, 1360, 214, 240, -258, -240, M.paintRed);
+  // stepladder leaning beside the bench: rungs to climb and stand on
+  for (const z of [-250, -214]) box(1162, 1166, GY, BT + 6, z, z + 3, metal);
+  for (let i = 0; i < 4; i++) { const y = GY + 14 + i * 22; box(1158, 1170, y, y + 2.4, -250, -211, metal); }
+  // vice, old radio (with the coil), machine base, toolbox, jars, lamp
+  box(1188, 1210, BT, BT + 12, -214, -200, M.dsteel); box(1194, 1204, BT + 12, BT + 18, -212, -196, M.dsteel);
+  const radio = new THREE.MeshPhysicalMaterial({ color: 0x5a3018, roughness: .35, clearcoat: .6 });
+  box(1270, 1312, BT, BT + 24, -252, -228, radio); box(1274, 1300, BT + 6, BT + 20, -228, -227.4, new THREE.MeshStandardMaterial({ color: 0xd8c08a, roughness: .7 }), { col: false });
+  for (const x of [1304, 1308]) cyl(x, -227, 1.6, BT + 10, BT + 13, M.dsteel, { col: false, seg: 12 });
+  // the coil (single player): copper winding sitting at the radio's open back
+  { const g = new THREE.Group(); g.position.set(1291, BT + 1.6, -218); LV.add(g); const pts = []; for (let i = 0; i <= 120; i++) { const a = i / 120 * Math.PI * 16; pts.push(V3(Math.cos(a) * 1.6, -1 + i / 120 * 2.6, Math.sin(a) * 1.6)); } g.add(new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 240, .22, 6), MAT.copper)); g.add(new THREE.Mesh(new THREE.CylinderGeometry(.7, .7, 3.4, 12), M.dsteel)); g.traverse(o => { o.castShadow = true; }); GS.coilM = g; GS.coilP = V3(1291, BT, -218); }
+  // Dad's old machine base
+  box(1364, 1396, BT, BT + 4, -244, -212, M.dsteel); GS.dockRing = mesh(new THREE.TorusGeometry(11, 1.2, 10, 40), MAT.copper, 1380, BT + 16, -232); GS.dockGlow = mesh(new THREE.TorusGeometry(9.4, .5, 8, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color(0x5ff2e6).multiplyScalar(.15) }), 1380, BT + 16, -232, { cast: false });
+  for (const s of [-1, 1]) box(1380 + s * 12 - 1.5, 1380 + s * 12 + 1.5, BT + 4, BT + 16, -234, -230, M.dsteel, { col: false });
+  GS.dockP = V3(1380, BT + 4, -228);
+  box(1220, 1256, BT, BT + 18, -252, -232, M.capRed); box(1230, 1246, BT + 18, BT + 21, -244, -240, M.dsteel, { col: false });
+  const jarM = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: .05, transparent: true, opacity: .35, depthWrite: false }); const screwM = new THREE.MeshStandardMaterial({ color: 0x9a9aa0, metalness: .8, roughness: .4 });
+  [[1330, -206], [1344, -212]].forEach(([x, z]) => resGroup(cmGroup(8, 12, 8, ({ part }) => { part(new THREE.CylinderGeometry(4, 4, 12, 24, 1, true), jarM, 0, 0, 0); part(new THREE.CylinderGeometry(3.6, 3.6, 5, 16), screwM, 0, -3.4, 0); part(new THREE.CylinderGeometry(4.2, 4.2, 1.6, 24), M.capRed, 0, 6.6, 0); }, [jarM]), x, z, BT, 8, 12, 8, .3, 5, '螺絲樽', true));
+  cyl(1424, -232, 6, BT, BT + 2, M.black, { seg: 20 }); tubeM([[1424, BT + 2, -232], [1426, BT + 30, -240], [1422, BT + 46, -230]], .6, M.black, 20);
+  mesh(new THREE.ConeGeometry(7, 9, 20, 1, true), new THREE.MeshStandardMaterial({ color: 0x2a5a3a, roughness: .5, side: THREE.DoubleSide }), 1418, BT + 42, -226, { cast: false }).rotation.z = .5;
+  GS.lampL = pointL(0xffc890, 2600, 1414, BT + 36, -222);
+  // ---- metal shelving on the west wall (the security camera sits on top) ----
+  for (const [x, z] of [[922, 20], [973, 20], [922, 227], [973, 227]]) box(x, x + 3, GY, 222, z, z + 3, metal);
+  for (const y of [GY + 22, 72, 122, 172, 222]) box(922, 976, y - 3, y, 20, 230, metal, { uv: 40 });
+  box(926, 970, 72, 100, 150, 222, M.cardB, { uv: 0 }); box(928, 966, 122, 144, 30, 80, M.cardC, { uv: 0 });
+  const paint = (c) => new THREE.MeshStandardMaterial({ color: c, roughness: .4, metalness: .5 });
+  [[944, GY + 22, 60, 0x3a6ea8], [952, 72, 40, 0xd8c23a], [948, 172, 60, 0xe8e2d6]].forEach(([x, y, z, c]) => { const pm = paint(c); resGroup(cmGroup(18, 20, 18, ({ part }) => { part(new THREE.CylinderGeometry(9, 9, 20, 28), pm, 0, 0, 0); part(new THREE.TorusGeometry(8.4, .5, 6, 28), MAT.dsteel, 0, 10, 0).rotation.x = Math.PI / 2; }, [pm]), x, z, y, 18, 20, 18, .3, 4, '油漆罐', true); });
+  // the camera: a pushable box on the top shelf — knock it off and it stops watching
+  { const camBody = new THREE.MeshStandardMaterial({ color: 0xe8e8ea, roughness: .4 }); let head = null, lens = null, led = null;
+    const r = resGroup(cmGroup(14, 14, 14, ({ I, part }) => {
+      part(new THREE.BoxGeometry(10, 3, 10), camBody, 0, -5.5, 0);
+      head = new THREE.Group(); head.position.set(0, 1, 0); I.add(head);
+      part(new THREE.BoxGeometry(8, 7, 13), camBody, 0, 0, 0, { p: head }); lens = part(new THREE.CylinderGeometry(2.4, 2.8, 2.4, 20), new THREE.MeshPhysicalMaterial({ color: 0x0a0a10, roughness: .05, clearcoat: 1 }), 0, 0, 7.2, { p: head }); lens.rotation.x = Math.PI / 2;
+      led = part(new THREE.SphereGeometry(.7, 10, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff2a2a).multiplyScalar(3) }), 3, 2.6, 6.6, { p: head });
+      part(new THREE.CircleGeometry(1.6, 20), crewMats().badge, -2.5, 2.6, 6.6, { p: head });
+    }, [camBody]), 950, 125, 222, 14, 14, 14, .4, 3, '監視鏡頭', true);
+    GS.cam = r; GS.camHead = head; GS.camLens = lens; GS.camLed = led; GS.camLight = new THREE.PointLight(0xff3030, 30, 0, 2); head.add(GS.camLight); GS.camLight.position.set(3, 2.6, 7); }
+  // ---- other garage things ----
+  const binM = new THREE.MeshStandardMaterial({ color: 0x2f4a3a, roughness: .6 });
+  cyl(1410, 255, 28, GY, GY + 96, binM, { seg: 28 }); cyl(1410, 255, 30, GY + 96, GY + 100, binM, { seg: 28 });
+  cyl(1350, 268, 28, GY, GY + 96, new THREE.MeshStandardMaterial({ color: 0x2a4a8a, roughness: .6 }), { seg: 28 }); cyl(1350, 268, 30, GY + 96, GY + 100, new THREE.MeshStandardMaterial({ color: 0x2a4a8a, roughness: .6 }), { seg: 28 });
+  // lawn mower
+  const mowM = new THREE.MeshStandardMaterial({ color: 0xc83a2a, roughness: .45, metalness: .3 });
+  box(1330, 1380, GY + 8, GY + 30, 120, 170, mowM); for (const [x, z] of [[1332, 124], [1378, 124], [1332, 166], [1378, 166]]) { const w = mesh(new THREE.CylinderGeometry(8, 8, 4, 20), M.black, x, GY + 8, z); w.rotation.z = Math.PI / 2; }
+  tubeM([[1355, GY + 30, 170], [1355, GY + 70, 200], [1355, GY + 92, 214]], 1.2, M.black, 20); box(1335, 1375, GY + 90, GY + 94, 212, 216, M.black, { col: false });
+  // boxes & things to push around
+  resGroup(cmGroup(40, 24, 40, ({ part }) => { part(new THREE.BoxGeometry(40, 24, 40), M.cardB, 0, 0, 0); part(new THREE.BoxGeometry(40.4, 2, 6), new THREE.MeshStandardMaterial({ color: 0xc8b48a, roughness: .5 }), 0, 12, 0); }, [M.cardB]), 943, -200, GY, 40, 24, 40, .4, 2.5, '紙箱', true);
+  const crateM = new THREE.MeshStandardMaterial({ ...genWood([186, 150, 104], [120, 92, 60], 431, 4), roughness: .8 });
+  resGroup(cmGroup(24, 20, 24, ({ part }) => { part(new THREE.BoxGeometry(24, 20, 24), crateM, 0, 0, 0); }, [crateM]), 1400, 30, GY, 24, 20, 24, .4, 3, '木箱', true);
+  const ballM = new THREE.MeshStandardMaterial({ color: 0xd8f04a, roughness: .9 }); resGroup(cmGroup(7, 7, 7, ({ part }) => { part(new THREE.SphereGeometry(3.5, 24, 16), ballM, 0, 0, 0); }, [ballM]), 1300, 60, GY, 7, 7, 7, .4, 8, '網球', true);
+  const toyCar = new THREE.MeshPhysicalMaterial({ color: 0xe03a3a, roughness: .3, clearcoat: .8 });
+  resGroup(cmGroup(10, 5, 18, ({ part }) => { part(new THREE.BoxGeometry(10, 3, 18), toyCar, 0, -.5, 0); part(new THREE.BoxGeometry(8, 2.4, 8), toyCar, 0, 2, -1); for (const [x, z] of [[-5, -6], [5, -6], [-5, 6], [5, 6]]) part(new THREE.CylinderGeometry(1.8, 1.8, 1.4, 14), MAT.black, x, -1.8, z, { r: [0, 0, Math.PI / 2] }); }, [toyCar]), 1000, 262, GY, 10, 5, 18, .4, 6, '玩具車', true);
+  // lights
+  LV.add(new THREE.HemisphereLight(0x707884, 0x34302a, 1.6));
+  const tube = (x, z) => { box(x - 60, x + 60, 262, 270, z - 8, z + 8, new THREE.MeshStandardMaterial({ color: 0xd0d4d8, roughness: .5 }), { col: false }); return mesh(new THREE.BoxGeometry(110, 2, 4), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xdfeaff, emissiveIntensity: 3 }), x, 261, z, { cast: false }); };
+  tube(1180, -60); GS.tubeB = tube(1300, 160); tube(1020, 120);
+  GS.tubeAL = spotL(0xdfe8ff, 230000, V3(1180, 258, -60), V3(1180, GY, -60), 1.05, .7, 1024, 10, 500);
+  GS.tubeBL = pointL(0xcfdcff, 70000, 1300, 250, 160); GS.tubeCL = pointL(0xd8e2ff, 52000, 1020, 250, 120);
+  GS.streetL = pointL(0xffa860, 1600, 1185, GY + 6, 290);
+  // the man's torch (moved every frame)
+  GS.torch = new THREE.SpotLight(0xfff0dc, 0, 0, .34, .45, 2); GS.torch.castShadow = true; GS.torch.shadow.mapSize.setScalar(TOUCH ? 512 : 1024); GS.torch.shadow.camera.near = 4; GS.torch.shadow.camera.far = 700; GS.torch.shadow.bias = -.0005; GS.torch.shadow.normalBias = .04; LV.add(GS.torch, GS.torch.target);
+  GS.lights = [{ p: V3(1180, 258, -60), dir: V3(0, -1, 0), cos: Math.cos(1.05), range: 330, I: () => GS.tubeAL.intensity }, { p: V3(1300, 250, 160), range: 220, I: () => GS.tubeBL.intensity }, { p: V3(1020, 250, 120), range: 200, I: () => GS.tubeCL.intensity }, { p: V3(1414, BT + 36, -222), range: 70, I: () => GS.lampL.intensity }, { p: V3(1185, GY + 6, 290), range: 60 }];
+  // pickups
+  addBattery(1150, 121.4, -30); addBattery(946, 222, 205); addVial(1150, GY, 40); addCrumb(1010, GY, -120); addCrumb(1320, BT, -204);
+  // frog: power strips
+  addSwitch('工作枱的拖板', [1196, GY + 1.5, -194], [1300, 0, -210], 150, { list: 'garage' });
+  addSwitch('車房燈的插座', [930, GY + 1.5, -160], [1180, 0, 0], 300, { list: 'garage' });
+  box(1190, 1204, GY, GY + 3, -197, -191, M.white); box(924, 936, GY, GY + 3, -164, -156, M.white);
+  // the Origin Dynamics man
+  const coverall = new THREE.MeshPhysicalMaterial({ color: 0x59636e, roughness: .85, sheen: .4, sheenColor: 0x9aa4b0 });
+  const H = buildHuman({ pants: coverall, top: coverall, skin: MAT.skin, shoe: new THREE.MeshStandardMaterial({ color: 0x1e1c1a, roughness: .5 }), cap: new THREE.MeshStandardMaterial({ color: 0x1f2a44, roughness: .7 }), badge: crewMats().badge, hair: 0x241a14 });
+  const torchM = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 2.2, 16, 14), M.dsteel); torchM.position.set(0, -26, 6); torchM.rotation.x = 1.3; H.arms[1].el.add(torchM);
+  const lensM = new THREE.Mesh(new THREE.SphereGeometry(1.5, 12, 10), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xfff2e0).multiplyScalar(10) })); lensM.position.set(0, 8.4, 0); torchM.add(lensM); H.lens = lensM;
+  H.pos.set(1310, GY, 60); H.yaw = Math.PI; H.root.visible = true; GS.agent = H;
+  GS.beam = beamMesh(0xfff0dc, 420, .34, 0); beams.push({ m: GS.beam, o: V3(), d: V3(0, -1, 0), ca: Math.cos(.36), len: 420, c: new THREE.Color(0xfff0dc), k: 0 }); GS.beamRec = beams[beams.length - 1];
+}
+function buildCar(cx, cz) {
+  const paint = new THREE.MeshPhysicalMaterial({ color: 0x24456a, roughness: .32, metalness: .45, clearcoat: 1, clearcoatRoughness: .08 });
+  const glass = new THREE.MeshPhysicalMaterial({ color: 0x0c1218, roughness: .05, metalness: .2, clearcoat: 1, transparent: true, opacity: .88 });
+  const chrome = new THREE.MeshStandardMaterial({ color: 0xdfe4ea, metalness: 1, roughness: .18 });
+  const tire = new THREE.MeshStandardMaterial({ color: 0x1a1a1c, roughness: .9 });
+  const x0 = cx - 86, x1 = cx + 86, zf = cz + 220, zb = cz - 218; // front faces the garage door
+  const prof = (pts) => { const s = new THREE.Shape(); pts.forEach(([z, y], i) => i ? s.lineTo(z, y) : s.moveTo(z, y)); return s; };
+  const ex = (shape, mat, w, xo) => { const g = new THREE.ExtrudeGeometry(shape, { depth: w, bevelEnabled: true, bevelThickness: 3, bevelSize: 3, bevelSegments: 3, curveSegments: 6 }); g.rotateY(-Math.PI / 2); const m = mesh(g, mat, xo, 0, 0); return m; };
+  const L = (z) => cz + z;
+  ex(prof([[L(-218), -2], [L(218), -2], [L(222), 30], [L(214), 56], [L(140), 62], [L(62), 68], [L(-160), 70], [L(-206), 64], [L(-220), 36]]), paint, 166, x1 - 3);
+  ex(prof([[L(62), 68], [L(14), 116], [L(-118), 120], [L(-168), 72], [L(-160), 68]]), glass, 150, x1 - 11);
+  box(x0 + 14, x1 - 14, 118, 122, L(-112), L(10), paint, { col: false });
+  for (const s of [-1, 1]) box(cx + s * 70 - 2, cx + s * 70 + 2, 66, 120, L(-24), L(-20), paint, { col: false });
+  // lights, grille, plates, mirrors, bumpers
+  for (const s of [-1, 1]) { mesh(new THREE.BoxGeometry(30, 10, 3), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff4dd, emissiveIntensity: .25 }), cx + s * 58, 44, L(222), { cast: false }); mesh(new THREE.BoxGeometry(30, 9, 3), new THREE.MeshStandardMaterial({ color: 0x400808, emissive: 0xff1a1a, emissiveIntensity: .5 }), cx + s * 58, 50, L(-221), { cast: false }); mesh(new THREE.BoxGeometry(14, 8, 4), paint, cx + s * 92, 76, L(52)); }
+  box(cx - 40, cx + 40, 20, 34, L(220), L(224), new THREE.MeshStandardMaterial({ color: 0x111214, roughness: .4 }), { col: false });
+  mesh(new THREE.PlaneGeometry(52, 26), genPlate('BN 3385'), cx, 30, L(-222), { cast: false }).rotation.y = Math.PI;
+  box(x0 + 2, x1 - 2, 6, 14, L(222), L(228), chrome, { col: false }); box(x0 + 2, x1 - 2, 6, 14, L(-226), L(-220), chrome, { col: false });
+  // wheels (climbable)
+  for (const z of [L(150), L(-150)]) for (const s of [-1, 1]) {
+    const x = cx + s * 74; const w = mesh(new THREE.CylinderGeometry(33, 33, 22, 40), tire, x, GY + 33, z); w.rotation.z = Math.PI / 2;
+    const hb = mesh(new THREE.CylinderGeometry(18, 18, 22.6, 32), chrome, x, GY + 33, z); hb.rotation.z = Math.PI / 2;
+    cols.push({ t: 'b', x0: x - 11, x1: x + 11, y0: GY, y1: GY + 66, z0: z - 30, z1: z + 30 });
+  }
+  // colliders: body, cabin, stepped windscreen (characters climb it), roof on top
+  cols.push({ t: 'b', x0, x1, y0: -2, y1: 64, z0: L(140), z1: L(222) });
+  cols.push({ t: 'b', x0, x1, y0: -2, y1: 68, z0: L(-220), z1: L(140) });
+  cols.push({ t: 'b', x0: x0 + 8, x1: x1 - 8, y0: 68, y1: 121, z0: L(-160), z1: L(16) });
+  cols.push({ t: 'b', x0: x0 + 8, x1: x1 - 8, y0: 68, y1: 102, z0: L(16), z1: L(34) }); cols.push({ t: 'b', x0: x0 + 8, x1: x1 - 8, y0: 68, y1: 84, z0: L(34), z1: L(50) });
+  cols.push({ t: 'b', x0: x0 + 8, x1: x1 - 8, y0: 68, y1: 98, z0: L(-174), z1: L(-160) });
+  GS.car = { x0, x1, z0: L(-220), z1: L(222) };
+}
+
+// ---------- the man: patrol, inspect, investigate ----------
+const AG_PATH = [
+  { x: 1010, z: -140, stop: 3, look: [950, 120, 140], line: 'shelf' },
+  { x: 1010, z: 200 },
+  { x: 1290, z: 220, stop: 2.6, look: [1150, 60, 150], line: 'car' },
+  { x: 1320, z: 40 },
+  { x: 1300, z: -150, stop: 4, look: [1300, GY + 90, -240], line: 'bench' },
+  { x: 1150, z: -170 }
+];
+const AG_LINES = { shelf: '教授的東西……會不會藏在這些箱裡？', car: '車裡面也查過了。', bench: '這張工作枱……他以前一定在這裡做實驗。' };
+function agentSay(k) { if (GS.said[k] && T - GS.said[k] < 40) return; GS.said[k] = T; sayW('Origin Dynamics 職員', AG_LINES[k] || k, '#9fb3c8', 3); }
+function updAgent(dt) {
+  const H = GS.agent; if (!H) return; const P = H.pos; let moveD = 0;
+  const walkTo = (tx, tz, sp) => { const dx = tx - P.x, dz = tz - P.z, d = Math.hypot(dx, dz); const s = sp * dt; if (d < s + .5) { P.x = tx; P.z = tz; moveD = d; return true; } P.x += dx / d * s; P.z += dz / d * s; moveD = s; H.yaw = angDamp(H.yaw, Math.atan2(dx, dz), 5, dt); return false; };
+  if (GS.mode === 'patrol') {
+    const n = AG_PATH[GS.node % AG_PATH.length];
+    if (walkTo(n.x, n.z, 52)) { if (n.stop) { GS.mode = 'look'; GS.wait = n.stop; GS.look = V3(...n.look); if (n.line && rnd() < .5) agentSay(n.line); } GS.node++; }
+    const fx = Math.sin(H.yaw), fz = Math.cos(H.yaw); H.aimT.set(P.x + fx * 150 + Math.sin(T * .8) * 40, GY, P.z + fz * 150 + Math.cos(T * .7) * 30);
+  } else if (GS.mode === 'look') {
+    GS.wait -= dt; const la = GS.look; H.yaw = angDamp(H.yaw, Math.atan2(la.x - P.x, la.z - P.z), 2.5, dt); const s = Math.sin(T * 1.1) * 34; H.aimT.set(la.x + s, la.y, la.z + Math.cos(T * .9) * 20);
+    if (GS.wait <= 0) GS.mode = 'patrol';
+  } else if (GS.mode === 'sus' || GS.mode === 'hear') {
+    GS.trackT -= dt; const tp = GS.trackP; const d = Math.hypot(tp.x - P.x, tp.z - P.z);
+    if (d > 70) walkTo(tp.x, tp.z, GS.mode === 'sus' ? 38 : 60); else H.yaw = angDamp(H.yaw, Math.atan2(tp.x - P.x, tp.z - P.z), 2, dt);
+    H.aimT.copy(tp);
+    if (GS.trackT <= 0) { GS.mode = 'look'; GS.wait = 2.5; GS.look = tp.clone(); if (!GS.said.lost || T - GS.said.lost > 30) { GS.said.lost = T; sayW('Origin Dynamics 職員', '……是老鼠嗎？', '#9fb3c8', 2.4); } }
+  }
+  // keep him out of the car
+  const C = GS.car; if (P.x > C.x0 - 22 && P.x < C.x1 + 22 && P.z > C.z0 - 22 && P.z < C.z1 + 22) { const dl = P.x - (C.x0 - 22), dr = C.x1 + 22 - P.x, db = P.z - (C.z0 - 22), df = C.z1 + 22 - P.z; const m = Math.min(dl, dr, db, df); if (m === dl) P.x = C.x0 - 22; else if (m === dr) P.x = C.x1 + 22; else if (m === db) P.z = C.z0 - 22; else P.z = C.z1 + 22; }
+  P.x = clamp(P.x, 950, 1430); P.z = clamp(P.z, -180, 270); P.y = GY;
+  H.aim.lerp(H.aimT, 1 - Math.exp(-3 * dt));
+  agentPose(H, moveD, dt);
+}
+function agentPose(H, moveD, dt) {
+  const step = humanAnim(H, moveD, dt); const A0 = H.arms[0]; A0.sh.rotation.x = Math.sin(H.phase) * .3 * (H.amp / .42); A0.el.rotation.x = -.25;
+  humanAimArm(H, 1, dt);
+  const lp = V3(); H.lens.getWorldPosition(lp); const dir = V3().subVectors(H.aim, lp).normalize(); H.lightPos = lp; H.lightDir = dir;
+  const on = ZONES.garage && ZONES.garage.near; GS.torch.position.copy(lp); GS.torch.target.position.copy(lp).addScaledVector(dir, 100); GS.torch.intensity = on ? 90000 : 0;
+  GS.beamRec.o.copy(lp); GS.beamRec.d.copy(dir); GS.beamRec.k = on ? .05 : 0; GS.beam.material.uniforms.uK.value = .045; aimBeam(GS.beam, lp, V3().copy(lp).addScaledVector(dir, 420));
+  if (step && leader && LEVEL === 'garage') {
+    const fp = V3(); H.legs[Math.floor(H.phase / Math.PI) % 2 === 0 ? 0 : 1].ankle.getWorldPosition(fp); const dist = Math.hypot(leader.pos.x - fp.x, leader.pos.y - GY, leader.pos.z - fp.z);
+    SND.thud(clamp(1.15 - dist / 420, .08, 1)); cam.shake = Math.max(cam.shake, clamp(1 - dist / 260, 0, 1) * .8);
+    for (let i = 0; i < 5; i++) emit(V3(fp.x + R(-6, 6), GY + .5, fp.z + R(-8, 12)), V3(R(-14, 14), R(4, 14), R(-14, 14)), new THREE.Color(.22, .22, .22), R(.5, 1), R(.6, 1.2), 20, 2.5);
+    for (const C of party) if (mine(C) && !C.frozen && STATE === 'play' && Math.hypot(C.pos.x - fp.x, C.pos.z - (fp.z + 4)) < 14 && C.pos.y < GY + 8) knock(C, fp, C === leader ? '差點被踩扁！' : null);
+  }
+}
+function garageSeen(tp, who) {
+  if (GS.mode !== 'sus') { GS.mode = 'sus'; if (who === 'cam') sayW('Origin Dynamics 職員', '（對講機）鏡頭拍到有東西在動……我去看看。', '#9fb3c8', 3); else if (!GS.said.sus || T - GS.said.sus > 20) { GS.said.sus = T; sayW('Origin Dynamics 職員', '嗯？誰在那裡？', '#9fb3c8', 2.4); } }
+  GS.trackP = tp.clone(); GS.trackP.y = Math.max(GY, tp.y); GS.trackT = 3;
+}
+function garageHear(p, loud) {
+  if (!GS.agent || loud < .3) return; if (Math.hypot(p.x - GS.agent.pos.x, p.z - GS.agent.pos.z) > 520) return;
+  if (GS.mode !== 'sus') { GS.mode = 'hear'; GS.trackP = p.clone(); GS.trackT = 3.5; if (!GS.said.hear || T - GS.said.hear > 15) { GS.said.hear = T; sayW('Origin Dynamics 職員', '什麼聲音？', '#9fb3c8', 2); } }
+}
+// the security camera: sweeps left and right until it is knocked off its shelf
+function updSecCam(dt) {
+  const r = GS.cam; if (!r) return;
+  if (!GS.camBroken && (r.y0 < 200 || r.gone || r.target < .7)) { GS.camBroken = true; GS.camLight.intensity = 0; GS.camLed.material.color.setRGB(.05, .02, .02); if (!NET.client) { toastW('監視鏡頭掉下來，壞了！', 3); noise(V3(r.cx, r.y0, r.cz), .9, .8); } }
+  if (GS.camBroken) return;
+  GS.camYaw = Math.PI / 2 + Math.sin(T * .35) * .85; GS.camHead.rotation.set(.38, GS.camYaw - Math.PI / 2 + Math.PI / 2, 0);
+  GS.camHead.rotation.y = GS.camYaw; const blink = Math.sin(T * 6) > .4; GS.camLed.material.color.setRGB(blink ? 3 : .4, blink ? .3 : .05, blink ? .3 : .05); GS.camLight.intensity = blink ? 30 : 4;
+}
+function camEye() {
+  const r = GS.cam; const eye = V3(); GS.camLens.getWorldPosition(eye); const q = new THREE.Quaternion(); GS.camHead.getWorldQuaternion(q); const fwd = V3(0, 0, 1).applyQuaternion(q); return { eye, fwd };
+}
+function detectGarage(dt) {
+  if (STATE !== 'play') return; if (window.__NODET) { meter = 0; return; } if (TOY.grace > 0) { meter = Math.max(0, meter - dt * .5); return; }
+  const L = leader; if (L.frozen || !mine(L)) { meter = Math.max(0, meter - dt * .5); KS.watch = null; return; }
+  let seen = 0, who = null; const H = GS.agent;
+  const hp = V3(); H.head.getWorldPosition(hp); const q = new THREE.Quaternion(); H.head.getWorldQuaternion(q); const hf = V3(0, 0, 1).applyQuaternion(q);
+  const s1 = seeFrom(hp, hf, .55, 420); if (s1 > seen) { seen = s1; who = 'agent'; }
+  if (H.lightPos) { const s2 = seeFrom(H.lightPos, H.lightDir, Math.cos(.34), 520) * 1.5; if (s2 > seen) { seen = s2; who = 'agent'; } }
+  if (!GS.camBroken) { const ce = camEye(); const s3 = seeFrom(ce.eye, ce.fwd, .8, 420); if (s3 > seen) { seen = s3; who = 'cam'; } }
+  KS.watch = seen > 0 ? { p: who === 'cam' ? camEye().eye : hp, s: seen, who } : null;
+  if (seen > 0) {
+    const lit = Math.max(litAtList(V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z), GS.lights), who === 'agent' && H.lightPos && seeFrom(H.lightPos, H.lightDir, Math.cos(.34), 520) > 0 ? 1 : 0) * (inDark(L.pos) ? .6 : 1);
+    const under = L.pos.y < 0 && L.pos.x > GS.car.x0 && L.pos.x < GS.car.x1 && L.pos.z > GS.car.z0 && L.pos.z < GS.car.z1 ? .35 : 1;
+    const mv = L.spd > 1.5 ? 1 : .5; const cr = L.crouch ? .55 : 1;
+    meter += seen * lit * mv * cr * under * (L.id === 'cham' ? 1 - .82 * L.camo : 1) * dt;
+    if (meter > .32) netSeen(V3(L.pos.x, L.pos.y + 2, L.pos.z), who);
+  } else meter -= dt * .24;
+  meter = clamp(meter, 0, 1); if (meter >= 1) toyFreeze(who);
+}
+function updGarageWorld(dt) {
+  // the side door's dog flap: swings when someone goes through once the latch is open
+  if (GS.latch) {
+    GS.flapCol.y0 = -999; GS.flapCol.y1 = -998; let push = 0;
+    for (const C of party) if (Math.abs(C.pos.x - 1455) < 6 && C.pos.z > 88 && C.pos.z < 122 && C.pos.y < GY + 16) push = C.pos.x < 1455 ? 1 : -1;
+    GS.flapA = damp(GS.flapA, push * 1.1, push ? 10 : 3, dt); GS.flap.rotation.z = GS.flapA;
+    GS.latchM.rotation.x = damp(GS.latchM.rotation.x, -1.2, 6, dt);
+  } else if (!NET.client) {
+    // anyone whose head reaches the latch flips it open
+    for (const C of party) if (!C.frozen && Math.hypot(C.pos.x - GS.latchP.x, C.pos.z - GS.latchP.z) < 7 && C.pos.y + C.h >= GS.latchP.y - .6) { latchOpen(C); break; }
+  }
+  if (GS.dock) { GS.dockGlow.material.color.setRGB(.6 + Math.sin(T * 5) * .2, 2.4, 2.3); GS.dockRing.rotation.z += dt * .6; }
+  if (GS.coilM && !GS.coil) { GS.coilM.rotation.y += dt * .8; }
+  // the far tube flickers
+  if (GS.tubeBL) { const f = rnd() < .03 ? .1 : 1; GS.tubeBL.intensity = 70000 * f; GS.tubeB.material.emissiveIntensity = 3 * f; }
+}
+function latchOpen(C) { if (GS.latch) return; GS.latch = true; SND.snap(); toastW(`${C ? C.S.name : ''}打開了狗門的門扣！`, 3); if (NET.on && quest === 6) setQuest(7); if (!NET.on && LEVEL === 'garage' && quest === 3) setQuest(4); }
+
+const GQ_SP = [
+  { t: '上到工作枱', s: '工作枱在車房最入面。小心 Origin Dynamics 的人和鐵架頂的監視鏡頭——躲到車底會比較安全' },
+  { t: '從舊收音機拆出線圈', s: '收音機的後蓋打開了，銅線圈就在後面' },
+  { t: '把線圈裝上機座', s: '工作枱另一邊是爸爸以前的縮小機機座' },
+  { t: '打開狗門的門扣', s: '側門下面有狗門，但門扣太高，一個人夠不到——疊羅漢、推木箱過去墊腳，或者用尺寸槍' },
+  { t: '由狗門逃出後園', s: '快！那個人聽到聲音了' }
+];
+LEVELS.garage = {
+  chapter: '第三章', title: '車房', mpChapter: '第二章（多人）', env: 'garage', envI: .95, fog: [0x10141a, .0009], expo: 1.3,
+  dust: { N: 2200, box: [930, 1450, GY, 260, -250, 300], beamFrac: .2, door: false },
+  toys: true, npcNear: true, build: buildGarage,
+  cps: [[978, GY, -196], [1000, GY, -150], [1172, GY + 80, -232], [1400, GY, 100]],
+  quests: GQ_SP,
+  // started straight from the chapter list: the team has just dropped out of the duct
+  spawn() {
+    spawnSP(this.cps[0], -Math.PI / 2, 5);
+    if (!LIV.ventOpen) { LIV.ventOpen = true; LIV.ventCol.y0 = -999; LIV.ventCol.y1 = -998; }
+  },
+  enter(prev, again) {
+    if (again) return;
+    if (!NET.on) { setTimeout(() => sayW('小彩', '有人在車房……灰色制服、帽上有標誌——是 Origin Dynamics 的人！', '#9fd86b', 3.6), 1200); setTimeout(() => say('爸爸', '工作枱上有我以前的機座。拿收音機的線圈裝上去，縮小機就可以重新啟動。', '#f5f0e6', 4.2), 5400); }
+  },
+  npc(dt) { if (STATE === 'play' || STATE === 'fail' || STATE === 'frozen' || STATE === 'end') updAgent(dt); },
+  detect: detectGarage, hear: garageHear, seen: garageSeen,
+  update(dt) {
+    lvT += dt; const L = leader;
+    if (NET.on) return;
+    if (quest === 0 && L.grounded && L.pos.y > GS.benchY - 1 && L.pos.x > 1180 && L.pos.x < 1440 && L.pos.z < -194) { setQuest(1); toast('上到工作枱了'); }
+    if (quest === 1 && !GS.coil && L.pos.distanceTo(GS.coilP) < 5) { GS.coil = true; GS.coilM.visible = false; SND.pick(); toast('拿到線圈！'); setQuest(2); }
+    if (quest === 2 && L.pos.y > GS.benchY - 1 && L.pos.y < GS.benchY + 9 && L.pos.x > 1358 && L.pos.x < 1402 && L.pos.z > -250 && L.pos.z < -205) {
+      GS.dock = true; setQuest(3); SND.zapUp && SND.zapUp(); noise(GS.dockP, 1, .3); toast('機座重新亮起來了！', 3);
+      say('爸爸', '機座修好了……但控制晶片不見了。陳伯以前替我保管過一塊後備晶片——他就住在隔籬。', '#f5f0e6', 4.6);
+      setTimeout(() => sayW('Origin Dynamics 職員', '那是什麼光？！', '#9fb3c8', 2.4), 4800);
+    }
+  },
+  win() { },
+  marker() {
+    if (NET.on) return mpMarker();
+    if (quest === 0) return V3(1300, GS.benchY + 2, -205); if (quest === 1) return GS.coilP; if (quest === 2) return GS.dockP; if (quest === 3) return GS.latchP; return V3(1455, GY + 2, 105);
+  },
+  reset() { GS.mode = 'patrol'; },
+  eyeText: () => meter > .3 ? '他看到你了！躲起來' : GS.camBroken ? 'Origin Dynamics 的人在搜車房' : 'Origin Dynamics 的人和監視鏡頭',
+  hint(L) { if (!GS.latch && Math.hypot(L.pos.x - GS.latchP.x, L.pos.z - GS.latchP.z) < 12) return '門扣在頭頂——疊羅漢夠上去，或者推木箱過來墊腳'; return ''; },
+  onSwitch() { }
+};
+
+// =====================================================================
+//  第四章 · 後園與鄰居家 — out through the garage's dog flap into the night
+//  Our back yard (tall grass to hide in, a sprinkler sweeping the lawn, a big tree) → a broken board
+//  in the fence → the neighbour's yard (his dog on a chain by its kennel) → the deck → the cat flap
+//  into his glass sunroom, where 陳伯 reads the paper and looks up every so often.
+//  The control chip is on his writing desk.
+// =====================================================================
+const YS = { dog: null, old: null, chip: false, lights: [], said: {}, spr: null, clumps: [], gap: V3(2103, GY, 109), flap: V3(2558, -8, 68), chipP: V3(2716, 58, 160) };
+const DECK = -8;
+function genGrass() {
+  const W = 512, n = noiseField(W, W, 5, 6, 501), n2 = noiseField(W, W, 2, 64, 502); const h = new Float32Array(W * W);
+  const c = fromFn(W, W, (x, y, i, o) => { const b = hashI(i * 3 + 1); const blade = b > .55 ? (b - .55) * .5 : 0; const v = .55 + (n[i] - .5) * .3 + blade; const dry = sstep(.6, .8, n[i]) * .25; o[0] = (38 + dry * 120) * v * 1.4; o[1] = (78 + dry * 40) * v * 1.4; o[2] = 30 * v; h[i] = n2[i] * .5 + blade; });
+  return { map: tex(c), normalMap: normalTex(h, W, W, 2.2) };
+}
+function genSoil() { const W = 256, n = noiseField(W, W, 4, 8, 511); const c = fromFn(W, W, (x, y, i, o) => { const v = .6 + (n[i] - .5) * .4 + (hashI(i) > .97 ? .2 : 0); o[0] = 88 * v; o[1] = 62 * v; o[2] = 44 * v; }); return tex(c); }
+// night sky: gradient dome, stars, the moon
+function buildSky(cx, cz) {
+  const g = new THREE.SphereGeometry(1900, 48, 24);
+  const m = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: {},
+    vertexShader: `varying vec3 vP; void main(){ vP=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+    fragmentShader: `varying vec3 vP; void main(){ float y=vP.y; vec3 top=vec3(.012,.02,.05), mid=vec3(.05,.07,.15), hor=vec3(.28,.17,.16); vec3 c=mix(hor,mid,smoothstep(-.02,.22,y)); c=mix(c,top,smoothstep(.2,.8,y)); c+=vec3(.5,.3,.18)*pow(max(0.,1.-abs(y)*6.),3.)*.35; gl_FragColor=vec4(c,1.); }` });
+  const sky = new THREE.Mesh(g, m); sky.position.set(cx, 0, cz); sky.frustumCulled = false; sky.renderOrder = -10; LV.add(sky);
+  const N = 900, pos = new Float32Array(N * 3), col = new Float32Array(N * 3);
+  for (let i = 0; i < N; i++) { const u = rnd() * 2 - 1, a = rnd() * 6.283; const y = Math.abs(u) * .9 + .08; const r = Math.sqrt(1 - y * y); pos.set([cx + Math.cos(a) * r * 1800, y * 1800, cz + Math.sin(a) * r * 1800], i * 3); const k = R(.4, 1.6); col.set([k, k, k * 1.1], i * 3); }
+  const sg = new THREE.BufferGeometry(); sg.setAttribute('position', new THREE.BufferAttribute(pos, 3)); sg.setAttribute('color', new THREE.BufferAttribute(col, 3));
+  const stars = new THREE.Points(sg, new THREE.PointsMaterial({ size: 3.2, sizeAttenuation: false, vertexColors: true, fog: false, depthWrite: false, transparent: true, opacity: .9 })); stars.frustumCulled = false; LV.add(stars);
+  const moon = mesh(new THREE.CircleGeometry(60, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xf6ecd0).multiplyScalar(1.8), fog: false }), cx + 700, 1150, cz - 1250, { cast: false }); moon.lookAt(cx, 0, cz);
+  const halo = mesh(new THREE.CircleGeometry(200, 40), new THREE.MeshBasicMaterial({ color: 0x8aa0c8, transparent: true, opacity: .12, fog: false, depthWrite: false, blending: THREE.AdditiveBlending }), cx + 690, 1145, cz - 1240, { cast: false }); halo.lookAt(cx, 0, cz);
+}
+// clumps of tall grass — taller than the characters, the best hiding place outdoors
+function buildGrassClumps(list) {
+  const blade = new THREE.PlaneGeometry(1.6, 1, 1, 4); blade.translate(0, .5, 0); const p = blade.attributes.position; for (let i = 0; i < p.count; i++) { const y = p.getY(i); p.setX(i, p.getX(i) * (1 - y * .9)); p.setZ(i, y * y * .35); }
+  blade.computeVertexNormals();
+  const mat = new THREE.MeshStandardMaterial({ color: 0x4f7a34, roughness: .8, side: THREE.DoubleSide });
+  let n = 0; for (const c of list) n += c[3]; const IM = new THREE.InstancedMesh(blade, mat, n); IM.castShadow = true; IM.receiveShadow = true;
+  const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), s = V3(), t = V3(), col = new THREE.Color(); let k = 0;
+  for (const [x, z, r, cnt] of list) { YS.clumps.push({ x, z, r }); for (let i = 0; i < cnt; i++) { const a = rnd() * 6.283, d = Math.sqrt(rnd()) * r; t.set(x + Math.cos(a) * d, GY, z + Math.sin(a) * d); e.set(R(-.2, .2), rnd() * 6.283, R(-.25, .25)); q.setFromEuler(e); const hgt = R(14, 30); s.set(R(.8, 1.4), hgt, 1); m4.compose(t, q, s); IM.setMatrixAt(k, m4); col.setHSL(R(.22, .3), R(.35, .55), R(.22, .38)); IM.setColorAt(k, col); k++; } }
+  LV.add(IM); return IM;
+}
+function inGrass(p) { if (p.y > GY + 16) return false; for (const c of YS.clumps) if (Math.hypot(p.x - c.x, p.z - c.z) < c.r) return true; return false; }
+
+function buildYard() {
+  const K = kitchenMats(), M = MAT;
+  const gr = genGrass(); const grassM = new THREE.MeshStandardMaterial({ ...gr, roughness: .95, normalScale: new THREE.Vector2(.8, .8) });
+  const soilM = new THREE.MeshStandardMaterial({ map: genSoil(), roughness: 1 });
+  const fenceM = new THREE.MeshStandardMaterial({ ...genWood([150, 112, 76], [86, 60, 40], 521, 10), roughness: .9 });
+  const sidingN = new THREE.MeshStandardMaterial({ ...genSiding(0xc8c2b0, 531), roughness: .85 });
+  const sidingU = new THREE.MeshStandardMaterial({ ...genSiding(0xb7c4c8, 532), roughness: .85 });
+  const stone = new THREE.MeshStandardMaterial({ color: 0x8a8680, roughness: .9 });
+  const X0 = 1460, X1 = 2760, Z0 = -440, Z1 = 640;
+  // ground + boundaries
+  box(X0 - 4, X1, GY - 10, GY, Z0, Z1, grassM, { uv: 90, cast: false });
+  box(X0, X1, GY, GY + 170, Z0 - 6, Z0, fenceM, { uv: 60 }); box(X0, X1, GY, GY + 170, Z1, Z1 + 6, fenceM, { uv: 60 });
+  for (let x = X0; x < X1; x += 120) { box(x, x + 6, GY, GY + 176, Z0 - 8, Z0 - 2, fenceM, { col: false }); box(x, x + 6, GY, GY + 176, Z1 + 2, Z1 + 8, fenceM, { col: false }); }
+  // our house's outside wall (the garage) and the fence beyond it
+  box(X0 - 8, X0, GY, 270, -260, 56, sidingU, { uv: 120 }); box(X0 - 8, X0, GY, 270, 154, 310, sidingU, { uv: 120 }); box(X0 - 8, X0, 190, 270, 56, 154, sidingU, { uv: 120 }); box(X0 - 8, X0, GY, GY + 170, Z0, -260, fenceM, { uv: 60 }); box(X0 - 8, X0, GY, GY + 170, 310, Z1, fenceM, { uv: 60 });
+  // outside of the side door (the door itself is part of the garage); lamp above it
+  box(X0, X0 + 3, 186, 194, 56, 154, M.white, { col: false });
+  mesh(new THREE.BoxGeometry(6, 12, 8), new THREE.MeshStandardMaterial({ color: 0x1a1a1a, roughness: .5 }), X0 + 4, 210, 105); mesh(new THREE.SphereGeometry(3.4, 14, 10), K.bulb, X0 + 5, 204, 105, { cast: false });
+  YS.doorL = pointL(0xffc890, 6000, X0 + 12, 200, 105);
+  // the property-line fence with a broken board at the bottom
+  box(2100, 2106, GY, GY + 160, Z0, 100, fenceM, { uv: 60 }); box(2100, 2106, GY, GY + 160, 118, Z1, fenceM, { uv: 60 }); box(2100, 2106, GY + 20, GY + 160, 100, 118, fenceM, { uv: 60 });
+  const brk = mesh(new THREE.BoxGeometry(5, 22, 18), fenceM, 2096, GY + 4, 109); brk.rotation.set(0, .3, 1.2);
+  // the neighbour's house wall (with the sunroom built against it)
+  box(2752, X1 + 8, GY, 300, Z0, Z1, sidingN, { uv: 120 });
+  for (const z of [-300, 400]) { box(2750, 2752, 90, 200, z - 50, z + 50, new THREE.MeshStandardMaterial({ color: 0x15181c, roughness: .1, metalness: .3 }), { col: false }); box(2749, 2752, 86, 90, z - 54, z + 54, M.white, { col: false }); }
+  // --- our yard: stepping stones, flower bed, gnome, tree, hose, sprinkler, toys ---
+  const path = [[1490, 105], [1540, 112], [1590, 100], [1640, 118], [1700, 108], [1760, 96], [1830, 110], [1900, 122], [1960, 112], [2030, 104], [2080, 110]];
+  // flagstones: irregular, bevelled, flush with the lawn (low enough to just walk over)
+  { const tm = MAT.floor.map.clone(), tn = MAT.floor.normalMap && MAT.floor.normalMap.clone(); for (const t of [tm, tn]) if (t) { t.repeat.set(1 / 34, 1 / 34); t.needsUpdate = true; }
+    const flagM = new THREE.MeshStandardMaterial({ map: tm, normalMap: tn || null, color: 0xc4beb2, roughness: .92 });
+    for (const [x, z] of path) { const r = R(13, 17), sh = new THREE.Shape(), N = 11, a0 = R(0, 6.28);
+      for (let i = 0; i < N; i++) { const a = a0 + i / N * Math.PI * 2, rr = r * R(.84, 1.06); i ? sh.lineTo(Math.cos(a) * rr * 1.1, Math.sin(a) * rr) : sh.moveTo(Math.cos(a) * rr * 1.1, Math.sin(a) * rr); }
+      const g = new THREE.ExtrudeGeometry(sh, { depth: .3, bevelEnabled: true, bevelThickness: .25, bevelSize: .9, bevelSegments: 2, curveSegments: 1 }); g.rotateX(-Math.PI / 2);
+      const m = new THREE.Mesh(g, flagM); m.position.set(x, GY + .25, z); m.rotation.y = R(0, 6.28); m.receiveShadow = true; LV.add(m);
+      cols.push({ t: 'c', x, z, r: r * .95, y0: GY, y1: GY + .8, small: true }); } }
+  box(1560, 2060, GY, GY + 5, Z0, Z0 + 60, soilM, { uv: 40 });
+  const stemM = new THREE.MeshStandardMaterial({ color: 0x3f6a2a, roughness: .7 }); const pet = [0xe85a6a, 0xf2c23a, 0xd8d0ff, 0xff8a3a];
+  for (let i = 0; i < 26; i++) { const x = 1575 + i * 18 + R(-5, 5), z = Z0 + 14 + R(0, 36), h = R(35, 70); cyl(x, z, .8, GY + 5, GY + h, stemM, { col: false, seg: 6 }); const fl = mesh(new THREE.SphereGeometry(R(3.5, 6), 12, 8), new THREE.MeshStandardMaterial({ color: pet[i % 4], roughness: .6 }), x, GY + h + 2, z); fl.scale.y = .55; }
+  // garden gnome
+  const gM = new THREE.MeshStandardMaterial({ color: 0x3a6ea8, roughness: .6 }); cyl(1950, -250, 12, GY, GY + 26, gM, { seg: 20, rt: 9 });
+  mesh(new THREE.SphereGeometry(7, 20, 14), MAT.skin, 1950, GY + 33, -250); mesh(new THREE.ConeGeometry(7, 16, 20), new THREE.MeshStandardMaterial({ color: 0xc8302a, roughness: .5 }), 1950, GY + 45, -250); mesh(new THREE.ConeGeometry(6, 10, 16), new THREE.MeshStandardMaterial({ color: 0xf2f0e8, roughness: .9 }), 1950, GY + 26, -244).rotation.x = Math.PI;
+  cols.push({ t: 'c', x: 1950, z: -250, r: 8, y0: GY + 26, y1: GY + 52 });
+  // the big tree: climb the trunk, walk out along the low branch
+  const bark = new THREE.MeshStandardMaterial({ ...genWood([96, 76, 60], [52, 40, 32], 541), roughness: 1 });
+  cyl(1800, 360, 24, GY, 330, bark, { seg: 24, rt: 18 }); box(1818, 1920, 118, 128, 352, 368, bark); box(1910, 1960, 124, 132, 356, 364, bark, { col: false });
+  const leafM = furMat({ color: 0x2f5a2a, len: 5, den: .35, droop: -.1, clump: .8, rimK: .12, root: .4 });
+  for (const [x, y, z, r] of [[1800, 360, 360, 120], [1890, 320, 330, 90], [1730, 330, 420, 90], [1830, 420, 400, 80]]) { const f = furMesh(new THREE.SphereGeometry(r, 28, 18), leafM); f.position.set(x, y, z); LV.add(f); }
+  // hose from the house to the sprinkler
+  tubeM([[X0 + 2, GY + 40, -120], [X0 + 10, GY + 2, -110], [1560, GY + 1.5, -60], [1700, GY + 1.5, -20], [1820, GY + 1.5, 0]], 1.4, new THREE.MeshStandardMaterial({ color: 0x2f8a3a, roughness: .5 }), 80);
+  const sp = new THREE.Group(); sp.position.set(1820, GY, 0); LV.add(sp); mesh(new THREE.CylinderGeometry(5, 7, 4, 16), M.dsteel, 0, 2, 0, { parent: sp }); const arm = mesh(new THREE.BoxGeometry(2, 2, 12), M.paintRed, 0, 5, 0, { parent: sp });
+  YS.spr = { g: sp, arm, a: 0, p: V3(1820, GY, 0), R: 130 }; cols.push({ t: 'c', x: 1820, z: 0, r: 6, y0: GY, y1: GY + 6 });
+  // toys and things to resize
+  const ballM = new THREE.MeshPhysicalMaterial({ color: 0xe84a6a, roughness: .35, clearcoat: .6 });
+  resGroup(cmGroup(24, 24, 24, ({ part }) => { part(new THREE.SphereGeometry(12, 32, 20), ballM, 0, 0, 0); part(new THREE.TorusGeometry(12.05, .8, 6, 40), new THREE.MeshStandardMaterial({ color: 0xf2f0e8 }), 0, 0, 0); }, [ballM]), 1650, 250, GY, 24, 24, 24, .3, 4, '皮球', true);
+  const canM = new THREE.MeshStandardMaterial({ color: 0x5aa8c8, roughness: .4, metalness: .4 });
+  resGroup(cmGroup(30, 26, 18, ({ part }) => { part(new THREE.CylinderGeometry(9, 9, 22, 24), canM, 0, -2, 0); part(new THREE.CylinderGeometry(1.4, 2.4, 22, 10), canM, 12, 2, 0, { r: [0, 0, -.9] }); part(new THREE.TorusGeometry(7, 1.2, 6, 20, Math.PI), canM, -2, 10, 0); }, [canM]), 1700, -300, GY, 30, 26, 18, .3, 4, '花灑', true);
+  const potM = new THREE.MeshStandardMaterial({ color: 0xb8643a, roughness: .9 });
+  // tall grass clumps (hiding) — kept off the stone path
+  const clumps = []; for (let i = 0; i < 46; i++) { const x = R(1490, 2690), z = R(Z0 + 70, Z1 - 30); if (Math.abs(z - 110) < 34 && x < 2100) continue; if (x > 2380 && x < 2560 && z > -80 && z < 240) continue; if (Math.hypot(x - 2300, z - 420) < 70) continue; if (Math.hypot(x - 1820, z) < 40) continue; clumps.push([x, z, R(10, 18), 18]); }
+  clumps.push([2080, 70, 16, 22], [2130, 150, 16, 22], [2250, 60, 14, 20], [2380, 260, 16, 20], [1560, 40, 14, 20]);
+  buildGrassClumps(clumps);
+  // --- the neighbour's yard ---
+  // kennel
+  const kenM = new THREE.MeshStandardMaterial({ ...genWood([170, 70, 50], [110, 40, 30], 551, 6), roughness: .8 });
+  box(2250, 2350, GY, GY + 70, 440, 444, kenM); box(2250, 2254, GY, GY + 70, 380, 444, kenM); box(2346, 2350, GY, GY + 70, 380, 444, kenM);
+  box(2250, 2280, GY, GY + 70, 376, 380, kenM); box(2320, 2350, GY, GY + 70, 376, 380, kenM); box(2280, 2320, GY + 50, GY + 70, 376, 380, kenM);
+  box(2250, 2350, GY, GY + 2, 380, 440, kenM, { col: false });
+  for (const s of [-1, 1]) { const r = mesh(new THREE.BoxGeometry(62, 4, 76), new THREE.MeshStandardMaterial({ color: 0x5a3a2a, roughness: .8 }), 2300 + s * 26, GY + 86, 410); r.rotation.z = s * -.62; }
+  cols.push({ t: 'b', x0: 2250, x1: 2350, y0: GY + 70, y1: GY + 88, z0: 376, z1: 444 });
+  mesh(new THREE.CylinderGeometry(9, 7, 6, 20), M.dsteel, 2215, GY + 3, 400); // water bowl
+  // BBQ
+  const bbqM = new THREE.MeshStandardMaterial({ color: 0x1c1c1e, roughness: .4, metalness: .6 });
+  cyl(2450, -250, 30, GY + 60, GY + 92, bbqM, { seg: 28 }); mesh(new THREE.SphereGeometry(30, 28, 12, 0, Math.PI * 2, 0, Math.PI / 2), bbqM, 2450, GY + 92, -250);
+  for (const a of [0, 2.1, 4.2]) { const l = mesh(new THREE.CylinderGeometry(1.5, 1.5, 62, 8), bbqM, 2450 + Math.cos(a) * 20, GY + 30, -250 + Math.sin(a) * 20); l.rotation.set(Math.sin(a) * .2, 0, -Math.cos(a) * .2); }
+  cols.push({ t: 'c', x: 2450, z: -250, r: 4, y0: GY, y1: GY + 60 });
+  // deck in front of the sunroom
+  const deckM = new THREE.MeshStandardMaterial({ ...genWood([150, 104, 70], [96, 64, 42], 561, 12), roughness: .75 });
+  box(2400, 2556, GY, DECK, -60, 220, deckM, { uv: 60 }); box(2390, 2400, GY, GY + 6, -60, 220, deckM, { uv: 60 });
+  cyl(2470, 30, 40, DECK + 70, DECK + 73, new THREE.MeshPhysicalMaterial({ color: 0xe8e6e0, roughness: .3, clearcoat: .5 }), { seg: 36 }); cyl(2470, 30, 3, DECK, DECK + 70, M.dsteel, { seg: 12 }); cyl(2470, 30, 20, DECK, DECK + 2, M.dsteel, { seg: 24 });
+  for (const [x, z] of [[2420, 30], [2520, 30]]) { box(x - 18, x + 18, DECK + 42, DECK + 45, z - 18, z + 18, M.white); for (const [dx, dz] of [[-16, -16], [16, -16], [-16, 16], [16, 16]]) box(x + dx - 1.2, x + dx + 1.2, DECK, DECK + 42, z + dz - 1.2, z + dz + 1.2, M.white); }
+  for (const [x, z] of [[2412, -40], [2412, 200]]) { cyl(x, z, 16, DECK, DECK + 30, potM, { seg: 24, rt: 19 }); const f = furMesh(new THREE.SphereGeometry(20, 20, 14), leafM); f.position.set(x, DECK + 46, z); LV.add(f); }
+  // --- the sunroom (glass: you can see in, he can see out) ---
+  const glass = new THREE.MeshPhysicalMaterial({ color: 0xcfe6f0, roughness: .04, transmission: .85, thickness: .3, transparent: true, opacity: .22, depthWrite: false });
+  const frameM = new THREE.MeshStandardMaterial({ color: 0xf2f0ea, roughness: .5 });
+  box(2556, 2752, GY, DECK, -60, 220, deckM, { uv: 60 }); box(2556, 2752, 230, 234, -64, 224, glass, { cast: false }); noRay();
+  // west glass wall with the sliding door (closed) and the cat flap
+  box(2556, 2560, DECK, 230, -60, 60, glass, { cast: false }); noRay(); box(2556, 2560, DECK + 16, 230, 60, 80, glass, { cast: false }); noRay(); box(2556, 2560, DECK, 230, 80, 220, glass, { cast: false }); noRay();
+  box(2555, 2561, DECK, DECK + 16, 59, 61, frameM); box(2555, 2561, DECK, DECK + 16, 79, 81, frameM); box(2555, 2561, DECK + 15, DECK + 17, 60, 80, frameM);
+  const cf = new THREE.Group(); cf.position.set(2558, DECK + 15, 70); LV.add(cf); YS.catFlap = cf; mesh(new THREE.BoxGeometry(.8, 14, 18), new THREE.MeshPhysicalMaterial({ color: 0x8aa0aa, roughness: .2, transparent: true, opacity: .55 }), 0, -7, 0, { parent: cf, cast: false });
+  box(2556, 2752, DECK, 230, -64, -60, glass, { cast: false }); noRay(); box(2556, 2752, DECK, 230, 220, 224, glass, { cast: false }); noRay();
+  for (const z of [-60, 0, 60, 140, 220]) box(2555, 2561, DECK, 232, z - 2, z + 2, frameM, { col: false });
+  for (const x of [2600, 2660, 2720]) { box(x - 2, x + 2, DECK, 232, -64, -60, frameM, { col: false }); box(x - 2, x + 2, DECK, 232, 220, 224, frameM, { col: false }); box(x - 2, x + 2, 228, 234, -64, 224, frameM, { col: false }); }
+  box(2555, 2561, 228, 234, -64, 224, frameM, { col: false });
+  // inside: rug, armchair, lamp, side table, plant shelf, writing desk, bookshelf
+  const rugM = furMat({ color: 0xb85a48, len: .5, den: 2.6, droop: .1, clump: .45, rimK: .03, root: .6 });
+  const rg = new THREE.PlaneGeometry(120, 160); rg.rotateX(-Math.PI / 2); const rug = furMesh(rg, rugM); rug.position.set(2650, DECK + .3, 60); LV.add(rug); cols.push({ t: 'b', x0: 2590, x1: 2710, y0: DECK, y1: DECK + .3, z0: -20, z1: 140, small: true });
+  const wick = new THREE.MeshStandardMaterial({ color: 0xb08a5a, roughness: .95 });
+  box(2630, 2690, DECK, DECK + 40, 20, 90, wick); box(2682, 2694, DECK + 40, DECK + 100, 20, 90, wick); box(2630, 2690, DECK + 40, DECK + 66, 14, 22, wick); box(2630, 2690, DECK + 40, DECK + 66, 88, 96, wick);
+  box(2636, 2684, DECK + 40, DECK + 48, 24, 86, new THREE.MeshPhysicalMaterial({ color: 0x5a7a9a, roughness: .9, sheen: .6 }));
+  cyl(2620, 120, 16, DECK + 50, DECK + 53, M.wood || K.wood, { seg: 24 }); cyl(2620, 120, 2, DECK, DECK + 50, M.dsteel, { seg: 10 }); cyl(2620, 120, 3, DECK + 53, DECK + 61, new THREE.MeshPhysicalMaterial({ color: 0xf2f0ea, roughness: .2, clearcoat: .8 }), { seg: 16 });
+  cyl(2700, -10, 1, DECK, DECK + 150, M.dsteel, { seg: 8 }); mesh(new THREE.CylinderGeometry(10, 15, 18, 24, 1, true), new THREE.MeshStandardMaterial({ color: 0xf2e6cc, roughness: .9, side: THREE.DoubleSide, emissive: 0xffb36a, emissiveIntensity: .7 }), 2700, DECK + 152, -10, { cast: false });
+  YS.lampL = pointL(0xffc890, 9000, 2700, DECK + 140, -10);
+  for (const y of [DECK + 40, DECK + 80]) box(2580, 2740, y - 3, y, 196, 218, frameM);
+  for (let i = 0; i < 6; i++) { const x = 2595 + i * 26; cyl(x, 207, 7, DECK + 80, DECK + 94, potM, { seg: 16, rt: 8 }); const f = furMesh(new THREE.SphereGeometry(9, 14, 10), leafM); f.position.set(x, DECK + 102, 207); f.scale.y = .8; LV.add(f); }
+  // writing desk (the chip is on it) and its chair
+  const deskM = new THREE.MeshStandardMaterial({ ...genWood([120, 76, 50], [70, 44, 28], 571), roughness: .5 });
+  const DT = DECK + 66; box(2690, 2750, DT - 4, DT, 120, 200, deskM); for (const [x, z] of [[2692, 122], [2746, 122], [2692, 196], [2746, 196]]) box(x - 2, x + 2, DECK, DT - 4, z - 2, z + 2, deskM);
+  box(2700, 2748, DT - 18, DT - 4, 124, 196, deskM); // drawers
+  box(2660, 2690, DECK + 42, DECK + 45, 145, 175, deskM); for (const [dx, dz] of [[2, 2], [28, 2], [2, 28], [28, 28]]) box(2660 + dx - 1.2, 2660 + dx + 1.2, DECK, DECK + 42, 145 + dz - 1.2, 145 + dz + 1.2, deskM); box(2660, 2663, DECK + 45, DECK + 90, 145, 175, deskM);
+  box(2730, 2746, DT, DT + 22, 130, 150, M.cardB, { uv: 0 }); box(2700, 2724, DT, DT + .6, 170, 192, new THREE.MeshStandardMaterial({ color: 0xf2efe6, roughness: .9 }), { col: false });
+  // the chip: a little green board with a glow
+  { const g = new THREE.Group(); g.position.set(YS.chipP.x, DT + .4, YS.chipP.z); LV.add(g); g.add(new THREE.Mesh(new THREE.BoxGeometry(5, .4, 4), new THREE.MeshStandardMaterial({ color: 0x1f7a3a, roughness: .5 }))); const ch = new THREE.Mesh(new THREE.BoxGeometry(2, .6, 2), new THREE.MeshStandardMaterial({ color: 0x111, roughness: .3 })); ch.position.y = .5; g.add(ch); for (let i = 0; i < 6; i++) { const p = new THREE.Mesh(new THREE.BoxGeometry(.3, .2, .8), MAT.brass); p.position.set(-1.6 + i * .64, .3, 1.8); g.add(p); }
+    const halo = new THREE.Mesh(new THREE.RingGeometry(2.6, 3.3, 32), new THREE.MeshBasicMaterial({ color: new THREE.Color(0x7ff6a0).multiplyScalar(2), transparent: true, opacity: .5, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false })); LVFX.add(halo); halo.position.set(YS.chipP.x, DT + 2, YS.chipP.z); YS.chipM = g; YS.chipHalo = halo; YS.chipP.y = DT; }
+  // a moving box with books piled on it, pushed against the desk — the way up to the top
+  { box(2700, 2734, DECK, DECK + 46, 92, 119, M.cardB, { uv: 0 }); box(2700, 2734, DECK + 22, DECK + 23.5, 91.6, 92, new THREE.MeshStandardMaterial({ color: 0xc8a878, roughness: .8 }), { col: false });
+    const bk = [0x8a3a2e, 0x2e4a6a, 0x4a6a3a, 0xc8a060, 0x5a3a5a, 0x2a2a30]; let y = DECK + 46;
+    for (let i = 0; i < bk.length; i++) { const h = 3.2 + (i * 7 % 5) * .3, dx = [0, 1.2, -.8, .6, -1, .4][i], dz = [0, -.6, .8, -.3, .5, 0][i];
+      box(2704 + dx, 2730 + dx, y, y + h, 98 + dz, 118 + dz * .5, new THREE.MeshStandardMaterial({ color: bk[i], roughness: .65 }), { col: false });
+      box(2705 + dx, 2729 + dx, y + .5, y + h - .5, 97.6 + dz, 98 + dz, new THREE.MeshStandardMaterial({ color: 0xeee6d2, roughness: .9 }), { col: false }); y += h; }
+    YS.bookTop = y; cols.push({ t: 'b', x0: 2704, x1: 2730, y0: DECK + 46, y1: y, z0: 98, z1: 118 }); }
+  // bookshelf on the house wall
+  box(2735, 2752, DECK, DECK + 180, -50, 10, deskM); for (const y of [DECK + 40, DECK + 80, DECK + 120, DECK + 160]) box(2735, 2752, y - 2, y, -50, 10, deskM);
+  // pickups, switches
+  addBattery(1900, 128, 360); addBattery(2450, GY + 122, -250); addVial(2130, GY, 150); addCrumb(1640, GY, 40); addCrumb(2470, DECK + 73, 30);
+  addSwitch('露台的插座', [2404, DECK + 1.5, 210], [2560, 0, 60], 220, { list: 'yard' }); box(2398, 2410, DECK, DECK + 3, 206, 214, M.white);
+  // lights: the moon, a dim sky fill, lamps
+  LV.add(new THREE.HemisphereLight(0x50648c, 0x16220f, .95));
+  YS.moon = spotL(0xb8c8ff, 2600000, V3(2400, 900, -900), V3(2000, GY, 100), .55, .5, 2048, 300, 2600);
+  YS.porchL = pointL(0xffd2a0, 7000, 2564, 200, 70);
+  YS.lights = [{ p: V3(X0 + 12, 200, 105), range: 120, I: () => YS.doorL.intensity }, { p: V3(2564, 200, 70), range: 150, I: () => YS.porchL.intensity }, { p: V3(2700, DECK + 140, -10), range: 170, I: () => YS.lampL.intensity }];
+  // the dog and 陳伯
+  buildDog(); buildOldMan();
+}
+
+// ---------- the neighbour's dog ----------
+function buildDog() {
+  const D = { pos: V3(2300, GY, 368), yaw: Math.PI, mode: 'sleep', t: 0, phase: 0, anchor: V3(2300, GY, 410), look: V3(), sleepK: 1, barkT: 0 };
+  const g = new THREE.Group(); scene.add(g); D.root = g;
+  const fur = furMat({ color: 0xd8a45a, belly: 0xf0d8a8, bellyAmt: .8, len: 1.4, den: 1.8, droop: .5, clump: .5, rimK: .07, root: .6 });
+  const body = new THREE.Group(); body.position.y = 46; g.add(body); D.body = body;
+  body.add(furMesh(ell(17, 17, 38, 40, 28), fur));
+  const neck = new THREE.Group(); neck.position.set(0, 10, 32); body.add(neck); D.neck = neck;
+  const head = new THREE.Group(); head.position.set(0, 12, 8); neck.add(head); D.head = head;
+  head.add(furMesh(ell(11, 11, 12, 32, 24), fur)); const snout = furMesh(ell(6, 5.4, 9, 20, 14), fur); snout.position.set(0, -3, 11); head.add(snout);
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(2.2, 14, 10), new THREE.MeshPhysicalMaterial({ color: 0x1a1210, roughness: .2, clearcoat: 1 })); nose.position.set(0, -1, 19.6); nose.scale.set(1.3, .9, .8); head.add(nose);
+  D.eyes = []; for (const s of [-1, 1]) {
+    const e = new THREE.Mesh(new THREE.SphereGeometry(1.8, 16, 12), MAT.eye); e.position.set(s * 5, 3, 9.6); head.add(e); D.eyes.push(e);
+    const ear = new THREE.Group(); ear.position.set(s * 9, 5, 0); ear.rotation.z = s * .35; head.add(ear); const em = furMesh(ell(3.2, 9, 6, 16, 12), fur); em.position.y = -7; ear.add(em);
+  }
+  const tongue = new THREE.Mesh(ell(2.4, .6, 4, 12, 8), new THREE.MeshStandardMaterial({ color: 0xe0707a, roughness: .5 })); tongue.position.set(0, -7, 14); head.add(tongue); D.tongue = tongue;
+  const collar = new THREE.Mesh(new THREE.TorusGeometry(9.5, 1.4, 8, 28), MAT.paintRed); collar.position.set(0, 2, 2); collar.rotation.x = Math.PI / 2 - .4; neck.add(collar);
+  D.legs = []; for (const [x, z] of [[-8, 26], [8, 26], [-8, -26], [8, -26]]) { const L = new THREE.Group(); L.position.set(x, -8, z); body.add(L); const lm = furMesh(capG(4.2, 26), fur); lm.position.y = -16; L.add(lm); const paw = furMesh(ell(4.4, 2.6, 5.4, 12, 8), fur); paw.position.set(0, -32, 1.4); L.add(paw); D.legs.push({ g: L, z }); }
+  D.tail = new THREE.Group(); D.tail.position.set(0, 8, -36); body.add(D.tail); const tm = furMesh(capG(3, 26), fur); tm.position.set(0, 0, -14); tm.rotation.x = Math.PI / 2 + .5; D.tail.add(tm);
+  YS.dog = D;
+}
+function updDog(dt) {
+  const D = YS.dog; if (!D) return; D.t -= dt; const P = D.pos; let sp = 0;
+  if (D.mode === 'sleep') { D.sleepK = damp(D.sleepK, 1, 2, dt); if (D.t <= 0 && rnd() < dt * .03) { D.mode = 'sniff'; D.t = R(8, 14); D.target = dogSpot(); } }
+  else {
+    D.sleepK = damp(D.sleepK, 0, 3, dt);
+    if (D.mode === 'sniff') { if (moveDog(D, D.target, 26, dt)) { D.target = dogSpot(); sp = 0; } else sp = 26; if (D.t <= 0) { D.mode = 'home'; } }
+    else if (D.mode === 'alert' || D.mode === 'bark') { const dx = D.look.x - P.x, dz = D.look.z - P.z; D.yaw = angDamp(D.yaw, Math.atan2(dx, dz), 4, dt); if (D.mode === 'alert' && Math.hypot(dx, dz) > 60) { moveDog(D, D.look, 40, dt); sp = 40; } if (D.t <= 0) { D.mode = 'sniff'; D.t = R(5, 9); D.target = dogSpot(); } if (D.mode === 'bark' && (D.barkT -= dt) <= 0) { D.barkT = .45; dogBark(); } }
+    else if (D.mode === 'home') { const h = V3(2300, GY, 368); if (moveDog(D, h, 28, dt)) { D.mode = 'sleep'; D.t = R(10, 20); D.yaw = Math.PI; } else sp = 28; }
+  }
+  // the chain
+  const ax = P.x - D.anchor.x, az = P.z - D.anchor.z, ad = Math.hypot(ax, az); if (ad > 175) { P.x = D.anchor.x + ax / ad * 175; P.z = D.anchor.z + az / ad * 175; }
+  // bump into small things
+  if (sp > 0 && !NET.client) for (const C of party) if (mine(C) && !C.frozen && C.pos.y < GY + 10 && Math.hypot(C.pos.x - (P.x + Math.sin(D.yaw) * 30), C.pos.z - (P.z + Math.cos(D.yaw) * 30)) < 14) knock(C, V3(P.x, GY, P.z), C === leader ? '被狗的鼻撞開了！' : null);
+  dogAnim(D, sp, dt);
+}
+function dogSpot() { const a = rnd() * 6.283, r = R(40, 170); return V3(2300 + Math.cos(a) * r, GY, 410 + Math.sin(a) * r); }
+function moveDog(D, t, sp, dt) { const dx = t.x - D.pos.x, dz = t.z - D.pos.z, d = Math.hypot(dx, dz); if (d < 6) return true; D.pos.x += dx / d * sp * dt; D.pos.z += dz / d * sp * dt; D.yaw = angDamp(D.yaw, Math.atan2(dx, dz), 4, dt); return false; }
+function dogAnim(D, sp, dt) {
+  D.root.position.copy(D.pos); D.root.rotation.y = D.yaw; D.phase += dt * sp * .22; const k = D.sleepK;
+  D.body.position.y = lerp(46, 22, k); D.body.rotation.z = k * .15; D.neck.rotation.x = lerp(D.mode === 'sniff' ? .55 + Math.sin(T * 7) * .08 : -.05, .9, k);
+  D.legs.forEach((L, i) => { L.g.rotation.x = sp > 0 ? Math.sin(D.phase + (i % 2 ? Math.PI : 0) + (i > 1 ? Math.PI / 2 : 0)) * .55 : lerp(0, i < 2 ? -1.4 : 1.3, k); });
+  D.tail.rotation.y = Math.sin(T * (D.mode === 'bark' ? 18 : 6)) * (k > .5 ? .1 : .5);
+  for (const e of D.eyes) e.scale.y = k > .6 ? .12 : 1; D.tongue.visible = k < .4 && sp > 0;
+  D.head.rotation.x = D.mode === 'bark' ? Math.sin(T * 14) * .12 : 0;
+}
+function dogBark() { SND.thud(.25); tone(330, 180, .14, .12, 'sawtooth'); nz(.12, 900, 1.2, .2); if (!YS.said.bark || T - YS.said.bark > 6) { YS.said.bark = T; sayW('鄰居的狗', '汪！汪汪！', '#d8a45a', 1.6); } oldManLook(YS.dog.look, 4); }
+function yardHear(p, loud) {
+  const D = YS.dog; if (D && loud > .25 && Math.hypot(p.x - D.pos.x, p.z - D.pos.z) < 360) { D.mode = 'alert'; D.t = 4; D.look.copy(p); if (D.sleepK > .5) sayW('鄰居的狗', '……？', '#d8a45a', 1.2); }
+  if (Math.hypot(p.x - 2650, p.z - 60) < 260 && loud > .3) oldManLook(p, 3);
+}
+function yardSeen(tp, who) { if (who === 'dog') { const D = YS.dog; D.mode = 'bark'; D.t = 3; D.look.copy(tp); } else oldManLook(tp, 3.5); }
+
+// ---------- 陳伯 in his armchair ----------
+function buildOldMan() {
+  const cardig = new THREE.MeshPhysicalMaterial({ color: 0x7a5a3a, roughness: .95, sheen: .6, sheenColor: 0xc8a888 });
+  const H = buildHuman({ pants: new THREE.MeshStandardMaterial({ color: 0x3a3a40, roughness: .9 }), top: cardig, skin: MAT.skin, shoe: new THREE.MeshStandardMaterial({ color: 0x4a2a1a, roughness: .7 }), hair: 0xd8d4cc, bald: true, glasses: true });
+  H.pos.set(2662, DECK + 4, 55); H.yaw = -Math.PI / 2; H.root.visible = true;
+  // seated: thighs forward, shins down
+  H.pelvis.position.y = 44; for (const L of H.legs) { L.hip.rotation.x = -1.45; L.knee.rotation.x = 1.5; L.ankle.rotation.x = 0; }
+  const paper = new THREE.Mesh(new THREE.PlaneGeometry(52, 34), new THREE.MeshStandardMaterial({ map: genNews(), roughness: .9, side: THREE.DoubleSide })); paper.position.set(0, 52, 26); H.chest.add(paper); H.paper = paper;
+  YS.old = { H, mode: 'read', t: R(8, 12), look: V3(2500, 40, 60), lookK: 0 };
+  H.root.position.copy(H.pos); H.root.rotation.y = H.yaw;
+}
+function genNews() { const [c, x] = cnv(256, 168); x.fillStyle = '#ece6d8'; x.fillRect(0, 0, 256, 168); x.fillStyle = '#222'; x.font = '900 26px "Noto Sans TC"'; x.fillText('尋人：陳教授', 14, 36); x.font = '500 12px "Noto Sans TC"'; for (let i = 0; i < 9; i++) x.fillRect(14, 52 + i * 12, R(150, 226), 4); x.fillStyle = '#888'; x.fillRect(176, 48, 66, 64); return tex(c); }
+function oldManLook(p, d) { const O = YS.old; if (!O) return; O.mode = 'alert'; O.t = d; O.look.copy(p); if (!YS.said.old || T - YS.said.old > 12) { YS.said.old = T; sayW('陳伯', rnd() < .5 ? '嗯？外面有什麼？' : '……小黃，又吠什麼？', '#c8b8a0', 2.4); } }
+function updOldMan(dt) {
+  const O = YS.old; if (!O) return; const H = O.H; O.t -= dt;
+  if (O.mode === 'read') { if (O.t <= 0) { O.mode = 'look'; O.t = 4.2; O.look.set(R(2380, 2540), R(-10, 30), R(-40, 200)); } }
+  else if (O.mode === 'look' || O.mode === 'alert') { if (O.t <= 0) { O.mode = 'read'; O.t = R(9, 15); } else if (O.mode === 'look') O.look.z += Math.sin(T * .8) * 30 * dt; }
+  O.lookK = damp(O.lookK, O.mode === 'read' ? 0 : 1, 3, dt);
+  H.paper.position.y = lerp(52, 22, O.lookK); H.paper.rotation.x = lerp(-.2, -1.2, O.lookK);
+  H.root.updateMatrixWorld(true); const hp = V3(); H.head.getWorldPosition(hp); const ad = V3().subVectors(O.look, hp); const yr0 = Math.atan2(ad.x, ad.z) - H.yaw; const yr = Math.atan2(Math.sin(yr0), Math.cos(yr0)); const pitch = Math.atan2(-ad.y, Math.hypot(ad.x, ad.z));
+  H.head.rotation.y = damp(H.head.rotation.y, clamp(yr, -.9, .9) * O.lookK, 3, dt); H.head.rotation.x = damp(H.head.rotation.x, lerp(.55, clamp(pitch * .6, -.3, .5), O.lookK), 3, dt);
+  for (const A of H.arms) { A.sh.rotation.x = lerp(-1.1, -.5, O.lookK); A.sh.rotation.z = A.s * -.25; A.el.rotation.x = lerp(-.9, -.6, O.lookK); }
+}
+// sprinkler: one jet sweeping round; whoever it hits gets knocked over
+function updSprinkler(dt) {
+  const S = YS.spr; if (!S) return; S.a += dt * .9; S.arm.rotation.y = S.a; const dx = Math.sin(S.a), dz = Math.cos(S.a);
+  if (YS.near) for (let i = 0; i < 3; i++) { const v = R(60, 120); emit(V3(S.p.x + dx * 5, GY + 6, S.p.z + dz * 5), V3(dx * v + R(-4, 4), R(40, 70), dz * v + R(-4, 4)), new THREE.Color(.55, .7, .85), R(.15, .3), R(.8, 1.4), 120, 0); }
+  if (NET.client) return;
+  for (const C of party) { if (!mine(C) || C.frozen || C.pos.y > GY + 14) continue; const rx = C.pos.x - S.p.x, rz = C.pos.z - S.p.z, d = Math.hypot(rx, rz); if (d < 20 || d > S.R) continue; const ca = (rx * dx + rz * dz) / d; if (ca > .985) knock(C, V3(S.p.x, GY, S.p.z), C === leader ? '被灑水器射中了！' : null); }
+}
+function detectYard(dt) {
+  if (STATE !== 'play') return; if (window.__NODET) { meter = 0; return; } if (TOY.grace > 0) { meter = Math.max(0, meter - dt * .5); return; }
+  const L = leader; if (L.frozen || !mine(L)) { meter = Math.max(0, meter - dt * .5); KS.watch = null; return; }
+  let seen = 0, who = null; const D = YS.dog, O = YS.old;
+  if (D && D.sleepK < .5) { const hp = V3(); D.head.getWorldPosition(hp); const q = new THREE.Quaternion(); D.head.getWorldQuaternion(q); const f = V3(0, 0, 1).applyQuaternion(q); const s = seeFrom(hp, f, .5, 320) * 1.2; if (s > seen) { seen = s; who = 'dog'; } }
+  if (O && O.lookK > .5) { const hp = V3(); O.H.head.getWorldPosition(hp); const q = new THREE.Quaternion(); O.H.head.getWorldQuaternion(q); const f = V3(0, 0, 1).applyQuaternion(q); const s = seeFrom(hp, f, .5, 320); if (s > seen) { seen = s; who = 'old'; } }
+  KS.watch = seen > 0 ? { p: who === 'dog' ? D.head.getWorldPosition(V3()) : O.H.head.getWorldPosition(V3()), s: seen, who } : null;
+  if (seen > 0) {
+    const p = V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z); let lit = litAtList(p, YS.lights, .6) * (inDark(L.pos) ? .6 : 1); if (inGrass(L.pos)) lit *= .3;
+    const mv = L.spd > 1.5 ? 1 : .5; const cr = L.crouch ? .55 : 1;
+    meter += seen * lit * mv * cr * (L.id === 'cham' ? 1 - .82 * L.camo : 1) * dt;
+    if (meter > .3) netSeen(V3(L.pos.x, L.pos.y + 2, L.pos.z), who);
+  } else meter -= dt * .24;
+  meter = clamp(meter, 0, 1); if (meter >= 1) toyFreeze(who);
+}
+function updYardWorld(dt) {
+  YS.near = ZONES.yard && ZONES.yard.near; updSprinkler(dt);
+  const lw = YS.flapW = YS.flapW || 0; let push = 0; for (const C of party) if (Math.abs(C.pos.x - 2558) < 5 && C.pos.z > 61 && C.pos.z < 79 && C.pos.y < DECK + 12) push = C.pos.x < 2558 ? 1 : -1;
+  YS.flapW = damp(lw, push, push ? 10 : 3, dt); YS.catFlap.rotation.z = YS.flapW;
+  if (!YS.chip && YS.chipM) { YS.chipM.rotation.y += dt; YS.chipHalo.lookAt(camera.position); }
+  if (!YS.chip && !NET.client && STATE === 'play') { for (const C of party) if ((NET.on || C === leader) && !C.frozen && C.pos.distanceTo(YS.chipP) < 5) { chipGet(C); break; } }
+}
+function chipGet(C) {
+  if (YS.chip) return; YS.chip = true; YS.chipM.visible = false; YS.chipHalo.visible = false; SND.pick();
+  for (let i = 0; i < 30; i++) emit(YS.chipP.clone().add(V3(0, 2, 0)), V3(R(-10, 10), R(4, 18), R(-10, 10)), new THREE.Color(.6, 2.2, 1), R(.15, .35), R(.4, 1), 30, 2);
+  toastW(`${C.S.name}拿到了控制晶片！`, 3);
+  if (NET.on) { if (quest === 10) { STATE = 'end'; endT = 0; END_TXT = ['第三章（多人）· 完', '控制晶片', '晶片、零件、電池都齊了。下一站：馬路對面的公園。']; nsend({ t: 'end', e: END_TXT }); } }
+  else { say('爸爸', '找到了！有這塊晶片，縮小機就可以重新啟動……', '#f5f0e6', 3.4); setTimeout(() => say('陳伯', '……教授？是你嗎？', '#c8b8a0', 3), 3600); END_TXT = ['第四章 · 完', '控制晶片', '晶片到手了。陳伯好像早就知道教授會來……下一站：馬路對面的公園。']; unlockKey('ch4'); setTimeout(() => { if (STATE === 'play') { STATE = 'end'; endT = 0; } }, 7000); }
+}
+const YQ_SP = [
+  { t: '穿過後園，去圍欄的爛板', s: '圍欄最下面有塊爛板可以鑽過去。小心灑水器，長草可以躲' },
+  { t: '避開鄰居的狗，去陽光房', s: '狗醒了會吠，陳伯會望出來。陽光房的玻璃門下面有貓門' },
+  { t: '找出控制晶片', s: '晶片在陳伯的書枱上。他在看報紙，但不時會抬頭' }
+];
+LEVELS.yard = {
+  chapter: '第四章', title: '後園與鄰居家', mpChapter: '第三章（多人）', env: 'yard', envI: .5, fog: [0x0e1626, .0004], expo: 1.35,
+  dust: { N: 1400, box: [1500, 2740, GY, 220, -420, 620], beamFrac: .0, door: false },
+  toys: true, npcNear: true, build: buildYard,
+  cps: [[1480, GY, 105], [1900, GY, 112], [2130, GY, 109], [2420, DECK, 100], [2600, DECK, 140]],
+  quests: YQ_SP,
+  spawn() { spawnSP(this.cps[0], -Math.PI / 2, 5); if (!GS.latch) { GS.latch = true; } if (!LIV.ventOpen) { LIV.ventOpen = true; LIV.ventCol.y0 = -999; LIV.ventCol.y1 = -998; } },
+  enter(prev, again) { if (!again && !NET.on && prev === 'garage' && STATE === 'play') unlockKey('ch3'); if (again || NET.on) return; setTimeout(() => say('爸爸', '陳伯就住隔籬，那邊的玻璃屋……小心他的狗。', '#f5f0e6', 3.6), 1500); },
+  npc(dt) { if (STATE === 'play' || STATE === 'fail' || STATE === 'frozen' || STATE === 'end') { updDog(dt); updOldMan(dt); } },
+  detect: detectYard, hear: yardHear, seen: yardSeen,
+  update(dt) {
+    lvT += dt; if (NET.on) return; const L = leader;
+    if (quest === 0 && L.pos.x > 2108) setQuest(1);
+    if (quest === 1 && L.pos.x > 2562 && L.pos.y > DECK - 2) { setQuest(2); toast('進了陽光房'); }
+  },
+  win() { },
+  marker() { if (NET.on) return mpMarker(); return quest === 0 ? YS.gap : quest === 1 ? YS.flap : (YS.chip ? null : YS.chipP); },
+  reset() { if (YS.dog) { YS.dog.mode = 'home'; } if (YS.old) { YS.old.mode = 'read'; YS.old.t = 8; } },
+  eyeText: () => meter > .3 ? '被看見了！躲進長草' : '鄰居的狗和陳伯',
+  hint(L) { if (inGrass(L.pos)) return '躲在長草裡——比較難被看見'; return ''; },
+  onSwitch() { }
+};
+
+// ---------- online co-op: one shared chain of objectives across the whole house (host decides) ----------
+function mpObjectives() {
+  if (!NET.on || NET.client || STATE !== 'play' || !WORLD) return;
+  const P = playerChars().filter(C => !C.frozen); if (!P.length) return;
+  if (quest === 2 && P.every(C => C.pos.x > 316 && C.pos.x < 912)) { setQuest(3); toastW('全隊到齊客廳！', 2.4); }
+  if (quest === 4 && !LIV.ventOpen) ventOpen();
+  if (quest === 4 && P.every(C => C.pos.x > 924)) { setQuest(5); toastW('全隊到了車房！', 2.4); }
+  if (quest === 5 && GS.camBroken) setQuest(6);
+  if (quest === 6 && GS.latch) setQuest(7);
+  if (quest === 7 && P.every(C => C.pos.x > 1462)) { setQuest(8); toastW('全隊出了後園！', 2.4); }
+  if (quest === 8 && P.every(C => C.pos.x > 2108)) setQuest(9);
+  if (quest === 9 && P.every(C => C.pos.x > 2562 && C.pos.y > DECK - 2)) { setQuest(10); toastW('全隊進了陽光房！', 2.4); }
+}
+function mpMarker() {
+  const L = leader;
+  if (quest === 0) { const p = LIV.parts.filter(q => !q.got).sort((a, b) => Math.hypot(a.x - L.pos.x, a.z - L.pos.z) - Math.hypot(b.x - L.pos.x, b.z - L.pos.z))[0]; return p ? V3(p.x, p.y + 2, p.z) : null; }
+  if (quest === 1) return V3(LIV.wedge.cx, 4, LIV.wedge.cz); if (quest === 2) return V3(345, 0, -10); if (quest === 3) return V3(LIV.remote.cx, 46, LIV.remote.cz);
+  if (quest === 4) return L.pos.x > 924 ? null : V3(896, 6, -200); if (quest === 5) return V3(GS.cam.cx, GS.cam.y0 + 14, GS.cam.cz); if (quest === 6) return GS.latchP; if (quest === 7) return L.pos.x > 1462 ? null : V3(1455, GY + 2, 105);
+  if (quest === 8) return L.pos.x > 2108 ? null : YS.gap; if (quest === 9) return L.pos.x > 2562 ? null : YS.flap; return YS.chip ? null : YS.chipP;
+}
+// what the host tells everyone about the garage and the yard
+function netWorldExtra(w) {
+  const A = GS.agent, D = YS.dog, O = YS.old;
+  w.ga = [+A.pos.x.toFixed(1), +A.pos.z.toFixed(1), +A.yaw.toFixed(3), +A.aimT.x.toFixed(1), +A.aimT.y.toFixed(1), +A.aimT.z.toFixed(1), GS.camBroken ? 1 : 0, GS.latch ? 1 : 0];
+  w.ya = [+D.pos.x.toFixed(1), +D.pos.z.toFixed(1), +D.yaw.toFixed(3), D.mode, +D.sleepK.toFixed(2), O.mode, +O.look.x.toFixed(0), +O.look.y.toFixed(0), +O.look.z.toFixed(0), YS.chip ? 1 : 0, LIV.ventOpen ? 1 : 0];
+}
+function netRecvExtra(w) {
+  if (w.ga) { if (w.ga[6] && !GS.camBroken) { GS.cam.y0 = Math.min(GS.cam.y0, 150); } if (w.ga[7] && !GS.latch) latchOpen(null); }
+  if (w.ya) { if (w.ya[9] && !YS.chip) { YS.chip = true; YS.chipM.visible = false; YS.chipHalo.visible = false; } if (w.ya[10] && !LIV.ventOpen) ventOpen(); }
+}
+function netNPCExtra(dt) {
+  const w = NET.npc; if (!w) return;
+  if (w.ga && GS.agent) { const A = GS.agent, g = w.ga, ox = A.pos.x, oz = A.pos.z; const k = 1 - Math.exp(-8 * dt); if (Math.hypot(g[0] - ox, g[1] - oz) > 80) { A.pos.x = g[0]; A.pos.z = g[1]; } else { A.pos.x += (g[0] - ox) * k; A.pos.z += (g[1] - oz) * k; } A.pos.y = GY; A.yaw = angDamp(A.yaw, g[2], 8, dt); A.aimT.set(g[3], g[4], g[5]); A.aim.lerp(A.aimT, 1 - Math.exp(-3 * dt)); agentPose(A, Math.hypot(A.pos.x - ox, A.pos.z - oz), dt); }
+  if (w.ya && YS.dog) { const D = YS.dog, y = w.ya, ox = D.pos.x, oz = D.pos.z; const k = 1 - Math.exp(-8 * dt); D.pos.x += (y[0] - ox) * k; D.pos.z += (y[1] - oz) * k; D.yaw = angDamp(D.yaw, y[2], 8, dt); D.mode = y[3]; D.sleepK = y[4]; dogAnim(D, Math.hypot(D.pos.x - ox, D.pos.z - oz) / Math.max(dt, 1e-3), dt);
+    const O = YS.old; O.mode = y[5]; O.t = 99; O.look.set(y[6], y[7], y[8]); updOldMan(dt); }
+}
 
 // =====================================================================
 //  ONLINE CO-OP  (1–4 players, peer-to-peer over WebRTC — no game server)
@@ -4881,7 +5717,6 @@ function netSendChars() {
   if (c.length) nsend({ t: 'p', lv: LEVEL, c });
 }
 function netRecvChars(d, from) {
-  if (d.lv !== LEVEL) return;
   for (const a of d.c) { const C = chars[a[0]]; if (!C || C.owner !== from) continue; C.net = { x: a[1], y: a[2], z: a[3], yaw: a[4], st: a[5], spd: a[6], fl: a[7] }; C.stamina = a[8]; C.stamMax = a[9]; C.camo = a[10]; C.on = a[11] || null; }
 }
 function netInterp(dt) {
@@ -4905,7 +5740,8 @@ function netSendWorld() {
   w.bat = batteries.map(b => b.got ? 1 : 0); w.vi = VIALS.map(v => v.got ? 1 : 0); w.cr = CRUMBS.map(c => c.got ? 1 : 0);
   w.res = resizables.map(r => [+r.cx.toFixed(2), +r.cz.toFixed(2), +r.y0.toFixed(2), +r.target.toFixed(3), r.gone ? 1 : 0]);
   w.toy = IDS.map(id => { const C = chars[id]; return C.frozen ? [1, C.toyAt === 'hand' ? 2 : C.toyAt === 'box' ? 3 : 1, +(C.toyTilt || 0).toFixed(2), +(C.toyRoll || 0).toFixed(2), +(C.rescueT || 0).toFixed(2)] : 0; });
-  if (LEVEL === 'kitchen') {
+  netWorldExtra(w);
+  {
     const F = TOY.fetch;
     w.m = [+mom.pos.x.toFixed(1), +mom.pos.z.toFixed(1), +mom.yaw.toFixed(3), +mom.aimT.x.toFixed(1), +mom.aimT.y.toFixed(1), +mom.aimT.z.toFixed(1), KM.mode, KM.pt, F ? F.mode : '', F ? +F.t.toFixed(2) : 0, F && F.from ? +F.from.y.toFixed(1) : 0];
     w.k = [+KID.yaw.toFixed(3), +KID.pitch.toFixed(3)];
@@ -4918,7 +5754,7 @@ function netSendWorld() {
 }
 function netRecvWorld(w) {
   syncParty();
-  if (w.lv !== LEVEL || STATE === 'loading') return;
+  if (STATE === 'loading') return;
   if (w.q !== quest) setQuest(w.q); cp = w.cp; PROTO = w.pr; gotBat = w.gb; if (w.cm !== cellMax) { cellMax = w.cm; cells = cellMax; }
   const hide = o => { o.got = true; if (o.g) o.g.visible = false; if (o.halo) o.halo.visible = false; };
   w.bat.forEach((g, i) => { if (g && batteries[i] && !batteries[i].got) hide(batteries[i]); });
@@ -4932,13 +5768,13 @@ function netRecvWorld(w) {
     else if (C.frozen) { C.frozen = false; C.toyAt = null; toyLook(C, false); C.root.rotation.set(0, C.yaw, 0); changed = true; }
   });
   if (changed) refreshPartyHUD();
-  if (w.m) NET.npc = w;
+  if (w.m) NET.npc = w; netRecvExtra(w);
   if (w.liv) { if (w.liv[0] && !LIV.open) { LIV.open = true; SND.creak(); } [...w.liv[1]].forEach((g, i) => { const p = LIV.parts[i]; if (g === '1' && p && !p.got) { p.got = true; p.g.visible = false; p.halo.visible = false; } }); LIV.partsGot = LIV.parts.filter(p => p.got).length; LIV.remoteGot = !!w.liv[2]; }
   if (w.core) { KS.coreGot = !!w.core[0]; KS.carried = !!w.core[1]; KS.carrier = w.core[2] || null; KS.coreDrop = w.core[3] ? V3(...w.core[3]) : null; }
 }
 // the family and the cat on a client: follow the host's snapshot, animate locally
 function netNPC(dt) {
-  const w = NET.npc; if (LEVEL !== 'kitchen' || !w || !w.m) return;
+  const w = NET.npc; if (!w || !w.m) return; netNPCExtra(dt);
   const m = w.m, P = mom.pos, ox = P.x, oz = P.z;
   const dx = m[0] - P.x, dz = m[1] - P.z; if (dx * dx + dz * dz > 3600) { P.x = m[0]; P.z = m[1]; } else { const k = 1 - Math.exp(-8 * dt); P.x += dx * k; P.z += dz * k; }
   mom.yaw = angDamp(mom.yaw, m[2], 8, dt); mom.aimT.set(m[3], m[4], m[5]); KM.mode = m[6]; KM.pt = m[7];
@@ -4977,7 +5813,7 @@ function netMsg(d, from) {
     case 'lease': for (const id of d.ids) chars[id].owner = d.to; break;
     case 'unl': for (const u of d.l) applyUnlease(u); break;
     case 'lvl': if (NET.on && !NET.host && !(d.n === LEVEL && STATE === 'loading')) loadLevel(d.n); break;
-    case 'end': if (NET.on && !NET.host && STATE === 'play') { STATE = 'end'; endT = 0; } break;
+    case 'end': if (NET.on && !NET.host && STATE === 'play') { if (d.e) END_TXT = d.e; STATE = 'end'; endT = 0; } break;
     case 'fail': if (NET.on && !NET.host) { cp = d.cp; fail(); } break;
     case 'say': say(d.n, d.x, d.c, d.d); break;
     case 'toast': toast(d.x, d.d); break;
@@ -5041,6 +5877,7 @@ function hostGet(d) {
   }
 }
 function hostSeen(tp, who) {
+  if (who === 'agent' || who === 'cam') { garageSeen(tp, who); return; } if (who === 'dog' || who === 'old') { yardSeen(tp, who); return; }
   if (who === 'mom' && KM.mode !== 'sus' && KM.mode !== 'fopen' && !TOY.fetch) { KM.prev = KM.mode; KM.mode = 'sus'; KM.susP = tp; KM.trackT = 2.2; if (!KS.said.sus) { KS.said.sus = 1; sayW('太太', '嗯？……什麼東西？', '#f4bb72', 2.2); } }
   if (who === 'mom' && KM.mode === 'sus') { KM.susP = tp; KM.trackT = 2.2; }
   if (who === 'kid') { KID.mode = 'sus'; KID.t = 2.2; KID.look.copy(tp); if (!KS.said.kidsus) { KS.said.kidsus = 1; sayW('女兒', '媽媽……那邊好像有東西在動。', '#e8a0c0', 2.8); } }
@@ -5059,9 +5896,8 @@ function hostFreeze(C, who) {
   netLease([C.id], NET.hostId);
   C.frozen = true; C.toyAt = 'floor'; C.climbing = false; C.mantle = null; C.vel.set(0, 0, 0); C.tumble = 0; C.toyVy = 0; C.crouch = false; C.toyTilt = 0; C.toyRoll = 0; C.stk = false; C.carried = false;
   toyLook(C, true); toyBurst(V3(C.pos.x, C.pos.y + C.h * .5, C.pos.z)); SND.heart(1); tone(1800, 600, .8, .08, 'triangle');
-  if (who === 'kid') sayW('女兒', '媽媽！那裡有隻玩具！', '#e8a0c0', 2.6); else sayW('太太', '咦？……哪來的玩具？', '#f4bb72', 2.4);
-  if (KM.mode === 'sus') KM.mode = 'goto';
-  if (toyReachable(C)) TOY.fetchQ.push(C);
+  toySay(who, sayW);
+  const inK = zoneAt(C.pos, 4); if (!inK || inK.id === 'kitchen') { if (KM.mode === 'sus') KM.mode = 'goto'; if (toyReachable(C)) TOY.fetchQ.push(C); }
   toastW(`${C.S.name}被看見，變成了玩具！`, 3);
   refreshPartyHUD();
   if (playerChars().every(q => q.frozen)) { fail(); nsend({ t: 'fail', cp }); }
@@ -5091,7 +5927,7 @@ $('mpCopy').addEventListener('click', () => { const l = mpLink(); (navigator.cli
 (() => { const m = location.search.match(/[?&]room=([A-Za-z0-9]{4})/); if (m) NET.autoJoin = m[1].toUpperCase(); })();
 requestAnimationFrame(frame);
 init().catch(e => { console.error(e); $('err').textContent = '載入失敗：' + (e && e.stack || e); });
-if (location.hash === '#dev') window.__bn = { step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT }; }, info: () => ({ fps: $('fps').textContent, state: STATE, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
+if (location.hash === '#dev') window.__bn = { scene, THREE, startGame, startChapter, openChapters, step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT, GS, YS, DECK, GY, WC, ventOpen, latchOpen, mpMarker, zoneFloor, KS }; }, info: () => ({ fps: $('fps').textContent, state: STATE, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
 </script>
 </body>
 </html>

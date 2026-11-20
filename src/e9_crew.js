@@ -191,14 +191,14 @@ function updPebbles(dt) {
 // frog: lights out near a socket / lamp / TV
 function addSwitch(name, p, c, R, opts = {}) { CREW.sw.push({ name, p: V3(...p), c: V3(...c), R, until: 0, cd: 0, lights: null, specs: null, ...opts }); }
 function swResolve(s) {
-  if (s.lights) return; const Z = ZONES.kitchen;
+  if (s.lights) return; const Z = ZONES[s.list] || ZONES.kitchen; const specList = s.list === 'garage' ? GS.lights : s.list === 'yard' ? YS.lights : KS.lights;
   s.lights = Z.lights.filter(l => !l.isHemisphereLight && l.intensity >= 150 && l !== KS.coreLight && l !== KS.fridgeLight && l !== LIV.gapLight && (() => { const p = l.getWorldPosition(V3()); return Math.hypot(p.x - s.c.x, p.z - s.c.z) < s.R; })());
   s.orig = s.lights.map(l => l.intensity);
-  s.specs = KS.lights.filter(q => q !== KS.fridgeL && Math.hypot(q.p.x - s.c.x, q.p.z - s.c.z) < s.R);
+  s.specs = specList.filter(q => q !== KS.fridgeL && Math.hypot(q.p.x - s.c.x, q.p.z - s.c.z) < s.R);
 }
 function swNear(C) { let best = null, bd = 9; for (const s of CREW.sw) { const d = C.pos.distanceTo(s.p); if (d < bd) { bd = d; best = s; } } return best; }
 function frogSwitch() {
-  const C = leader; if (!C || C.id !== 'frog' || STATE !== 'play' || LEVEL !== 'kitchen') return;
+  const C = leader; if (!C || C.id !== 'frog' || STATE !== 'play') return;
   const s = swNear(C); if (!s) { toast('附近沒有插座、燈或電器'); return; }
   if (s.until > T) { toast('這裡已經黑了'); return; } if (s.cd > T) { toast(`電路還在冷卻（${Math.ceil(s.cd - T)} 秒）`); return; }
   if (NET.client) nsend({ t: 'swr', i: CREW.sw.indexOf(s), id: C.id }, NET.hostId); else hostSwitch(CREW.sw.indexOf(s), C.id);
@@ -240,7 +240,7 @@ function crewInput(L, ctl) {
 }
 function crewHint(L) {
   if (!L) return '';
-  if (L.id === 'frog' && LEVEL === 'kitchen') { const s = swNear(L); if (s) return s.until > T ? `${s.name}：已經熄了` : s.cd > T ? `${s.name}：電路冷卻中` : `${TOUCH ? '按「電」' : '<kbd>E</kbd>'} 搞電器：${s.name}（附近熄燈 20 秒）`; }
+  if (L.id === 'frog') { const s = swNear(L); if (s) return s.until > T ? `${s.name}：已經熄了` : s.cd > T ? `${s.name}：電路冷卻中` : `${TOUCH ? '按「電」' : '<kbd>E</kbd>'} 搞電器：${s.name}（附近熄燈 20 秒）`; }
   if ((L.id === 'rab' || L.id === 'frog') && L.charge > 0) return `蓄力 ${Math.round(L.charge * 100)}%……放手${L.id === 'rab' ? '起跳' : '跳出去'}`;
   return '';
 }

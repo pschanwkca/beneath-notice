@@ -13,12 +13,14 @@
 //   basement lab   = its old coordinates + BO  (directly under the kitchen)
 //   the wall (hub) = its old coordinates + HO  (a cavity running from the basement floor up to the kitchen floor)
 // =====================================================================
-const BO = V3(28, -336, -229), HO = V3(-400, -340, -94);
+const BO = V3(28, -336, -229), HO = V3(-400, -340, -94); let MP_CPS = null;
 const ZONES = {}, ZL = []; let WORLD = false;
 function zoneDef(id, o) { const Z = Object.assign({ id, off: V3(), core: [], lv: null, fx: null, cols: [], lights: [], beams: [], dust: null, env: null, near: false, prepped: false }, o); ZONES[id] = Z; ZL.push(Z); return Z; }
-zoneDef('kitchen', { floor: 0, core: [[-312, 920, -12, 300, -250, 250], [-432, -312, -2, 40, -126, -74]], env: 'kitchen' });
+zoneDef('kitchen', { floor: 0, core: [[-312, 912, -12, 300, -250, 250], [-432, -312, -2, 40, -126, -74]], peek: [[930, 1060, -40, 60, -260, -120]], env: 'kitchen' });
 // peek: spots in other places from which you can see in (through a mouse hole) — draw this place too
 zoneDef('wall', { floor: HO.y + 4, off: HO, core: [[-530, -312, -360, -2, -140, -52]], peek: [[-282, -140, -345, -250, -160, 10], [-312, -160, -12, 90, -200, 0]], env: 'hub' });
+zoneDef('garage', { floor: -20, core: [[912, 1460, -40, 300, -270, 312]], peek: [[820, 912, -10, 70, -240, -150], [1460, 1640, -40, 120, 20, 200]], env: 'garage' });
+zoneDef('yard', { floor: -20, core: [[1460, 2770, -40, 1000, -460, 660]], env: 'yard' });
 zoneDef('basement', { floor: BO.y, off: BO, core: [[-312, 338, -360, -60, -549, 33], [-282, -160, -60, 150, -549, -245]], peek: [[-390, -312, -345, -295, -130, -50]], env: 'basement' });
 function inZone(Z, x, y, z, m = 0) { for (const b of Z.core) if (x > b[0] - m && x < b[1] + m && y > b[2] - m && y < b[3] + m && z > b[4] - m && z < b[5] + m) return true; return false; }
 // floor height of the place a point is in (the kitchen sits at 0, the basement and the wall far below)
@@ -50,7 +52,9 @@ function buildZone(Z) {
 }
 async function buildWorld(prog) {
   if (WORLD) return;
-  for (const id of ['basement', 'wall', 'kitchen']) { if (prog) await prog(id); buildZone(ZONES[id]); }
+  for (const id of ['basement', 'wall', 'kitchen', 'garage', 'yard']) { if (prog) await prog(id); buildZone(ZONES[id]); }
+  ZONES.garage.prepped = ZONES.yard.prepped = true;
+  MP_CPS = [...LEVELS.kitchen.cps, ...LEVELS.garage.cps, ...LEVELS.yard.cps];
   for (let i = furMeshes.length - 1; i >= 0; i--) if (!inScene(furMeshes[i])) furMeshes.splice(i, 1);
   partitionCols(); setupLightPool(); WORLD = true;
 }
@@ -164,10 +168,10 @@ function zoneTick(dt) {
   for (const Z of ZL) if (Z.near && Z.dust) { const U = Z.dust.material.uniforms; U.uT.value = T; for (let i = 0; i < 4; i++) U.uBK.value[i] = Z.beams[i] ? Z.beams[i].k : 0; }
   swTick(); lightTick(dt);
   // single player: the rules of the place the leader walks into take over
-  if (!NET.on && leader && (STATE === 'play' || STATE === 'frozen')) {
+  if (leader && mine(leader) && (STATE === 'play' || STATE === 'frozen')) {
     const cur = ZONES[LEVEL]; if (!cur || !inZone(cur, lp.x, lp.y, lp.z, 2)) { const nz = zoneAt(lp); if (nz && nz.id !== LEVEL) enterZone(nz.id); }
   }
-  updNpcWalk(dt); updBanner(dt);
+  updNpcWalk(dt); updBanner(dt); updSecCam(dt); updGarageWorld(dt); updYardWorld(dt);
 }
 // a place's rules take over (no loading, nothing moves)
 function enterZone(id, quiet) {
@@ -175,6 +179,7 @@ function enterZone(id, quiet) {
   if (P && prev !== id) { P.save = { qs: QUESTS, q: quest, cp, lvT }; if (LVL && LVL.leave) LVL.leave(id); }
   LEVEL = id; LVL = D; LV = Z.lv; LVFX = Z.fx; beams = Z.beams; dust = Z.dust; CPS = D.cps;
   const again = !quiet && !!Z.save;   // walking back into a place you've been: carry on where you left off
+  if (NET.on && MP_CPS) { CPS = MP_CPS; QUESTS = MP_QUESTS; setQuest(quest); if (!quiet && !Z.mpSeen) { Z.mpSeen = true; if (D.mpChapter) chapterBanner(D.mpChapter, D.title); } if (party.length && PORTRAITS.dad) buildPartyHUD(); return; }
   if (again) { QUESTS = Z.save.qs; cp = Z.save.cp; lvT = Z.save.lvT; setQuest(Z.save.q); } else { QUESTS = D.quests; cp = 0; lvT = 0; setQuest(0); }
   if (D.enter) D.enter(prev, again);
   if (!quiet && !again) chapterBanner(D.chapter, D.title);

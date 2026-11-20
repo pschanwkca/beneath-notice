@@ -1,0 +1,6 @@
+[
+ {"click": "#go", "wait": 1000},
+ {"eval": "(async()=>{const b=window.__bn; for(let i=0;i<60 && b.state!=='play';i++){ b.press('Space'); await new Promise(r=>setTimeout(r,200));} window.__NODET=true; b.step(5); document.querySelectorAll('#hud,.hud,#quest,#party,#tool').forEach(e=>e.style.opacity=0); return b.info().state})()"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; const L=b.leader; L.pos.set(1640,W.GY,140); b.cam.yaw=-Math.PI*.5; b.cam.pitch=.3; b.cam.dist=80; b.step(240); return b.LEVEL})()", "wait": 200, "shot": "y4_yardwide"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; const L=b.leader; L.pos.set(2200,W.GY,180); b.cam.yaw=-Math.PI*.35; b.cam.pitch=.2; b.cam.dist=70; b.step(90); return [b.LEVEL, W.YS.dog.mode]})()", "wait": 200, "shot": "y5_dog"}
+]

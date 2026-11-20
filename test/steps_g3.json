@@ -1,0 +1,7 @@
+[
+ {"click": "#go", "wait": 1000},
+ {"eval": "(async()=>{const b=window.__bn; for(let i=0;i<60 && b.state!=='play';i++){ b.press('Space'); await new Promise(r=>setTimeout(r,200));} window.__NODET=true; for(let k=0;k<20;k++) b.step(1); return b.info().state})()"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; window.T=(x,y,z)=>{const L=b.leader; L.pos.set(x,y,z); L.vel.set(0,0,0); L.climbing=false; L.mantle=null; L.stamina=100; for(const F of b.party) if(F!==L){F.pos.copy(L.pos); F.pos.x-=4; F.disp&&F.disp.copy(F.pos); F.queue=[];}}; window.H=(k,n,e)=>{b.keys[k]=true; const o=[]; for(let i=0;i<n;i++){ b.step(1); if(i%(e||15)==(e||15)-1) o.push(b.leader.pos.toArray().map(v=>+v.toFixed(1)).concat([b.leader.state])); } b.keys[k]=false; return o}; W.ventOpen(); T(870,0,-200); b.step(10); b.cam.yaw=-Math.PI/2; const tr=H('KeyW',420,20); return {tr,lvl:b.LEVEL}})()"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; T(1187,W.GY,-188); b.step(10); b.cam.yaw=0; const tr=H('KeyW',780,30); return {tr,lvl:b.LEVEL,q:b.quest,st:b.leader.stamina}})()", "shot":"s6_bench"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; T(1150,W.GY,-230); b.step(10); b.cam.yaw=-Math.PI/2; const tr=H('KeyW',300,15); return {tr,q:b.quest}})()"}
+]

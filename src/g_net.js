@@ -184,7 +184,6 @@ function netSendChars() {
   if (c.length) nsend({ t: 'p', lv: LEVEL, c });
 }
 function netRecvChars(d, from) {
-  if (d.lv !== LEVEL) return;
   for (const a of d.c) { const C = chars[a[0]]; if (!C || C.owner !== from) continue; C.net = { x: a[1], y: a[2], z: a[3], yaw: a[4], st: a[5], spd: a[6], fl: a[7] }; C.stamina = a[8]; C.stamMax = a[9]; C.camo = a[10]; C.on = a[11] || null; }
 }
 function netInterp(dt) {
@@ -208,7 +207,8 @@ function netSendWorld() {
   w.bat = batteries.map(b => b.got ? 1 : 0); w.vi = VIALS.map(v => v.got ? 1 : 0); w.cr = CRUMBS.map(c => c.got ? 1 : 0);
   w.res = resizables.map(r => [+r.cx.toFixed(2), +r.cz.toFixed(2), +r.y0.toFixed(2), +r.target.toFixed(3), r.gone ? 1 : 0]);
   w.toy = IDS.map(id => { const C = chars[id]; return C.frozen ? [1, C.toyAt === 'hand' ? 2 : C.toyAt === 'box' ? 3 : 1, +(C.toyTilt || 0).toFixed(2), +(C.toyRoll || 0).toFixed(2), +(C.rescueT || 0).toFixed(2)] : 0; });
-  if (LEVEL === 'kitchen') {
+  netWorldExtra(w);
+  {
     const F = TOY.fetch;
     w.m = [+mom.pos.x.toFixed(1), +mom.pos.z.toFixed(1), +mom.yaw.toFixed(3), +mom.aimT.x.toFixed(1), +mom.aimT.y.toFixed(1), +mom.aimT.z.toFixed(1), KM.mode, KM.pt, F ? F.mode : '', F ? +F.t.toFixed(2) : 0, F && F.from ? +F.from.y.toFixed(1) : 0];
     w.k = [+KID.yaw.toFixed(3), +KID.pitch.toFixed(3)];
@@ -221,7 +221,7 @@ function netSendWorld() {
 }
 function netRecvWorld(w) {
   syncParty();
-  if (w.lv !== LEVEL || STATE === 'loading') return;
+  if (STATE === 'loading') return;
   if (w.q !== quest) setQuest(w.q); cp = w.cp; PROTO = w.pr; gotBat = w.gb; if (w.cm !== cellMax) { cellMax = w.cm; cells = cellMax; }
   const hide = o => { o.got = true; if (o.g) o.g.visible = false; if (o.halo) o.halo.visible = false; };
   w.bat.forEach((g, i) => { if (g && batteries[i] && !batteries[i].got) hide(batteries[i]); });
@@ -235,13 +235,13 @@ function netRecvWorld(w) {
     else if (C.frozen) { C.frozen = false; C.toyAt = null; toyLook(C, false); C.root.rotation.set(0, C.yaw, 0); changed = true; }
   });
   if (changed) refreshPartyHUD();
-  if (w.m) NET.npc = w;
+  if (w.m) NET.npc = w; netRecvExtra(w);
   if (w.liv) { if (w.liv[0] && !LIV.open) { LIV.open = true; SND.creak(); } [...w.liv[1]].forEach((g, i) => { const p = LIV.parts[i]; if (g === '1' && p && !p.got) { p.got = true; p.g.visible = false; p.halo.visible = false; } }); LIV.partsGot = LIV.parts.filter(p => p.got).length; LIV.remoteGot = !!w.liv[2]; }
   if (w.core) { KS.coreGot = !!w.core[0]; KS.carried = !!w.core[1]; KS.carrier = w.core[2] || null; KS.coreDrop = w.core[3] ? V3(...w.core[3]) : null; }
 }
 // the family and the cat on a client: follow the host's snapshot, animate locally
 function netNPC(dt) {
-  const w = NET.npc; if (LEVEL !== 'kitchen' || !w || !w.m) return;
+  const w = NET.npc; if (!w || !w.m) return; netNPCExtra(dt);
   const m = w.m, P = mom.pos, ox = P.x, oz = P.z;
   const dx = m[0] - P.x, dz = m[1] - P.z; if (dx * dx + dz * dz > 3600) { P.x = m[0]; P.z = m[1]; } else { const k = 1 - Math.exp(-8 * dt); P.x += dx * k; P.z += dz * k; }
   mom.yaw = angDamp(mom.yaw, m[2], 8, dt); mom.aimT.set(m[3], m[4], m[5]); KM.mode = m[6]; KM.pt = m[7];
@@ -280,7 +280,7 @@ function netMsg(d, from) {
     case 'lease': for (const id of d.ids) chars[id].owner = d.to; break;
     case 'unl': for (const u of d.l) applyUnlease(u); break;
     case 'lvl': if (NET.on && !NET.host && !(d.n === LEVEL && STATE === 'loading')) loadLevel(d.n); break;
-    case 'end': if (NET.on && !NET.host && STATE === 'play') { STATE = 'end'; endT = 0; } break;
+    case 'end': if (NET.on && !NET.host && STATE === 'play') { if (d.e) END_TXT = d.e; STATE = 'end'; endT = 0; } break;
     case 'fail': if (NET.on && !NET.host) { cp = d.cp; fail(); } break;
     case 'say': say(d.n, d.x, d.c, d.d); break;
     case 'toast': toast(d.x, d.d); break;
@@ -344,6 +344,7 @@ function hostGet(d) {
   }
 }
 function hostSeen(tp, who) {
+  if (who === 'agent' || who === 'cam') { garageSeen(tp, who); return; } if (who === 'dog' || who === 'old') { yardSeen(tp, who); return; }
   if (who === 'mom' && KM.mode !== 'sus' && KM.mode !== 'fopen' && !TOY.fetch) { KM.prev = KM.mode; KM.mode = 'sus'; KM.susP = tp; KM.trackT = 2.2; if (!KS.said.sus) { KS.said.sus = 1; sayW('太太', '嗯？……什麼東西？', '#f4bb72', 2.2); } }
   if (who === 'mom' && KM.mode === 'sus') { KM.susP = tp; KM.trackT = 2.2; }
   if (who === 'kid') { KID.mode = 'sus'; KID.t = 2.2; KID.look.copy(tp); if (!KS.said.kidsus) { KS.said.kidsus = 1; sayW('女兒', '媽媽……那邊好像有東西在動。', '#e8a0c0', 2.8); } }
@@ -362,9 +363,8 @@ function hostFreeze(C, who) {
   netLease([C.id], NET.hostId);
   C.frozen = true; C.toyAt = 'floor'; C.climbing = false; C.mantle = null; C.vel.set(0, 0, 0); C.tumble = 0; C.toyVy = 0; C.crouch = false; C.toyTilt = 0; C.toyRoll = 0; C.stk = false; C.carried = false;
   toyLook(C, true); toyBurst(V3(C.pos.x, C.pos.y + C.h * .5, C.pos.z)); SND.heart(1); tone(1800, 600, .8, .08, 'triangle');
-  if (who === 'kid') sayW('女兒', '媽媽！那裡有隻玩具！', '#e8a0c0', 2.6); else sayW('太太', '咦？……哪來的玩具？', '#f4bb72', 2.4);
-  if (KM.mode === 'sus') KM.mode = 'goto';
-  if (toyReachable(C)) TOY.fetchQ.push(C);
+  toySay(who, sayW);
+  const inK = zoneAt(C.pos, 4); if (!inK || inK.id === 'kitchen') { if (KM.mode === 'sus') KM.mode = 'goto'; if (toyReachable(C)) TOY.fetchQ.push(C); }
   toastW(`${C.S.name}被看見，變成了玩具！`, 3);
   refreshPartyHUD();
   if (playerChars().every(q => q.frozen)) { fail(); nsend({ t: 'fail', cp }); }

@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>BENEATH NOTICE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -116,7 +116,17 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--fain
 .chap i{display:block;width:72px;height:1px;margin:14px auto 0;background:linear-gradient(90deg,transparent,var(--amber),transparent)}
 .pmp{margin-top:22px;padding-top:18px;border-top:1px solid var(--faint);display:grid;gap:12px;justify-items:center}
 .pmp[hidden]{display:none}
-#roster,#help{z-index:30}
+#roster,#help,#chaps{z-index:30}
+.cbox{width:min(760px,94vw)}
+.clist{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px;margin-bottom:6px}
+.ch{display:block;width:100%;text-align:left;padding:14px 14px 13px;border-radius:12px;border:1px solid var(--faint);background:rgba(245,240,230,.03);color:var(--ink);box-shadow:none;font:inherit;cursor:pointer;transition:transform .16s,border-color .16s,background .16s}
+.ch:hover{transform:translateY(-2px);border-color:rgba(244,187,114,.55);background:rgba(244,187,114,.07)}
+.ch small{display:block;font:600 11px "Noto Sans TC";letter-spacing:.2em;color:var(--amber)}
+.ch b{display:block;font:700 17px/1.3 "Noto Sans TC";margin:5px 0 6px}
+.ch em{display:block;font-style:normal;font-size:12px;line-height:1.5;color:var(--dim)}
+.ch.lock{cursor:default;opacity:.46;transform:none;background:transparent;border-style:dashed}
+.ch.lock small{color:var(--dim)}
+@media (max-height:520px){.ch{padding:10px 12px}.ch b{font-size:15px;margin:3px 0 4px}.ch em{font-size:11px}}
 .pcard{max-width:520px}
 body.paused .hud{opacity:0}
 #pause{background:radial-gradient(ellipse at 50% 50%,rgba(7,9,12,.55),rgba(7,9,12,.88))}
@@ -187,7 +197,7 @@ html.touch .desk{display:none}
 .tb:hover{transform:none;box-shadow:none}
 .tb.pr{transform:scale(.92);background:rgba(244,187,114,.9);color:#10131a}
 .tb.dn{border-color:var(--amber);color:var(--amber)}
-.tbtns{position:absolute;right:calc(16px + env(safe-area-inset-right));bottom:16px;width:230px;height:230px;pointer-events:none}
+.tbtns{position:absolute;right:calc(16px + env(safe-area-inset-right));bottom:calc(10px + env(safe-area-inset-bottom));width:230px;height:230px;pointer-events:none}
 .tbtns .tb{pointer-events:auto}
 #tbJump{right:0;bottom:0;width:86px;height:86px;font-size:17px}
 #tbCrouch{right:113px;bottom:13px}
@@ -367,7 +377,7 @@ html.touch .mpchip{bottom:auto;top:62px}
     <p class="tag">一次失控的縮小實驗，你只剩 5 公分高。<br>家人就在樓上找你，但絕對不能被他們看見。</p>
     <div class="row">
       <button id="go">序章：地庫</button>
-      <button id="go1" class="ghost">第一章：牆內與廚房</button>
+      <button id="goCh" class="ghost">選擇章節</button>
       <button id="goMP" class="ghost mpbtn">多人連線 · 最多 8 人</button>
       <button id="goRoster" class="ghost">角色</button>
       <div class="sel" id="qsel" role="group" aria-label="畫質">
@@ -413,6 +423,14 @@ html.touch .mpchip{bottom:auto;top:62px}
       <div id="mpErr" class="mperr"></div>
       <div class="mpact"><button id="mpStart" disabled>開始</button><button id="mpLeave" class="ghost small">離開房間</button></div>
     </div>
+  </div>
+</div>
+
+<div class="ov" id="chaps" hidden>
+  <div class="rbox panel cbox">
+    <div class="mph"><b>章節</b><span id="chapsN"></span></div>
+    <div class="clist" id="chapsList"></div>
+    <div class="mpact"><button id="chapsClose" class="ghost small">關閉</button></div>
   </div>
 </div>
 

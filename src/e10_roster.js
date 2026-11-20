@@ -10,11 +10,11 @@ const ROSTER = [
   { id: 'hog', key: 'prologue', how: '完成序章（地庫實驗室）' },
   { id: 'rab', key: 'ch1', how: '完成第一章（把核心帶回牆腳）' },
   { id: 'coon', key: 'ch2', how: '完成第二章（客廳的電池）' },
-  { id: 'frog', key: 'bat6', how: '單人模式集齊 6 粒鈕扣電池' },
-  { id: 'f1', future: true, how: '第三章：車房（製作中）' },
-  { id: 'f2', future: true, how: '第四章：鄰居家（製作中）' },
-  { id: 'f3', future: true, how: '第五章：馬路（製作中）' },
-  { id: 'f4', future: true, how: '第六章：公園（製作中）' }
+  { id: 'frog', key: 'bat6', how: '單人模式集齊全部鈕扣電池' },
+  { id: 'f1', future: true, how: '第五章：馬路（製作中）' },
+  { id: 'f2', future: true, how: '第六章：公園（製作中）' },
+  { id: 'f3', future: true, how: '第七章（製作中）' },
+  { id: 'f4', future: true, how: '第八章（製作中）' }
 ];
 const UNL = (() => { try { return JSON.parse(localStorage.getItem('bn_unlock_v1') || '{}') || {}; } catch (e) { return {}; } })();
 function isUnlocked(id) { const r = ROSTER.find(q => q.id === id); return !!r && !r.future && (!r.key || !!UNL[r.key]); }
@@ -89,3 +89,27 @@ function openHelp() {
   $('helpAbil').innerHTML = who.map(id => { const S = SP[id]; return `<div>${PORTRAITS[id] ? `<img alt="" src="${PORTRAITS[id]}">` : ''}<span><b style="color:${S.col}">${S.name} · ${S.abil}</b><small>${S.desc}</small></span></div>`; }).join('');
   $('help').hidden = false;
 }
+
+// ---------- chapter list (title screen) ----------
+const CHAPS = [
+  { n: '序章', t: '地庫實驗室', d: '縮小實驗失控。由工作枱爬到地上，找出路。', go: () => startGame(0) },
+  { n: '第一、二章', t: '牆內・廚房・客廳', d: '穿過牆內的老鼠洞，避開太太、女兒和貓。', go: () => startGame(1) },
+  { n: '第三章', t: '車房', d: 'Origin Dynamics 的人在搜車房。修好機座，從狗門逃出去。', key: 'ch2', lock: '完成第二章解鎖', go: () => startChapter('garage') },
+  { n: '第四章', t: '後園與鄰居家', d: '穿過圍欄、避開陳伯的狗，到陽光房找控制晶片。', key: 'ch3', lock: '完成第三章解鎖', go: () => startChapter('yard') },
+  { n: '第五章', t: '馬路', d: '製作中', future: true }
+];
+function startChapter(name) { $('start').hidden = true; playT = 0; fails = 0; requestLock(); loadLevel(name); }
+function openChapters() {
+  const L = $('chapsList'); L.innerHTML = '';
+  for (const c of CHAPS) {
+    const open = !c.future && (!c.key || !!UNL[c.key]); const b = document.createElement('button');
+    b.className = 'ch' + (open ? '' : ' lock'); b.disabled = !open;
+    b.innerHTML = `<small>${c.n}</small><b>${c.t}</b><em>${open ? c.d : c.future ? '製作中' : c.lock}</em>`;
+    if (open) b.addEventListener('click', () => { $('chaps').hidden = true; audioInit(); c.go(); });
+    L.appendChild(b);
+  }
+  $('chapsN').textContent = `${CHAPS.filter(c => !c.future && (!c.key || UNL[c.key])).length} / ${CHAPS.filter(c => !c.future).length} 已解鎖`;
+  $('chaps').hidden = false;
+}
+$('goCh').addEventListener('click', () => { audioInit(); openChapters(); });
+$('chapsClose').addEventListener('click', () => { $('chaps').hidden = true; });

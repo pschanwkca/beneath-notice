@@ -14,7 +14,8 @@ function buildLivingRoom(K) {
   const floorM = new THREE.MeshStandardMaterial({ color: 0x8a5c3a, roughness: .7, map: K.floor.map || null });
   box(X0 - 2, X1 + 12, -10, 0, -240, 240, floorM, { uv: 140, cast: false });
   box(X0 - 2, X1 + 12, 260, 270, -240, 240, K.ceil, { cast: false });
-  box(X0, X1 + 12, 0, 260, -244, -232, wallM, { uv: 120 }); box(X1, X1 + 12, 0, 260, -232, 232, wallM, { uv: 120 });
+  box(X0, X1 + 12, 0, 260, -244, -232, wallM, { uv: 120 }); // far wall: the vent near the floor leads through a duct into the garage
+  box(X1, X1 + 12, 0, 260, -232, -214, wallM, { uv: 120 }); box(X1, X1 + 12, 0, 260, -186, 232, wallM, { uv: 120 }); box(X1, X1 + 12, 0, 4, -214, -186, wallM, { uv: 120 }); box(X1, X1 + 12, 24, 260, -214, -186, wallM, { uv: 120 });
   // front wall with the window opening (x 700–850, y 100–210)
   box(X0, 700, 0, 260, 232, 244, wallM, { uv: 120 }); box(850, X1 + 12, 0, 260, 232, 244, wallM, { uv: 120 }); box(700, 850, 0, 100, 232, 244, wallM, { uv: 120 }); box(700, 850, 210, 260, 232, 244, wallM, { uv: 120 });
   box(X0, X1, 0, 9, -232, -230.5, M.white, { col: false }); box(X0, X1, 0, 9, 230.5, 232, M.white, { col: false }); box(X1 - 1.5, X1, 0, 9, -230, 230, M.white, { col: false });
@@ -98,7 +99,11 @@ function buildLivingRoom(K) {
   // pendant over the dining table (shadow-casting)
   cyl(490, -130, .3, 200, 260, M.black, { col: false, seg: 6 }); mesh(new THREE.SphereGeometry(16, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2), K.shade, 490, 195, -130); spotL(0xffd2a0, 52000, V3(490, 190, -130), V3(490, 0, -130), .95, .7, 1024, 10, 500);
   // the vent out (online co-op exit)
-  box(899, 900, 4, 24, -214, -186, M.black, { col: false }); for (let i = 0; i < 6; i++) box(898.4, 899.4, 6 + i * 3.2, 7.2 + i * 3.2, -213, -187, M.dsteel, { col: false });
+  // vent grille: hinged at the top, swings up once the way on is open
+  { const g = new THREE.Group(); g.position.set(898.6, 24, -200); LV.add(g); LIV.grille = g; const gm = new THREE.MeshStandardMaterial({ color: 0xd8dde2, metalness: .8, roughness: .35 });
+    mesh(new THREE.BoxGeometry(1.2, 21, 30), gm, 0, -10.5, 0, { parent: g }).visible = false; for (let i = 0; i < 6; i++) mesh(new THREE.BoxGeometry(1.4, 1.4, 27), gm, .2, -2.6 - i * 3.2, 0, { parent: g }); for (const z of [-14, 14]) mesh(new THREE.BoxGeometry(1.6, 21, 1.6), gm, 0, -10.5, z, { parent: g }); mesh(new THREE.BoxGeometry(1.6, 1.6, 30), gm, 0, -.8, 0, { parent: g }); mesh(new THREE.BoxGeometry(1.6, 1.6, 30), gm, 0, -20.2, 0, { parent: g });
+    LIV.ventCol = { t: 'b', x0: 897.6, x1: 900, y0: 4, y1: 24, z0: -214, z1: -186 }; cols.push(LIV.ventCol); }
+  box(900, 912, 3.4, 4, -214, -186, new THREE.MeshStandardMaterial({ color: 0xb8bec4, metalness: .85, roughness: .4 }), { col: false });
   // houseplant + toy ball for good measure
   cyl(860, -150, 14, 0, 26, new THREE.MeshPhysicalMaterial({ color: 0xe8e2d6, roughness: .4 }), { seg: 28 }); const leaf = furMat({ color: 0x3f7a33, len: 3, den: .45, droop: -.2, clump: .7, rimK: .12, root: .45 }); const lf = furMesh(new THREE.SphereGeometry(18, 28, 18), leaf); lf.position.set(860, 46, -150); LV.add(lf); cols.push({ t: 'c', x: 860, z: -150, r: 18, y0: 28, y1: 64 });
   const pb = new THREE.MeshPhysicalMaterial({ color: 0x4ab0e0, roughness: .3, clearcoat: .8 }); resGroup(cmGroup(14, 14, 14, ({ part }) => { part(new THREE.SphereGeometry(7, 28, 20), pb, 0, 0, 0); }, [pb]), 640, 120, 0, 14, 14, 14, .3, 5, '皮球', true);
@@ -130,6 +135,7 @@ function updLiving(dt) {
   const tgt = LIV.open ? .62 : .025; const pa = LIV.a; LIV.a = damp(LIV.a, tgt, LIV.open ? 1.3 : 6, dt); LIV.door.rotation.y = LIV.a;
   if (Math.abs(LIV.a - pa) > 1e-5) updDoorSegs();
   LIV.gapLight.intensity = 300 + LIV.a * 4000;
+  if (LIV.grille) LIV.grille.rotation.z = damp(LIV.grille.rotation.z, LIV.ventOpen ? 1.45 : 0, 3, dt);
   for (const f of LIV.fish) { f.ph += dt * .5; f.m.position.set(670 + Math.cos(f.ph) * f.r * 1.6, f.y + Math.sin(f.ph * 2.3) * 2, -207 + Math.sin(f.ph) * 10); f.m.rotation.y = -f.ph + Math.PI; }
   if (LIV.tvMat) { if (LIV.tvOff) { LIV.tvMat.color.setRGB(.015, .016, .02); LIV.tvLight.intensity = 0; } else { const fl = .8 + Math.sin(T * 7) * .1 + (rnd() < .05 ? .3 : 0); LIV.tvMat.color.setRGB(.35 * fl, .5 * fl, .75 * fl); LIV.tvLight.intensity = 2200 * fl; } }
   // pickups for the objectives
@@ -157,9 +163,9 @@ function livingGet(d, C) {
     for (let i = 0; i < 30; i++) emit(V3(r.cx, r.y0 + 3, r.cz), V3(R(-10, 10), R(4, 20), R(-10, 10)), new THREE.Color(.6, 2, 1.9), R(.15, .35), R(.4, 1), 30, 2);
     if (KS.mp) { setQuest(4); toastW('電池到手！全隊到客廳最裡面的通風口集合', 3.4); sayW(C.S.name, '電池拿到了！去通風口！', C.S.col, 2.6); }
     else {
-      say('爸爸', '兩粒電池……夠核心撐一陣子了。', '#f5f0e6', 3.2);
-      END_TXT = ['第二章（試玩）· 完', '遙控器的電池', '核心又亮起來了。下一站：魚缸——還有車房裡的工作枱。']; unlockKey('ch2');
-      setTimeout(() => { if (STATE === 'play') { STATE = 'end'; endT = 0; } }, 1800);
+      say('爸爸', '兩粒電池……夠核心撐一陣子了。', '#f5f0e6', 3.2); unlockKey('ch2');
+      // chapter two is done; the vent behind the TV cabinet leads on to the garage — no stopping
+      setTimeout(() => { chapterBanner('第二章 · 完', '核心又亮起來了'); ventOpen(); QUESTS = SP_Q2B; setQuest(0); KS.ch3 = true; say('爸爸', '客廳盡頭的通風口通去車房。我以前的工作枱在那裡——可以修好縮小機。', '#f5f0e6', 4.2); }, 2600);
     }
   }
 }
@@ -179,12 +185,14 @@ const MP_QUESTS = [
   { t: '打開通往客廳的門', s: '門被門擋卡住了——熊可以推開門擋，或者爸爸把它縮小' },
   { t: '全隊進入客廳', s: '所有玩家都要走過去（電腦隊友會跟着）' },
   { t: '拿走遙控器的電池', s: '遙控器在客廳的咖啡枱上' },
-  { t: '從通風口離開', s: '客廳最裡面的牆腳有通風口，全隊一齊到就可以離開' }
+  { t: '爬過通風口去車房', s: '電池到手，通風口的蓋打開了——全隊一齊爬過去' },
+  { t: '弄跌監視鏡頭', s: '鐵架頂有部 Origin Dynamics 的監視鏡頭——爬上去把它推跌（熊推、阿刺撞都得）' },
+  { t: '打開狗門的門扣', s: '側門下面有狗門，門扣太高——疊羅漢、跳跳跳上去，或者推木箱過去墊腳' },
+  { t: '全隊由狗門出去後園', s: '所有玩家都要出去' },
+  { t: '全隊穿過圍欄的爛板', s: '去隔籬陳伯的後園。小心灑水器，長草可以躲' },
+  { t: '全隊從貓門進入陽光房', s: '鄰居的狗會吠，陳伯會望出來' },
+  { t: '拿走書枱上的控制晶片', s: '陳伯的書枱在陽光房最入面' }
 ];
-function livingHost() {
-  if (!NET.on || NET.client || STATE !== 'play' || LEVEL !== 'kitchen') return;
-  const P = playerChars().filter(C => !C.frozen);
-  if (quest === 2 && P.length && P.every(C => C.pos.x > 316)) { setQuest(3); toastW('全隊到齊客廳！', 2.4); }
-  if (quest === 4 && P.length && P.every(C => C.pos.distanceTo(LIV.vent) < 30)) { STATE = 'end'; endT = 0; sayW('小彩', '出去了！電池和零件都齊了。', '#9fd86b', 3); nsend({ t: 'end' }); }
-  else if (quest === 4 && P.some(C => C.pos.distanceTo(LIV.vent) < 30) && (!LIV.waitT || T - LIV.waitT > 6)) { LIV.waitT = T; toastW('通風口：要全隊一齊到才可以離開', 2.6); }
-}
+const SP_Q2B = [{ t: '爬過通風口去車房', s: '爸爸：車房的工作枱有我以前的工具，可以修好縮小機' }];
+function ventOpen() { if (LIV.ventOpen) return; LIV.ventOpen = true; LIV.ventCol.y0 = -999; LIV.ventCol.y1 = -998; SND.creak(); toastW('通風口的蓋打開了！', 2.6); }
+function livingHost() { }

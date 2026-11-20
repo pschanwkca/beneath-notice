@@ -121,7 +121,20 @@ function moveVert(C, dt) {
   ceil(C);
 }
 function ceil(C) {
-  for (const c of colsNear(C.pos.x, C.pos.y + 1, C.pos.z)) { if (c.y0 < C.pos.y + C.h * .55 || C.pos.y + C.h <= c.y0) continue; if (!xzHit(c, C.pos.x, C.pos.z, C.r * .7, _h)) continue; C.pos.y = c.y0 - C.h; if (C.vel.y > 0) C.vel.y = 0; }
+  let hit = null;
+  for (const c of colsNear(C.pos.x, C.pos.y + 1, C.pos.z)) { if (c.y0 < C.pos.y + C.h * .55 || C.pos.y + C.h <= c.y0) continue; if (!xzHit(c, C.pos.x, C.pos.z, C.r * .7, _h)) continue; C.pos.y = c.y0 - C.h; if (C.vel.y > 0) C.vel.y = 0; hit = c; }
+  return hit;
+}
+// climbing up into a thin overhang (a table top over its leg, a counter lip): reach round the edge and pull up onto it
+function xzIn(c, x, z) { return c.t === 'b' ? x > c.x0 && x < c.x1 && z > c.z0 && z < c.z1 : Math.hypot(x - c.x, z - c.z) < c.r; }
+function lipGrab(C, n, c) {
+  if (!c || c.slick || c.y1 - c.y0 > 6.5 || c.y0 < -900) return false;
+  const reach = C.r + 5; if (xzIn(c, C.pos.x + n.x * reach, C.pos.z + n.z * reach)) return false;   // the lip sticks out too far
+  let ox = 0; while (ox < reach && xzIn(c, C.pos.x + n.x * ox, C.pos.z + n.z * ox)) ox += .5;   // how far out its edge is
+  const px = C.pos.x - n.x * (C.r + .7), pz = C.pos.z - n.z * (C.r + .7);
+  if (!xzIn(c, px, pz) || solidAt(px, c.y1 + .3, pz) || solidAt(px, c.y1 + C.h * .5, pz)) return false;
+  C.mantle = { from: C.pos.clone(), to: V3(px, c.y1, pz), t: 0, out: V3(n.x * (ox + C.r * .6), 0, n.z * (ox + C.r * .6)), dur: .5 };
+  return true;
 }
 function land(C, imp) {
   if (C !== leader) return;
@@ -149,8 +162,9 @@ function updLeader(C, dt) {
   C.climbCD = Math.max(0, (C.climbCD || 0) - dt); if (C.rollT > 0) C.rollT -= dt; C.overhang = Math.max(0, (C.overhang || 0) - dt); C.pushing = false;
   if (C.tumble > 0) C.tumble -= dt;
   if (C.mantle) {
-    const M = C.mantle; M.t += dt / .3; const t = Math.min(1, M.t);
+    const M = C.mantle; M.t += dt / (M.dur || .3); const t = Math.min(1, M.t);
     C.pos.lerpVectors(M.from, M.to, sstep(0, 1, t)); C.pos.y = lerp(M.from.y, M.to.y, Math.min(1, t * 1.6));
+    if (M.out) { const s = Math.sin(Math.PI * Math.min(1, t * 1.25)); C.pos.x += M.out.x * s; C.pos.z += M.out.z * s; }
     C.state = 'climb'; C.spd = 6;
     if (t >= 1) { C.mantle = null; C.climbing = false; C.grounded = true; C.vel.set(0, 0, 0); C.squash = .35; C.state = 'idle'; }
     return;
@@ -175,7 +189,7 @@ function updLeader(C, dt) {
   C.pos.x += C.vel.x * dt; C.pos.z += C.vel.z * dt;
   const hit = resolveH(C, true);
   moveVert(C, dt);
-  if (hit && ctl && !base && C.climbCD <= 0 && !C.crouch && (C.stamina > 8 || C.id === 'gecko')) { if (-(wx * hit.nx + wz * hit.nz) > .5) startClimb(C, hit); }
+  if (hit && ctl && !base && !hit.c.slick && C.climbCD <= 0 && !C.crouch && (C.stamina > 8 || C.id === 'gecko')) { if (-(wx * hit.nx + wz * hit.nz) > .5) startClimb(C, hit); }
   if (C.grounded && !C.cold) C.stamina = Math.min(C.stamMax || 100, C.stamina + 45 * dt);
   const hs = Math.hypot(C.vel.x, C.vel.z); C.spd = hs;
   C.state = base && C.grounded ? (hs > .8 ? 'stackwalk' : 'stack') : C.dashT > 0 ? 'roll' : C.tumble > 0 ? 'tumble' : C.gliding ? 'glide' : !C.grounded ? 'air' : hs > .8 ? (C.crouch ? 'sneak' : 'walk') : (C.crouch ? 'crouch' : 'idle');
@@ -205,7 +219,7 @@ function updClimb(C, dt, inX, inY, ctl, run) {
   const ox = C.pos.x, oz = C.pos.z;
   C.pos.y += inY * sp * dt; C.pos.x += sx * inX * sp * .8 * dt; C.pos.z += sz * inX * sp * .8 * dt;
   if (inY < 0) { const [sup] = supportAt(C.pos.x, C.pos.z, C.r * .55, C.pos.y + .3); if (C.pos.y <= sup + .05) { C.pos.y = sup; detach(C, 0, 0, true); C.state = 'idle'; return; } }
-  const yb = C.pos.y; ceil(C); if (inY > 0 && C.pos.y < yb - .01) C.overhang = 1.4;
+  const yb = C.pos.y; const cc = ceil(C); if (inY > 0 && C.pos.y < yb - .01) { C.overhang = 1.4; if (lipGrab(C, n, cc)) { C.overhang = 0; return; } }
   C.pos.x -= n.x * .35; C.pos.z -= n.z * .35;
   let hit = resolveClimb(C);
   if (!hit && inX !== 0) { C.pos.x = ox - n.x * .35; C.pos.z = oz - n.z * .35; hit = resolveClimb(C); }
@@ -215,7 +229,9 @@ function updClimb(C, dt, inX, inY, ctl, run) {
     if (inY >= 0 && C.pos.y + C.h * .42 > hit.c.y1) {
       const px = C.pos.x - n.x * (C.r + .7), pz = C.pos.z - n.z * (C.r + .7);
       if (!solidAt(px, hit.c.y1 + C.h * .5, pz)) { C.mantle = { from: C.pos.clone(), to: V3(px, hit.c.y1, pz), t: 0 }; return; }
-      C.pos.y = Math.min(C.pos.y, hit.c.y1 - C.h * .42);
+      // another block sits right on top of this one (a pile, stacked cupboards): keep climbing up its face
+      const wx = C.pos.x - n.x * (C.r + .3), wz = C.pos.z - n.z * (C.r + .3), up = solidAt(wx, hit.c.y1 + .3, wz);
+      if (!(up && up !== hit.c && !up.slick && up.y0 <= hit.c.y1 + .6)) C.pos.y = Math.min(C.pos.y, hit.c.y1 - C.h * .42);
     }
     if (inX !== 0) { // step sideways onto a ledge beside you
       const qx = C.pos.x + sx * inX * (C.r + 1.2) - n.x * .8, qz = C.pos.z + sz * inX * (C.r + 1.2) - n.z * .8; const c2 = solidAt(qx, C.pos.y + .3, qz);
@@ -699,11 +715,12 @@ function update(dt) {
     endT += dt; updCam(dt); if (STK) stkClear(); for (const F of party) if (F !== leader && !F.frozen) updFollower(F, leader, dt); hideOccluders();
     if (endT > 3.6 && $('end').hidden) { const E = END_TXT || (NET.on ? ['第一章（多人）· 完', '零件與電池', '三個零件和電池都齊了。從通風口爬出去——下一站：車房的工作枱。'] : ['第一章 · 完', '找回核心', '核心找回來了，但它的光越來越弱。']); $('endA').textContent = E[0]; $('endB').textContent = E[1]; $('endC').textContent = E[2]; $('st3l').textContent = '鈕扣電池（總數）'; $('st3').textContent = gotBat;
       $('end').hidden = false; $('hud').classList.add('off'); $('touch').hidden = true; if (document.pointerLockElement) document.exitPointerLock();
-      const m = Math.floor(playT / 60), s = Math.floor(playT % 60); $('st1').textContent = `${m}:${String(s).padStart(2, '0')}`; $('st2').textContent = fails; $('st3').textContent = `${gotBat}/3`;
+      const m = Math.floor(playT / 60), s = Math.floor(playT % 60); $('st1').textContent = `${m}:${String(s).padStart(2, '0')}`; $('st2').textContent = fails; $('st3').textContent = `${gotBat}/${batteries.length}`;
     }
   }
   zoneTick(dt); if (WORLD && (ZONES.kitchen.near || LEVEL === 'kitchen')) updLiving(dt);
-  if (NET.client) netNPC(dt); else for (const Z of ZL) { const D = LEVELS[Z.id]; if (D && (Z.id === LEVEL || (Z.near && Z.prepped && D.npcNear))) D.npc(dt); }
+  if (NET.client) netNPC(dt); else for (const Z of ZL) { const D = LEVELS[Z.id]; if (!D || !D.npc) continue; if (Z.id === LEVEL || (Z.near && Z.prepped && D.npcNear) || (NET.on && Z.prepped && D.npcNear && playerChars().some(C => inZone(Z, C.pos.x, C.pos.y, C.pos.z, 60)))) D.npc(dt); }
+  mpObjectives();
   const cr = STATE === 'frozen' ? clamp(1 - failT / 2.3, 0, 1) * .8 : STATE === 'fail' ? clamp(failT / .7, 0, 1) * (failT < 2.4 ? 1 : clamp(1 - (failT - 2.4) / .8, 0, 1)) : meter * .55;
   grade.uniforms.uCrys.value = damp(grade.uniforms.uCrys.value, cr, 8, dt);
   grade.uniforms.uFlash.value = STATE === 'fail' && failT > .6 && failT < 1.1 ? (1 - Math.abs(failT - .85) / .25) * .5 : 0;
@@ -717,6 +734,7 @@ let last = performance.now();
 function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(.05, (now - last) / 1000); last = now;
+  { const [w, h] = viewSize(); if (w !== RS.w || h !== RS.h) onResize(); }
   if (STATE === 'load') return;
   if (!PAUSED || NET.on) update(dt);
   if (!window.__NR) composer.render();
@@ -727,12 +745,16 @@ function frame(now) {
     if (STATE === 'play' && !PAUSED) { if ((QUAL === 'high' && fps < 30) || (QUAL === 'med' && fps < 22)) { if (++fpsLow >= 2) { applyQ(QUAL === 'high' ? 'med' : 'low'); toast('畫質已自動調低，保持流暢'); fpsLow = 0; } } else fpsLow = 0; }
   }
 }
+// phones report stale sizes around a rotation: the canvas always fills the screen by CSS, and the
+// drawing size is re-checked every frame so it settles on the real size
+const RS = { w: 0, h: 0 };
+function viewSize() { const w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight; return [Math.max(1, w), Math.max(1, h)]; }
 function onResize() {
-  const w = innerWidth, h = innerHeight; renderer.setSize(w, h); composer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
+  const [w, h] = viewSize(); RS.w = w; RS.h = h; renderer.setSize(w, h, false); composer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
   grade.uniforms.uRes.value.set(w * renderer.getPixelRatio(), h * renderer.getPixelRatio()); fxaa.material.uniforms.resolution.value.set(1 / (w * renderer.getPixelRatio()), 1 / (h * renderer.getPixelRatio()));
   const sc = h * renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2)); onResizeDust(sc); if (parts) parts.material.uniforms.uScale.value = sc;
 }
-addEventListener('resize', onResize);
+addEventListener('resize', onResize); addEventListener('orientationchange', () => { onResize(); setTimeout(onResize, 250); setTimeout(onResize, 700); }); if (window.visualViewport) visualViewport.addEventListener('resize', onResize);
 function applyQ(q) {
   QUAL = q; const P = { high: [Math.min(devicePixelRatio, 1.5), true, true, 16], med: [Math.min(devicePixelRatio, 1.1), true, false, 12], low: [TOUCH ? Math.min(devicePixelRatio, 1.25) * DYN.k : .85, false, false, TOUCH ? 6 : 8] }[q];
   BLOOM_K = q === 'low' ? .5 : 1; fxaa.enabled = TOUCH || q === 'low'; grade.uniforms.uGrain.value = TOUCH ? .014 : .035;
@@ -743,7 +765,6 @@ function pause() { PAUSED = true; $('pause').hidden = false; document.body.class
 function resume() { PAUSED = false; $('pause').hidden = true; document.body.classList.remove('paused'); $('help').hidden = true; $('roster').hidden = true; last = performance.now(); requestLock(); }
 document.querySelectorAll('.sel button').forEach(b => b.addEventListener('click', () => applyQ(b.dataset.q)));
 $('go').addEventListener('click', () => { audioInit(); startGame(0); });
-$('go1').addEventListener('click', () => { audioInit(); startGame(1); });
 $('resume').addEventListener('click', () => { audioInit(); resume(); });
 $('again').addEventListener('click', () => location.reload());
 
@@ -812,7 +833,7 @@ async function init() {
   for (const id of ['hog', 'rab', 'coon', 'frog']) { chars[id].root.visible = false; chars[id].pos.set(0, -900, 0); }
   party.push(chars.dad, chars.sq, chars.bear); buildMom();
   // the whole house is built now, once: walking from room to room never loads anything
-  const WL = { basement: [.42, '搭建地庫…'], wall: [.52, '搭建牆內…'], kitchen: [.6, '搭建廚房和客廳…'] };
+  const WL = { basement: [.42, '搭建地庫…'], wall: [.52, '搭建牆內…'], kitchen: [.58, '搭建廚房和客廳…'], garage: [.64, '搭建車房…'], yard: [.7, '搭建後園和陽光房…'] };
   await buildWorld(async id => { setLoad(...WL[id]); await tick(); });
   buildParticles(); enterZone('basement', true); scene.environment = ZONES.basement.envTex; placeStart();
   for (const id in chars) animChar(chars[id], .016);

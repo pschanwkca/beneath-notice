@@ -1,0 +1,9 @@
+[
+ {"click": "#go", "wait": 1500},
+ {"eval": "(async()=>{const b=window.__bn; for(let i=0;i<60 && b.state!=='play';i++){ b.press('Space'); await new Promise(r=>setTimeout(r,200));} window.__NODET=true; for(let k=0;k<30;k++) b.step(1); return b.info()})()", "wait": 300},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; const L=b.leader; L.pos.set(1000,W.GY,0); L.vel.set(0,0,0); for(const F of b.party) if(F!==L){F.pos.copy(L.pos); F.pos.x+=6; F.disp.copy(F.pos); F.queue=[];} b.cam.yaw=-Math.PI/2; b.cam.pitch=.15; b.cam.dist=70; for(let k=0;k<90;k++) b.step(1); return {lvl:b.LEVEL, info:b.info(), near:W.ZL.map(z=>[z.id,z.near]), agent:W.GS.agent&&W.GS.agent.pos.toArray().map(v=>+v.toFixed(0))}})()", "wait": 300, "shot": "g1_garage"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; const L=b.leader; L.pos.set(1300,W.GY,150); b.cam.yaw=-Math.PI*.75; b.cam.pitch=.2; b.cam.dist=60; for(let k=0;k<60;k++) b.step(1); return {lvl:b.LEVEL, info:b.info()}})()", "wait": 300, "shot": "g2_garage"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; const L=b.leader; L.pos.set(1700,W.GY,200); b.cam.yaw=-Math.PI*.5; b.cam.pitch=.15; b.cam.dist=70; for(let k=0;k<90;k++) b.step(1); return {lvl:b.LEVEL, info:b.info(), dog:W.YS.dog&&W.YS.dog.pos.toArray().map(v=>+v.toFixed(0))}})()", "wait": 300, "shot": "y1_yard"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; const L=b.leader; L.pos.set(2380,W.GY,60); b.cam.yaw=-Math.PI/2; b.cam.pitch=.12; b.cam.dist=80; for(let k=0;k<90;k++) b.step(1); return {lvl:b.LEVEL, info:b.info()}})()", "wait": 300, "shot": "y2_sunroom_out"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; const L=b.leader; L.pos.set(2640,W.DECK,150); b.cam.yaw=-Math.PI*.7; b.cam.pitch=.15; b.cam.dist=60; for(let k=0;k<90;k++) b.step(1); return {lvl:b.LEVEL, info:b.info()}})()", "wait": 300, "shot": "y3_sunroom"}
+]
