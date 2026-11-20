@@ -32,7 +32,7 @@ function stkLedge(fx, fz, dx, dz, y0, maxY, topH) {
 }
 function standable(x, z, y, C) { const [s] = supportAt(x, z, C.r * .55, y + .4); return Math.abs(s - y) < .45 && !solidAt(x, y + C.h * .5, z) && !solidAt(x, y + C.h * .9, z); }
 function stkPlan(L, quiet) {
-  const near = party.filter(F => F !== L && !F.frozen && !F.carried && !(F.lieK > 0) && Math.hypot(F.pos.x - L.pos.x, F.pos.z - L.pos.z) < 70);
+  const near = party.filter(F => F !== L && !F.frozen && !F.carried && !(F.lieK > 0) && (!NET.on || F.owner === F.baseOwner) && Math.hypot(F.pos.x - L.pos.x, F.pos.z - L.pos.z) < 70);
   if (!near.length) return { err: '身邊沒有隊友，疊不了羅漢' };
   near.sort((a, b) => b.h - a.h);
   const all = [...near, L]; const maxH = stkReach(all);
@@ -74,13 +74,14 @@ function stkSlot(i) {
 function stkStart() {
   const L = leader;
   if (STK) { if (STK.phase === 'ready') stkDown(); return; }
-  if (STATE !== 'play' || L.mantle || L.tumble > 0 || L.frozen || L.zip) return;
+  if (STATE !== 'play' || L.mantle || L.tumble > 0 || L.frozen || L.zip || !mine(L)) return;
   if (L.carry) sqDrop(L);
   const P = stkPlan(L, false); if (P.err) { toast(P.err); return; }
   STK = Object.assign(P, { phase: 'gather', t: 0, wob: 0, lock: true, yaw: Math.atan2(P.d[0], P.d[1]), from: P.mem.map(C => (C !== L && C.disp ? C.disp : C.pos).clone()) });
   for (const C of P.extras) if (C.disp) C.pos.copy(C.disp);
   for (const C of STK.mem) { C.stk = true; C.climbing = false; C.mantle = null; C.vel.set(0, 0, 0); C.crouch = false; C.tumble = 0; }
   for (const C of STK.extras) C.stk = true;
+  netLease([...STK.mem, ...STK.extras].filter(C => C !== L).map(C => C.id), NET.me);
   SND.swish();
   if (STK.ok && STK.mem.length < party.length) say(L.S.name, STK.mem.length === 2 ? '來，我踩你膊頭上去！' : `要${STK.mem.length}個人疊才夠高，大家來！`, L.S.col, 2.2);
 }
@@ -103,9 +104,10 @@ function stkDown(collapse) {
 function stkEnd() {
   const S = STK; if (!S) return; const L = leader;
   for (const C of [...S.mem, ...S.extras]) { C.stk = false; C.tumble = C === L ? C.tumble : 0; if (C !== L) { C.queue = []; C.qst = 'idle'; C.state = 'idle'; C.disp.copy(C.pos); C.offK = 0; C.vel.set(0, 0, 0); } }
+  netUnlease([...S.mem, ...S.extras].filter(C => C !== L).map(C => ({ id: C.id, x: C.pos.x, y: C.pos.y, z: C.pos.z })));
   trail = []; L.lastTrail.copy(L.pos); STK = null; refreshPartyHUD();
 }
-function stkClear() { STK = null; for (const C of party) C.stk = false; }
+function stkClear() { if (STK && NET.on) netUnlease([...STK.mem, ...STK.extras].filter(C => C !== leader).map(C => ({ id: C.id }))); STK = null; for (const C of party) C.stk = false; }
 function stkEdge(C, out) { const S = STK; const k = out ? -(C.r + .25) : C.r * .65; return V3(S.fx + S.d[0] * k, out ? S.ledge - C.h * .72 : S.ledge, S.fz + S.d[1] * k); }
 function stkLedgeSlots() {
   const S = STK, L = leader, sd = [S.d[1], -S.d[0]]; const slots = new Map(); slots.set(L, S.tgt.clone());
@@ -204,7 +206,7 @@ function stkHintText() {
 function pushTarget(C) {
   const fx = Math.sin(C.yaw), fz = Math.cos(C.yaw); let best = null, bd = 1e9;
   for (const r of resizables) {
-    if (!r.c.push) continue; const c = r.c;
+    if (!r.c.push || r.gone) continue; const c = r.c;
     if (c.y0 > C.pos.y + C.h * .8 || c.y1 < C.pos.y + .3) continue;
     const qx = clamp(C.pos.x, c.x0, c.x1), qz = clamp(C.pos.z, c.z0, c.z1); const dx = qx - C.pos.x, dz = qz - C.pos.z; const d = Math.hypot(dx, dz);
     if (d > C.r + 3.2) continue; if (d > .01 && (dx * fx + dz * fz) / d < .3) continue;
@@ -220,14 +222,13 @@ function bearShove() {
   if (!r) { SND.push(); if (!C.noPushT || T - C.noPushT > 6) { C.noPushT = T; toast('前面沒有推得動的東西'); } return; }
   const fx = Math.sin(C.yaw), fz = Math.cos(C.yaw); const vol = r.sx * r.sy * r.sz * r.s ** 3;
   const v = clamp(70 / Math.cbrt(Math.max(1, vol / 60)), 6, 48);
-  r.svx = (r.svx || 0) + fx * v; r.svz = (r.svz || 0) + fz * v; SND.push(); SND.thud(.12); cam.shake = Math.max(cam.shake, .12);
+  if (NET.client) nsend({ t: 'shv', i: resizables.indexOf(r), vx: fx * v, vz: fz * v }, NET.hostId); else { r.svx = (r.svx || 0) + fx * v; r.svz = (r.svz || 0) + fz * v; } SND.push(); SND.thud(.12); cam.shake = Math.max(cam.shake, .12);
   const p = V3(clamp(C.pos.x, r.c.x0, r.c.x1), C.pos.y + 1, clamp(C.pos.z, r.c.z0, r.c.z1));
   for (let i = 0; i < 8; i++) emit(p, V3(R(-6, 6) + fx * 8, R(2, 8), R(-6, 6) + fz * 8), new THREE.Color(.3, .27, .24), R(.2, .45), R(.3, .6), 30, 2);
 }
 function slideFree(c, dx, dz) { const nb = [c.x0 + dx, c.x1 + dx, c.z0 + dz, c.z1 + dz, c.y0 + .05, c.y1]; for (const o of cols) { if (o === c || o.y1 <= nb[4] || o.y0 >= nb[5]) continue; const b = colBounds(o); if (b[1] > nb[0] && b[0] < nb[1] && b[5] > nb[2] && b[4] < nb[3]) return false; } return true; }
+function bearHold(dt) { shoveCD = Math.max(0, shoveCD - dt); const L = leader; if (L && L.id === 'bear' && mine(L) && !L.frozen && pushHeld() && shoveCD <= 0 && !(Math.hypot(L.vel.x, L.vel.z) > 2 && L.pushing)) bearShove(); }
 function updSlides(dt) {
-  shoveCD = Math.max(0, shoveCD - dt);
-  const L = leader; if (L && L.id === 'bear' && pushHeld() && shoveCD <= 0 && !(Math.hypot(L.vel.x, L.vel.z) > 2 && L.pushing)) bearShove();
   for (const r of resizables) {
     if (!r.svx && !r.svz) continue; const c = r.c;
     const dx = r.svx * dt, dz = r.svz * dt;

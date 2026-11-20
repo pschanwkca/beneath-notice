@@ -96,7 +96,7 @@ function resolveH(C, allowStep) {
       if (!xzHit(c, C.pos.x, C.pos.z, C.r, _h)) continue;
       const rise = c.y1 - C.pos.y;
       if (allowStep && rise <= STEP && C.grounded) { C.pos.y = c.y1; continue; }
-      if (c.push && C.id === 'bear' && C.grounded && C === leader && pushHeld() && pushCol(c, -_h.nx * _h.pen, -_h.nz * _h.pen)) { C.pushing = true; continue; }
+      if (c.push && C.id === 'bear' && C.grounded && C === leader && !NET.client && pushHeld() && pushCol(c, -_h.nx * _h.pen, -_h.nz * _h.pen)) { C.pushing = true; continue; }
       C.pos.x += _h.nx * _h.pen; C.pos.z += _h.nz * _h.pen; any = true;
       const vn = C.vel.x * _h.nx + C.vel.z * _h.nz; if (vn < 0) { C.vel.x -= vn * _h.nx; C.vel.z -= vn * _h.nz; }
       if (rise > STEP * 1.2 && (!best || _h.pen > best.pen)) best = { nx: _h.nx, nz: _h.nz, pen: _h.pen, c };
@@ -139,7 +139,7 @@ function readMove() {
 function startClimb(C, hit) { C.climbing = true; C.climbN.set(hit.nx, 0, hit.nz); C.vel.set(0, 0, 0); C.grounded = false; C.crouch = false; C.yaw = Math.atan2(-hit.nx, -hit.nz); SND.swish(); }
 function detach(C, push, up, grounded) { C.climbing = false; C.vel.set(C.climbN.x * push * 20, up, C.climbN.z * push * 20); C.climbCD = .35; if (grounded) C.grounded = true; }
 function updLeader(C, dt) {
-  const ctl = STATE === 'play' && !(C.tumble > 0);
+  const ctl = STATE === 'play' && !(C.tumble > 0) && !PAUSED;
   const mv = ctl ? readMove() : { x: 0, y: 0, m: 0, run: false }; const inX = mv.x, inY = mv.y;
   const fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
   let wx = fx * inY + rx * inX, wz = fz * inY + rz * inX; const wl = Math.hypot(wx, wz); if (wl > 0) { wx /= wl; wz /= wl; }
@@ -270,6 +270,7 @@ function hideOccluders() {
   }
 }
 function switchTo(N) {
+  if (NET.on) return;
   if (!N || N === leader || STATE !== 'play' || leader.mantle || STK) return;
   if (N.frozen) { toast(`${N.S.name}變成了玩具，要先救回來`); return; }
   const ik = trail.length - N.queue.length;
@@ -310,7 +311,7 @@ const gunBeam = new THREE.Mesh(new THREE.CylinderGeometry(.06, .06, 1, 8, 1, tru
 function updAim() {
   aimRes = null; if (!leader || leader.id !== 'dad' || STATE !== 'play') return;
   ray.setFromCamera(_sc, camera); ray.far = cam.curD + 150;
-  const hits = ray.intersectObjects(resizables.filter(r => r.gun !== false).map(r => r.mesh), true);
+  const hits = ray.intersectObjects(resizables.filter(r => r.gun !== false && !r.gone).map(r => r.mesh), true);
   if (hits.length) { const h = hits[0]; let o = h.object; while (o && !o.userData.res) o = o.parent; if (o && !rayBlocked(ray.ray.origin, ray.ray.direction, h.distance - .6, true)) aimRes = { r: o.userData.res, p: h.point.clone() }; }
 }
 function fireGun(grow) {
@@ -320,7 +321,7 @@ function fireGun(grow) {
   const r = aimRes.r; const nt = clamp(r.target * (grow ? 2 : .5), r.min, r.max);
   if (Math.abs(nt - r.target) < 1e-3) { toast(grow ? `${r.name}已經放到最大了` : `${r.name}已經縮到最小了`); return; }
   if (grow && !roomFor(r, nt)) { toast(`空間不夠，「${r.name}」放不大`); SND.zapDn(); return; }
-  r.target = nt; sizeNotice(r, grow); cells--; r.pulse = 1; grow ? SND.zapUp() : SND.zapDn();
+  if (NET.client) nsend({ t: 'gun', i: resizables.indexOf(r), g: grow }, NET.hostId); else { r.target = nt; sizeNotice(r, grow); } cells--; r.pulse = 1; grow ? SND.zapUp() : SND.zapDn();
   const tip = V3(); leader.gunTip.getWorldPosition(tip); const dv = V3().subVectors(aimRes.p, tip); const len = dv.length();
   gunBeam.position.copy(tip); gunBeam.scale.set(1, 1, len); gunBeam.lookAt(aimRes.p); gunBeam.material.opacity = 1;
   for (let i = 0; i < 26; i++) emit(aimRes.p, V3(R(-14, 14), R(-6, 18), R(-14, 14)), new THREE.Color(.5, 2.2, 2.1), R(.15, .4), R(.3, .8), 20, 2);
@@ -418,6 +419,7 @@ function updMom(dt) {
   }
 }
 function knock(C, from, msg) {
+  if (NET.on && !mine(C)) return;
   if (STK && STK.lock) stkDown(true);
   const dx = C.pos.x - from.x, dz = C.pos.z - from.z, d = Math.hypot(dx, dz) || 1;
   C.climbing = false; C.mantle = null; C.vel.set(dx / d * 42, 52, dz / d * 42); C.grounded = false; C.tumble = .9; C.crouch = false; if (msg) toast(msg);
@@ -445,8 +447,9 @@ function fail() {
 }
 function respawn() {
   stkClear(); toyUnfreezeAll();
-  const p = CPS[cp] || CPS[0]; const L = leader; L.pos.set(p[0], p[1], p[2]); L.vel.set(0, 0, 0); L.climbing = false; L.mantle = null; L.tumble = 0; L.grounded = true; L.crouch = false;
-  let i = 0; for (const F of party) if (F !== L) { i++; F.pos.set(p[0] + i * (cp === 1 ? 3.4 : 2.6), p[1], p[2] + (cp === 1 ? 0 : i * 2.2)); F.queue = []; F.qst = 'idle'; F.state = 'idle'; F.disp.copy(F.pos); F.offK = 0; }
+  if (NET.on) for (const C of party) { C.owner = C.baseOwner; C.carried = false; C.carry = null; }
+  const p = CPS[cp] || CPS[0]; const L = leader; const off = NET.on ? IDS.indexOf(L.id) * 3 : 0; L.pos.set(p[0] + off, p[1], p[2]); L.vel.set(0, 0, 0); L.climbing = false; L.mantle = null; L.tumble = 0; L.grounded = true; L.crouch = false;
+  let i = 0; for (const F of party) if (F !== L && mine(F)) { i = NET.on ? IDS.indexOf(F.id) : i + 1; F.pos.set(p[0] + i * (cp === 1 ? 3.4 : 2.6), p[1], p[2] + (cp === 1 ? 0 : i * 2.2)); F.queue = []; F.qst = 'idle'; F.state = 'idle'; F.disp.copy(F.pos); F.offK = 0; }
   trail = []; L.lastTrail.copy(L.pos); meter = 0; LVL.reset(); cam.tgt.copy(L.pos);
 }
 
@@ -455,7 +458,7 @@ let subT = 0, toastT = 0;
 function say(name, text, color, dur = 3) { $('subn').textContent = name; $('subn').style.color = color || 'var(--amber)'; $('subt').textContent = text; $('sub').classList.add('on'); subT = dur; }
 function toast(t, dur = 2.6) { $('toast').textContent = t; $('toast').classList.add('on'); toastT = dur; }
 function refreshPartyHUD() {
-  for (const id of IDS) { const el = $('pm-' + id); if (!el) continue; const C = chars[id]; el.classList.toggle('on', leader && leader.id === id); el.classList.toggle('toy', !!C.frozen); const sm = el.querySelector('small'); if (sm && party.includes(C)) sm.textContent = C.frozen ? (C.toyAt === 'box' ? '在玩具箱' : C.toyAt === 'hand' ? '被拿走了' : '變成玩具') : (C.stamMax || 100) < 100 ? `體力 ${C.stamMax}%` : SP[id].role; }
+  for (const id of IDS) { const el = $('pm-' + id); if (!el) continue; const C = chars[id]; el.classList.toggle('on', leader && leader.id === id); el.classList.toggle('toy', !!C.frozen); const sm = el.querySelector('small'); if (sm && party.includes(C)) sm.textContent = C.frozen ? (C.toyAt === 'box' ? '在玩具箱' : C.toyAt === 'hand' ? '被拿走了' : '變成玩具') : NET.on ? playerLabel(id) + ((C.stamMax || 100) < 100 ? ` · ${C.stamMax}%` : '') : (C.stamMax || 100) < 100 ? `體力 ${C.stamMax}%` : SP[id].role; }
   if (!leader) return; for (const id of IDS) $('touch').classList.toggle(id, leader.id === id); $('tbAct').textContent = leader.id === 'cham' ? '舌' : '抱'; $('tbCrouch').classList.toggle('dn', !!leader.crouch); $('an').textContent = leader.S.abil; $('ad').textContent = leader.S.desc; $('cells').style.display = leader.id === 'dad' ? 'flex' : 'none';
 }
 function buildPartyHUD() {
@@ -501,7 +504,9 @@ function updHUD(dt) {
   $('cells').innerHTML = Array.from({ length: cellMax }, (_, i) => `<i class="${i < cells ? 'f' : ''}"></i>`).join('');
   let h = '';
   const ph = L.id === 'bear' && !STK ? pushTarget(L) : null;
-  if (STK) h = stkHintText();
+  if (NET.on && L.frozen) h = PROTO > 0 ? '你變成了玩具！等隊友來搖醒你，或者讓他們用 Prototype（R）' : '你變成了玩具！等隊友來玩具箱搖醒你';
+  else if (NET.on && !mine(L)) h = '隊友正在帶着你行動……';
+  else if (STK) h = stkHintText();
   else if (TOY.rescuing) h = `正在搖醒${TOY.rescuing.S.name}…… ${Math.min(99, Math.round(TOY.rescuing.rescueT / 1.4 * 100))}%`;
   else if (fz && PROTO > 0 && !L.climbing) h = TOUCH ? `按「復活」用 Prototype 救回${fz.S.name}（體力上限 -20%），或者去玩具箱救他` : `<kbd>R</kbd> 用 Prototype 救回${fz.S.name}（體力上限 -20%）· 或者去玩具箱救他`;
   else if (fz && !L.climbing && fz.toyAt === 'box') h = `${fz.S.name}在玩具箱裡——爬進去碰一下就能救回來`;
@@ -618,15 +623,11 @@ function winBasement() {
     if (!blocked && d < 9 && leader.pos.y < 3) { STATE = 'end'; endT = 0; say('前拍檔', '三年了……我一直在等你。快進來，牆裡面比較安全。', '#b7d38a', 4.5); }
   }
 }
-function updCheckpoints() { if (!CPS) return; CPS.forEach((p, i) => { if (leader.grounded && Math.hypot(leader.pos.x - p[0], leader.pos.y - p[1], leader.pos.z - p[2]) < 30) cp = i; }); }
+function updCheckpoints() { if (!CPS) return; const who = NET.on ? playerChars().filter(C => !C.frozen) : [leader]; CPS.forEach((p, i) => { if (who.some(C => (C.grounded || !mine(C)) && Math.hypot(C.pos.x - p[0], C.pos.y - p[1], C.pos.z - p[2]) < 30)) cp = i; }); }
 function updBatteries(dt) {
   for (const b of batteries) {
     if (b.got) continue; b.b.rotation.y += dt * 2; b.b.position.y = 1.4 + Math.sin(T * 2.4 + b.x) * .3; b.halo.position.y = b.y + b.b.position.y; b.halo.lookAt(camera.position);
-    if (leader && STATE === 'play' && Math.hypot(leader.pos.x - b.x, leader.pos.y + 1 - b.y - 1.2, leader.pos.z - b.z) < 3.4) {
-      b.got = true; b.g.visible = false; b.halo.visible = false; gotBat++; cellMax++; cells = cellMax; SND.pick();
-      toast(`找到鈕扣電池！尺寸槍能量上限 +1（這裡 ${batteries.filter(q => q.got).length}/${batteries.length}）`);
-      for (let i = 0; i < 30; i++) emit(V3(b.x, b.y + 1.4, b.z), V3(R(-10, 10), R(4, 20), R(-10, 10)), new THREE.Color(.5, 2, 1.9), R(.15, .35), R(.4, 1), 30, 2);
-    }
+    if (leader && STATE === 'play' && !leader.frozen && mine(leader) && Math.hypot(leader.pos.x - b.x, leader.pos.y + 1 - b.y - 1.2, leader.pos.z - b.z) < 3.4) netGet('bat', batteries.indexOf(b));
   }
 }
 function updTrap() {
@@ -644,25 +645,25 @@ function update(dt) {
   const fl = .75 + Math.sin(T * 13) * .08 + (rnd() < .04 ? R(-.5, .6) : 0); machine.light.intensity = 900 * fl; machine.field.material.uniforms.uK.value = .85 + (fl - .75);
   if (rnd() < dt * 1.3) { const a = R(0, 6.28); const p = V3(machine.x + Math.cos(a) * 17, machine.y + Math.sin(a) * 17, machine.z + 1); for (let i = 0; i < 14; i++) emit(p, V3(R(-25, 25), R(5, 40), R(-10, 25)), rnd() < .5 ? new THREE.Color(3, 1.6, .5) : new THREE.Color(.8, 3, 2.8), R(.12, .25), R(.3, .9), 220, .5); if (leader) SND.crack(clamp(1 - leader.pos.distanceTo(V3(machine.x, machine.y, machine.z)) / 200, 0, 1)); } }
   if (dust) { dust.material.uniforms.uT.value = T; for (let i = 0; i < 4; i++) dust.material.uniforms.uBK.value[i] = beams[i] ? beams[i].k : 0; }
-  updRings(dt); if (STATE === 'play') { updSlides(dt); updPushFall(dt); } updResizables(dt); if (LVL && LVL.toys && STATE !== 'loading') updToys(dt); updTongue(dt); updScout(dt); updWatch(); updBatteries(dt); updParticles(dt);
+  updRings(dt); if (STATE === 'play') { bearHold(dt); if (!NET.client) { updSlides(dt); updPushFall(dt); } } updResizables(dt); if (LVL && LVL.toys && STATE !== 'loading') updToys(dt); updTongue(dt); updScout(dt); updWatch(); updBatteries(dt); updParticles(dt);
   if (STATE === 'title') updTitle(dt);
   else if (STATE === 'intro') { updIntro(dt); for (const C of party) { C.state = 'idle'; C.spd = 0; } }
   else if (STATE === 'play') {
     playT += dt;
-    for (let i = 0; i < party.length; i++) if (pressed['Digit' + (i + 1)]) switchTo(party[i]);
-    if (pressed.Tab) { const act = party.filter(C => !C.frozen); if (act.length > 1) switchTo(act[(act.indexOf(leader) + 1) % act.length]); }
+    if (!NET.on) for (let i = 0; i < party.length; i++) if (pressed['Digit' + (i + 1)]) switchTo(party[i]);
+    if (!NET.on) if (pressed.Tab) { const act = party.filter(C => !C.frozen); if (act.length > 1) switchTo(act[(act.indexOf(leader) + 1) % act.length]); }
     if (pressed.KeyR) useProto();
-    for (const C of party) if (pressed['sw_' + C.id]) switchTo(C);
+    if (!NET.on) for (const C of party) if (pressed['sw_' + C.id]) switchTo(C);
     if (pressed.KeyC || pressed.Tab) setTimeout(refreshPartyHUD, 30);
     if (pressed.KeyH) { hudOn = !hudOn; $('hud').classList.toggle('off', !hudOn); }
     if (pressed.KeyF) stkStart();
-    const lockL = STK && STK.lock;
+    const lockL = (STK && STK.lock) || !mine(leader) || leader.frozen;
     if (!lockL) { const sub = dt > 1 / 30 ? 2 : 1; for (let s = 0; s < sub; s++) updLeader(leader, dt / sub); }
     if (STK) updStack(dt);
-    if (!(STK && STK.lock)) pushTrail(leader); for (const F of party) if (F !== leader && !F.stk && !F.frozen && !F.carried) updFollower(F, leader, dt);
+    if (!lockL) pushTrail(leader); for (const F of party) if (F !== leader && !F.stk && !F.frozen && !F.carried && mine(F)) updFollower(F, leader, dt);
     updCarry(dt); updTongueAim(); updVentFx(dt);
     stkScan(dt);
-    updAim(); LVL.detect(dt); updCheckpoints(); LVL.update(dt); LVL.win();
+    updAim(); LVL.detect(dt); if (!NET.client) updCheckpoints(); LVL.update(dt); if (!NET.client) LVL.win();
     cellT += dt; if (cells < cellMax && cellT > 10) { cells++; cellT = 0; } if (cells >= cellMax) cellT = 0;
     updCam(dt); hideOccluders();
     if (meter > .4 && Math.floor((T - dt) * (1 + meter * 1.5)) !== Math.floor(T * (1 + meter * 1.5))) SND.heart(meter);
@@ -682,11 +683,12 @@ function update(dt) {
       const m = Math.floor(playT / 60), s = Math.floor(playT % 60); $('st1').textContent = `${m}:${String(s).padStart(2, '0')}`; $('st2').textContent = fails; $('st3').textContent = `${gotBat}/3`;
     }
   }
-  if (LEVEL === 'basement') { if (STATE === 'play' || STATE === 'fail' || STATE === 'end') updMom(dt); } else LVL.npc(dt);
+  if (LEVEL === 'basement') { if (STATE === 'play' || STATE === 'fail' || STATE === 'end') updMom(dt); } else if (NET.client) netNPC(dt); else LVL.npc(dt);
   const cr = STATE === 'frozen' ? clamp(1 - failT / 2.3, 0, 1) * .8 : STATE === 'fail' ? clamp(failT / .7, 0, 1) * (failT < 2.4 ? 1 : clamp(1 - (failT - 2.4) / .8, 0, 1)) : meter * .55;
   grade.uniforms.uCrys.value = damp(grade.uniforms.uCrys.value, cr, 8, dt);
   grade.uniforms.uFlash.value = STATE === 'fail' && failT > .6 && failT < 1.1 ? (1 - Math.abs(failT - .85) / .25) * .5 : 0;
   grade.uniforms.uFade.value = STATE === 'end' ? clamp((endT - 2) / 1.6, 0, .85) : STATE === 'fail' ? clamp((failT - 2) / .4, 0, 1) * clamp((3.2 - failT) / .8, 0, 1) : 0;
+  netUpdate(dt);
   for (const id in chars) animChar(chars[id], dt);
   updHUD(dt);
   pressed = {};
@@ -696,8 +698,8 @@ function frame(now) {
   requestAnimationFrame(frame);
   const dt = Math.min(.05, (now - last) / 1000); last = now;
   if (STATE === 'load') return;
-  if (!PAUSED) update(dt);
-  composer.render();
+  if (!PAUSED || NET.on) update(dt);
+  if (!window.__NR) composer.render();
   fpsAcc += dt; fpsN++;
   if (fpsAcc > 2) {
     const fps = fpsN / fpsAcc; $('fps').textContent = Math.round(fps) + ' fps · ' + ({ high: '高', med: '中', low: '低' })[QUAL]; fpsAcc = 0; fpsN = 0;
@@ -797,4 +799,5 @@ async function init() {
   setShadowLive(upLight, false); setShadowLive(flashLight, false);
   STATE = 'title'; updTitle(0); composer.render();
   setLoad(1, '完成'); $('load').hidden = true; $('start').hidden = false;
+  if (NET.autoJoin) { mpOpen(NET.autoJoin); mpConnect(NET.autoJoin, false); }
 }

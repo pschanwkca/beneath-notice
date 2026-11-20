@@ -25,6 +25,7 @@ function tubeM(pts, r, mat, seg = 60) { const c = new THREE.CatmullRomCurve3(pts
 
 // ---------- chapter card ----------
 async function loadLevel(name) {
+  window.__loads = (window.__loads || 0) + 1; if (NET.on && NET.host) nsend({ t: 'lvl', n: name });
   STATE = 'loading'; const D = LEVELS[name];
   $('lvlA').textContent = D.chapter; $('lvlB').textContent = D.title; $('lvl').hidden = false; requestAnimationFrame(() => $('lvl').classList.add('on'));
   $('end').hidden = true; $('dead').classList.remove('on');
@@ -34,7 +35,7 @@ async function loadLevel(name) {
   scene.environmentIntensity = D.envI; scene.fog.color.setHex(D.fog[0]); scene.fog.density = D.fog[1]; renderer.toneMappingExposure = D.expo;
   D.build(); padBeams(); if (!dust) buildDust(D.dust); applyQ(QUAL); onResize();
   CPS = D.cps; QUESTS = D.quests; quest = 0; cp = 0; meter = 0; setQuest(0); trail = []; grade.uniforms.uCrys.value = 0;
-  stkClear(); toyUnfreezeAll(); D.spawn();
+  stkClear(); toyUnfreezeAll(); D.spawn(); netAfterSpawn();
   for (const C of party) { C.lastTrail = C.pos.clone(); C.disp = C.pos.clone(); C.queue = []; C.vel.set(0, 0, 0); C.climbing = false; C.mantle = null; C.tumble = 0; C.grounded = true; C.offK = 0; }
   assignGaps(); cam.tgt.set(leader.pos.x, leader.pos.y + leader.h * .8, leader.pos.z); cam.curD = cam.dist;
   for (const id in chars) animChar(chars[id], .016);
@@ -50,11 +51,14 @@ function joinGecko() {
 function scheduleLines(list) { for (const L of list) if (lvT - 1 / 60 < L[0] && lvT >= L[0]) { if (typeof L[1] === 'function') L[1](); else say(L[1], L[2], L[3], L[4] || 3.2); } }
 
 // ---------- noise (distractions) ----------
-function noise(p, loud) {
+function noise(p, loud, clang) {
+  noiseRing(p); if (NET.on && NET.host) nsend({ t: 'ring', p: [p.x, p.y, p.z], v: clang || 0 });
+  if (LEVEL !== 'kitchen' || NET.client) return;
+  momHear(p, loud); catHear(p, loud); kidHear(p);
+}
+function noiseRing(p) {
   const ring = new THREE.Mesh(new THREE.RingGeometry(1, 1.6, 48), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xf4bb72).multiplyScalar(2), transparent: true, opacity: .8, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
   ring.rotation.x = -Math.PI / 2; ring.position.set(p.x, p.y + .3, p.z); ring.userData.t = 0; LVFX.add(ring); NOISERINGS.push(ring);
-  if (LEVEL !== 'kitchen') return;
-  momHear(p, loud); catHear(p, loud); kidHear(p);
 }
 const NOISERINGS = [];
 function updRings(dt) { for (let i = NOISERINGS.length - 1; i >= 0; i--) { const r = NOISERINGS[i]; r.userData.t += dt; const t = r.userData.t; r.scale.setScalar(1 + t * 60); r.material.opacity = Math.max(0, .8 - t * 1.1); if (t > .75) { r.parent && r.parent.remove(r); r.geometry.dispose(); NOISERINGS.splice(i, 1); } } }
@@ -64,7 +68,7 @@ function updPushFall(dt) {
     const [sup] = supportAt(r.cx, r.cz, .4, r.y0 + .01);
     if (sup < r.y0 - .15 || r.vy) {
       r.vy = (r.vy || 0) - 620 * dt; r.y0 += r.vy * dt;
-      if (r.y0 <= sup) { const imp = -r.vy; r.y0 = sup; r.vy = 0; if (imp > 80) { noise(V3(r.cx, sup, r.cz), clamp(imp / 260, .4, 1)); SND.clang(clamp(imp / 300, .3, 1)); for (let i = 0; i < 16; i++) emit(V3(r.cx, sup + 1, r.cz), V3(R(-30, 30), R(10, 40), R(-30, 30)), new THREE.Color(.5, .45, .4), R(.3, .8), R(.4, .9), 300, 1); if (r.name) toast(`「${r.name}」掉到地上——發出了好大的聲音！`); } }
+      if (r.y0 <= sup) { const imp = -r.vy; r.y0 = sup; r.vy = 0; if (imp > 80) { noise(V3(r.cx, sup, r.cz), clamp(imp / 260, .4, 1), clamp(imp / 300, .3, 1)); SND.clang(clamp(imp / 300, .3, 1)); for (let i = 0; i < 16; i++) emit(V3(r.cx, sup + 1, r.cz), V3(R(-30, 30), R(10, 40), R(-30, 30)), new THREE.Color(.5, .45, .4), R(.3, .8), R(.4, .9), 300, 1); if (r.name) toastW(`「${r.name}」掉到地上——發出了好大的聲音！`); } }
       applyResize(r);
     }
   }
@@ -275,10 +279,10 @@ LEVELS.wall = {
   update(dt) {
     lvT += dt; scheduleLines(HUB_LINES);
     for (const K of [chars.gecko, chars.cham]) if (!party.includes(K)) { const dx = leader.pos.x - K.pos.x, dz = leader.pos.z - K.pos.z; K.yaw = angDamp(K.yaw, Math.atan2(dx, dz), 3, dt); K.state = 'idle'; K.spd = 0; }
-    if (quest === 0 && (lvT > 17 || (leader.pos.z > 16 && Math.abs(leader.pos.x) < 85 && lvT > 4))) setQuest(1);
+    if (!NET.client && quest === 0 && (lvT > 17 || (leader.pos.z > 16 && Math.abs(leader.pos.x) < 85 && lvT > 4))) setQuest(1);
   },
   win() {
-    if (leader.pos.y > 272 && !loadingNext) { loadingNext = true; if (!party.includes(chars.cham)) joinCham(); loadLevel('kitchen'); }
+    if (!loadingNext && (NET.on ? party.some(C => isPlayerChar(C) && !C.frozen && C.pos.y > 272) : leader.pos.y > 272)) { loadingNext = true; if (!party.includes(chars.cham)) joinCham(); loadLevel('kitchen'); }
   },
   marker() { return quest >= 1 ? STATIC.hubTop : null; },
   reset() { }, eyeText: () => '', hint: () => ''
@@ -535,11 +539,11 @@ const MKP = { stove: { x: 34, z: -128, look: [22, 96, -178] }, sink: { x: -100, 
 const MSCHED = [['stove', 12], ['fridge', 0], ['stove', 9], ['sink', 7], ['stove', 8], ['table', 6]];
 const KM = { mode: 'act', sched: 0, pt: 'stove', t: 10, inv: null, prev: null, trackT: 0 };
 const MOMK_LINES = { fridge: '雞蛋……還有半盒。', sink: '那間公司的人今天又來了，說要拿走地庫的東西。', table: '先吃吧。警察說，要等四十八小時才能立案。' };
-function momLineK(k) { const t = MOMK_LINES[k]; if (!t || KS.said['m_' + k]) return; KS.said['m_' + k] = 1; say('太太', t, '#f4bb72', 3.6); if (k === 'table') setTimeout(() => { if (LEVEL === 'kitchen') say('女兒', '……我想爸爸。', '#e8a0c0', 2.8); }, 3800); }
+function momLineK(k) { const t = MOMK_LINES[k]; if (!t || KS.said['m_' + k]) return; KS.said['m_' + k] = 1; sayW('太太', t, '#f4bb72', 3.6); if (k === 'table') setTimeout(() => { if (LEVEL === 'kitchen') sayW('女兒', '……我想爸爸。', '#e8a0c0', 2.8); }, 3800); }
 function nextSched() { KM.sched = (KM.sched + 1) % MSCHED.length; KM.pt = MSCHED[KM.sched][0]; KM.mode = 'goto'; }
 function momHear(p, loud) {
   if (KM.mode === 'fopen' || TOY.fetch) return;
-  KM.inv = V3(clamp(p.x, -270, 270), 0, clamp(p.z, -132, 24)); KM.invP = p.clone(); KM.mode = 'inv'; say('太太', '什麼聲音？', '#f4bb72', 2.2);
+  KM.inv = V3(clamp(p.x, -270, 270), 0, clamp(p.z, -132, 24)); KM.invP = p.clone(); KM.mode = 'inv'; sayW('太太', '什麼聲音？', '#f4bb72', 2.2);
 }
 function kidHear(p) { if (!KID.root) return; KID.mode = 'noise'; KID.t = 2.6; KID.look.copy(p); }
 function momWalk(x, z, sp, dt) {
@@ -560,16 +564,14 @@ function updKitchenMom(dt) {
     const [ok, d] = momWalk(KM.inv.x, KM.inv.z, 92, dt); moveD = d; if (ok) { KM.mode = 'invlook'; KM.t = 3.4; }
   } else if (KM.mode === 'invlook') {
     const la = KM.invP; mom.yaw = angDamp(mom.yaw, Math.atan2(la.x - P.x, la.z - P.z), 3, dt); mom.aimT.copy(la).add(V3(Math.sin(T * 1.4) * 25, 0, 0)); KM.t -= dt;
-    if (KM.t <= 0) { const nearCat = CAT.pos && CAT.pos.distanceTo(KM.invP) < 90; say('太太', nearCat ? '小橘，又是你？' : '……奇怪。', '#f4bb72', 2.2); KM.mode = 'goto'; }
+    if (KM.t <= 0) { const nearCat = CAT.pos && CAT.pos.distanceTo(KM.invP) < 90; sayW('太太', nearCat ? '小橘，又是你？' : '……奇怪。', '#f4bb72', 2.2); KM.mode = 'goto'; }
   } else if (KM.mode === 'sus') {
     mom.aimT.copy(KM.susP); mom.yaw = angDamp(mom.yaw, Math.atan2(KM.susP.x - P.x, KM.susP.z - P.z), 1.6, dt); KM.trackT -= dt;
     if (KM.trackT <= 0) { KM.mode = KM.prev || 'goto'; if (KM.mode === 'act' && KM.t <= 0) KM.mode = 'goto'; }
   }
   // fridge door
   if (KS.closeT > 0 && KM.mode !== 'fopen') { KS.closeT -= dt; if (KS.closeT <= 0) KS.doorTarget = 0; }
-  KS.doorA = damp(KS.doorA, KS.doorTarget || 0, KS.doorTarget ? 3.2 : 2.4, dt); KS.door.rotation.y = KS.doorA;
-  const open = clamp(KS.doorA / 1.2, 0, 1); KS.fridgeLight.intensity = 2600 * open; KS.fridgeL.on = open > .2; beams[2].k = .045 * open; KS.fridgeBeam.material.uniforms.uK.value = beams[2].k;
-  if (KS.doorA > .35) { KS.doorCol.y0 = -1000; KS.doorCol.y1 = -999; } else { KS.doorCol.y0 = 6; KS.doorCol.y1 = 184; }
+  KS.doorA = damp(KS.doorA, KS.doorTarget || 0, KS.doorTarget ? 3.2 : 2.4, dt); fridgeDoor();
   momAnimK(dt, moveD);
 }
 function momAnimK(dt, moveD) {
@@ -599,11 +601,12 @@ function momAnimK(dt, moveD) {
 function updKid(dt) {
   const H = KID; H.t -= dt;
   let ty = 0, tp = .62;
+  if (NET.client) { const w = NET.npc; if (w && w.k) { ty = w.k[0]; tp = w.k[1]; } H.mode = '_net'; }
   if (H.mode === 'read') { ty = Math.sin(T * .7) * .08; tp = .62; if (H.t <= 0) { H.mode = 'look'; H.t = 2.8; H.dir = rnd() < .5 ? -1 : 1; } }
   else if (H.mode === 'look') { ty = H.dir * Math.sin((2.8 - H.t) / 2.8 * Math.PI) * 1.15; tp = .2; if (H.t <= 0) { H.mode = 'read'; H.t = R(6, 11); } }
   else if (H.mode === 'noise' || H.mode === 'sus') { const hp = V3(); H.head.getWorldPosition(hp); const d = V3().subVectors(H.look, hp); const by = H.root.rotation.y; ty = clamp(Math.atan2(Math.sin(Math.atan2(d.x, d.z) - by), Math.cos(Math.atan2(d.x, d.z) - by)), -1.3, 1.3); tp = clamp(Math.atan2(-d.y, Math.hypot(d.x, d.z)), -.3, .9); if (H.t <= 0) { H.mode = 'read'; H.t = R(5, 9); } }
-  if (KM.mode === 'act' && KM.pt === 'table') { const hp = V3(); H.head.getWorldPosition(hp); const d = V3().subVectors(mom.head.getWorldPosition(V3()), hp); const by = H.root.rotation.y; ty = clamp(Math.atan2(Math.sin(Math.atan2(d.x, d.z) - by), Math.cos(Math.atan2(d.x, d.z) - by)), -1.2, 1.2); tp = -.25; }
-  H.yaw = damp(H.yaw, ty, 4, dt); H.pitch = damp(H.pitch, tp, 4, dt); H.head.rotation.set(H.pitch, H.yaw, 0);
+  if (!NET.client && KM.mode === 'act' && KM.pt === 'table') { const hp = V3(); H.head.getWorldPosition(hp); const d = V3().subVectors(mom.head.getWorldPosition(V3()), hp); const by = H.root.rotation.y; ty = clamp(Math.atan2(Math.sin(Math.atan2(d.x, d.z) - by), Math.cos(Math.atan2(d.x, d.z) - by)), -1.2, 1.2); tp = -.25; }
+  H.yaw = damp(H.yaw, ty, NET.client ? 9 : 4, dt); H.pitch = damp(H.pitch, tp, NET.client ? 9 : 4, dt); H.head.rotation.set(H.pitch, H.yaw, 0);
   for (const L of H.legs) L.knee.rotation.x = 1.5 + Math.sin(T * 2.2 + L.s * 1.6) * .25;
   H.arms[1].sh.rotation.set(-.95 + Math.sin(T * 6) * .03, .3, 0); H.arms[1].el.rotation.x = -.9 + Math.sin(T * 9) * .04; H.arms[0].sh.rotation.set(-1, -.3, 0); H.arms[0].el.rotation.x = -.8;
 }
@@ -611,8 +614,14 @@ function catHear(p) {
   if (!CAT.root || CAT.mode === 'pounce' || CAT.mode === 'stalk') return;
   CAT.target.set(clamp(p.x, -280, 280), 0, clamp(p.z, -140, 205)); CAT.mode = CAT.mode === 'sleep' ? 'wake' : 'inv'; CAT.t = .9; CAT.next = 'inv';
 }
-function catSee() {
-  const L = leader; if (L.pos.y > 22 || CAT.cool > 0) return false;
+function catTarget() {
+  if (!NET.on) return leader; let best = null, bd = 1e9;
+  for (const C of playerChars()) { if (C.frozen) continue; const d = Math.hypot(C.pos.x - CAT.pos.x, C.pos.z - CAT.pos.z); if (d < bd) { bd = d; best = C; } }
+  return best || leader;
+}
+function knockAny(C, from, msg) { if (mine(C)) knock(C, from, msg); else if (NET.on && isPlayerChar(C)) nsend({ t: 'knock', id: C.id, x: from.x, z: from.z, m: msg }); }
+function catSee(L = leader) {
+  if (L.pos.y > 22 || CAT.cool > 0) return false;
   const dx = L.pos.x - CAT.pos.x, dz = L.pos.z - CAT.pos.z, d = Math.hypot(dx, dz); if (d > 140) return false;
   const fx = Math.sin(CAT.yaw), fz = Math.cos(CAT.yaw); if ((dx * fx + dz * fz) / d < .2) return false;
   if (!(L.spd > 1.2 || d < 45) || (L.crouch && d > 70)) return false;
@@ -623,15 +632,17 @@ function catSee() {
 }
 function ceilAt(x, z, y) { let m = 1e9, mc = null; for (const c of cols) { if (c.y0 < y + .5 || c.y0 > m) continue; if (!xzHit(c, x, z, .6, _h)) continue; m = c.y0; mc = c; } return [m, mc]; }
 function updCat(dt) {
-  const C = CAT, L = leader; let sp = 0, ty = null; C.cool = Math.max(0, (C.cool || 0) - dt);
+  const C = CAT; let sp = 0, ty = null; C.cool = Math.max(0, (C.cool || 0) - dt);
+  if (NET.client) { const w = NET.npc; if (w && w.c) { const ox = C.pos.x, oz = C.pos.z; const k = 1 - Math.exp(-10 * dt); C.pos.x += (w.c[0] - C.pos.x) * k; C.pos.z += (w.c[1] - C.pos.z) * k; sp = Math.hypot(C.pos.x - ox, C.pos.z - oz) / Math.max(dt, 1e-4); ty = w.c[2]; C.mode = w.c[3]; C.jump = w.c[4]; } const L = leader; catAnim(dt, sp, ty, L.pos.x - C.pos.x, L.pos.z - C.pos.z); return; }
+  const L = catTarget();
   const dx = L.pos.x - C.pos.x, dz = L.pos.z - C.pos.z, dl = Math.hypot(dx, dz);
   const toward = (p, speed) => { const ex = p.x - C.pos.x, ez = p.z - C.pos.z, e = Math.hypot(ex, ez); if (e < speed * dt + 1) return true; C.pos.x += ex / e * speed * dt; C.pos.z += ez / e * speed * dt; ty = Math.atan2(ex, ez); sp = speed; return false; };
   switch (C.mode) {
     case 'sleep': if (dl < (L.crouch ? 15 : 30) && L.pos.y < 15 && L.spd > .5 && STATE === 'play') { C.mode = 'wake'; C.t = .9; C.next = 'sniff'; C.sniffT = 3; } break;
-    case 'wake': C.t -= dt; if (C.t <= 0) { C.mode = C.next || 'sniff'; C.t = 3.5; if (!KS.said.catwake) { KS.said.catwake = 1; say('前拍檔', '貓醒了！別動，或者躲到牠鑽不進去的地方！', '#b7d38a', 3); } } break;
-    case 'inv': if (toward(C.target, 95)) { C.mode = 'sniff'; C.t = 4; } if (catSee()) { C.mode = 'stalk'; } break;
-    case 'sniff': C.t -= dt; ty = C.yaw + Math.sin(T * 1.6) * .03; if (catSee()) C.mode = 'stalk'; else if (C.t <= 0) { C.mode = 'home'; } break;
-    case 'home': if (toward(C.home, 40)) { C.mode = 'settle'; C.t = 1.4; } if (catSee()) C.mode = 'stalk'; break;
+    case 'wake': C.t -= dt; if (C.t <= 0) { C.mode = C.next || 'sniff'; C.t = 3.5; if (!KS.said.catwake) { KS.said.catwake = 1; sayW('前拍檔', '貓醒了！別動，或者躲到牠鑽不進去的地方！', '#b7d38a', 3); } } break;
+    case 'inv': if (toward(C.target, 95)) { C.mode = 'sniff'; C.t = 4; } if (catSee(L)) { C.mode = 'stalk'; } break;
+    case 'sniff': C.t -= dt; ty = C.yaw + Math.sin(T * 1.6) * .03; if (catSee(L)) C.mode = 'stalk'; else if (C.t <= 0) { C.mode = 'home'; } break;
+    case 'home': if (toward(C.home, 40)) { C.mode = 'settle'; C.t = 1.4; } if (catSee(L)) C.mode = 'stalk'; break;
     case 'settle': C.t -= dt; ty = 2.4; if (C.t <= 0) C.mode = 'sleep'; break;
     case 'stalk': {
       const [cl] = ceilAt(L.pos.x, L.pos.z, L.pos.y);
@@ -642,11 +653,15 @@ function updCat(dt) {
     case 'crouch': C.t -= dt; ty = Math.atan2(dx, dz); if (C.t <= 0) { C.mode = 'pounce'; C.t = 0; C.from = C.pos.clone(); C.to = V3(L.pos.x - dx / (dl || 1) * 6, 0, L.pos.z - dz / (dl || 1) * 6); SND.swish(); } break;
     case 'pounce': {
       C.t += dt / .5; const t = Math.min(1, C.t); C.pos.lerpVectors(C.from, C.to, t); C.jump = Math.sin(t * Math.PI) * 16; ty = Math.atan2(C.to.x - C.from.x, C.to.z - C.from.z);
-      if (t >= 1) { C.jump = 0; const d = Math.hypot(L.pos.x - C.pos.x, L.pos.z - C.pos.z); if (d < 13 && L.pos.y < 10) { knock(L, C.pos, '小橘撲過來了！'); SND.meow(); noise(C.pos.clone(), .7); if (!KS.said.catcatch) { KS.said.catcatch = 1; setTimeout(() => say('太太', '小橘！別亂來！', '#f4bb72', 2.2), 400); } } C.mode = 'play'; C.t = 1.4; }
+      if (t >= 1) { C.jump = 0; const d = Math.hypot(L.pos.x - C.pos.x, L.pos.z - C.pos.z); if (d < 13 && L.pos.y < 10) { knockAny(L, C.pos, '小橘撲過來了！'); SND.meow(); noise(C.pos.clone(), .7); if (!KS.said.catcatch) { KS.said.catcatch = 1; setTimeout(() => sayW('太太', '小橘！別亂來！', '#f4bb72', 2.2), 400); } } C.mode = 'play'; C.t = 1.4; }
       break;
     }
     case 'play': C.t -= dt; if (C.t <= 0) { C.mode = 'home'; C.cool = 9; } break;
   }
+  catAnim(dt, sp, ty, dx, dz);
+}
+function catAnim(dt, sp, ty, dx, dz) {
+  const C = CAT;
   if (ty !== null) C.yaw = angDamp(C.yaw, ty, 6, dt);
   // body animation
   C.sleepK = damp(C.sleepK, C.mode === 'sleep' || C.mode === 'settle' ? 1 : 0, 3, dt);
@@ -679,21 +694,19 @@ function eyeSee(head, fovCos, range) {
 function litAt(p) { for (const l of KS.lights) { if (l.on === false) continue; const d = V3().subVectors(p, l.p); const dist = d.length(); if (dist > l.range) continue; d.divideScalar(dist); if (l.cos && d.dot(l.dir) < l.cos) continue; if (!rayBlocked(l.p, d, dist - 1, false)) return 1; } return .3; }
 function detectKitchen(dt) {
   if (STATE !== 'play') return;
+  if (window.__NODET) { meter = 0; return; }
   if (TOY.grace > 0) { meter = Math.max(0, meter - dt * .5); return; }
   const L = leader; let seen = 0, who = null;
+  if (L.frozen || !mine(L)) { meter = Math.max(0, meter - dt * .5); KS.watch = null; return; }
   const s1 = eyeSee(mom.head, .55, 440); if (s1 > seen) { seen = s1; who = 'mom'; }
   const s2 = eyeSee(KID.head, .5, 360); if (s2 > seen) { seen = s2; who = 'kid'; }
   KS.watch = seen > 0 ? { p: (who === 'kid' ? KID.head : mom.head).getWorldPosition(V3()), s: seen, who } : null;
   const kd = Math.hypot(L.pos.x - KID.root.position.x, L.pos.z - KID.root.position.z); if (kd < 45 && L.pos.y < 40 && L.spd > 2 && !L.crouch && KID.mode !== 'read') { seen = Math.max(seen, .3); who = who || 'kid'; }
   if (seen > 0) {
-    const lit = litAt(V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z)); const mv = L.spd > 1.5 ? 1 : .5; const cr = L.crouch ? .55 : 1; const glow = KS.carried ? 1.35 : 1;
+    const lit = litAt(V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z)); const mv = L.spd > 1.5 ? 1 : .5; const cr = L.crouch ? .55 : 1; const glow = KS.carried && (!NET.on || KS.carrier === L.id) ? 1.35 : 1;
     const k = seen * lit * mv * cr * glow * (L.id === 'cham' ? 1 - .82 * L.camo : 1); meter += k * dt * 1.0;
     const tp = V3(L.pos.x, L.pos.y + 2, L.pos.z);
-    if (meter > .32) {
-      if (who === 'mom' && KM.mode !== 'sus' && KM.mode !== 'fopen' && !TOY.fetch) { KM.prev = KM.mode; KM.mode = 'sus'; KM.susP = tp; KM.trackT = 2.2; if (!KS.said.sus) { KS.said.sus = 1; say('太太', '嗯？……什麼東西？', '#f4bb72', 2.2); } }
-      if (who === 'mom' && KM.mode === 'sus') { KM.susP = tp; KM.trackT = 2.2; }
-      if (who === 'kid') { KID.mode = 'sus'; KID.t = 2.2; KID.look.copy(tp); if (!KS.said.kidsus) { KS.said.kidsus = 1; say('女兒', '媽媽……那邊好像有東西在動。', '#e8a0c0', 2.8); } }
-    }
+    if (meter > .32) netSeen(tp, who);
   } else meter -= dt * .24;
   meter = clamp(meter, 0, 1); if (meter >= 1) { toyFreeze(who); }
 }
@@ -705,18 +718,15 @@ function updKitchenPlayer(dt) {
   if (inFridge(L)) { L.cold = true; if (!KS.said.cold) { KS.said.cold = 1; toast('雪櫃裡好冷……體力不會恢復'); } if (rnd() < dt * 1.5) emit(V3(L.pos.x, L.pos.y + L.h * .8, L.pos.z) .add(V3(Math.sin(L.yaw), 0, Math.cos(L.yaw)).multiplyScalar(1.2)), V3(Math.sin(L.yaw) * 2, 1.5, Math.cos(L.yaw) * 2), new THREE.Color(.25, .27, .3), R(.4, .7), R(.6, 1), -1, 1); } else L.cold = false;
   if (Math.hypot(L.pos.x - KS.drain.x, L.pos.z - KS.drain.z) < 3.6 && Math.abs(L.pos.y - 12) < 1.5) {
     L.pos.set(191, 0, -196); L.vel.set(0, 0, 0); L.climbing = false; L.mantle = null; L.squash = .8; SND.swish(); toast('從排水口滑到了雪櫃底下！');
-    for (const F of party) if (F !== L) { const fits = F.h < 5.9; F.pos.set(fits ? 191 + R(-8, 8) : 191, 0, fits ? -186 + R(-6, 6) : -140); F.queue = []; F.disp.copy(F.pos); F.qst = 'idle'; }
+    for (const F of party) if (F !== L && mine(F) && !F.frozen) { const fits = F.h < 5.9; F.pos.set(fits ? 191 + R(-8, 8) : 191, 0, fits ? -186 + R(-6, 6) : -140); F.queue = []; F.disp.copy(F.pos); F.qst = 'idle'; }
     trail = []; L.lastTrail.copy(L.pos);
   }
-  if (KS.coreGot && !KS.carried && KS.coreDrop && L.pos.distanceTo(KS.coreDrop) < 4.5) { KS.carried = true; KS.coreDrop = null; SND.pick(); toast('重新拿起了核心'); }
-  if (!KS.coreGot && L.pos.distanceTo(V3(212, 0, -194)) < 4.5) {
-    KS.coreGot = true; KS.carried = true; PROTO++; SND.pick(); toast(`拿到核心了！旁邊還有一支 Prototype（共 ${PROTO} 支）。核心在發光——帶着它更容易被看見`, 4.2); setQuest(2);
-    say('爸爸', '找到了……光比之前弱。我們得快點。', '#f5f0e6', 3);
-  }
-  if (KS.carried) { const C = leader; const p = V3(C.pos.x, C.pos.y + C.h + 1.4 + Math.sin(T * 3) * .25, C.pos.z); KS.core.position.lerp(p, 1 - Math.exp(-14 * dt)); KS.core.rotation.y += dt * 2; KS.coreLight.intensity = 60 + Math.sin(T * 5) * 15; }
+  if (KS.coreGot && !KS.carried && KS.coreDrop && !L.frozen && L.pos.distanceTo(KS.coreDrop) < 4.5) netGet('cdrop');
+  if (!KS.coreGot && !L.frozen && L.pos.distanceTo(V3(212, 0, -194)) < 4.5) netGet('core');
+  if (KS.carried) { const C = NET.on && KS.carrier ? chars[KS.carrier] : leader; const p = V3(C.pos.x, C.pos.y + C.h + 1.4 + Math.sin(T * 3) * .25, C.pos.z); KS.core.position.lerp(p, 1 - Math.exp(-14 * dt)); KS.core.rotation.y += dt * 2; KS.coreLight.intensity = 60 + Math.sin(T * 5) * 15; }
   else if (KS.coreDrop) { KS.core.position.lerp(KS.coreDrop, 1 - Math.exp(-10 * dt)); KS.core.rotation.y += dt; }
   else { KS.core.rotation.y += dt; KS.core.position.y = 1.6 + Math.sin(T * 2) * .2; }
-  if (quest === 0 && !KS.coreGot && Math.hypot(L.pos.x - 191, L.pos.z - -120) < 80 && CAT.mode === 'sleep') setQuest(1);
+  if (!NET.client && quest === 0 && !KS.coreGot && playerChars().some(C => Math.hypot(C.pos.x - 191, C.pos.z + 120) < 80) && CAT.mode === 'sleep') setQuest(1);
 }
 LEVELS.kitchen = {
   chapter: '第一章', title: '晚飯時間的廚房', env: 'kitchen', envI: .75, fog: [0x1a1510, .0007], expo: 1.18,
@@ -743,12 +753,13 @@ LEVELS.kitchen = {
     if (rnd() < dt * .75) { emit(KS.tap, V3(0, -2, 0), new THREE.Color(.5, .62, .7), .35, .9, 300, 0); setTimeout(() => { if (LEVEL === 'kitchen') { for (let i = 0; i < 4; i++) emit(V3(-100, 68.9, -193), V3(R(-6, 6), R(5, 12), R(-6, 6)), new THREE.Color(.5, .62, .72), .2, .35, 200, 1); if (leader.pos.distanceTo(V3(-100, 68, -193)) < 120) SND.drip(); } }, 420); }
   },
   win() {
-    const home = Math.hypot(leader.pos.x + 296, leader.pos.z + 100) < 9 && leader.pos.y < 3 && STATE === 'play';
-    if (home && KS.carried && party.some(C => C.frozen)) { if (!KS.said.leftToy || T - KS.said.leftToy > 6) { KS.said.leftToy = T; toast('還有隊友是玩具！先把他救回來，不能丟下任何人', 3.4); } return; }
-    if (KS.carried && home) { STATE = 'end'; endT = 0; say('前拍檔', '回來了……快，牆裡面安全。', '#b7d38a', 3); }
+    const W = KS.carried ? (NET.on && KS.carrier ? chars[KS.carrier] : leader) : null; if (!W) return;
+    const home = Math.hypot(W.pos.x + 296, W.pos.z + 100) < 9 && W.pos.y < 3 && STATE === 'play';
+    if (home && party.some(C => C.frozen)) { if (!KS.said.leftToy || T - KS.said.leftToy > 6) { KS.said.leftToy = T; toastW('還有隊友是玩具！先把他救回來，不能丟下任何人', 3.4); } return; }
+    if (home) { STATE = 'end'; endT = 0; sayW('前拍檔', '回來了……快，牆裡面安全。', '#b7d38a', 3); if (NET.host) nsend({ t: 'end' }); }
   },
   marker() { const t = toyMarker(); if (t) return t; if (KS.coreDrop) return KS.coreDrop; return quest >= 2 ? STATIC.home : (KS.coreGot ? null : V3(212, 2, -194)); },
-  reset() { KS.coreDrop = null; KM.mode = 'goto'; KM.pt = 'stove'; KS.doorTarget = 0; KS.closeT = 0; CAT.mode = 'home'; KID.mode = 'read'; KID.t = 6; if (KS.carried) { const C = leader; KS.core.position.set(C.pos.x, C.pos.y + 6, C.pos.z); } },
+  reset() { KS.coreDrop = null; KS.carrier = null; KM.mode = 'goto'; KM.pt = 'stove'; KS.doorTarget = 0; KS.closeT = 0; CAT.mode = 'home'; KID.mode = 'read'; KID.t = 6; if (KS.carried) { const C = leader; KS.core.position.set(C.pos.x, C.pos.y + 6, C.pos.z); } },
   eyeText: () => meter > .3 ? '她們在看這邊！快躲進影子裡' : '太太和女兒在廚房',
   hint(L) {
     if (TOUCH) return '';

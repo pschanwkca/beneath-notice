@@ -27,6 +27,7 @@ function toyReachable(C) {
   return true;
 }
 function toyFreeze(who) {
+  if (NET.on) { const L = leader; if (L.frozen || (NET.pend.frz && T - NET.pend.frz < 2)) return; NET.pend.frz = T; meter = 0; if (NET.host) hostFreeze(L, who); else nsend({ t: 'frz', id: L.id, who, p: [L.pos.x, L.pos.y, L.pos.z], y: L.yaw }, NET.hostId); return; }
   const L = leader; const left = party.filter(C => !C.frozen && C !== L);
   if (!left.length || !LVL.toys) { fail(); return; }
   if (STK) { if (STK.lock) stkDown(true); stkClear(); }
@@ -49,21 +50,23 @@ function toyHandOff() {
   trail = []; N.lastTrail.copy(N.pos); assignGaps(); STATE = 'play'; TOY.grace = 1.5; SND.sw(); refreshPartyHUD();
   toast(`${F.S.name}變成了玩具！現在操控：${N.S.name}`, 3.4);
 }
-function toyRevive(C, proto) {
+function toyRevive(C, proto, by = leader) {
   TOY.fetchQ = TOY.fetchQ.filter(q => q !== C);
-  if (TOY.fetch && TOY.fetch.C === C) { TOY.fetch = null; KM.mode = 'goto'; setTimeout(() => { if (LEVEL === 'kitchen') say('太太', '……咦？玩具呢？', '#f4bb72', 2.2); }, 300); }
-  const L = leader;
+  if (TOY.fetch && TOY.fetch.C === C) { TOY.fetch = null; KM.mode = 'goto'; setTimeout(() => { if (LEVEL === 'kitchen') sayW('太太', '……咦？玩具呢？', '#f4bb72', 2.2); }, 300); }
+  const L = by;
   if (proto) {
     let p = null; for (const [a, d] of [[1.2, 3.2], [-1.2, 3.2], [2.6, 3], [-2.6, 3], [3.14, 3]]) { const x = L.pos.x + Math.sin(L.yaw + a) * d, z = L.pos.z + Math.cos(L.yaw + a) * d; if (standable(x, z, L.pos.y, C)) { p = V3(x, L.pos.y, z); break; } }
     C.pos.copy(p || L.pos); C.stamMax = Math.max(60, (C.stamMax || 100) - 20); C.stamina = Math.min(C.stamina, C.stamMax);
   }
   C.frozen = false; C.toyAt = null; toyLook(C, false); C.root.rotation.set(0, C.yaw, 0);
   C.disp.copy(C.pos); C.queue = []; C.vel.set(0, 0, 0); C.state = 'idle'; C.qst = 'idle'; C.offK = 0; C.lastTrail = C.pos.clone();
+  if (NET.on) { netUnlease([{ id: C.id, x: C.pos.x, y: C.pos.y, z: C.pos.z }]); nsend({ t: 'rev', id: C.id, x: C.pos.x, y: C.pos.y, z: C.pos.z, sm: C.stamMax, pr: proto ? 1 : 0 }); if (C === leader) { TOY.grace = 1.5; meter = 0; } }
   assignGaps(); refreshPartyHUD(); toyBurst(V3(C.pos.x, C.pos.y + C.h * .5, C.pos.z)); SND.pick();
-  toast(proto ? `用 Prototype 救回了${C.S.name}！體力上限變成 ${C.stamMax}%` : `從玩具箱救回了${C.S.name}！`, 3.2);
-  say(C.S.name, proto ? '……我回來了？身體好重。' : '謝了！還以為要一直做玩具……', C.S.col, 2.4);
+  toastW(proto ? `用 Prototype 救回了${C.S.name}！體力上限變成 ${C.stamMax}%` : `從玩具箱救回了${C.S.name}！`, 3.2);
+  sayW(C.S.name, proto ? '……我回來了？身體好重。' : '謝了！還以為要一直做玩具……', C.S.col, 2.4);
 }
 function useProto() {
+  if (NET.on) { if (STATE !== 'play') return; if (leader.frozen) { toast('你變成了玩具，要等隊友救你'); return; } if (NET.host) hostProto(leader.id, null); else nsend({ t: 'proto', id: leader.id }, NET.hostId); return; }
   const fz = party.filter(C => C.frozen); if (STATE !== 'play') return;
   if (!fz.length) { toast(PROTO ? '隊友都好好的，Prototype 留着之後用' : '沒有 Prototype'); return; }
   if (!PROTO) { toast('沒有 Prototype 了——去玩具箱把隊友救出來'); return; }
@@ -89,7 +92,7 @@ function momFetch(dt) {
   if (F.mode === 'grab') {
     F.t += dt; mom.yaw = angDamp(mom.yaw, Math.atan2(C.pos.x - P.x, C.pos.z - P.z), 5, dt); mom.aimT.copy(F.from);
     const k = clamp((F.t - .45) / .5, 0, 1); if (k > 0) { if (C.toyAt !== 'hand') { C.toyAt = 'hand'; refreshPartyHUD(); } C.pos.lerpVectors(F.from, V3().copy(toyHand()).add(V3(0, -C.h * .4, 0)), easeIO(k)); }
-    if (F.t > 1.15) { F.mode = 'carry'; F.wps = P.x < 40 && TOY.box.ap.x > 40 ? [V3(60, 0, 8), TOY.box.ap] : [TOY.box.ap]; say('太太', LEVEL === 'kitchen' && !KS.said.tidy ? '女兒的玩具又亂放……' : '玩具要收好。', '#f4bb72', 2.2); KS.said.tidy = 1; }
+    if (F.t > 1.15) { F.mode = 'carry'; F.wps = P.x < 40 && TOY.box.ap.x > 40 ? [V3(60, 0, 8), TOY.box.ap] : [TOY.box.ap]; sayW('太太', LEVEL === 'kitchen' && !KS.said.tidy ? '女兒的玩具又亂放……' : '玩具要收好。', '#f4bb72', 2.2); KS.said.tidy = 1; }
     return 0;
   }
   if (F.mode === 'carry') {
@@ -113,30 +116,31 @@ function toyApproach(p) {
 }
 function updToys(dt) {
   const L = leader; TOY.rescuing = null; if (TOY.grace > 0) TOY.grace -= dt;
-  for (const C of party) {
+  if (NET.client) { for (const C of party) if (C.frozen && C.rescueT > 0 && !L.frozen && Math.hypot(L.pos.x - C.pos.x, L.pos.z - C.pos.z) < 4.6) TOY.rescuing = C; }
+  else for (const C of party) {
     if (!C.frozen) continue;
     if (C.toyAt !== 'hand') { // fall, rest on whatever is below
       const [s] = supportAt(C.pos.x, C.pos.z, C.r * .5, C.pos.y + .05);
       if (C.pos.y > s + .01 || C.toyVy > 0) { C.toyVy = (C.toyVy || 0) - G * dt; C.pos.y = Math.max(s, C.pos.y + C.toyVy * dt); if (C.pos.y <= s) { if (C.toyVy < -60) SND.land(.4); C.toyVy = 0; } }
     }
-    if (STATE === 'play' && C.toyAt !== 'hand' && !L.frozen && Math.hypot(L.pos.x - C.pos.x, L.pos.z - C.pos.z) < 4.6 && Math.abs(L.pos.y - C.pos.y) < 4) {
-      C.rescueT = (C.rescueT || 0) + dt; TOY.rescuing = C; C.toyRoll = Math.sin(T * 34) * .12 * Math.min(1, C.rescueT * 2); if (rnd() < dt * 8) SND.step(.5);
-      if (C.rescueT >= 1.4) { C.rescueT = 0; toyRevive(C, false); }
+    const rs = STATE === 'play' && C.toyAt !== 'hand' ? (NET.on ? playerChars() : [L]).find(q => q !== C && !q.frozen && Math.hypot(q.pos.x - C.pos.x, q.pos.z - C.pos.z) < 4.6 && Math.abs(q.pos.y - C.pos.y) < 4) : null;
+    if (rs) {
+      C.rescueT = (C.rescueT || 0) + dt; if (rs === L) TOY.rescuing = C; C.toyRoll = Math.sin(T * 34) * .12 * Math.min(1, C.rescueT * 2); if (rnd() < dt * 8) SND.step(.5);
+      if (C.rescueT >= 1.4) { C.rescueT = 0; toyRevive(C, false, rs); }
     } else if (C.rescueT > 0) { C.rescueT = Math.max(0, C.rescueT - dt * 2); if (C.toyAt === 'floor') C.toyRoll = 0; }
   }
   // vials
   for (const v of VIALS) {
     if (v.got) continue; v.g.rotation.y += dt * 1.6; v.g.position.y = v.y + 1.6 + Math.sin(T * 2.2 + v.x) * .35; v.halo.position.set(v.x, v.g.position.y, v.z); v.halo.lookAt(camera.position);
-    if (STATE === 'play' && Math.hypot(L.pos.x - v.x, L.pos.y + 1 - v.y - 1.6, L.pos.z - v.z) < 3.6) { v.got = true; v.g.visible = false; v.halo.visible = false; PROTO++; SND.pick(); toyBurst(V3(v.x, v.y + 1.6, v.z)); toast(`拾到一支 Prototype！（共 ${PROTO} 支）隊友變成玩具時，按 ${TOUCH ? '「復活」' : 'R'} 就能救回來`, 3.6); }
+    if (STATE === 'play' && !L.frozen && mine(L) && Math.hypot(L.pos.x - v.x, L.pos.y + 1 - v.y - 1.6, L.pos.z - v.z) < 3.6) netGet('vial', VIALS.indexOf(v));
   }
   // crumbs restore the stamina cap
   for (const c of CRUMBS) {
     if (c.got) continue; c.g.rotation.y += dt * .8; c.halo.lookAt(camera.position);
-    if (STATE !== 'play' || Math.hypot(L.pos.x - c.x, L.pos.z - c.z) > 3.4 || Math.abs(L.pos.y - c.y) > 2.5) continue;
+    if (STATE !== 'play' || L.frozen || !mine(L) || Math.hypot(L.pos.x - c.x, L.pos.z - c.z) > 3.4 || Math.abs(L.pos.y - c.y) > 2.5) continue;
     const cap = L.stamMax || 100;
     if (cap >= 100) { if (!c.full || T - c.full > 8) { c.full = T; toast('還不餓——體力上限減少的隊友才需要吃'); } continue; }
-    c.got = true; c.g.visible = false; c.halo.visible = false; L.stamMax = Math.min(100, cap + c.v); L.stamina = Math.min(L.stamMax, L.stamina + 30);
-    SND.pick(); refreshPartyHUD(); toast(`${L.S.name}吃了${c.big ? '一塊曲奇' : '餅乾碎'}，體力上限回到 ${L.stamMax}%`, 3);
+    netGet('crumb', CRUMBS.indexOf(c));
   }
 }
 // ---------- props ----------

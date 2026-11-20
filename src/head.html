@@ -187,6 +187,43 @@ html.touch .note{margin-top:10px}
 html.touch .card{max-height:100vh;overflow:auto}
 
 @media(prefers-reduced-motion:reduce){*{transition:none!important}}
+.mpbtn{border-color:rgba(130,236,230,.55)!important;color:var(--cyan)!important}
+.mpbox{width:min(640px,94vw);padding:22px 24px 20px;text-align:center}
+.mph{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px}
+.mph b{font:700 22px "Noto Sans TC";letter-spacing:.04em}
+.mph span{font-size:12px;color:var(--dim)}
+.mpnote{color:var(--dim);font-size:14px;line-height:1.6;margin:4px auto 18px;max-width:30em}
+.mpjoin{display:flex;gap:8px;justify-content:center;margin:16px 0 18px}
+.mpjoin input{width:130px;font:700 22px "Fredoka",monospace;letter-spacing:.3em;text-transform:uppercase;text-align:center;background:rgba(255,255,255,.06);color:var(--ink);border:1px solid var(--faint);border-radius:99px;padding:8px 12px}
+.mpjoin input:focus{outline:2px solid var(--cyan);outline-offset:2px}
+button.small{font-size:14px;padding:6px 16px;min-height:34px}
+.mpcode{display:flex;align-items:center;justify-content:center;gap:12px;margin:2px 0 16px}
+.mpcode span{color:var(--dim);font-size:13px}
+.mpcode b{font:700 30px "Fredoka",monospace;letter-spacing:.28em;color:var(--cyan)}
+.mpslots{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.mps{display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 6px 10px;border-radius:14px;background:rgba(255,255,255,.04);border:1px solid var(--faint);color:var(--ink);box-shadow:none;min-height:0;font:600 14px "Noto Sans TC"}
+.mps:hover{transform:translateY(-2px);box-shadow:none;border-color:rgba(245,240,230,.4)}
+.mps .ph{width:64px;height:64px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 35%,#2b3442,#121820);display:grid;place-items:center}
+.mps img{width:100%;height:100%;object-fit:cover}
+.mps small{font-size:11px;color:var(--dim);font-weight:500}
+.mps em{font-style:normal;font-size:11px;color:var(--dim);margin-top:2px}
+.mps.me{border-color:var(--amber);background:rgba(244,187,114,.1)}
+.mps.me em{color:var(--amber);font-weight:700}
+.mps.taken{opacity:.75;cursor:default}
+.mps.taken em{color:var(--cyan)}
+.mpstatus{margin:16px 0 4px;font-size:14px;color:var(--ink)}
+.mperr{min-height:16px;font-size:12px;color:var(--rose)}
+.mpact{display:flex;gap:10px;justify-content:center;align-items:center;margin-top:10px}
+.mpact button[disabled]{opacity:.45;cursor:default;transform:none;box-shadow:none}
+.mpchip{position:absolute;left:50%;bottom:16px;transform:translateX(-50%);font-size:12px;color:var(--dim);background:var(--panel);border:1px solid var(--faint);border-radius:99px;padding:4px 12px;display:flex;align-items:center;gap:6px}
+.mpchip[hidden]{display:none}
+.mpchip i{width:7px;height:7px;border-radius:50%;background:#7be08a;box-shadow:0 0 8px #7be08a}
+.mpchip b{font:600 12px "Fredoka";letter-spacing:.15em;color:var(--cyan)}
+.ptag{position:absolute;transform:translate(-50%,-100%);font:700 11px "Noto Sans TC";padding:2px 8px;border-radius:99px;background:rgba(10,13,18,.6);white-space:nowrap;opacity:0;transition:opacity .2s;pointer-events:none}
+.ptag.on{opacity:1}
+html.touch .mpslots{grid-template-columns:repeat(4,1fr);gap:6px}
+html.touch .mps .ph{width:48px;height:48px}
+html.touch .mpchip{bottom:auto;top:62px}
 </style>
 </head>
 <body>
@@ -211,6 +248,7 @@ html.touch .card{max-height:100vh;overflow:auto}
 </div>
 
 <div id="hud" class="hud off">
+  <div id="mpChip" class="mpchip" hidden></div>
   <div id="watch"><i></i><span></span></div>
   <div class="bars"></div>
   <div class="q panel" id="quest">
@@ -268,6 +306,7 @@ html.touch .card{max-height:100vh;overflow:auto}
     <div class="row">
       <button id="go">序章：地庫</button>
       <button id="go1" class="ghost">第一章：牆內與廚房</button>
+      <button id="goMP" class="ghost mpbtn">多人連線 · 最多 4 人</button>
       <div class="sel" id="qsel" role="group" aria-label="畫質">
         <button data-q="high" class="on">高畫質</button><button data-q="med">中</button><button data-q="low">低</button>
       </div>
@@ -292,6 +331,25 @@ html.touch .card{max-height:100vh;overflow:auto}
       <div><span>換角色</span><span>點右上頭像</span></div>
     </div>
     <div class="note"><span class="desk">序章原型 · 地庫實驗室 · 走向牆壁按住前進就會攀爬</span><span class="mob">序章原型 · 地庫實驗室 · 撞向牆壁並繼續前進就會攀爬</span></div>
+  </div>
+</div>
+
+<div class="ov" id="mp" hidden>
+  <div class="mpbox panel">
+    <div class="mph"><b>多人連線</b><span id="mpCount"></span></div>
+    <div id="mpHome">
+      <p class="mpnote">一齊通關：每人操控一隻角色，沒有人揀的角色由電腦控制，跟着房主行動。由第一章開始。</p>
+      <button id="mpCreate">開新房間</button>
+      <div class="mpjoin"><input id="mpCode" maxlength="4" placeholder="房號" autocomplete="off" spellcheck="false" aria-label="房號"><button id="mpJoin" class="ghost">加入</button></div>
+      <button id="mpBack" class="ghost small">返回</button>
+    </div>
+    <div id="mpRoom" hidden>
+      <div class="mpcode"><span>房號</span><b id="mpRoomCode">----</b><button id="mpCopy" class="ghost small">複製邀請連結</button></div>
+      <div class="mpslots" id="mpSlots"></div>
+      <div id="mpStatus" class="mpstatus">連線中…</div>
+      <div id="mpErr" class="mperr"></div>
+      <div class="mpact"><button id="mpStart" disabled>開始</button><button id="mpLeave" class="ghost small">離開房間</button></div>
+    </div>
   </div>
 </div>
 

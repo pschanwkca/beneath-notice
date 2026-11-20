@@ -1,4 +1,4 @@
-node_modules/
+node_modules
 test/*.png
 test/*.txt
 .DS_Store

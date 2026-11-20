@@ -76,10 +76,10 @@ function sizeNotice(r, grow) {
   const p = V3(r.cx, r.y0 + r.sy * r.target * .5, r.cz);
   const sees = (head, fov, range) => { const e = V3(); head.getWorldPosition(e); const q = new THREE.Quaternion(); head.getWorldQuaternion(q); const f = V3(0, 0, 1).applyQuaternion(q); const d = V3().subVectors(p, e); const dist = d.length(); d.divideScalar(dist); return dist < range && d.dot(f) > fov && !rayBlocked(e, d, dist - Math.max(r.sx, r.sz) * r.target * .6, false); };
   const big = r.target >= 2;
-  if (KID.root && sees(KID.head, .3, 380)) { KID.mode = 'noise'; KID.t = 3; KID.look.copy(p); if (!KS.said['kidsz' + r.name]) { KS.said['kidsz' + r.name] = 1; say('女兒', r.name === '毛公仔' ? (big ? '媽媽！熊仔變得好大！' : '熊仔……縮小了？') : `那個${r.name}自己${grow ? '變大' : '變小'}了！`, '#e8a0c0', 2.8); } }
+  if (KID.root && sees(KID.head, .3, 380)) { KID.mode = 'noise'; KID.t = 3; KID.look.copy(p); if (!KS.said['kidsz' + r.name]) { KS.said['kidsz' + r.name] = 1; sayW('女兒', r.name === '毛公仔' ? (big ? '媽媽！熊仔變得好大！' : '熊仔……縮小了？') : `那個${r.name}自己${grow ? '變大' : '變小'}了！`, '#e8a0c0', 2.8); } }
   if (sees(mom.head, .35, 440) && !TOY.fetch && KM.mode !== 'fopen') {
     KM.inv = toyApproach(p); KM.invP = p.clone(); KM.mode = 'inv';
-    say('太太', grow ? `咦？那個${r.name}……是不是變大了？` : `……奇怪，那個${r.name}剛才不是這麼小的吧？`, '#f4bb72', 2.8);
+    sayW('太太', grow ? `咦？那個${r.name}……是不是變大了？` : `……奇怪，那個${r.name}剛才不是這麼小的吧？`, '#f4bb72', 2.8);
   }
 }
 // ---- eat the cookie ----
@@ -89,9 +89,5 @@ function updCookie() {
   if (!near) return;
   const team = r.s >= 1.9; const who = team ? party.filter(C => !C.frozen) : [L]; const need = who.some(C => (C.stamMax || 100) < 100);
   if (!need) { if (!r.full || T - r.full > 8) { r.full = T; toast(team ? '大曲奇！不過大家都不餓，留着之後吃' : '還不餓——體力上限減少的隊友才需要吃'); } return; }
-  r.eaten = true; r.mesh.visible = false; c.y0 = -999; c.y1 = -998; const i = resizables.indexOf(r); if (i >= 0) resizables.splice(i, 1);
-  for (const C of who) { C.stamMax = Math.min(100, (C.stamMax || 100) + (team ? 25 : 20)); C.stamina = Math.min(C.stamMax, C.stamina + 40); }
-  SND.pick(); refreshPartyHUD(); for (let k = 0; k < 24; k++) emit(V3(r.cx, r.y0 + 1, r.cz), V3(R(-12, 12), R(4, 16), R(-12, 12)), new THREE.Color(.8, .55, .28), R(.2, .5), R(.4, .8), 200, 1);
-  toast(team ? '巨型曲奇！全隊一起吃，體力上限 +25%' : `${L.S.name}吃了曲奇，體力上限回到 ${L.stamMax}%`, 3.4);
-  if (team) say(L.S.name, '放大曲奇真是天才！', L.S.col, 2.2);
+  if (!mine(L) || L.frozen) return; netGet('cookie');
 }

@@ -80,7 +80,7 @@ function updTongueAim() {
   tongueAim = { P, c, item: null, n: hitNormal(c, P) };
 }
 function chamTongue() {
-  const C = leader; if (!C || C.id !== 'cham' || TNG.phase !== 'off' || STK || C.mantle || C.zip || STATE !== 'play') return; tongueMesh();
+  const C = leader; if (!C || C.id !== 'cham' || TNG.phase !== 'off' || STK || C.mantle || C.zip || STATE !== 'play' || !mine(C) || C.frozen) return; tongueMesh();
   const A = tongueAim; SND.swish(); tone(900, 300, .12, .04, 'triangle');
   if (!A) { TNG.phase = 'miss'; TNG.t = 0; const d = V3(); camera.getWorldDirection(d); TNG.b.copy(mouthPos(C)).addScaledVector(d, 14); return; }
   TNG.b.copy(A.item ? A.item.p : A.P); TNG.t = 0;
@@ -132,18 +132,19 @@ function chamAnim(C, dt) {
 }
 // ---------- squirrel: carry & scout ----------
 function sqCarry() {
-  const C = leader; if (!C || C.id !== 'sq' || STK || STATE !== 'play') return;
+  const C = leader; if (!C || C.id !== 'sq' || STK || STATE !== 'play' || !mine(C) || C.frozen) return;
   if (C.carry) { sqDrop(C); return; }
   if (C.climbing) { toast('攀爬時抱不了人'); return; }
-  let best = null, bd = 6; for (const F of party) { if (F === C || F.frozen || F.stk) continue; const p = F.disp || F.pos; const d = Math.hypot(p.x - C.pos.x, p.z - C.pos.z); if (d < bd && Math.abs(p.y - C.pos.y) < 3) { bd = d; best = F; } }
+  let best = null, bd = 6; for (const F of party) { if (F === C || F.frozen || F.stk || (NET.on && F.owner !== F.baseOwner)) continue; const p = F.disp || F.pos; const d = Math.hypot(p.x - C.pos.x, p.z - C.pos.z); if (d < bd && Math.abs(p.y - C.pos.y) < 3) { bd = d; best = F; } }
   if (!best) { toast('要走近隊友才抱得到'); return; }
-  C.carry = best; best.carried = true; best.state = 'hang'; best.queue = []; SND.swish(); tone(500, 760, .12, .04, 'triangle');
+  C.carry = best; best.carried = true; best.state = 'hang'; best.queue = []; netLease([best.id], NET.me); SND.swish(); tone(500, 760, .12, .04, 'triangle');
   say(C.S.name, best.id === 'bear' ? '老友你……好重……' : `抱緊${best.S.name}！`, C.S.col, 1.8);
 }
 function sqDrop(C) {
   const F = C.carry; if (!F) return; C.carry = null; F.carried = false;
   let p = null; for (const a of [1.6, -1.6, 2.6, -2.6, 0, Math.PI]) { const x = C.pos.x + Math.sin(C.yaw + a) * 2.6, z = C.pos.z + Math.cos(C.yaw + a) * 2.6; if (standable(x, z, C.pos.y, F)) { p = V3(x, C.pos.y, z); break; } }
   F.pos.copy(p || C.pos); F.disp.copy(F.pos); F.queue = []; F.qst = 'idle'; F.state = 'idle'; F.vel.set(0, 0, 0); F.offK = 0; F.squash = .5;
+  netUnlease([{ id: F.id, x: F.pos.x, y: F.pos.y, z: F.pos.z }]);
 }
 function carryWeight(C) { return C.carry ? C.carry.h / 5 : 0; }
 function updCarry(dt) {
@@ -166,7 +167,7 @@ function sqScout() {
   const C = leader; if (!C || C.id !== 'sq' || STATE !== 'play') return;
   if (LEVEL !== 'kitchen') { toast('這裡沒有人，不用偵察'); return; }
   if (SCOUT.cd > 0) { toast(`偵察冷卻中（${Math.ceil(SCOUT.cd)} 秒）`); return; }
-  scoutCones(); const high = C.pos.y > 40; SCOUT.t = high ? 10 : 5; SCOUT.cd = 14; SND.zapUp();
+  scoutCones(); const high = C.pos.y > 40; SCOUT.t = high ? 10 : 5; SCOUT.cd = 14; SND.zapUp(); if (NET.on) nsend({ t: 'scout', d: SCOUT.t });
   toast(high ? '在高處偵察：顯示她們的視線範圍 10 秒' : '偵察：顯示她們的視線範圍 5 秒（站高一點看得更久）', 3);
 }
 function updScout(dt) {
