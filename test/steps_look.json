@@ -1,0 +1,5 @@
+[
+ {"click": "#go1", "wait": 3000},
+ {"eval": "(async()=>{const b=window.__bn; for(let i=0;i<300 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,200)); b.loadLevel('kitchen'); await new Promise(r=>setTimeout(r,1500)); for(let i=0;i<300 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,200)); window.__NODET=true; const L=b.leader; L.pos.set(-60,0,-120); b.cam.yaw=Math.PI; b.cam.pitch=-1.3; b.step(30); return [b.cam.pitch, b.cam.curD.toFixed(1)]})()", "wait": 400, "shot": "l1_lookup"},
+ {"eval": "(()=>{const b=window.__bn; b.cam.pitch=-.7; b.step(20); return b.cam.curD.toFixed(1)})()", "wait": 400, "shot": "l2_lookup_half"}
+]

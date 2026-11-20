@@ -129,6 +129,7 @@ function crewExtras(C, S, head, body, k, part, plain) {
 const CREW = { peb: [], pebCD: 0, sw: [] };
 function hogRoll() {
   const C = leader; if (!C || C.id !== 'hog' || STATE !== 'play' || C.climbing || C.dashT > 0 || (C.dashCD || 0) > T || !C.grounded) return;
+  if (isBase(C)) { toast('頭上有人，滾唔到'); return; }
   if (C.stamina < 12) { toast('體力不夠，先休息一下'); return; }
   C.dashT = .62; C.dashCD = T + 1.1; C.dashHit = new Set(); C.stamina -= 12; C.crouch = false; SND.swish(); SND.jump();
 }
@@ -147,6 +148,7 @@ function hogDash(C, dt) {
 // rabbit & frog: hold to charge, release to jump
 function chargeJump(C, dt, ctl) {
   if (C.id !== 'rab' && C.id !== 'frog') return;
+  if (C.stackN) { C.charge = 0; return; }
   const holding = ctl && keys.Mouse0 && C.grounded && !C.climbing;
   if (holding) { C.charge = Math.min(1, (C.charge || 0) + dt / .85); C.crouch = true; C.vel.x *= .8; C.vel.z *= .8; return; }
   if (C.charge > 0) {

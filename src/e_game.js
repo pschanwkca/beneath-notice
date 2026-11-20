@@ -129,7 +129,7 @@ function land(C, imp) {
   else if (imp > 45) { C.squash = clamp(imp / 160, .25, .75); SND.land(clamp(imp / 130, .2, .8)); }
   else SND.step(.6);
 }
-function speedOf(C, run) { return (C.crouch ? 6.5 : run ? 25 : 13.5) * C.S.spd * (C.slow || 1) * (C.carry ? 1 - .22 * carryWeight(C) : 1); }
+function speedOf(C, run) { return (C.crouch ? 6.5 : run ? 25 : 13.5) * C.S.spd * (C.slow || 1) * (C.carry ? 1 - .22 * carryWeight(C) : 1) * (C.stackN ? (C.stackN > 1 ? .6 : .76) : 1); }
 const joy = { id: null, x: 0, y: 0, ox: 0, oy: 0, on: false };
 function readMove() {
   if (joy.on && Math.hypot(joy.x, joy.y) > .1) { const m = Math.min(1, Math.hypot(joy.x, joy.y)); return { x: joy.x, y: joy.y, m, run: m > .93 }; }
@@ -139,7 +139,9 @@ function readMove() {
 function startClimb(C, hit) { C.climbing = true; C.climbN.set(hit.nx, 0, hit.nz); C.vel.set(0, 0, 0); C.grounded = false; C.crouch = false; C.yaw = Math.atan2(-hit.nx, -hit.nz); SND.swish(); }
 function detach(C, push, up, grounded) { C.climbing = false; C.vel.set(C.climbN.x * push * 20, up, C.climbN.z * push * 20); C.climbCD = .35; if (grounded) C.grounded = true; }
 function updLeader(C, dt) {
-  const ctl = STATE === 'play' && !(C.tumble > 0) && !PAUSED && !isBase(C);
+  const ctl = STATE === 'play' && !(C.tumble > 0) && !PAUSED;
+  // the bottom of a tower can still walk, carrying everyone on top (slower; no jumping or climbing)
+  const base = isBase(C); C.stackN = base ? towerSize(C) - 1 : 0;
   const mv = ctl ? readMove() : { x: 0, y: 0, m: 0, run: false }; const inX = mv.x, inY = mv.y;
   const fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
   let wx = fx * inY + rx * inX, wz = fz * inY + rz * inX; const wl = Math.hypot(wx, wz); if (wl > 0) { wx /= wl; wz /= wl; }
@@ -160,7 +162,8 @@ function updLeader(C, dt) {
   let dvx = tx - C.vel.x, dvz = tz - C.vel.z; const dl = Math.hypot(dvx, dvz); if (dl > acc) { dvx *= acc / dl; dvz *= acc / dl; }
   if (C.tumble > 0) { if (C.grounded) { C.vel.x *= 1 - 5 * dt; C.vel.z *= 1 - 5 * dt; } } else { C.vel.x += dvx; C.vel.z += dvz; }
   if (wl > 0 && !(C.tumble > 0)) C.yaw = angDamp(C.yaw, Math.atan2(wx, wz), 13, dt);
-  if (ctl && pressed.Space && C.grounded) { C.vel.y = 47 * C.S.jmp; C.grounded = false; C.squash = -.55; C.crouch = false; SND.jump(); }
+  if (ctl && pressed.Space && C.grounded && base) { if (!C.noJumpT || T - C.noJumpT > 3) { C.noJumpT = T; toast('頭上有人，跳唔到——叫佢哋先落嚟'); } }
+  else if (ctl && pressed.Space && C.grounded) { C.vel.y = 47 * C.S.jmp; C.grounded = false; C.squash = -.55; C.crouch = false; SND.jump(); }
   if (C.dashT > 0) hogDash(C, dt); chargeJump(C, dt, ctl);
   C.vel.y -= G * dt; const wasGl = C.gliding; C.gliding = false;
   if (C.id === 'sq' && ctl && !C.grounded && keys.Space && (C.vel.y < 0 || wasGl)) {
@@ -172,10 +175,10 @@ function updLeader(C, dt) {
   C.pos.x += C.vel.x * dt; C.pos.z += C.vel.z * dt;
   const hit = resolveH(C, true);
   moveVert(C, dt);
-  if (hit && ctl && C.climbCD <= 0 && !C.crouch && (C.stamina > 8 || C.id === 'gecko')) { if (-(wx * hit.nx + wz * hit.nz) > .5) startClimb(C, hit); }
+  if (hit && ctl && !base && C.climbCD <= 0 && !C.crouch && (C.stamina > 8 || C.id === 'gecko')) { if (-(wx * hit.nx + wz * hit.nz) > .5) startClimb(C, hit); }
   if (C.grounded && !C.cold) C.stamina = Math.min(C.stamMax || 100, C.stamina + 45 * dt);
   const hs = Math.hypot(C.vel.x, C.vel.z); C.spd = hs;
-  C.state = C.dashT > 0 ? 'roll' : C.tumble > 0 ? 'tumble' : C.gliding ? 'glide' : !C.grounded ? 'air' : hs > .8 ? (C.crouch ? 'sneak' : 'walk') : (C.crouch ? 'crouch' : 'idle');
+  C.state = base && C.grounded ? (hs > .8 ? 'stackwalk' : 'stack') : C.dashT > 0 ? 'roll' : C.tumble > 0 ? 'tumble' : C.gliding ? 'glide' : !C.grounded ? 'air' : hs > .8 ? (C.crouch ? 'sneak' : 'walk') : (C.crouch ? 'crouch' : 'idle');
   if (C.pos.y < -400 || (WORLD && C.pos.y < -5 && !zoneAt(C.pos, 30))) { C.pos.set(...CPS[cp]); C.vel.set(0, 0, 0); }
 }
 function resolveClimb(C) {
@@ -291,18 +294,22 @@ function switchTo(N) {
 
 // ---------- camera ----------
 function updCam(dt) {
-  if (STATE === 'play' && !PAUSED) { cam.yaw -= mouseDX * .0024 * SET.sens; cam.pitch = clamp(cam.pitch + mouseDY * .0022 * SET.sens * (SET.inv ? -1 : 1), -.45, 1.25); }
+  if (STATE === 'play' && !PAUSED) { cam.yaw -= mouseDX * .0024 * SET.sens; cam.pitch = clamp(cam.pitch + mouseDY * .0022 * SET.sens * (SET.inv ? -1 : 1), -1.4, 1.35); }
   mouseDX = mouseDY = 0;
   const L = leader; const ty = L.pos.y + L.h * (L.crouch ? .62 : .8);
   cam.tgt.x = damp(cam.tgt.x, L.pos.x, 16, dt); cam.tgt.y = damp(cam.tgt.y, ty, 10, dt); cam.tgt.z = damp(cam.tgt.z, L.pos.z, 16, dt);
   const d = cam.dist * (L.climbing ? 1.18 : 1) * (L.on || isBase(L) ? 1.3 : 1);
-  const dir = V3(Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch));
+  // the camera stays behind the head; tilting further only turns the view up (to the ceiling / sky)
+  const pc = Math.max(cam.pitch, -.2);
+  const dir = V3(Math.sin(cam.yaw) * Math.cos(pc), Math.sin(pc), Math.cos(cam.yaw) * Math.cos(pc));
+  const lk = V3(Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch));
   const o = V3(cam.tgt.x + Math.cos(cam.yaw) * 1.1, cam.tgt.y, cam.tgt.z - Math.sin(cam.yaw) * 1.1);
   const hitT = rayFirst(o, dir, d + 1); const want = Math.max(1.6, Math.min(d, hitT - .9));
   cam.curD = want < cam.curD ? want : damp(cam.curD, want, 5, dt);
   camera.position.copy(o).addScaledVector(dir, cam.curD);
   const fl = zoneFloor(L.pos); if (camera.position.y < fl + .6) camera.position.y = fl + .6;
-  camera.lookAt(o);
+  // look along the view direction: tilting down past the floor turns the view up to the ceiling / sky
+  camera.lookAt(camera.position.x - lk.x, camera.position.y - lk.y, camera.position.z - lk.z);
   if (cam.shake > .001) { camera.position.x += (Math.random() - .5) * cam.shake; camera.position.y += (Math.random() - .5) * cam.shake; cam.shake = Math.max(0, cam.shake - dt * 3); }
   bokeh.uniforms.focus.value = cam.curD;
 }
@@ -549,9 +556,10 @@ function animChar(C, dt) {
   C.t += dt; const k = C.k, b = C.body, st = C.state, spd = C.spd || 0;
   C.root.position.copy(C !== leader && C.disp && party.includes(C) ? C.disp : C.pos); C.root.rotation.y = C.yaw;
   let legA = 0, armA = 0, bob = 0, lean = 0, roll = 0, armZ = 0, legZ = 0, armX = 0, legT = 0, armAlt = 0;
-  if (st === 'walk' || st === 'sneak') {
+  if (st === 'walk' || st === 'sneak' || st === 'stackwalk') {
     const prev = C.phase; C.phase += dt * spd / (.95 * k) * 1.25; const s = Math.sin(C.phase); const a = clamp(spd / 13, .35, 1);
     legA = s * .75 * a; armA = -s * .65 * a; bob = Math.abs(Math.cos(C.phase)) * .16 * k * a; lean = clamp(spd * .013, 0, .32); roll = s * .08 * a;
+    if (st === 'stackwalk') { armA = 0; armX = -2.7 + s * .05; lean = .04; legZ = .18; roll *= 1.6; bob -= .1 * k; }
     if (C === leader && Math.floor(prev / Math.PI) !== Math.floor(C.phase / Math.PI)) SND.step(st === 'sneak' ? .3 : .8);
   } else if (st === 'air' || st === 'tumble') { legT = .55; armX = -1.1; armZ = .5; }
   else if (st === 'glide') { armZ = 1.35; legZ = .55; lean = 1.25; }

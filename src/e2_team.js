@@ -6,7 +6,8 @@
 //   - Anyone else walks up and presses F to climb onto the new top, and so on.
 //   - The top person faces a ledge and presses W/Space to climb onto it.
 //   - Standing on a ledge, F pulls the nearest teammate below up next to you.
-//   - The people underneath can't walk away while someone is standing on them.
+//   - The one at the bottom can still walk (slower), carrying the whole tower; no jumping or
+//     climbing while carrying. Anyone who gets their head knocked by something falls off.
 //  Each character records who it stands on (C.on); its owner keeps it on top of that
 //  character every frame, so the same rules work for AI teammates and online players.
 //  熊的推: tap left = shove (light things slide, fall off edges, make noise); hold left = keep pushing.
@@ -124,10 +125,16 @@ function stackSolve(dt) {
     const i = towerSize(C); const sw = Math.sin(T * 2.2 + i) * .08 * i;
     C.pos.set(B.pos.x + Math.cos(B.yaw) * sw, B.pos.y + B.h * STK_ON, B.pos.z - Math.sin(B.yaw) * sw); C.vel.set(0, 0, 0); C.grounded = true; C.climbing = false; C.spd = 0;
     C.state = isBase(C) ? 'stack' : 'top'; if (C.disp) C.disp.copy(C.pos);
+    // carried under a table edge / shelf: whoever hits their head falls off
+    if (solidAt(C.pos.x, C.pos.y + C.h * .55, C.pos.z) || solidAt(C.pos.x, C.pos.y + C.h * .95, C.pos.z)) {
+      C.on = null; const bx = B.vel.x || 0, bz = B.vel.z || 0; C.vel.set(-bx * .5 + R(-6, 6), 16, -bz * .5 + R(-6, 6)); C.grounded = false; C.pos.x -= Math.sign(bx) * .8; C.pos.z -= Math.sign(bz) * .8;
+      if (C === leader) { C.tumble = .6; toast('撞到頭，跌咗落嚟！'); } else { C.drop = true; if (B === leader) toast(`${C.S.name}撞到頭，跌咗落嚟！`); }
+      SND.thud(.25); continue;
+    }
   }
   for (const C of party) {
     if (!mine(C) || C.on || C.hop || C.frozen) continue;
-    if (isBase(C)) { C.state = 'stack'; C.spd = 0; if (C !== leader) { C.vel.set(0, 0, 0); if (C.disp) C.disp.copy(C.pos); C.offK = 0; } }
+    if (isBase(C) && C !== leader) { C.state = 'stack'; C.spd = 0; C.vel.set(0, 0, 0); if (C.disp) C.disp.copy(C.pos); C.offK = 0; }
     if (C.drop) { // an AI teammate falling off a tower
       C.vel.y -= G * dt; C.pos.addScaledVector(C.vel, dt); const [s] = supportAt(C.pos.x, C.pos.z, C.r * .55, C.pos.y + 2); C.state = 'tumble'; C.tumble = .3;
       if (C.pos.y <= s) { C.pos.y = s; C.vel.set(0, 0, 0); C.drop = false; C.tumble = 0; C.state = 'idle'; C.queue = []; SND.land(.4); }
@@ -161,7 +168,7 @@ function stackHintText() {
   const H = stackHintK; if (!H) return ''; const F = TOUCH ? '按「疊」' : '<kbd>F</kbd>';
   if (H.k === 'reach') return TOUCH ? '推搖桿向前爬上去 · 向後拉落返地下' : '<kbd>W</kbd> 爬上去 · <kbd>S</kbd> 落返地下';
   if (H.k === 'short') return NET.on ? '夠唔到——叫隊友走過來按 F 疊上你頭頂' : (TOUCH ? '夠唔到——點頭像換另一隻角色，走過來按「疊」疊上去' : '夠唔到——<kbd>Tab</kbd> 換另一隻角色，走過來按 <kbd>F</kbd> 疊上去');
-  if (H.k === 'base') return '有人企喺你頭上，暫時郁唔到';
+  if (H.k === 'base') return '頭上有人——可以孭住成座人塔行，但唔可以跳或者爬';
   if (H.k === 'pull') return `${F} 拉${H.n}上來`;
   if (H.k === 'over') return `上面凸出來爬不過去 · 走近隊友${F}疊羅漢`;
   if (H.k === 'climb') return `${F} 爬上${H.n}頭頂（疊羅漢）`;
