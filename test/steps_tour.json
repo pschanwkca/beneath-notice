@@ -1,0 +1,133 @@
+[
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; await b.startChapter('kitchen'); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(5); return b.LEVEL; })()"
+ },
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; if(b.LEVEL!=='basement'){ b.loadLevel('basement'); await new Promise(r=>setTimeout(r,600)); for(let i=0;i<200 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); } b.step(5); return b.LEVEL; })()"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(b.W.BO.x+40,b.W.BO.y+0,b.W.BO.z-150); L.vel.set(0,0,0); L.climbing=false; L.yaw=0+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(0)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(0)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=0; b.cam.pitch=0.14;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t01_lab"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(b.W.BO.x+30,b.W.BO.y+92,b.W.BO.z-195); L.vel.set(0,0,0); L.climbing=false; L.yaw=0.3+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(0.3)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(0.3)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=0.3; b.cam.pitch=0.25;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t02_lab_bench"
+ },
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; if(b.LEVEL!=='wall'){ b.loadLevel('wall'); await new Promise(r=>setTimeout(r,600)); for(let i=0;i<200 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); } b.step(5); return b.LEVEL; })()"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(b.W.HO.x+60,b.W.HO.y+4,b.W.HO.z+15); L.vel.set(0,0,0); L.climbing=false; L.yaw=Math.PI/2+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(Math.PI/2)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(Math.PI/2)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=Math.PI/2; b.cam.pitch=0.14;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t03_wall"
+ },
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; if(b.LEVEL!=='kitchen'){ b.loadLevel('kitchen'); await new Promise(r=>setTimeout(r,600)); for(let i=0;i<200 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); } b.step(5); return b.LEVEL; })()"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(-286,0,-100); L.vel.set(0,0,0); L.climbing=false; L.yaw=-Math.PI/2+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(-Math.PI/2)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(-Math.PI/2)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=-Math.PI/2; b.cam.pitch=0.2;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t04_kitchen_hole"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(150,0,-120); L.vel.set(0,0,0); L.climbing=false; L.yaw=0.3+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(0.3)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(0.3)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=0.3; b.cam.pitch=0.2;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t05_kitchen_fridge"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(-100,13,-176); L.vel.set(0,0,0); L.climbing=false; L.yaw=0+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(0)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(0)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=0; b.cam.pitch=0.1;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t06_undersink"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(-200,90,-185); L.vel.set(0,0,0); L.climbing=false; L.yaw=0.6+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(0.6)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(0.6)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=0.6; b.cam.pitch=0.3;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t07_counter"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(262,0,-262); L.vel.set(0,0,0); L.climbing=false; L.yaw=0.2+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(0.2)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(0.2)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=0.2; b.cam.pitch=0.15;  b.HX.bd.tgt=1.35; b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t08_bathroom"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(360,0,-400); L.vel.set(0,0,0); L.climbing=false; L.yaw=-1.2+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(-1.2)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(-1.2)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=-1.2; b.cam.pitch=0.2;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t09_bath_toilet"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(450,270.2,-226); L.vel.set(0,0,0); L.climbing=false; L.yaw=-Math.PI/2+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(-Math.PI/2)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(-Math.PI/2)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=-Math.PI/2; b.cam.pitch=0.05;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t10_duct"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(330,0,-10); L.vel.set(0,0,0); L.climbing=false; L.yaw=-Math.PI/2+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(-Math.PI/2)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(-Math.PI/2)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=-Math.PI/2; b.cam.pitch=0.15;  b.LIV.open=true; b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t11_living"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(700,0,60); L.vel.set(0,0,0); L.climbing=false; L.yaw=-2.4+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(-2.4)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(-2.4)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=-2.4; b.cam.pitch=0.2;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t12_living_sofa"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(788,0,-215); L.vel.set(0,0,0); L.climbing=false; L.yaw=0+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(0)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(0)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=0; b.cam.pitch=-0.2;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t13_stairs"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(640,300,-80); L.vel.set(0,0,0); L.climbing=false; L.yaw=-2.8+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(-2.8)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(-2.8)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=-2.8; b.cam.pitch=0.25;  b.hxSet(b.HX.id.ulight,true,'kid'); b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t14_bedroom"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(500,300,-120); L.vel.set(0,0,0); L.climbing=false; L.yaw=0+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(0)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(0)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=0; b.cam.pitch=0.35;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t15_bedroom_desk"
+ },
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; if(b.LEVEL!=='garage'){ b.loadLevel('garage'); await new Promise(r=>setTimeout(r,600)); for(let i=0;i<200 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); } b.step(5); return b.LEVEL; })()"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(978,-20,-196); L.vel.set(0,0,0); L.climbing=false; L.yaw=-Math.PI/2+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(-Math.PI/2)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(-Math.PI/2)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=-Math.PI/2; b.cam.pitch=0.2;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t16_garage_exit"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(1000,-20,150); L.vel.set(0,0,0); L.climbing=false; L.yaw=-2.2+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(-2.2)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(-2.2)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=-2.2; b.cam.pitch=0.25;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t17_garage_car"
+ },
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; if(b.LEVEL!=='yard'){ b.loadLevel('yard'); await new Promise(r=>setTimeout(r,600)); for(let i=0;i<200 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); } b.step(5); return b.LEVEL; })()"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(1480,-20,105); L.vel.set(0,0,0); L.climbing=false; L.yaw=-Math.PI/2+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(-Math.PI/2)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(-Math.PI/2)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=-Math.PI/2; b.cam.pitch=0.2;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t18_yard"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(2300,-20,330); L.vel.set(0,0,0); L.climbing=false; L.yaw=Math.PI+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(Math.PI)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(Math.PI)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=Math.PI; b.cam.pitch=0.2;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t19_kennel"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(2600,b.W.DECK,100); L.vel.set(0,0,0); L.climbing=false; L.yaw=-Math.PI/2+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(-Math.PI/2)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(-Math.PI/2)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=-Math.PI/2; b.cam.pitch=0.2;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t20_sunroom"
+ },
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; if(b.LEVEL!=='road'){ b.loadLevel('road'); await new Promise(r=>setTimeout(r,600)); for(let i=0;i<200 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); } b.step(5); return b.LEVEL; })()"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(1940,-20,744); L.vel.set(0,0,0); L.climbing=false; L.yaw=Math.PI+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(Math.PI)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(Math.PI)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=Math.PI; b.cam.pitch=0.2;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t21_road"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(2060,-20,1560); L.vel.set(0,0,0); L.climbing=false; L.yaw=Math.PI+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(Math.PI)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(Math.PI)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=Math.PI; b.cam.pitch=0.15;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "t22_park_gate"
+ }
+]

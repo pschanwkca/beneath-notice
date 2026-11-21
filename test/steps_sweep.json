@@ -1,0 +1,41 @@
+[
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; await b.startChapter('kitchen'); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(5); return b.LEVEL; })()"
+ },
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; if(b.LEVEL!=='kitchen'){ b.loadLevel('kitchen'); await new Promise(r=>setTimeout(r,600)); for(let i=0;i<200 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); } b.step(5); window.__SWEEP_ZONE='kitchen'; window.__SWEEP_MAX=(b.LEVEL==='kitchen'?320:170); for(const F of b.party) if(F!==b.leader){ F.queue=[]; } return [b.LEVEL,b.state]; })()"
+ },
+ {
+  "evalFile": "sweep.js"
+ },
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; if(b.LEVEL!=='basement'){ b.loadLevel('basement'); await new Promise(r=>setTimeout(r,600)); for(let i=0;i<200 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); } b.step(5); window.__SWEEP_ZONE='basement'; window.__SWEEP_MAX=(b.LEVEL==='kitchen'?320:170); for(const F of b.party) if(F!==b.leader){ F.queue=[]; } return [b.LEVEL,b.state]; })()"
+ },
+ {
+  "evalFile": "sweep.js"
+ },
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; if(b.LEVEL!=='wall'){ b.loadLevel('wall'); await new Promise(r=>setTimeout(r,600)); for(let i=0;i<200 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); } b.step(5); window.__SWEEP_ZONE='wall'; window.__SWEEP_MAX=(b.LEVEL==='kitchen'?320:170); for(const F of b.party) if(F!==b.leader){ F.queue=[]; } return [b.LEVEL,b.state]; })()"
+ },
+ {
+  "evalFile": "sweep.js"
+ },
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; if(b.LEVEL!=='garage'){ b.loadLevel('garage'); await new Promise(r=>setTimeout(r,600)); for(let i=0;i<200 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); } b.step(5); window.__SWEEP_ZONE='garage'; window.__SWEEP_MAX=(b.LEVEL==='kitchen'?320:170); for(const F of b.party) if(F!==b.leader){ F.queue=[]; } return [b.LEVEL,b.state]; })()"
+ },
+ {
+  "evalFile": "sweep.js"
+ },
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; if(b.LEVEL!=='yard'){ b.loadLevel('yard'); await new Promise(r=>setTimeout(r,600)); for(let i=0;i<200 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); } b.step(5); window.__SWEEP_ZONE='yard'; window.__SWEEP_MAX=(b.LEVEL==='kitchen'?320:170); for(const F of b.party) if(F!==b.leader){ F.queue=[]; } return [b.LEVEL,b.state]; })()"
+ },
+ {
+  "evalFile": "sweep.js"
+ },
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; if(b.LEVEL!=='road'){ b.loadLevel('road'); await new Promise(r=>setTimeout(r,600)); for(let i=0;i<200 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); } b.step(5); window.__SWEEP_ZONE='road'; window.__SWEEP_MAX=(b.LEVEL==='kitchen'?320:170); for(const F of b.party) if(F!==b.leader){ F.queue=[]; } return [b.LEVEL,b.state]; })()"
+ },
+ {
+  "evalFile": "sweep.js"
+ }
+]

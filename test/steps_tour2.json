@@ -1,0 +1,26 @@
+[
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; await b.startChapter('kitchen'); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(5); return b.LEVEL; })()"
+ },
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; await b.startChapter('kitchen'); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(5); return b.LEVEL; })()"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(150,0,-120); L.vel.set(0,0,0); L.climbing=false; L.yaw=0.3+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(0.3)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(0.3)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=0.3; b.cam.pitch=0.2;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "v05_kitchen_fridge"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(-100,13,-176); L.vel.set(0,0,0); L.climbing=false; L.yaw=0+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(0)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(0)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=0; b.cam.pitch=0.1;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "v06_undersink"
+ },
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; if(b.LEVEL!=='road'){ b.loadLevel('road'); await new Promise(r=>setTimeout(r,600)); for(let i=0;i<200 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); } b.step(5); return b.LEVEL; })()"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; if(b.state!=='play') b.state='play'; const L=b.leader; L.pos.set(1940,-20,744); L.vel.set(0,0,0); L.climbing=false; L.yaw=Math.PI+Math.PI; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x+Math.sin(Math.PI)*(4+i*3)+(i%2?3:-3), L.pos.y, L.pos.z+Math.cos(Math.PI)*(4+i*3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=Math.PI; b.cam.pitch=0.2;   b.step(70); return [b.LEVEL, b.info().fps, b.info().calls, b.info().tris]; })()",
+  "wait": 1800,
+  "shot": "v21_road"
+ }
+]

@@ -342,7 +342,8 @@ function hideOccluders() {
   for (const F of party) {
     if (F === L || F.on || F.hop || F.frozen || isBase(F)) { F.root.visible = true; continue; }
     const p = V3(F.disp.x, F.disp.y + F.h * .5, F.disp.z); const t = clamp(V3().subVectors(p, a).dot(ab) / len2, 0, 1); const q = V3().copy(a).addScaledVector(ab, t);
-    F.root.visible = !(p.distanceTo(q) < F.r + 1.3 && t < .92) && p.distanceTo(a) > F.r + .8;
+    // hide a teammate that blocks the line to you, or that is so close to the camera it would fill the screen
+    F.root.visible = !(p.distanceTo(q) < F.r + 1.8 && t < .92) && p.distanceTo(a) > F.r * 2 + 4.5;
   }
 }
 function switchTo(N) {
@@ -563,7 +564,8 @@ $('quest').addEventListener('pointerdown', e => { if (TOUCH) { e.stopPropagation
 const _pv = V3();
 function project(p, el, offX = 0, offY = 0, clampEdge = false) {
   _pv.copy(p).project(camera); let x = (_pv.x * .5 + .5) * innerWidth, y = (-_pv.y * .5 + .5) * innerHeight; const behind = _pv.z > 1;
-  if (clampEdge) { if (behind) { x = innerWidth - x; y = innerHeight - 40; } x = clamp(x, 60, innerWidth - 60); y = clamp(y, 170, innerHeight - 170); }
+  if (clampEdge) { if (behind) { x = innerWidth - x; y = innerHeight - 40; } x = clamp(x, 60, innerWidth - 60); y = clamp(y, 170, innerHeight - 170);
+    const q = $('quest'); if (q && q.offsetParent) { const r = q.getBoundingClientRect(); if (x < r.right + 30 && y < r.bottom + 28) y = r.bottom + 28; } }   // never on top of the quest card
   el.style.left = (x + offX) + 'px'; el.style.top = (y + offY) + 'px'; return !behind;
 }
 let lastHint = '';
