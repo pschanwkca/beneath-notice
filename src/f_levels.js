@@ -762,7 +762,7 @@ LEVELS.kitchen = {
     mom.root.visible = true; mom.phone.visible = false; mom.active = false; if (!mom.spoon) { mom.spoon = new THREE.Mesh(new THREE.CylinderGeometry(.5, .7, 26, 8), KMAT.wood); mom.spoon.position.set(0, -27, 8); mom.spoon.rotation.x = 1.2; mom.arms[1].el.add(mom.spoon); }
     mom.pos.set(34, 0, -128); mom.yaw = Math.PI; mom.aim.set(22, 96, -178); mom.aimT.copy(mom.aim); KM.mode = 'act'; KM.pt = 'stove'; KM.sched = 0; KM.t = 10;
     KID.root.visible = true; KID.root.position.set(-90, 0, 157); KID.root.rotation.y = Math.PI; KID.mode = 'read'; KID.t = 7;
-    HX.bd.a = 1.35; for (const o of HX.list) { o.on = { klight: true, hood: true, tv: true, lamp: true }[o.id] || false; hxApply(o, true); } HX.water = 0; brainReset();
+    HX.bd.a = 1.35; for (const o of HX.list) { if (o.lv) continue; o.on = o.def; hxApply(o, true); } HX.water = 0; brainReset();
     CAT.root.visible = true; CAT.pos.copy(CAT.home); CAT.mode = 'sleep'; CAT.sleepK = 1;
     kitchenMode();
   },

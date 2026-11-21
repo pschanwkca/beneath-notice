@@ -97,7 +97,7 @@ function buildGarage() {
   const X0 = 912, X1 = 1460, Z0 = -260, Z1 = 310;
   // ---- shell ----
   box(X0, X1, GY - 10, GY, Z0, Z1, floorM, { uv: 160, cast: false });
-  box(X0, X1, 270, 280, Z0, Z1, ceilM, { cast: false });
+  box(X0, 924, 270, 280, Z0, Z1, ceilM, { cast: false }); box(946, X1, 270, 280, Z0, Z1, ceilM, { cast: false }); box(924, 946, 270, 280, Z0, 108, ceilM, { cast: false }); box(924, 946, 270, 280, 132, Z1, ceilM, { cast: false });   // (a grille over the shelving: the duct from the house)
   // west wall, with the duct from the living room's vent (z -214…-186, y 4…24)
   box(X0, 920, GY, 270, Z0, -214, wallM, { uv: 120 }); box(X0, 920, GY, 270, -186, Z1, wallM, { uv: 120 }); box(X0, 920, GY, 4, -214, -186, wallM, { uv: 120 }); box(X0, 920, 24, 270, -214, -186, wallM, { uv: 120 });
   const ductM = new THREE.MeshStandardMaterial({ color: 0xb8bec4, metalness: .85, roughness: .4 });
@@ -195,10 +195,11 @@ function buildGarage() {
   // lights
   LV.add(new THREE.HemisphereLight(0x707884, 0x34302a, 1.6));
   const tube = (x, z) => { box(x - 60, x + 60, 262, 270, z - 8, z + 8, new THREE.MeshStandardMaterial({ color: 0xd0d4d8, roughness: .5 }), { col: false }); return mesh(new THREE.BoxGeometry(110, 2, 4), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xdfeaff, emissiveIntensity: 3 }), x, 261, z, { cast: false }); };
-  tube(1180, -60); GS.tubeB = tube(1300, 160); tube(1020, 120);
+  GS.tubeMeshes = [tube(1180, -60), (GS.tubeB = tube(1300, 160)), tube(1020, 120)];
   GS.tubeAL = spotL(0xdfe8ff, 230000, V3(1180, 258, -60), V3(1180, GY, -60), 1.05, .7, 1024, 10, 500);
   GS.tubeBL = pointL(0xcfdcff, 70000, 1300, 250, 160); GS.tubeCL = pointL(0xd8e2ff, 52000, 1020, 250, 120);
   GS.streetL = pointL(0xffa860, 1600, 1185, GY + 6, 290);
+  buildGarageDuct(M);
   // the man's torch (moved every frame)
   GS.torch = new THREE.SpotLight(0xfff0dc, 0, 0, .34, .45, 2); GS.torch.castShadow = true; GS.torch.shadow.mapSize.setScalar(TOUCH ? 512 : 1024); GS.torch.shadow.camera.near = 4; GS.torch.shadow.camera.far = 700; GS.torch.shadow.bias = -.0005; GS.torch.shadow.normalBias = .04; LV.add(GS.torch, GS.torch.target);
   GS.lights = [{ p: V3(1180, 258, -60), dir: V3(0, -1, 0), cos: Math.cos(1.05), range: 330, I: () => GS.tubeAL.intensity }, { p: V3(1300, 250, 160), range: 220, I: () => GS.tubeBL.intensity }, { p: V3(1020, 250, 120), range: 200, I: () => GS.tubeCL.intensity }, { p: V3(1414, BT + 36, -222), range: 70, I: () => GS.lampL.intensity }, { p: V3(1185, GY + 6, 290), range: 60 }];
@@ -285,13 +286,9 @@ function agentSay(k) { if (GS.said[k] && T - GS.said[k] < 40) return; GS.said[k]
 function updAgent(dt) {
   const H = GS.agent; if (!H) return; const P = H.pos; let moveD = 0;
   const walkTo = (tx0, tz0, sp) => { const [tx, tz] = agentWay(P, tx0, tz0); const fin = tx === tx0 && tz === tz0; const dx = tx - P.x, dz = tz - P.z, d = Math.hypot(dx, dz); const s = sp * dt; if (d < s + .5) { P.x = tx; P.z = tz; moveD = d; return fin; } P.x += dx / d * s; P.z += dz / d * s; moveD = s; H.yaw = angDamp(H.yaw, Math.atan2(dx, dz), 5, dt); return false; };
-  const J = TAKE.job && TAKE.job.who === 'agent' ? TAKE.job : null;
+  const J = TAKE.job && TAKE.job.who === 'agent' ? TAKE.job : null; agentBrainTick(dt);
   if (J) agentTake(J, H, walkTo, dt);
-  else if (GS.mode === 'patrol') {
-    const n = AG_PATH[GS.node % AG_PATH.length];
-    if (walkTo(n.x, n.z, 52)) { if (n.stop) { GS.mode = 'look'; GS.wait = n.stop; GS.look = V3(...n.look); if (n.line && rnd() < .5) agentSay(n.line); } GS.node++; }
-    const fx = Math.sin(H.yaw), fz = Math.cos(H.yaw); H.aimT.set(P.x + fx * 150 + Math.sin(T * .8) * 40, GY, P.z + fz * 150 + Math.cos(T * .7) * 30);
-  } else if (GS.mode === 'look') {
+  else if (GS.mode === 'patrol') agentBrain(H, walkTo, dt); else if (GS.mode === 'look') {
     GS.wait -= dt; const la = GS.look; H.yaw = angDamp(H.yaw, Math.atan2(la.x - P.x, la.z - P.z), 2.5, dt); const s = Math.sin(T * 1.1) * 34; H.aimT.set(la.x + s, la.y, la.z + Math.cos(T * .9) * 20);
     if (GS.wait <= 0) GS.mode = 'patrol';
   } else if (GS.mode === 'sus' || GS.mode === 'hear') {
@@ -302,7 +299,7 @@ function updAgent(dt) {
   }
   // keep him out of the car
   const C = GS.car, M = CAR_M - 2; if (P.x > C.x0 - M && P.x < C.x1 + M && P.z > C.z0 - M && P.z < C.z1 + M) { const dl = P.x - (C.x0 - M), dr = C.x1 + M - P.x, db = P.z - (C.z0 - M), df = C.z1 + M - P.z; const m = Math.min(dl, dr, db, df); if (m === dl) P.x = C.x0 - M; else if (m === dr) P.x = C.x1 + M; else if (m === db) P.z = C.z0 - M; else P.z = C.z1 + M; }
-  P.x = clamp(P.x, 950, 1430); P.z = clamp(P.z, -182, 270); P.y = GY;
+  P.x = clamp(P.x, 950, 1430); P.z = clamp(P.z, P.x < 1080 ? -236 : -182, 270); P.y = GY;   // (he can step up to the fuse box at the shelf end; the bench end is in his way)
   H.aim.lerp(H.aimT, 1 - Math.exp(-3 * dt));
   agentPose(H, moveD, dt);
   takeBend(H, J ? J.bend : 0, J ? 1 : 0);
@@ -321,11 +318,13 @@ function agentPose(H, moveD, dt) {
   }
 }
 function garageSeen(tp, who) {
+  if (!AGB.seenT || T - AGB.seenT > 4) { AGB.seenT = T; agentSus(.28, tp); }
   if (GS.mode !== 'sus') { GS.mode = 'sus'; if (who === 'cam') sayW('Origin Dynamics 職員', '（對講機）鏡頭拍到有東西在動……我去看看。', '#9fb3c8', 3); else if (!GS.said.sus || T - GS.said.sus > 20) { GS.said.sus = T; sayW('Origin Dynamics 職員', '嗯？誰在那裡？', '#9fb3c8', 2.4); } }
   GS.trackP = tp.clone(); GS.trackP.y = Math.max(GY, tp.y); GS.trackT = 3;
 }
 function garageHear(p, loud) {
-  if (!GS.agent || loud < .3) return; if (Math.hypot(p.x - GS.agent.pos.x, p.z - GS.agent.pos.z) > 520) return;
+  if (!GS.agent || loud < .3) return; if (HX.id.radio && HX.id.radio.on && loud < .7) return;   // the radio drowns it out
+  agentSus(.25, p); if (Math.hypot(p.x - GS.agent.pos.x, p.z - GS.agent.pos.z) > 520) return;
   if (GS.mode !== 'sus') { GS.mode = 'hear'; GS.trackP = p.clone(); GS.trackT = 3.5; if (!GS.said.hear || T - GS.said.hear > 15) { GS.said.hear = T; sayW('Origin Dynamics 職員', '什麼聲音？', '#9fb3c8', 2); } }
 }
 // the security camera: sweeps left and right until it is knocked off its shelf
@@ -333,6 +332,7 @@ function updSecCam(dt) {
   const r = GS.cam; if (!r) return;
   if (!GS.camBroken && (r.y0 < 200 || r.gone || r.target < .7)) { GS.camBroken = true; GS.camLight.intensity = 0; GS.camLed.material.color.setRGB(.05, .02, .02); if (!NET.client) { toastW('監視鏡頭掉下來，壞了！', 3); noise(V3(r.cx, r.y0, r.cz), .9, .8); } }
   if (GS.camBroken) return;
+  if (!camPowered()) { GS.camLed.material.color.setRGB(.05, .02, .02); GS.camLight.intensity = 0; return; }
   GS.camYaw = Math.PI / 2 + Math.sin(T * .35) * .85; GS.camHead.rotation.set(.38, GS.camYaw - Math.PI / 2 + Math.PI / 2, 0);
   GS.camHead.rotation.y = GS.camYaw; const blink = Math.sin(T * 6) > .4; GS.camLed.material.color.setRGB(blink ? 3 : .4, blink ? .3 : .05, blink ? .3 : .05); GS.camLight.intensity = blink ? 30 : 4;
 }
@@ -346,13 +346,13 @@ function detectGarage(dt) {
   const hp = V3(); H.head.getWorldPosition(hp); const q = new THREE.Quaternion(); H.head.getWorldQuaternion(q); const hf = V3(0, 0, 1).applyQuaternion(q);
   const s1 = seeFrom(hp, hf, .55, 420); if (s1 > seen) { seen = s1; who = 'agent'; }
   if (H.lightPos) { const s2 = seeFrom(H.lightPos, H.lightDir, Math.cos(.34), 520) * 1.5; if (s2 > seen) { seen = s2; who = 'agent'; } }
-  if (!GS.camBroken) { const ce = camEye(); const s3 = seeFrom(ce.eye, ce.fwd, .8, 420); if (s3 > seen) { seen = s3; who = 'cam'; } }
+  if (!GS.camBroken && camPowered()) { const ce = camEye(); const s3 = seeFrom(ce.eye, ce.fwd, .8, 420); if (s3 > seen) { seen = s3; who = 'cam'; } }
   KS.watch = seen > 0 ? { p: who === 'cam' ? camEye().eye : hp, s: seen, who } : null;
   if (seen > 0) {
     const lit = Math.max(litAtList(V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z), GS.lights), who === 'agent' && H.lightPos && seeFrom(H.lightPos, H.lightDir, Math.cos(.34), 520) > 0 ? 1 : 0) * (inDark(L.pos) ? .6 : 1);
     const under = L.pos.y < 0 && L.pos.x > GS.car.x0 && L.pos.x < GS.car.x1 && L.pos.z > GS.car.z0 && L.pos.z < GS.car.z1 ? .35 : 1;
     const mv = L.spd > 1.5 ? 1 : .5; const cr = L.crouch ? .55 : 1;
-    meter += seen * lit * mv * cr * under * hideK(L) * dt;
+    meter += seen * lit * mv * cr * under * hideK(L) * AGB.eye * dt;
     if (meter > .32) netSeen(V3(L.pos.x, L.pos.y + 2, L.pos.z), who);
   } else meter -= dt * .24;
   meter = clamp(meter, 0, 1); if (meter >= 1) toyFreeze(who);
@@ -371,7 +371,7 @@ function updGarageWorld(dt) {
   if (GS.dock) { GS.dockGlow.material.color.setRGB(.6 + Math.sin(T * 5) * .2, 2.4, 2.3); GS.dockRing.rotation.z += dt * .6; }
   if (GS.coilM && !GS.coil) { GS.coilM.rotation.y += dt * .8; }
   // the far tube flickers
-  if (GS.tubeBL) { const f = rnd() < .03 ? .1 : 1; GS.tubeBL.intensity = 70000 * f; GS.tubeB.material.emissiveIntensity = 3 * f; }
+  if (GS.tubeBL && (!HX.id.gpanel || HX.id.gpanel.on)) { const f = rnd() < .03 ? .1 : 1; GS.tubeBL.intensity = 70000 * f; GS.tubeB.material.emissiveIntensity = 3 * f; }
 }
 function latchOpen(C) { if (GS.latch) return; GS.latch = true; SND.snap(); toastW(`${C ? C.S.name : ''}打開了狗門的門扣！`, 3); if (NET.on && quest === 6) setQuest(7); if (!NET.on && LEVEL === 'garage' && quest === 3) setQuest(4); }
 
@@ -400,7 +400,7 @@ LEVELS.garage = {
   npc(dt) { if (STATE === 'play' || STATE === 'fail' || STATE === 'frozen' || STATE === 'end') updAgent(dt); },
   detect: detectGarage, hear: garageHear, seen: garageSeen,
   update(dt) {
-    lvT += dt; const L = leader;
+    lvT += dt; const L = leader; hxUI(); radioTick();
     if (NET.on) return;
     if (quest === 0 && L.grounded && L.pos.y > GS.benchY - 1 && L.pos.x > 1180 && L.pos.x < 1440 && L.pos.z < -194) { setQuest(1); toast('上到工作枱了'); }
     if (quest === 1 && !GS.coil && L.pos.distanceTo(GS.coilP) < 5) { GS.coil = true; GS.coilM.visible = false; SND.pick(); toast('拿到線圈！'); setQuest(2); }
@@ -415,8 +415,8 @@ LEVELS.garage = {
     if (NET.on) return mpMarker();
     if (quest === 0) return V3(1300, GS.benchY + 2, -205); if (quest === 1) return GS.coilP; if (quest === 2) return GS.dockP; if (quest === 3) return GS.latchP; return V3(1455, GY + 2, 105);
   },
-  reset() { GS.mode = 'patrol'; },
-  eyeText: () => meter > .3 ? '他看到你了！躲起來' : GS.camBroken ? 'Origin Dynamics 的人在搜車房' : 'Origin Dynamics 的人和監視鏡頭',
+  reset() { GS.mode = 'patrol'; AGB.act = null; },
+  eyeText: () => meter > .3 ? '他看到你了！躲起來' : (AGB.search > 0 || AGB.netSus >= 3) ? '他在搜車房！先躲好' : (AGB.sus >= 2 || AGB.netSus >= 2) ? '職員起了疑心——眼睛更利' : (GS.camBroken || !camPowered()) ? 'Origin Dynamics 的人在搜車房（鏡頭不在拍）' : 'Origin Dynamics 的人和監視鏡頭',
   hint(L) { if (!GS.latch && Math.hypot(L.pos.x - GS.latchP.x, L.pos.z - GS.latchP.z) < 12) return '門扣在頭頂——疊羅漢夠上去，或者推木箱過來墊腳'; return ''; },
   onSwitch() { }
 };

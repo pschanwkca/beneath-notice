@@ -187,7 +187,14 @@ function buildDuct(K) {
   // segment A: from the top of the hood's chimney straight back over the kitchen's back wall
   box(14, 62, 268, 270, -330, -240, D); box(14, 16, 270, 294, -332, -196, D); box(60, 62, 270, 294, -306, -196, D); box(16, 60, 270, 294, -198, -196, D); box(14, 62, 292, 294, -332, -196, D);
   // segment B: along the back of the house to the bathroom fan
-  box(62, 348, 268, 270, -330, -308, D); box(14, 374, 270, 294, -332, -330, D); box(62, 374, 270, 294, -308, -306, D); box(372, 374, 270, 294, -330, -308, D); box(62, 374, 292, 294, -332, -306, D);
+  box(62, 348, 268, 270, -330, -308, D); box(14, 374, 270, 294, -332, -330, D); box(62, 320, 270, 294, -308, -306, D); box(344, 374, 270, 294, -308, -306, D); box(372, 374, 270, 294, -330, -308, D); box(62, 374, 292, 294, -332, -306, D);
+  // segment C: a branch before the fan, north over the bathroom, east over the living room, then north to the garage
+  box(320, 344, 268, 270, -306, -240, D); box(318, 320, 270, 294, -306, -214, D); box(344, 346, 270, 294, -306, -238, D); box(320, 344, 292, 294, -306, -214, D);
+  box(346, 904, 270, 294, -240, -238, D); box(320, 880, 270, 294, -214, -212, D); box(320, 904, 292, 294, -240, -212, D);
+  box(904, 906, 270, 294, -240, 108, D); box(878, 880, 270, 294, -214, 134, D); box(878, 904, 292, 294, -214, 134, D);
+  for (let x = 380; x < 880; x += 60) box(x, x + 1.2, 270, 292, -239.6, -239.2, new THREE.MeshStandardMaterial({ color: 0x8a9094, metalness: .8, roughness: .5 }), { col: false, cast: false });
+  addBattery(620, 270, -226); addCrumb(892, 270, -40);
+  pointL(0xffc890, 55, 600, 284, -226); pointL(0x9fc4ff, 50, 892, 284, 20);
   // seams, dust, a lost button and a vial: someone's been up here before
   for (let x = 80; x < 340; x += 48) box(x, x + 1.2, 270, 292, -330, -329.6, new THREE.MeshStandardMaterial({ color: 0x8a9094, metalness: .8, roughness: .5 }), { col: false, cast: false });
   const bun = furMat({ color: 0x8a8580, len: .6, den: 1.8, droop: .3, clump: .6, rimK: .05, root: .7 });
@@ -199,7 +206,7 @@ function buildDuct(K) {
 }
 
 // ---------- switches, taps and fans ----------
-function hxAdd(o) { o.i = HX.list.length; o.on = !!o.on; o.r = o.r || 8; HX.list.push(o); HX.id[o.id] = o; return o; }
+function hxAdd(o) { o.i = HX.list.length; o.on = !!o.on; o.def = o.on; o.r = o.r || 8; HX.list.push(o); HX.id[o.id] = o; return o; }
 function buildHouseSwitches(K) {
   HX.list.length = 0; HX.id = {}; HX.water = 0;
   const plate = (x, y, z, ry) => { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; LV.add(g); mesh(new THREE.BoxGeometry(7, 7, .6), MAT.white, 0, 0, 0, { parent: g }); const t = mesh(new THREE.BoxGeometry(2.4, 3.4, .9), new THREE.MeshPhysicalMaterial({ color: 0xf6f4ee, roughness: .3 }), 0, 0, .5, { parent: g }); return t; };
@@ -219,7 +226,7 @@ function buildHouseSwitches(K) {
   HX.basinW = null; LV.traverse(o => { if (!HX.basinW && o.isMesh && o.material === K.water && Math.abs(o.position.y - 68.6) < .2) HX.basinW = o; });
   // the pulsing ring that shows a switch is in reach
   const rg = new THREE.Mesh(new THREE.RingGeometry(2.6, 3.2, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color(0x82ece6).multiplyScalar(1.6), transparent: true, opacity: .8, side: THREE.DoubleSide, depthWrite: false, depthTest: false }));
-  rg.renderOrder = 10; rg.visible = false; LV.add(rg); HX.ring = rg;
+  rg.renderOrder = 10; rg.visible = false; scene.add(rg); HX.ring = rg;
   for (const o of HX.list) hxApply(o, true);
 }
 // what being on or off looks like (runs on everyone; quiet = no sound)
@@ -230,6 +237,7 @@ function hxApply(o, quiet) {
   if (o.id === 'lamp' && LIV.shade) LIV.shade.material.emissiveIntensity = o.on ? .6 : 0;
   if (o.id === 'hood' && HX.hoodLed) HX.hoodLed.emissiveIntensity = o.on ? 1.2 : 0;
   if (o.id === 'hood' && HX.hood) HX.hood.col.y0 = o.on ? HX.hood.y[0] : -999, HX.hood.col.y1 = o.on ? HX.hood.y[1] : -998;
+  if (o.id === 'gstrip' && !o.on && !quiet && !NET.client) toastW('監視鏡頭斷了電——它現在甚麼都看不到', 3);
   if (o.id === 'blight' && HX.bfan) HX.bfan.col.y0 = o.on ? HX.bfan.y[0] : -999, HX.bfan.col.y1 = o.on ? HX.bfan.y[1] : -998;
   if (!quiet) { SND.snap && SND.snap(); if (o.kind === 'flush') hxFlushSnd(o.p); }
 }
@@ -238,7 +246,7 @@ function hxSet(o, on, by) {
   if (!o) return; if (o.oneShot) { HX.flushT = 3.6; hxApply(o); if (!NET.client) hxFlushed(); }
   else { if (o.on === on) return; o.on = on; hxApply(o); }
   if (NET.on && NET.host) nsend({ t: 'hxs', i: o.i, on: o.on ? 1 : 0, f: o.oneShot ? 1 : 0 });
-  if (!NET.client && isPlayerId(by)) brainIncident(o.id, o, on, by);
+  if (!NET.client && isPlayerId(by)) { if (o.lv === 'garage') agentIncident(o.id, o.on); else if (o.lv === 'yard') oldIncident(o.id, o.on); else brainIncident(o.id, o, on, by); }
 }
 function isPlayerId(by) { return !!(by && chars[by]); }
 function hxRequest(o, C) {
@@ -250,8 +258,8 @@ function hxRecv(d) { const o = HX.list[d.i]; if (!o) return; if (d.f) { HX.flush
 function hxState() { return HX.list.map(o => o.on ? 1 : 0).join('') + '|' + HX.water.toFixed(2) + '|' + HX.bd.tgt.toFixed(2); }
 function hxRecvState(s) { if (!s) return; const [f, w, d] = s.split('|'); [...f].forEach((c, i) => { const o = HX.list[i]; if (o && !o.oneShot && o.on !== (c === '1')) { o.on = c === '1'; hxApply(o, true); } }); HX.water = +w; HX.bd.tgt = +d; }
 function hxNear(C) {
-  if (!C || !HX.list.length || LEVEL !== 'kitchen') return null; const cx = C.pos.x, cy = C.pos.y + C.h * .5, cz = C.pos.z; let best = null, bd = 1e9;
-  for (const o of HX.list) { const d = Math.hypot(o.p.x - cx, o.p.y - cy, o.p.z - cz); if (d < o.r && d < bd) { bd = d; best = o; } }
+  if (!C || !HX.list.length) return null; const cx = C.pos.x, cy = C.pos.y + C.h * .5, cz = C.pos.z; let best = null, bd = 1e9;
+  for (const o of HX.list) { if ((o.lv || 'kitchen') !== LEVEL) continue; const d = Math.hypot(o.p.x - cx, o.p.y - cy, o.p.z - cz); if (d < o.r && d < bd) { bd = d; best = o; } }
   return best;
 }
 function hxInput(L, ctl) { if (!ctl || !pressed.KeyE || STATE !== 'play') return false; const o = hxNear(L); if (!o) return false; hxRequest(o, L); return true; }
@@ -294,6 +302,8 @@ function hxLights() {
   const B = HX.blight; if (B) { B.l.intensity = HX.id.blight.on ? B.I : 0; if (HX.leak) HX.leak.intensity = HX.id.blight.on ? 260 : 0; }
   const H = HX.hoodL; if (H) { const on = HX.id.hood.on; H.spec.on = on; H.l.intensity = on ? H.I : 0; H.bulb.emissiveIntensity = on ? 7 : .08; }
   if (LEVEL !== 'kitchen') for (const k in HX.snd) HX.snd[k].gain.value = 0;
+  garageLights(); if (RADIO.bus && LEVEL !== 'garage') RADIO.bus.gain.value = 0; if (RADIO2.bus && LEVEL !== 'yard') RADIO2.bus.gain.value = 0;
+  if (YS.lampL && HX.id.olamp) { if (!HX.id.olamp.on) YS.lampL.intensity = 0; else if (YS.lampL.intensity === 0 && !inDark(YS.lampL.position)) YS.lampL.intensity = 9000; }
   const lp = HX.id.lamp; if (LIV.lamp && lp) { if (!lp.on) { LIV.lamp.intensity = 0; if (LIV.shade) LIV.shade.material.emissiveIntensity = 0; } else if (LIV.lamp.intensity === 0 && !inDark(LIV.lamp.position)) LIV.lamp.intensity = 9000; const s = KS.lights.find(q => q.p.x === 575 && q.p.z === 8); if (s) s.on = lp.on; }
   const tv = HX.id.tv; if (tv && !tv.on) LIV.tvOff = true; if (tv) { const s = KS.lights.find(q => q.p.x === 850 && q.p.z === 120); if (s) s.on = tv.on; }
 }
@@ -322,8 +332,11 @@ function hxTick(dt) {
     const H = HX.hood; if (hood.on && L.pos.x > 16 && L.pos.x < 60 && L.pos.z > -218 && L.pos.z < -198 && L.pos.y > 176 && L.pos.y < 196) { knock(L, V3(38, 195, -208), '抽油煙機的風扇在轉！先把它關掉'); L.vel.y = -30; }
     if (bl.on && L.pos.x > 344 && L.pos.x < 374 && L.pos.z > -332 && L.pos.z < -306 && L.pos.y > 262 && L.pos.y < 272 && Math.abs(L.vel.y) < 60) { if (!HX.saidFan || T - HX.saidFan > 4) { HX.saidFan = T; toast('抽氣扇在轉，下不去——要有人關廁所燈（連抽氣扇）', 3); } }
   }
-  // which switch is in reach (and the ring that shows it)
-  HX.near = L && mine(L) && !L.frozen && STATE === 'play' ? hxNear(L) : null;
-  const rg = HX.ring; if (HX.near) { rg.visible = true; rg.position.copy(HX.near.p); rg.lookAt(camera.position); const s = 1 + Math.sin(T * 6) * .12; rg.scale.setScalar(s); } else rg.visible = false;
+  hxUI();
+}
+// which switch is in reach (and the ring that shows it) — kitchen and garage
+function hxUI() {
+  const L = leader; HX.near = L && mine(L) && !L.frozen && STATE === 'play' ? hxNear(L) : null;
+  const rg = HX.ring; if (!rg) return; if (HX.near) { rg.visible = true; rg.position.copy(HX.near.p); rg.lookAt(camera.position); const s = 1 + Math.sin(T * 6) * .12; rg.scale.setScalar(s); } else rg.visible = false;
   if (TOUCH) $('touch').classList.toggle('use', !!HX.near);
 }

@@ -4902,7 +4902,7 @@ LEVELS.kitchen = {
     mom.root.visible = true; mom.phone.visible = false; mom.active = false; if (!mom.spoon) { mom.spoon = new THREE.Mesh(new THREE.CylinderGeometry(.5, .7, 26, 8), KMAT.wood); mom.spoon.position.set(0, -27, 8); mom.spoon.rotation.x = 1.2; mom.arms[1].el.add(mom.spoon); }
     mom.pos.set(34, 0, -128); mom.yaw = Math.PI; mom.aim.set(22, 96, -178); mom.aimT.copy(mom.aim); KM.mode = 'act'; KM.pt = 'stove'; KM.sched = 0; KM.t = 10;
     KID.root.visible = true; KID.root.position.set(-90, 0, 157); KID.root.rotation.y = Math.PI; KID.mode = 'read'; KID.t = 7;
-    HX.bd.a = 1.35; for (const o of HX.list) { o.on = { klight: true, hood: true, tv: true, lamp: true }[o.id] || false; hxApply(o, true); } HX.water = 0; brainReset();
+    HX.bd.a = 1.35; for (const o of HX.list) { if (o.lv) continue; o.on = o.def; hxApply(o, true); } HX.water = 0; brainReset();
     CAT.root.visible = true; CAT.pos.copy(CAT.home); CAT.mode = 'sleep'; CAT.sleepK = 1;
     kitchenMode();
   },
@@ -5073,7 +5073,7 @@ function buildGarage() {
   const X0 = 912, X1 = 1460, Z0 = -260, Z1 = 310;
   // ---- shell ----
   box(X0, X1, GY - 10, GY, Z0, Z1, floorM, { uv: 160, cast: false });
-  box(X0, X1, 270, 280, Z0, Z1, ceilM, { cast: false });
+  box(X0, 924, 270, 280, Z0, Z1, ceilM, { cast: false }); box(946, X1, 270, 280, Z0, Z1, ceilM, { cast: false }); box(924, 946, 270, 280, Z0, 108, ceilM, { cast: false }); box(924, 946, 270, 280, 132, Z1, ceilM, { cast: false });   // (a grille over the shelving: the duct from the house)
   // west wall, with the duct from the living room's vent (z -214…-186, y 4…24)
   box(X0, 920, GY, 270, Z0, -214, wallM, { uv: 120 }); box(X0, 920, GY, 270, -186, Z1, wallM, { uv: 120 }); box(X0, 920, GY, 4, -214, -186, wallM, { uv: 120 }); box(X0, 920, 24, 270, -214, -186, wallM, { uv: 120 });
   const ductM = new THREE.MeshStandardMaterial({ color: 0xb8bec4, metalness: .85, roughness: .4 });
@@ -5171,10 +5171,11 @@ function buildGarage() {
   // lights
   LV.add(new THREE.HemisphereLight(0x707884, 0x34302a, 1.6));
   const tube = (x, z) => { box(x - 60, x + 60, 262, 270, z - 8, z + 8, new THREE.MeshStandardMaterial({ color: 0xd0d4d8, roughness: .5 }), { col: false }); return mesh(new THREE.BoxGeometry(110, 2, 4), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xdfeaff, emissiveIntensity: 3 }), x, 261, z, { cast: false }); };
-  tube(1180, -60); GS.tubeB = tube(1300, 160); tube(1020, 120);
+  GS.tubeMeshes = [tube(1180, -60), (GS.tubeB = tube(1300, 160)), tube(1020, 120)];
   GS.tubeAL = spotL(0xdfe8ff, 230000, V3(1180, 258, -60), V3(1180, GY, -60), 1.05, .7, 1024, 10, 500);
   GS.tubeBL = pointL(0xcfdcff, 70000, 1300, 250, 160); GS.tubeCL = pointL(0xd8e2ff, 52000, 1020, 250, 120);
   GS.streetL = pointL(0xffa860, 1600, 1185, GY + 6, 290);
+  buildGarageDuct(M);
   // the man's torch (moved every frame)
   GS.torch = new THREE.SpotLight(0xfff0dc, 0, 0, .34, .45, 2); GS.torch.castShadow = true; GS.torch.shadow.mapSize.setScalar(TOUCH ? 512 : 1024); GS.torch.shadow.camera.near = 4; GS.torch.shadow.camera.far = 700; GS.torch.shadow.bias = -.0005; GS.torch.shadow.normalBias = .04; LV.add(GS.torch, GS.torch.target);
   GS.lights = [{ p: V3(1180, 258, -60), dir: V3(0, -1, 0), cos: Math.cos(1.05), range: 330, I: () => GS.tubeAL.intensity }, { p: V3(1300, 250, 160), range: 220, I: () => GS.tubeBL.intensity }, { p: V3(1020, 250, 120), range: 200, I: () => GS.tubeCL.intensity }, { p: V3(1414, BT + 36, -222), range: 70, I: () => GS.lampL.intensity }, { p: V3(1185, GY + 6, 290), range: 60 }];
@@ -5261,13 +5262,9 @@ function agentSay(k) { if (GS.said[k] && T - GS.said[k] < 40) return; GS.said[k]
 function updAgent(dt) {
   const H = GS.agent; if (!H) return; const P = H.pos; let moveD = 0;
   const walkTo = (tx0, tz0, sp) => { const [tx, tz] = agentWay(P, tx0, tz0); const fin = tx === tx0 && tz === tz0; const dx = tx - P.x, dz = tz - P.z, d = Math.hypot(dx, dz); const s = sp * dt; if (d < s + .5) { P.x = tx; P.z = tz; moveD = d; return fin; } P.x += dx / d * s; P.z += dz / d * s; moveD = s; H.yaw = angDamp(H.yaw, Math.atan2(dx, dz), 5, dt); return false; };
-  const J = TAKE.job && TAKE.job.who === 'agent' ? TAKE.job : null;
+  const J = TAKE.job && TAKE.job.who === 'agent' ? TAKE.job : null; agentBrainTick(dt);
   if (J) agentTake(J, H, walkTo, dt);
-  else if (GS.mode === 'patrol') {
-    const n = AG_PATH[GS.node % AG_PATH.length];
-    if (walkTo(n.x, n.z, 52)) { if (n.stop) { GS.mode = 'look'; GS.wait = n.stop; GS.look = V3(...n.look); if (n.line && rnd() < .5) agentSay(n.line); } GS.node++; }
-    const fx = Math.sin(H.yaw), fz = Math.cos(H.yaw); H.aimT.set(P.x + fx * 150 + Math.sin(T * .8) * 40, GY, P.z + fz * 150 + Math.cos(T * .7) * 30);
-  } else if (GS.mode === 'look') {
+  else if (GS.mode === 'patrol') agentBrain(H, walkTo, dt); else if (GS.mode === 'look') {
     GS.wait -= dt; const la = GS.look; H.yaw = angDamp(H.yaw, Math.atan2(la.x - P.x, la.z - P.z), 2.5, dt); const s = Math.sin(T * 1.1) * 34; H.aimT.set(la.x + s, la.y, la.z + Math.cos(T * .9) * 20);
     if (GS.wait <= 0) GS.mode = 'patrol';
   } else if (GS.mode === 'sus' || GS.mode === 'hear') {
@@ -5278,7 +5275,7 @@ function updAgent(dt) {
   }
   // keep him out of the car
   const C = GS.car, M = CAR_M - 2; if (P.x > C.x0 - M && P.x < C.x1 + M && P.z > C.z0 - M && P.z < C.z1 + M) { const dl = P.x - (C.x0 - M), dr = C.x1 + M - P.x, db = P.z - (C.z0 - M), df = C.z1 + M - P.z; const m = Math.min(dl, dr, db, df); if (m === dl) P.x = C.x0 - M; else if (m === dr) P.x = C.x1 + M; else if (m === db) P.z = C.z0 - M; else P.z = C.z1 + M; }
-  P.x = clamp(P.x, 950, 1430); P.z = clamp(P.z, -182, 270); P.y = GY;
+  P.x = clamp(P.x, 950, 1430); P.z = clamp(P.z, P.x < 1080 ? -236 : -182, 270); P.y = GY;   // (he can step up to the fuse box at the shelf end; the bench end is in his way)
   H.aim.lerp(H.aimT, 1 - Math.exp(-3 * dt));
   agentPose(H, moveD, dt);
   takeBend(H, J ? J.bend : 0, J ? 1 : 0);
@@ -5297,11 +5294,13 @@ function agentPose(H, moveD, dt) {
   }
 }
 function garageSeen(tp, who) {
+  if (!AGB.seenT || T - AGB.seenT > 4) { AGB.seenT = T; agentSus(.28, tp); }
   if (GS.mode !== 'sus') { GS.mode = 'sus'; if (who === 'cam') sayW('Origin Dynamics 職員', '（對講機）鏡頭拍到有東西在動……我去看看。', '#9fb3c8', 3); else if (!GS.said.sus || T - GS.said.sus > 20) { GS.said.sus = T; sayW('Origin Dynamics 職員', '嗯？誰在那裡？', '#9fb3c8', 2.4); } }
   GS.trackP = tp.clone(); GS.trackP.y = Math.max(GY, tp.y); GS.trackT = 3;
 }
 function garageHear(p, loud) {
-  if (!GS.agent || loud < .3) return; if (Math.hypot(p.x - GS.agent.pos.x, p.z - GS.agent.pos.z) > 520) return;
+  if (!GS.agent || loud < .3) return; if (HX.id.radio && HX.id.radio.on && loud < .7) return;   // the radio drowns it out
+  agentSus(.25, p); if (Math.hypot(p.x - GS.agent.pos.x, p.z - GS.agent.pos.z) > 520) return;
   if (GS.mode !== 'sus') { GS.mode = 'hear'; GS.trackP = p.clone(); GS.trackT = 3.5; if (!GS.said.hear || T - GS.said.hear > 15) { GS.said.hear = T; sayW('Origin Dynamics 職員', '什麼聲音？', '#9fb3c8', 2); } }
 }
 // the security camera: sweeps left and right until it is knocked off its shelf
@@ -5309,6 +5308,7 @@ function updSecCam(dt) {
   const r = GS.cam; if (!r) return;
   if (!GS.camBroken && (r.y0 < 200 || r.gone || r.target < .7)) { GS.camBroken = true; GS.camLight.intensity = 0; GS.camLed.material.color.setRGB(.05, .02, .02); if (!NET.client) { toastW('監視鏡頭掉下來，壞了！', 3); noise(V3(r.cx, r.y0, r.cz), .9, .8); } }
   if (GS.camBroken) return;
+  if (!camPowered()) { GS.camLed.material.color.setRGB(.05, .02, .02); GS.camLight.intensity = 0; return; }
   GS.camYaw = Math.PI / 2 + Math.sin(T * .35) * .85; GS.camHead.rotation.set(.38, GS.camYaw - Math.PI / 2 + Math.PI / 2, 0);
   GS.camHead.rotation.y = GS.camYaw; const blink = Math.sin(T * 6) > .4; GS.camLed.material.color.setRGB(blink ? 3 : .4, blink ? .3 : .05, blink ? .3 : .05); GS.camLight.intensity = blink ? 30 : 4;
 }
@@ -5322,13 +5322,13 @@ function detectGarage(dt) {
   const hp = V3(); H.head.getWorldPosition(hp); const q = new THREE.Quaternion(); H.head.getWorldQuaternion(q); const hf = V3(0, 0, 1).applyQuaternion(q);
   const s1 = seeFrom(hp, hf, .55, 420); if (s1 > seen) { seen = s1; who = 'agent'; }
   if (H.lightPos) { const s2 = seeFrom(H.lightPos, H.lightDir, Math.cos(.34), 520) * 1.5; if (s2 > seen) { seen = s2; who = 'agent'; } }
-  if (!GS.camBroken) { const ce = camEye(); const s3 = seeFrom(ce.eye, ce.fwd, .8, 420); if (s3 > seen) { seen = s3; who = 'cam'; } }
+  if (!GS.camBroken && camPowered()) { const ce = camEye(); const s3 = seeFrom(ce.eye, ce.fwd, .8, 420); if (s3 > seen) { seen = s3; who = 'cam'; } }
   KS.watch = seen > 0 ? { p: who === 'cam' ? camEye().eye : hp, s: seen, who } : null;
   if (seen > 0) {
     const lit = Math.max(litAtList(V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z), GS.lights), who === 'agent' && H.lightPos && seeFrom(H.lightPos, H.lightDir, Math.cos(.34), 520) > 0 ? 1 : 0) * (inDark(L.pos) ? .6 : 1);
     const under = L.pos.y < 0 && L.pos.x > GS.car.x0 && L.pos.x < GS.car.x1 && L.pos.z > GS.car.z0 && L.pos.z < GS.car.z1 ? .35 : 1;
     const mv = L.spd > 1.5 ? 1 : .5; const cr = L.crouch ? .55 : 1;
-    meter += seen * lit * mv * cr * under * hideK(L) * dt;
+    meter += seen * lit * mv * cr * under * hideK(L) * AGB.eye * dt;
     if (meter > .32) netSeen(V3(L.pos.x, L.pos.y + 2, L.pos.z), who);
   } else meter -= dt * .24;
   meter = clamp(meter, 0, 1); if (meter >= 1) toyFreeze(who);
@@ -5347,7 +5347,7 @@ function updGarageWorld(dt) {
   if (GS.dock) { GS.dockGlow.material.color.setRGB(.6 + Math.sin(T * 5) * .2, 2.4, 2.3); GS.dockRing.rotation.z += dt * .6; }
   if (GS.coilM && !GS.coil) { GS.coilM.rotation.y += dt * .8; }
   // the far tube flickers
-  if (GS.tubeBL) { const f = rnd() < .03 ? .1 : 1; GS.tubeBL.intensity = 70000 * f; GS.tubeB.material.emissiveIntensity = 3 * f; }
+  if (GS.tubeBL && (!HX.id.gpanel || HX.id.gpanel.on)) { const f = rnd() < .03 ? .1 : 1; GS.tubeBL.intensity = 70000 * f; GS.tubeB.material.emissiveIntensity = 3 * f; }
 }
 function latchOpen(C) { if (GS.latch) return; GS.latch = true; SND.snap(); toastW(`${C ? C.S.name : ''}打開了狗門的門扣！`, 3); if (NET.on && quest === 6) setQuest(7); if (!NET.on && LEVEL === 'garage' && quest === 3) setQuest(4); }
 
@@ -5376,7 +5376,7 @@ LEVELS.garage = {
   npc(dt) { if (STATE === 'play' || STATE === 'fail' || STATE === 'frozen' || STATE === 'end') updAgent(dt); },
   detect: detectGarage, hear: garageHear, seen: garageSeen,
   update(dt) {
-    lvT += dt; const L = leader;
+    lvT += dt; const L = leader; hxUI(); radioTick();
     if (NET.on) return;
     if (quest === 0 && L.grounded && L.pos.y > GS.benchY - 1 && L.pos.x > 1180 && L.pos.x < 1440 && L.pos.z < -194) { setQuest(1); toast('上到工作枱了'); }
     if (quest === 1 && !GS.coil && L.pos.distanceTo(GS.coilP) < 5) { GS.coil = true; GS.coilM.visible = false; SND.pick(); toast('拿到線圈！'); setQuest(2); }
@@ -5391,8 +5391,8 @@ LEVELS.garage = {
     if (NET.on) return mpMarker();
     if (quest === 0) return V3(1300, GS.benchY + 2, -205); if (quest === 1) return GS.coilP; if (quest === 2) return GS.dockP; if (quest === 3) return GS.latchP; return V3(1455, GY + 2, 105);
   },
-  reset() { GS.mode = 'patrol'; },
-  eyeText: () => meter > .3 ? '他看到你了！躲起來' : GS.camBroken ? 'Origin Dynamics 的人在搜車房' : 'Origin Dynamics 的人和監視鏡頭',
+  reset() { GS.mode = 'patrol'; AGB.act = null; },
+  eyeText: () => meter > .3 ? '他看到你了！躲起來' : (AGB.search > 0 || AGB.netSus >= 3) ? '他在搜車房！先躲好' : (AGB.sus >= 2 || AGB.netSus >= 2) ? '職員起了疑心——眼睛更利' : (GS.camBroken || !camPowered()) ? 'Origin Dynamics 的人在搜車房（鏡頭不在拍）' : 'Origin Dynamics 的人和監視鏡頭',
   hint(L) { if (!GS.latch && Math.hypot(L.pos.x - GS.latchP.x, L.pos.z - GS.latchP.z) < 12) return '門扣在頭頂——疊羅漢夠上去，或者推木箱過來墊腳'; return ''; },
   onSwitch() { }
 };
@@ -5571,6 +5571,7 @@ function buildYard() {
   LV.add(new THREE.HemisphereLight(0x50648c, 0x16220f, .95));
   YS.moon = spotL(0xb8c8ff, 2600000, V3(2400, 900, -900), V3(2000, GY, 100), .55, .5, 2048, 300, 2600);
   YS.porchL = pointL(0xffd2a0, 7000, 2564, 200, 70);
+  buildYardSwitches(X0);
   YS.lights = [{ p: V3(X0 + 12, 200, 105), range: 120, I: () => YS.doorL.intensity }, { p: V3(2564, 200, 70), range: 150, I: () => YS.porchL.intensity }, { p: V3(2700, DECK + 140, -10), range: 170, I: () => YS.lampL.intensity }];
   // the dog and 陳伯
   buildDog(); buildOldMan();
@@ -5643,19 +5644,12 @@ function buildOldMan() {
 function genNews() { const [c, x] = cnv(256, 168); x.fillStyle = '#ece6d8'; x.fillRect(0, 0, 256, 168); x.fillStyle = '#222'; x.font = '900 26px "Noto Sans TC"'; x.fillText('尋人：陳教授', 14, 36); x.font = '500 12px "Noto Sans TC"'; for (let i = 0; i < 9; i++) x.fillRect(14, 52 + i * 12, R(150, 226), 4); x.fillStyle = '#888'; x.fillRect(176, 48, 66, 64); return tex(c); }
 function oldManLook(p, d) { const O = YS.old; if (!O) return; O.mode = 'alert'; O.t = d; O.look.copy(p); if (!YS.said.old || T - YS.said.old > 12) { YS.said.old = T; sayW('陳伯', rnd() < .5 ? '嗯？外面有什麼？' : '……小黃，又吠什麼？', '#c8b8a0', 2.4); } }
 function updOldMan(dt) {
-  const O = YS.old; if (!O) return; const H = O.H; O.t -= dt;
-  if (O.mode === 'read') { if (O.t <= 0) { O.mode = 'look'; O.t = 4.2; O.look.set(R(2380, 2540), R(-10, 30), R(-40, 200)); } }
-  else if (O.mode === 'look' || O.mode === 'alert') { if (O.t <= 0) { O.mode = 'read'; O.t = R(9, 15); } else if (O.mode === 'look') O.look.z += Math.sin(T * .8) * 30 * dt; }
-  O.lookK = damp(O.lookK, O.mode === 'read' ? 0 : 1, 3, dt);
-  H.paper.position.y = lerp(52, 22, O.lookK); H.paper.rotation.x = lerp(-.2, -1.2, O.lookK);
-  H.root.updateMatrixWorld(true); const hp = V3(); H.head.getWorldPosition(hp); const ad = V3().subVectors(O.look, hp); const yr0 = Math.atan2(ad.x, ad.z) - H.yaw; const yr = Math.atan2(Math.sin(yr0), Math.cos(yr0)); const pitch = Math.atan2(-ad.y, Math.hypot(ad.x, ad.z));
-  H.head.rotation.y = damp(H.head.rotation.y, clamp(yr, -.9, .9) * O.lookK, 3, dt); H.head.rotation.x = damp(H.head.rotation.x, lerp(.55, clamp(pitch * .6, -.3, .5), O.lookK), 3, dt);
-  for (const A of H.arms) { A.sh.rotation.x = lerp(-1.1, -.5, O.lookK); A.sh.rotation.z = A.s * -.25; A.el.rotation.x = lerp(-.9, -.6, O.lookK); }
+  const O = YS.old; if (!O) return; const H = O.H; oldBrain(dt);
   if (TAKE.job && TAKE.job.who === 'old') oldTake(TAKE.job, dt); else if (O.grab) O.grab.visible = false;
 }
 // sprinkler: one jet sweeping round; whoever it hits gets knocked over
 function updSprinkler(dt) {
-  const S = YS.spr; if (!S) return; S.a += dt * .9; S.arm.rotation.y = S.a; const dx = Math.sin(S.a), dz = Math.cos(S.a);
+  const S = YS.spr; if (!S) return; if (HX.id.otap && !HX.id.otap.on) return; S.a += dt * .9; S.arm.rotation.y = S.a; const dx = Math.sin(S.a), dz = Math.cos(S.a);
   if (YS.near) for (let i = 0; i < 3; i++) { const v = R(60, 120); emit(V3(S.p.x + dx * 5, GY + 6, S.p.z + dz * 5), V3(dx * v + R(-4, 4), R(40, 70), dz * v + R(-4, 4)), new THREE.Color(.55, .7, .85), R(.15, .3), R(.8, 1.4), 120, 0); }
   if (NET.client) return;
   for (const C of party) { if (!mine(C) || C.frozen || C.pos.y > GY + 14) continue; const rx = C.pos.x - S.p.x, rz = C.pos.z - S.p.z, d = Math.hypot(rx, rz); if (d < 20 || d > S.R) continue; const ca = (rx * dx + rz * dz) / d; if (ca > .985) knock(C, V3(S.p.x, GY, S.p.z), C === leader ? '被灑水器射中了！' : null); }
@@ -5665,12 +5659,12 @@ function detectYard(dt) {
   const L = leader; if (L.frozen || !mine(L)) { meter = Math.max(0, meter - dt * .5); KS.watch = null; return; }
   let seen = 0, who = null; const D = YS.dog, O = YS.old;
   if (D && D.sleepK < .5) { const hp = V3(); D.head.getWorldPosition(hp); const q = new THREE.Quaternion(); D.head.getWorldQuaternion(q); const f = V3(0, 0, 1).applyQuaternion(q); const s = seeFrom(hp, f, .5, 320) * 1.2; if (s > seen) { seen = s; who = 'dog'; } }
-  if (O && O.lookK > .5) { const hp = V3(); O.H.head.getWorldPosition(hp); const q = new THREE.Quaternion(); O.H.head.getWorldQuaternion(q); const f = V3(0, 0, 1).applyQuaternion(q); const s = seeFrom(hp, f, .5, 320); if (s > seen) { seen = s; who = 'old'; } }
+  if (O && O.lookK > .5 && O.mode !== 'doze' && O.mode !== 'listen') { const hp = V3(); O.H.head.getWorldPosition(hp); const q = new THREE.Quaternion(); O.H.head.getWorldQuaternion(q); const f = V3(0, 0, 1).applyQuaternion(q); const s = seeFrom(hp, f, .5, 320); if (s > seen) { seen = s; who = 'old'; } }
   KS.watch = seen > 0 ? { p: who === 'dog' ? D.head.getWorldPosition(V3()) : O.H.head.getWorldPosition(V3()), s: seen, who } : null;
   if (seen > 0) {
     const p = V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z); let lit = litAtList(p, YS.lights, .6) * (inDark(L.pos) ? .6 : 1); if (inGrass(L.pos)) lit *= .3;
     const mv = L.spd > 1.5 ? 1 : .5; const cr = L.crouch ? .55 : 1;
-    meter += seen * lit * mv * cr * hideK(L) * dt;
+    meter += seen * lit * mv * cr * hideK(L) * (who === 'old' ? OLDB.eye : 1) * dt;
     if (meter > .3) netSeen(V3(L.pos.x, L.pos.y + 2, L.pos.z), who);
   } else meter -= dt * .24;
   meter = clamp(meter, 0, 1); if (meter >= 1) toyFreeze(who);
@@ -5708,7 +5702,7 @@ LEVELS.yard = {
   npc(dt) { if (STATE === 'play' || STATE === 'fail' || STATE === 'frozen' || STATE === 'end') { updDog(dt); updOldMan(dt); } },
   detect: detectYard, hear: yardHear, seen: yardSeen,
   update(dt) {
-    lvT += dt; if (NET.on) return; const L = leader;
+    lvT += dt; hxUI(); radioTick(); if (NET.on) return; const L = leader;
     if (QUESTS === YQ_SP2) return;
     if (quest === 0 && L.pos.x > 2108) setQuest(1);
     if (quest === 1 && L.pos.x > 2562 && L.pos.y > DECK - 2) { setQuest(2); toast('進了陽光房'); }
@@ -5716,7 +5710,7 @@ LEVELS.yard = {
   win() { },
   marker() { if (NET.on) return mpMarker(); if (QUESTS === YQ_SP2) return ST.gate; return quest === 0 ? YS.gap : quest === 1 ? YS.flap : (YS.chip ? null : YS.chipP); },
   reset() { if (YS.dog) { YS.dog.mode = 'home'; } if (YS.old) { YS.old.mode = 'read'; YS.old.t = 8; } },
-  eyeText: () => meter > .3 ? '被看見了！躲進長草' : '鄰居的狗和陳伯',
+  eyeText: () => { if (meter > .3) return '被看見了！躲進長草'; const O = YS.old, m = O && O.mode; return m === 'doze' ? '陳伯睡着了——趁現在' : m === 'listen' ? '陳伯閉着眼聽粵曲' : OLDB.sus >= 2 ? '陳伯起了疑心' : '鄰居的狗和陳伯'; },
   hint(L) { if (inGrass(L.pos)) return '躲在長草裡——比較難被看見'; return ''; },
   onSwitch() { }
 };
@@ -7203,7 +7197,14 @@ function buildDuct(K) {
   // segment A: from the top of the hood's chimney straight back over the kitchen's back wall
   box(14, 62, 268, 270, -330, -240, D); box(14, 16, 270, 294, -332, -196, D); box(60, 62, 270, 294, -306, -196, D); box(16, 60, 270, 294, -198, -196, D); box(14, 62, 292, 294, -332, -196, D);
   // segment B: along the back of the house to the bathroom fan
-  box(62, 348, 268, 270, -330, -308, D); box(14, 374, 270, 294, -332, -330, D); box(62, 374, 270, 294, -308, -306, D); box(372, 374, 270, 294, -330, -308, D); box(62, 374, 292, 294, -332, -306, D);
+  box(62, 348, 268, 270, -330, -308, D); box(14, 374, 270, 294, -332, -330, D); box(62, 320, 270, 294, -308, -306, D); box(344, 374, 270, 294, -308, -306, D); box(372, 374, 270, 294, -330, -308, D); box(62, 374, 292, 294, -332, -306, D);
+  // segment C: a branch before the fan, north over the bathroom, east over the living room, then north to the garage
+  box(320, 344, 268, 270, -306, -240, D); box(318, 320, 270, 294, -306, -214, D); box(344, 346, 270, 294, -306, -238, D); box(320, 344, 292, 294, -306, -214, D);
+  box(346, 904, 270, 294, -240, -238, D); box(320, 880, 270, 294, -214, -212, D); box(320, 904, 292, 294, -240, -212, D);
+  box(904, 906, 270, 294, -240, 108, D); box(878, 880, 270, 294, -214, 134, D); box(878, 904, 292, 294, -214, 134, D);
+  for (let x = 380; x < 880; x += 60) box(x, x + 1.2, 270, 292, -239.6, -239.2, new THREE.MeshStandardMaterial({ color: 0x8a9094, metalness: .8, roughness: .5 }), { col: false, cast: false });
+  addBattery(620, 270, -226); addCrumb(892, 270, -40);
+  pointL(0xffc890, 55, 600, 284, -226); pointL(0x9fc4ff, 50, 892, 284, 20);
   // seams, dust, a lost button and a vial: someone's been up here before
   for (let x = 80; x < 340; x += 48) box(x, x + 1.2, 270, 292, -330, -329.6, new THREE.MeshStandardMaterial({ color: 0x8a9094, metalness: .8, roughness: .5 }), { col: false, cast: false });
   const bun = furMat({ color: 0x8a8580, len: .6, den: 1.8, droop: .3, clump: .6, rimK: .05, root: .7 });
@@ -7215,7 +7216,7 @@ function buildDuct(K) {
 }
 
 // ---------- switches, taps and fans ----------
-function hxAdd(o) { o.i = HX.list.length; o.on = !!o.on; o.r = o.r || 8; HX.list.push(o); HX.id[o.id] = o; return o; }
+function hxAdd(o) { o.i = HX.list.length; o.on = !!o.on; o.def = o.on; o.r = o.r || 8; HX.list.push(o); HX.id[o.id] = o; return o; }
 function buildHouseSwitches(K) {
   HX.list.length = 0; HX.id = {}; HX.water = 0;
   const plate = (x, y, z, ry) => { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; LV.add(g); mesh(new THREE.BoxGeometry(7, 7, .6), MAT.white, 0, 0, 0, { parent: g }); const t = mesh(new THREE.BoxGeometry(2.4, 3.4, .9), new THREE.MeshPhysicalMaterial({ color: 0xf6f4ee, roughness: .3 }), 0, 0, .5, { parent: g }); return t; };
@@ -7235,7 +7236,7 @@ function buildHouseSwitches(K) {
   HX.basinW = null; LV.traverse(o => { if (!HX.basinW && o.isMesh && o.material === K.water && Math.abs(o.position.y - 68.6) < .2) HX.basinW = o; });
   // the pulsing ring that shows a switch is in reach
   const rg = new THREE.Mesh(new THREE.RingGeometry(2.6, 3.2, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color(0x82ece6).multiplyScalar(1.6), transparent: true, opacity: .8, side: THREE.DoubleSide, depthWrite: false, depthTest: false }));
-  rg.renderOrder = 10; rg.visible = false; LV.add(rg); HX.ring = rg;
+  rg.renderOrder = 10; rg.visible = false; scene.add(rg); HX.ring = rg;
   for (const o of HX.list) hxApply(o, true);
 }
 // what being on or off looks like (runs on everyone; quiet = no sound)
@@ -7246,6 +7247,7 @@ function hxApply(o, quiet) {
   if (o.id === 'lamp' && LIV.shade) LIV.shade.material.emissiveIntensity = o.on ? .6 : 0;
   if (o.id === 'hood' && HX.hoodLed) HX.hoodLed.emissiveIntensity = o.on ? 1.2 : 0;
   if (o.id === 'hood' && HX.hood) HX.hood.col.y0 = o.on ? HX.hood.y[0] : -999, HX.hood.col.y1 = o.on ? HX.hood.y[1] : -998;
+  if (o.id === 'gstrip' && !o.on && !quiet && !NET.client) toastW('監視鏡頭斷了電——它現在甚麼都看不到', 3);
   if (o.id === 'blight' && HX.bfan) HX.bfan.col.y0 = o.on ? HX.bfan.y[0] : -999, HX.bfan.col.y1 = o.on ? HX.bfan.y[1] : -998;
   if (!quiet) { SND.snap && SND.snap(); if (o.kind === 'flush') hxFlushSnd(o.p); }
 }
@@ -7254,7 +7256,7 @@ function hxSet(o, on, by) {
   if (!o) return; if (o.oneShot) { HX.flushT = 3.6; hxApply(o); if (!NET.client) hxFlushed(); }
   else { if (o.on === on) return; o.on = on; hxApply(o); }
   if (NET.on && NET.host) nsend({ t: 'hxs', i: o.i, on: o.on ? 1 : 0, f: o.oneShot ? 1 : 0 });
-  if (!NET.client && isPlayerId(by)) brainIncident(o.id, o, on, by);
+  if (!NET.client && isPlayerId(by)) { if (o.lv === 'garage') agentIncident(o.id, o.on); else if (o.lv === 'yard') oldIncident(o.id, o.on); else brainIncident(o.id, o, on, by); }
 }
 function isPlayerId(by) { return !!(by && chars[by]); }
 function hxRequest(o, C) {
@@ -7266,8 +7268,8 @@ function hxRecv(d) { const o = HX.list[d.i]; if (!o) return; if (d.f) { HX.flush
 function hxState() { return HX.list.map(o => o.on ? 1 : 0).join('') + '|' + HX.water.toFixed(2) + '|' + HX.bd.tgt.toFixed(2); }
 function hxRecvState(s) { if (!s) return; const [f, w, d] = s.split('|'); [...f].forEach((c, i) => { const o = HX.list[i]; if (o && !o.oneShot && o.on !== (c === '1')) { o.on = c === '1'; hxApply(o, true); } }); HX.water = +w; HX.bd.tgt = +d; }
 function hxNear(C) {
-  if (!C || !HX.list.length || LEVEL !== 'kitchen') return null; const cx = C.pos.x, cy = C.pos.y + C.h * .5, cz = C.pos.z; let best = null, bd = 1e9;
-  for (const o of HX.list) { const d = Math.hypot(o.p.x - cx, o.p.y - cy, o.p.z - cz); if (d < o.r && d < bd) { bd = d; best = o; } }
+  if (!C || !HX.list.length) return null; const cx = C.pos.x, cy = C.pos.y + C.h * .5, cz = C.pos.z; let best = null, bd = 1e9;
+  for (const o of HX.list) { if ((o.lv || 'kitchen') !== LEVEL) continue; const d = Math.hypot(o.p.x - cx, o.p.y - cy, o.p.z - cz); if (d < o.r && d < bd) { bd = d; best = o; } }
   return best;
 }
 function hxInput(L, ctl) { if (!ctl || !pressed.KeyE || STATE !== 'play') return false; const o = hxNear(L); if (!o) return false; hxRequest(o, L); return true; }
@@ -7310,6 +7312,8 @@ function hxLights() {
   const B = HX.blight; if (B) { B.l.intensity = HX.id.blight.on ? B.I : 0; if (HX.leak) HX.leak.intensity = HX.id.blight.on ? 260 : 0; }
   const H = HX.hoodL; if (H) { const on = HX.id.hood.on; H.spec.on = on; H.l.intensity = on ? H.I : 0; H.bulb.emissiveIntensity = on ? 7 : .08; }
   if (LEVEL !== 'kitchen') for (const k in HX.snd) HX.snd[k].gain.value = 0;
+  garageLights(); if (RADIO.bus && LEVEL !== 'garage') RADIO.bus.gain.value = 0; if (RADIO2.bus && LEVEL !== 'yard') RADIO2.bus.gain.value = 0;
+  if (YS.lampL && HX.id.olamp) { if (!HX.id.olamp.on) YS.lampL.intensity = 0; else if (YS.lampL.intensity === 0 && !inDark(YS.lampL.position)) YS.lampL.intensity = 9000; }
   const lp = HX.id.lamp; if (LIV.lamp && lp) { if (!lp.on) { LIV.lamp.intensity = 0; if (LIV.shade) LIV.shade.material.emissiveIntensity = 0; } else if (LIV.lamp.intensity === 0 && !inDark(LIV.lamp.position)) LIV.lamp.intensity = 9000; const s = KS.lights.find(q => q.p.x === 575 && q.p.z === 8); if (s) s.on = lp.on; }
   const tv = HX.id.tv; if (tv && !tv.on) LIV.tvOff = true; if (tv) { const s = KS.lights.find(q => q.p.x === 850 && q.p.z === 120); if (s) s.on = tv.on; }
 }
@@ -7338,9 +7342,12 @@ function hxTick(dt) {
     const H = HX.hood; if (hood.on && L.pos.x > 16 && L.pos.x < 60 && L.pos.z > -218 && L.pos.z < -198 && L.pos.y > 176 && L.pos.y < 196) { knock(L, V3(38, 195, -208), '抽油煙機的風扇在轉！先把它關掉'); L.vel.y = -30; }
     if (bl.on && L.pos.x > 344 && L.pos.x < 374 && L.pos.z > -332 && L.pos.z < -306 && L.pos.y > 262 && L.pos.y < 272 && Math.abs(L.vel.y) < 60) { if (!HX.saidFan || T - HX.saidFan > 4) { HX.saidFan = T; toast('抽氣扇在轉，下不去——要有人關廁所燈（連抽氣扇）', 3); } }
   }
-  // which switch is in reach (and the ring that shows it)
-  HX.near = L && mine(L) && !L.frozen && STATE === 'play' ? hxNear(L) : null;
-  const rg = HX.ring; if (HX.near) { rg.visible = true; rg.position.copy(HX.near.p); rg.lookAt(camera.position); const s = 1 + Math.sin(T * 6) * .12; rg.scale.setScalar(s); } else rg.visible = false;
+  hxUI();
+}
+// which switch is in reach (and the ring that shows it) — kitchen and garage
+function hxUI() {
+  const L = leader; HX.near = L && mine(L) && !L.frozen && STATE === 'play' ? hxNear(L) : null;
+  const rg = HX.ring; if (!rg) return; if (HX.near) { rg.visible = true; rg.position.copy(HX.near.p); rg.lookAt(camera.position); const s = 1 + Math.sin(T * 6) * .12; rg.scale.setScalar(s); } else rg.visible = false;
   if (TOUCH) $('touch').classList.toggle('use', !!HX.near);
 }
 // =====================================================================
@@ -7651,8 +7658,8 @@ function brainEyeText() {
   return pre + where('m', '太太') + ' · ' + where('k', '女兒');
 }
 // network: the daughter's body and the household mood
-function brainNet() { return [+HB.sus.toFixed(2), HB.search > 0 ? 1 : 0]; }
-function brainNetRecv(b) { HB.netSus = b[0]; HB.netSearch = !!b[1]; }
+function brainNet() { return [+HB.sus.toFixed(2), HB.search > 0 ? 1 : 0, +AGB.sus.toFixed(2) + (AGB.search > 0 ? 10 : 0)]; }
+function brainNetRecv(b) { HB.netSus = b[0]; HB.netSearch = !!b[1]; if (b[2] !== undefined) AGB.netSus = b[2] >= 10 ? 3 : b[2]; }
 
 // the daughter's body: sitting, standing, walking, reaching, crouching to the cat
 function kidBody(dt, moveD) {
@@ -7691,6 +7698,211 @@ function kidNetApply(dt) {
   const dx = k[2] - P.x, dz = k[3] - P.z; if (dx * dx + dz * dz > 3600) { P.x = k[2]; P.z = k[3]; } else { const f = 1 - Math.exp(-8 * dt); P.x += dx * f; P.z += dz * f; }
   KID.byaw = angDamp(KID.byaw ?? Math.PI, k[4], 8, dt); KID.pose = KPOSE[k[5]] || 'homework'; KID.seatY = k[6];
   return Math.hypot(P.x - ox, P.z - oz) > .05 && KID.pose === 'walk' ? Math.hypot(P.x - ox, P.z - oz) : 0;
+}
+// =====================================================================
+//  PHASE 2 — the garage comes alive, and the ceiling duct reaches it
+//  · the duct from the kitchen hood carries on past the bathroom fan, over the living room and into
+//    the garage's ceiling: a grille right above the metal shelving (where the security camera sits).
+//    The camera's power cable runs from the shelf up through the grille — climb it to get back into
+//    the duct: a quick way between the house and the garage in both directions
+//  · switches here: the fuse box (garage lights), the camera's power strip (on the top shelf), the
+//    old radio on the workbench (plays an old tune; covers small noises)
+//  · the Origin Dynamics man gets a brain like the family's: he picks what to search next (shelf,
+//    car, bench, bins, the dog flap, the camera, a radio call to his office — when he's looking at
+//    his phone he isn't looking at you), deals with the switches you flip, and grows suspicious:
+//    0 routine · 1 wary · 2 suspicious (sharper eyes, radios it in) · 3 searching (fast, sweeping)
+// =====================================================================
+const AGB = { sus: 0, stage: 0, quiet: 0, last: [], act: null, rx: null, search: 0, eye: 1 };
+
+// ---------- the duct's last stretch, the grille, the cable, the switches ----------
+function buildGarageDuct(M) {
+  const D = new THREE.MeshStandardMaterial({ map: kitchenMats().steel.map, color: 0xc4cacd, metalness: .5, roughness: .48 });
+  box(906, 912, 270, 275, 108, 132, D);                                            // a little step up onto the garage ceiling
+  box(906, 950, 270, 300, 106, 108, D); box(906, 950, 270, 300, 132, 134, D); box(946, 950, 270, 300, 108, 132, D); box(904, 950, 298, 300, 106, 134, D);
+  box(878, 906, 270, 294, 134, 136, D); box(904, 906, 270, 294, 132, 136, D);
+  // the grille (no collider: you drop through it onto the top shelf)
+  const gm = new THREE.MeshStandardMaterial({ color: 0xd8dde2, metalness: .8, roughness: .35 });
+  for (let i = 0; i < 6; i++) box(925 + i * 3.6, 926.2 + i * 3.6, 268.6, 270, 108.5, 131.5, gm, { col: false, cast: false });
+  box(922, 948, 268.4, 270, 106.5, 108.5, gm, { col: false }); box(922, 948, 268.4, 270, 131.5, 133.5, gm, { col: false });
+  // the camera's power: a strip on the top shelf, a cable up to the ceiling outlet through the grille
+  box(930, 950, 222, 225, 136, 142, MAT.white);
+  const led = mesh(new THREE.BoxGeometry(2.6, 1, 2.6), new THREE.MeshStandardMaterial({ color: 0x220000, emissive: 0xff4a2a, emissiveIntensity: 2.2 }), 947.5, 225.6, 139, { cast: false }); GS.stripLed = led;
+  box(929, 932, 222, 282, 128, 131, MAT.black);                                     // the cable: climbable, up into the duct
+  tubeM([[935, 223, 139], [942, 224, 132], [946, 223, 128]], .7, MAT.black, 20);
+  pointL(0xdfe8ff, 40, 930, 288, 120);
+  // the fuse box on the north wall, by the vent (a stack of boxes helps you up)
+  const fb = new THREE.MeshStandardMaterial({ color: 0x9aa0a4, metalness: .6, roughness: .45 });
+  box(936, 972, 96, 150, -260, -252, fb); box(940, 968, 100, 146, -252, -251.6, new THREE.MeshStandardMaterial({ color: 0x6a7074, metalness: .5, roughness: .5 }), { col: false });
+  for (let i = 0; i < 4; i++) box(944 + i * 6, 948 + i * 6, 118, 128, -251.6, -250, i === 0 ? new THREE.MeshStandardMaterial({ color: 0x1a1a1a }) : MAT.white, { col: false });
+  GS.fuseLever = mesh(new THREE.BoxGeometry(3, 6, 2), new THREE.MeshStandardMaterial({ color: 0xd83a2a, roughness: .5 }), 946, 123, -249.4);
+  box(938, 970, 150, 152, -262, -250, fb, { col: false });
+  // radio glow (on when playing)
+  GS.radioGlow = mesh(new THREE.PlaneGeometry(24, 12), new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xffb050, emissiveIntensity: 0 }), 1287, GS.benchY + 13, -227.2, { cast: false }); GS.radioGlow.rotation.y = 0;
+  hxAdd({ id: 'gpanel', lv: 'garage', name: '車房電箱', kind: 'light', p: V3(946, 123, -249), on: true, r: 10, verb: ['拉掣：車房熄燈', '推返個掣：車房開燈'] });
+  hxAdd({ id: 'gstrip', lv: 'garage', name: '監視鏡頭的拖板', kind: 'power', p: V3(947, 226, 139), on: true, r: 9, verb: ['關掉監視鏡頭的電', '開返監視鏡頭的電'] });
+  hxAdd({ id: 'radio', lv: 'garage', name: '舊收音機', kind: 'radio', p: V3(1306, GS.benchY + 11.5, -226), on: false, r: 10, verb: ['關收音機', '開收音機'] });
+}
+function camPowered() { const s = HX.id.gstrip; return !s || s.on; }
+// garage lights follow the fuse box (kept dark every frame while it's off)
+function garageLights() {
+  const g = HX.id.gpanel; if (!g || !GS.tubeAL) return;
+  if (!g.on) { GS.tubeAL.intensity = 0; GS.tubeBL.intensity = 0; GS.tubeCL.intensity = 0; }
+  else { if (GS.tubeAL.intensity === 0 && !inDark(V3(1180, 0, -60))) GS.tubeAL.intensity = 230000; if (GS.tubeCL.intensity === 0 && !inDark(V3(1020, 0, 120))) GS.tubeCL.intensity = 52000; }
+  for (const m of GS.tubeMeshes || []) m.material.emissiveIntensity = g.on ? 3 : .05;
+  if (GS.fuseLever) GS.fuseLever.position.y = g.on ? 125 : 119;
+  if (GS.stripLed) GS.stripLed.material.emissiveIntensity = camPowered() ? 2.2 : 0;
+  if (GS.radioGlow) GS.radioGlow.material.emissiveIntensity = HX.id.radio && HX.id.radio.on ? 1.2 + Math.sin(T * 3) * .1 : 0;
+}
+
+// ---------- the radio: an old tune through a small speaker ----------
+const RADIO = { bus: null, next: 0, step: 0, timer: 0 }, RADIO2 = { bus: null, next: 0, step: 0 };
+const RADIO_TUNE = [[76, 2], [74, 1], [72, 1], [69, 2], [72, 2], [74, 3], [0, 1], [76, 1], [79, 1], [81, 2], [79, 1], [76, 1], [74, 4], [72, 2], [74, 1], [76, 1], [72, 2], [69, 2], [67, 3], [0, 1], [69, 1], [72, 1], [74, 2], [76, 2], [72, 4]];
+function radioInit(Rd = RADIO) {
+  const C = AU.ctx; if (!C || Rd.bus) return; const RADIO = Rd;
+  RADIO.bus = C.createGain(); RADIO.bus.gain.value = 0; const bp = C.createBiquadFilter(); bp.type = 'bandpass'; bp.frequency.value = 1300; bp.Q.value = .8;
+  const ws = C.createWaveShaper(); const cv = new Float32Array(256); for (let i = 0; i < 256; i++) { const x = i / 128 - 1; cv[i] = Math.tanh(x * 2.2); } ws.curve = cv;
+  RADIO.in = C.createGain(); RADIO.in.connect(ws); ws.connect(bp); bp.connect(RADIO.bus); RADIO.bus.connect(AU.out);
+  const hiss = C.createBufferSource(); hiss.buffer = AU.noise; hiss.loop = true; const hf = C.createBiquadFilter(); hf.type = 'highpass'; hf.frequency.value = 3500; const hg = C.createGain(); hg.gain.value = .05; hiss.connect(hf); hf.connect(hg); hg.connect(RADIO.bus); hiss.start();
+}
+// Cantonese-opera-ish phrase for 陳伯's radio (original; pentatonic, with a woodblock)
+const RADIO_TUNE2 = [[69, 2], [72, 1], [74, 1], [76, 3], [74, 1], [72, 2], [69, 2], [67, 2], [69, 1], [72, 1], [69, 4], [0, 2], [76, 1], [79, 1], [76, 2], [74, 2], [72, 1], [74, 1], [69, 4]];
+function radioTick() { radioRun(RADIO, HX.id.radio, RADIO_TUNE, 'garage', .3); radioRun(RADIO2, HX.id.oradio, RADIO_TUNE2, 'yard', .26); }
+function radioRun(RADIO, o, TUNE, lv, beat) {
+  const C = AU.ctx; if (!C || !o) return; if (!RADIO.bus) radioInit(RADIO); if (!RADIO.bus) return;
+  const L = leader, d = L ? L.pos.distanceTo(o.p) : 999, v = o.on && (LEVEL === lv || d < 700) ? .55 * Math.pow(clamp(1 - d / 650, 0, 1), 1.3) : 0;
+  RADIO.bus.gain.setTargetAtTime(v, C.currentTime, .15);
+  if (!o.on || !BANK.piano.length) { RADIO.next = 0; return; }
+  if (RADIO.next < C.currentTime) RADIO.next = C.currentTime + .05;
+  while (RADIO.next < C.currentTime + .4) {
+    const [m, len] = TUNE[RADIO.step % TUNE.length]; RADIO.step++;
+    if (lv === 'yard') { if (m) playWind('clar', m, RADIO.next, len * beat * .95, .12, RADIO.in); if (RADIO.step % 2) playPerc('tick', RADIO.next, .06, RADIO.in); }
+    else { if (m) { playS('cel', m, RADIO.next, .35, len * beat * .9, RADIO.in); playS('piano', m - 12, RADIO.next, .18, len * beat, RADIO.in); }
+    if (RADIO.step % 4 === 1) playS('bass', [45, 43, 41, 40][Math.floor(RADIO.step / 8) % 4], RADIO.next, .35, beat * 2, RADIO.in); }
+    RADIO.next += len * beat;
+  }
+}
+
+// ---------- the man's brain ----------
+const AG_ACTS = [
+  { k: 'shelf', x: 1000, z: -140, stop: [4, 7], look: [950, 120, 140], line: '教授的東西……會不會藏在這些箱裡？' },
+  { k: 'car', x: 1000, z: 236, stop: [3, 5], look: [1150, 60, 160], line: '車裡面也查過了。' },
+  { k: 'bench', x: 1300, z: -176, stop: [4, 7], look: [1300, GY + 90, -240], line: '這張工作枱……他以前一定在這裡做實驗。' },
+  { k: 'bins', x: 1320, z: 228, stop: [3, 5], look: [1380, 40, 262], line: '垃圾桶……甚麼都沒有。' },
+  { k: 'door', x: 1396, z: 105, stop: [3, 4], look: [1455, 4, 105], line: '這個狗門……教授有養狗嗎？' },
+  { k: 'cam', x: 1010, z: 120, stop: [3, 4], look: [950, 228, 125], line: '鏡頭還在拍吧……' },
+  { k: 'phone', here: true, stop: [6, 9], phone: true, line: ['（對講機）這裡還是沒有發現。', '（對講機）收到，我再找找。', '（對講機）教授的車還在，人卻不見了……', '（對講機）甚麼？今晚要找到？'] }
+];
+function agentSayB(t, d = 3) { if (!t) return; if (AGB.sayT && T - AGB.sayT < 2.5) return; AGB.sayT = T; sayW('Origin Dynamics 職員', t, '#9fb3c8', d); }
+function agentChoose(H) {
+  // put right whatever's wrong first: the lights, the camera, the radio
+  const chores = [];
+  if (HX.id.gpanel && !HX.id.gpanel.on) chores.push({ x: 992, z: -232, sw: 'gpanel', on: true, line: '又跳掣？……' });
+  if (HX.id.gstrip && !HX.id.gstrip.on) chores.push({ x: 1002, z: 140, sw: 'gstrip', on: true, line: '（看手機）鏡頭斷線了？' });
+  if (HX.id.radio && HX.id.radio.on) chores.push({ x: 1292, z: -176, sw: 'radio', on: false, line: '誰開了收音機？' });
+  if (chores.length) { AGB.act = { ...chores[0], fix: true }; return; }
+  if (AGB.search > 0) { const sp = [[1000, -140], [1000, 236], [1300, -176], [1320, 228], [1396, 105], [1010, 120]]; const [x, z] = sp[(rnd() * sp.length) | 0]; AGB.act = { x, z, stop: [2.2, 3.2], look: [x + R(-60, 60), 8, z + R(-60, 60)], low: true }; return; }
+  const opts = AG_ACTS.filter(a => !AGB.last.includes(a.k)); const a = opts[(rnd() * opts.length) | 0];
+  AGB.last.unshift(a.k); if (AGB.last.length > 2) AGB.last.pop();
+  AGB.act = { ...a, x: a.here ? H.pos.x : a.x, z: a.here ? H.pos.z : a.z };
+}
+function agentIncident(id, on) {
+  if (NET.client) return;
+  const add = { gpanel: .6, gstrip: .6, radio: .45 }[id] || .3; agentSus(add, null);
+  if (TAKE.job) return;
+  const H = GS.agent; AGB.act = null; GS.mode = 'patrol'; agentChoose(H);   // drop what he's doing and deal with it
+  if (id === 'gpanel' && !on) agentSayB('嗯？停電了？');
+}
+function agentSus(v, p) {
+  AGB.sus = Math.min(3.4, AGB.sus + v); AGB.quiet = 0;
+  const st = AGB.sus >= 3 ? 3 : AGB.sus >= 2 ? 2 : AGB.sus >= 1 ? 1 : 0;
+  if (st > AGB.stage) { AGB.stage = st;
+    if (st === 2) setTimeout(() => agentSayB('（對講機）這間屋有古怪……好像有東西在動。'), 1800);
+    if (st === 3) { AGB.search = 32; setTimeout(() => agentSayB('出來！我知道你在這裡！', 3), 800); } }
+}
+function agentBrainTick(dt) {
+  AGB.quiet += dt; if (AGB.quiet > 16 && AGB.sus > 0) { AGB.sus = Math.max(0, AGB.sus - dt / 35); AGB.stage = Math.min(AGB.stage, Math.floor(AGB.sus)); }
+  if (AGB.search > 0) { AGB.search -= dt; if (AGB.search <= 0) { AGB.sus = Math.min(AGB.sus, 2.2); agentSayB('（對講機）……可能是我看錯了。'); } }
+  AGB.eye = 1 + AGB.sus * .14;
+}
+// one step of the brain while he isn't tracking something he saw or heard (replaces the fixed round)
+function agentBrain(H, walkTo, dt) {
+  const P = H.pos; if (!AGB.act) agentChoose(H); const A = AGB.act; const sp = AGB.search > 0 ? 78 : A.fix ? 66 : 52;
+  if (!A.arrived) {
+    if (walkTo(A.x, A.z, sp)) { A.arrived = true; A.t = A.sw ? .7 : R(...A.stop); if (A.line && (A.fix || rnd() < .55)) agentSayB(Array.isArray(A.line) ? A.line[(rnd() * A.line.length) | 0] : A.line); }
+    const fx = Math.sin(H.yaw), fz = Math.cos(H.yaw); H.aimT.set(P.x + fx * 150 + Math.sin(T * (AGB.search ? 2.4 : .8)) * (AGB.search ? 90 : 40), GY, P.z + fz * 150 + Math.cos(T * .7) * 30);
+    return;
+  }
+  A.t -= dt;
+  if (A.sw) { const o = HX.id[A.sw]; H.yaw = angDamp(H.yaw, Math.atan2(o.p.x - P.x, o.p.z - P.z), 5, dt); H.aimT.copy(o.p); if (A.t < .35 && !A.fired) { A.fired = 1; hxSet(o, A.on, 'agent'); } }
+  else if (A.phone) { H.aimT.set(P.x + Math.sin(H.yaw) * 30, GY + 40, P.z + Math.cos(H.yaw) * 30); }   // eyes on his phone, torch at his feet
+  else { const la = V3(...A.look); H.yaw = angDamp(H.yaw, Math.atan2(la.x - P.x, la.z - P.z), 2.5, dt); const s = Math.sin(T * 1.1) * 34; H.aimT.set(la.x + s, A.low ? GY + 4 + Math.sin(T * 2) * 6 : la.y, la.z + Math.cos(T * .9) * 20); }
+  if (A.t <= 0) AGB.act = null;
+}
+
+// =====================================================================
+//  陳伯 next door: still in his armchair, but no longer just reading and glancing up.
+//  He reads, looks out, sips his tea, dozes off (eyes shut — your chance), and listens to Cantonese
+//  opera on his little radio with his eyes closed. Switch his lamp off and the dim room sends him to
+//  sleep; switch his radio on and he settles in to listen — switch it off mid-song and he wakes up
+//  wondering. Our garden tap turns the lawn sprinkler off.
+// =====================================================================
+const OLDB = { sus: 0, quiet: 0, eye: 1, stage: 0 };
+function buildYardSwitches(X0) {
+  // the garden tap on our house wall, where the hose starts
+  box(X0, X0 + 3, GY + 40, GY + 48, -124, -116, MAT.dsteel || MAT.white); const tp = mesh(new THREE.TorusGeometry(2.6, .7, 8, 16), new THREE.MeshStandardMaterial({ color: 0xc83a2a, roughness: .5 }), X0 + 4, GY + 47, -120); tp.rotation.y = Math.PI / 2; YS.tapH = tp;
+  hxAdd({ id: 'otap', lv: 'yard', name: '後園水龍頭', kind: 'tap', p: V3(X0 + 4, GY + 46, -120), on: true, r: 10, verb: ['關水龍頭（灑水器停）', '開水龍頭（灑水器轉）'] });
+  // 陳伯's lamp (a foot switch on its cord) and his little radio on the side table
+  box(2686, 2694, DECK, DECK + 2, -8, -2, MAT.black);
+  hxAdd({ id: 'olamp', lv: 'yard', name: '陳伯的落地燈', kind: 'lamp', p: V3(2690, DECK + 2, -5), on: true, r: 8, verb: ['熄陳伯的燈', '開陳伯的燈'] });
+  const rm = new THREE.MeshPhysicalMaterial({ color: 0xb8322e, roughness: .35, clearcoat: .6 });
+  box(2608, 2624, DECK + 53, DECK + 63, 106, 114, rm); box(2610, 2622, DECK + 55, DECK + 61, 105.6, 106, new THREE.MeshStandardMaterial({ color: 0xd8c08a }), { col: false });
+  YS.radioGlow = mesh(new THREE.PlaneGeometry(10, 5), new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0xffb050, emissiveIntensity: 0 }), 2616, DECK + 58, 105.5, { cast: false }); YS.radioGlow.rotation.y = Math.PI;
+  hxAdd({ id: 'oradio', lv: 'yard', name: '陳伯的收音機', kind: 'radio', p: V3(2616, DECK + 63, 110), on: false, r: 9, verb: ['關收音機', '開收音機（粵曲）'] });
+}
+function oldIncident(id, on) {
+  if (NET.client) return; const O = YS.old; if (!O) return;
+  if (id === 'olamp' && !on) { oldSus(.35); oldSay('……燈泡又壞了？算了。'); }
+  if (id === 'olamp' && on && (O.mode === 'doze')) { O.mode = 'alert'; O.t = 3; O.look.set(2690, 20, -5); oldSay('嗯？誰開的燈？'); oldSus(.4); }
+  if (id === 'oradio' && on) { oldSus(.15); O.mode = 'listen'; O.t = 999; oldSay('哦？……收音機自己開了？好，聽一下粵曲。'); }
+  if (id === 'oradio' && !on && O.mode === 'listen') { O.mode = 'alert'; O.t = 4; O.look.set(2616, 60, 110); oldSay('咦？怎麼停了？'); oldSus(.45); }
+}
+function oldSay(t) { if (OLDB.sayT && T - OLDB.sayT < 3) return; OLDB.sayT = T; sayW('陳伯', t, '#c8b8a0', 2.8); }
+function oldSus(v) { OLDB.sus = Math.min(3.4, OLDB.sus + v); OLDB.quiet = 0; const st = Math.floor(Math.min(3, OLDB.sus)); if (st > OLDB.stage) { OLDB.stage = st; if (st === 2) oldSay('……是不是有小偷？'); if (st === 3) { oldSay('出來！我報警了！'); } } }
+// choose what to do next (runs on the host)
+function oldChoose(O) {
+  const lampOn = !HX.id.olamp || HX.id.olamp.on, radioOn = HX.id.oradio && HX.id.oradio.on;
+  if (radioOn) { O.mode = 'listen'; O.t = 999; return; }
+  const w = [['read', .4], ['look', .25 + OLDB.sus * .2], ['tea', .16], ['doze', lampOn ? .1 : .7]].filter(([k]) => k !== O.last);
+  let s = w.reduce((a, b) => a + b[1], 0) * rnd(); let k = w[0][0]; for (const [kk, v] of w) { s -= v; if (s <= 0) { k = kk; break; } }
+  O.last = k; O.mode = k; O.t = k === 'read' ? R(8, 14) : k === 'look' ? R(3.5, 5) : k === 'tea' ? R(3, 4.5) : R(10, 18);
+  if (k === 'look') O.look.set(R(2380, 2540), R(-10, 30), R(-40, 200));
+  if (k === 'doze' && rnd() < .5) oldSay(lampOn ? '……好睏……' : '……暗暗的，好睏……');
+}
+// he's still the same seated man; this decides where he's looking and whether his eyes are open
+function oldBrain(dt) {
+  const O = YS.old; if (!O) return; const H = O.H;
+  if (!NET.client) {
+    O.t -= dt; OLDB.quiet += dt; if (OLDB.quiet > 18 && OLDB.sus > 0) { OLDB.sus = Math.max(0, OLDB.sus - dt / 35); OLDB.stage = Math.min(OLDB.stage, Math.floor(OLDB.sus)); }
+    OLDB.eye = 1 + OLDB.sus * .15;
+    if (O.mode === 'listen' && !(HX.id.oradio && HX.id.oradio.on)) { O.mode = 'alert'; O.t = 3; }
+    if (O.t <= 0) oldChoose(O);
+    if (O.mode === 'look' && OLDB.sus >= 2) O.look.x += Math.sin(T * 1.6) * 60 * dt;
+  }
+  const open = O.mode === 'look' || O.mode === 'alert' ? 1 : O.mode === 'tea' ? .45 : 0;
+  O.lookK = damp(O.lookK, open, 3, dt);
+  O.dozeK = damp(O.dozeK || 0, O.mode === 'doze' || O.mode === 'listen' ? 1 : 0, 2, dt);
+  H.paper.visible = O.mode !== 'tea' && O.mode !== 'listen';
+  H.paper.position.y = lerp(lerp(52, 22, O.lookK), 14, O.dozeK); H.paper.rotation.x = lerp(lerp(-.2, -1.2, O.lookK), -1.4, O.dozeK);
+  H.root.updateMatrixWorld(true); const hp = V3(); H.head.getWorldPosition(hp); const ad = V3().subVectors(O.look, hp); const yr0 = Math.atan2(ad.x, ad.z) - H.yaw; const yr = Math.atan2(Math.sin(yr0), Math.cos(yr0)); const pitch = Math.atan2(-ad.y, Math.hypot(ad.x, ad.z));
+  const sway = O.mode === 'listen' ? Math.sin(T * 2.2) * .18 : 0;
+  H.head.rotation.y = damp(H.head.rotation.y, clamp(yr, -.9, .9) * O.lookK + sway, 3, dt);
+  H.head.rotation.x = damp(H.head.rotation.x, lerp(lerp(.55, clamp(pitch * .6, -.3, .5), O.lookK), .75 + Math.sin(T * .9) * .05, O.dozeK), 3, dt);
+  const tea = O.mode === 'tea' ? Math.max(0, Math.sin((O.t || 0) * 2)) : 0;
+  for (const A of H.arms) { A.sh.rotation.x = lerp(lerp(-1.1, -.5, O.lookK), -.35, O.dozeK); A.sh.rotation.z = A.s * -.25; A.el.rotation.x = lerp(lerp(-.9, -.6, O.lookK), -.4, O.dozeK); }
+  if (tea) { const A = H.arms[1]; A.sh.rotation.x = -1.3 - tea * .5; A.el.rotation.x = -1.6; }
+  if (O.dozeK > .7 && YS.near && rnd() < dt * .8) emit(V3(hp.x - 4, hp.y + 14, hp.z), V3(R(-2, 2), R(5, 8), R(-2, 2)), new THREE.Color(1.4, 1.4, 1.6), R(.3, .5), R(1.6, 2.2), -2, 0);
+  if (YS.radioGlow) YS.radioGlow.material.emissiveIntensity = HX.id.oradio && HX.id.oradio.on ? 1.2 : 0;
+  if (YS.tapH) YS.tapH.rotation.x = HX.id.otap && HX.id.otap.on ? 0 : Math.PI / 2;
 }
 
 // =====================================================================
@@ -8318,7 +8530,7 @@ $('mpVcBtn').addEventListener('click', () => vcSetMode(vcMode() === 'off' ? 'ope
 vcUI();
 requestAnimationFrame(frame);
 init().catch(e => { console.error(e); $('err').textContent = '載入失敗：' + (e && e.stack || e); });
-if (location.hash === '#dev') window.__VC = () => VC; if (location.hash === '#dev') window.__bn = { doorOpen, mpChecklist, HB, HX, hxSet, hxNear, navPath, NAVN, KM, KID, LIV, scene, THREE, MUS, ARR, BANK, AU, SET, toyFreeze, useProto, TAKE, protoTarget, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, ST, pressButton, LANES, pause, garageHear, TEST, testWarp, WARPS, testAll, startChapter2, NC, batPing, tortShell, crewJoin, hideK, startGame, startChapter, openChapters, step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT, GS, YS, DECK, GY, WC, ventOpen, latchOpen, mpMarker, zoneFloor, KS }; }, info: () => ({ fps: $('fps').textContent, state: STATE, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
+if (location.hash === '#dev') window.__VC = () => VC; if (location.hash === '#dev') window.__bn = { OLDB, YS, AGB, GS, camPowered, doorOpen, mpChecklist, HB, HX, hxSet, hxNear, navPath, NAVN, KM, KID, LIV, scene, THREE, MUS, ARR, BANK, AU, SET, toyFreeze, useProto, TAKE, protoTarget, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, ST, pressButton, LANES, pause, garageHear, TEST, testWarp, WARPS, testAll, startChapter2, NC, batPing, tortShell, crewJoin, hideK, startGame, startChapter, openChapters, step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT, GS, YS, DECK, GY, WC, ventOpen, latchOpen, mpMarker, zoneFloor, KS }; }, info: () => ({ fps: $('fps').textContent, state: STATE, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
 </script>
 </body>
 </html>

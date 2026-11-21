@@ -1,0 +1,11 @@
+[
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; await b.startChapter('garage'); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(10); return [b.LEVEL, b.state, b.HX.list.filter(o=>o.lv).map(o=>o.id+':'+(o.on?1:0)).join(' ')]; })()"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn, A=b.AGB, HX=b.HX, G=b.GS; const L=b.leader; L.pos.set(1160,b.GS.benchY,-250); for(const F of b.party) if(F!==L){F.pos.set(1150,-20,-240); F.queue=[];} const st=(s,f)=>{ for(let i=0;i<s*30;i++){ b.step(2); if(f&&f()) return Math.round(i/30*10)/10; } return 'timeout'; }; const seq=[]; let last=''; for(let i=0;i<150*30;i++){ b.step(2); const k=A.act? (A.act.k||A.act.sw||'search') : '-'; if(k!==last && k!=='-'){ seq.push(k); last=k; } } const out={seq};\n b.hxSet(HX.id.gpanel,false,'dad'); const lightsOff = G.tubeAL.intensity; out.gpanel=[lightsOff, st(40, ()=>HX.id.gpanel.on), +A.sus.toFixed(2)];\n b.hxSet(HX.id.gstrip,false,'dad'); out.camBlind=!b.camPowered(); out.gstrip=[st(40, ()=>HX.id.gstrip.on), +A.sus.toFixed(2)];\n b.hxSet(HX.id.radio,true,'dad'); st(1); out.radio=[st(40, ()=>!HX.id.radio.on), +A.sus.toFixed(2), A.stage];\n return out; })()"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; const L=b.leader; const out=[]; const st=(n,f)=>{ for(let i=0;i<n;i++){ b.step(1); if(f&&f()) return i; } return n; }; const hold=(yaw,sec,f)=>{ b.cam.yaw=yaw; b.keys.KeyW=true; const r=st(sec*60,f); b.keys.KeyW=false; return r; }; const at=()=>L.pos.toArray().map(v=>Math.round(v));\n L.pos.set(930.5,222,123); L.vel.set(0,0,0); L.stamina=100; st(5); hold(Math.PI, 12, ()=>L.pos.y>279 && L.grounded); st(30); out.push(['cable up into the duct', at(), L.grounded]);\n hold(Math.PI/2, 6, ()=>L.pos.x<905); out.push(['west along the duct', at()]);\n L.pos.set(915,282,120); L.vel.set(0,0,0); st(5); hold(-Math.PI/2, 4); st(90); out.push(['drop through the grille', at(), L.grounded]);\n return out; })()"
+ }
+]

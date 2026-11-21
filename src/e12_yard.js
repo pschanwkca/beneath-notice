@@ -173,6 +173,7 @@ function buildYard() {
   LV.add(new THREE.HemisphereLight(0x50648c, 0x16220f, .95));
   YS.moon = spotL(0xb8c8ff, 2600000, V3(2400, 900, -900), V3(2000, GY, 100), .55, .5, 2048, 300, 2600);
   YS.porchL = pointL(0xffd2a0, 7000, 2564, 200, 70);
+  buildYardSwitches(X0);
   YS.lights = [{ p: V3(X0 + 12, 200, 105), range: 120, I: () => YS.doorL.intensity }, { p: V3(2564, 200, 70), range: 150, I: () => YS.porchL.intensity }, { p: V3(2700, DECK + 140, -10), range: 170, I: () => YS.lampL.intensity }];
   // the dog and 陳伯
   buildDog(); buildOldMan();
@@ -245,19 +246,12 @@ function buildOldMan() {
 function genNews() { const [c, x] = cnv(256, 168); x.fillStyle = '#ece6d8'; x.fillRect(0, 0, 256, 168); x.fillStyle = '#222'; x.font = '900 26px "Noto Sans TC"'; x.fillText('尋人：陳教授', 14, 36); x.font = '500 12px "Noto Sans TC"'; for (let i = 0; i < 9; i++) x.fillRect(14, 52 + i * 12, R(150, 226), 4); x.fillStyle = '#888'; x.fillRect(176, 48, 66, 64); return tex(c); }
 function oldManLook(p, d) { const O = YS.old; if (!O) return; O.mode = 'alert'; O.t = d; O.look.copy(p); if (!YS.said.old || T - YS.said.old > 12) { YS.said.old = T; sayW('陳伯', rnd() < .5 ? '嗯？外面有什麼？' : '……小黃，又吠什麼？', '#c8b8a0', 2.4); } }
 function updOldMan(dt) {
-  const O = YS.old; if (!O) return; const H = O.H; O.t -= dt;
-  if (O.mode === 'read') { if (O.t <= 0) { O.mode = 'look'; O.t = 4.2; O.look.set(R(2380, 2540), R(-10, 30), R(-40, 200)); } }
-  else if (O.mode === 'look' || O.mode === 'alert') { if (O.t <= 0) { O.mode = 'read'; O.t = R(9, 15); } else if (O.mode === 'look') O.look.z += Math.sin(T * .8) * 30 * dt; }
-  O.lookK = damp(O.lookK, O.mode === 'read' ? 0 : 1, 3, dt);
-  H.paper.position.y = lerp(52, 22, O.lookK); H.paper.rotation.x = lerp(-.2, -1.2, O.lookK);
-  H.root.updateMatrixWorld(true); const hp = V3(); H.head.getWorldPosition(hp); const ad = V3().subVectors(O.look, hp); const yr0 = Math.atan2(ad.x, ad.z) - H.yaw; const yr = Math.atan2(Math.sin(yr0), Math.cos(yr0)); const pitch = Math.atan2(-ad.y, Math.hypot(ad.x, ad.z));
-  H.head.rotation.y = damp(H.head.rotation.y, clamp(yr, -.9, .9) * O.lookK, 3, dt); H.head.rotation.x = damp(H.head.rotation.x, lerp(.55, clamp(pitch * .6, -.3, .5), O.lookK), 3, dt);
-  for (const A of H.arms) { A.sh.rotation.x = lerp(-1.1, -.5, O.lookK); A.sh.rotation.z = A.s * -.25; A.el.rotation.x = lerp(-.9, -.6, O.lookK); }
+  const O = YS.old; if (!O) return; const H = O.H; oldBrain(dt);
   if (TAKE.job && TAKE.job.who === 'old') oldTake(TAKE.job, dt); else if (O.grab) O.grab.visible = false;
 }
 // sprinkler: one jet sweeping round; whoever it hits gets knocked over
 function updSprinkler(dt) {
-  const S = YS.spr; if (!S) return; S.a += dt * .9; S.arm.rotation.y = S.a; const dx = Math.sin(S.a), dz = Math.cos(S.a);
+  const S = YS.spr; if (!S) return; if (HX.id.otap && !HX.id.otap.on) return; S.a += dt * .9; S.arm.rotation.y = S.a; const dx = Math.sin(S.a), dz = Math.cos(S.a);
   if (YS.near) for (let i = 0; i < 3; i++) { const v = R(60, 120); emit(V3(S.p.x + dx * 5, GY + 6, S.p.z + dz * 5), V3(dx * v + R(-4, 4), R(40, 70), dz * v + R(-4, 4)), new THREE.Color(.55, .7, .85), R(.15, .3), R(.8, 1.4), 120, 0); }
   if (NET.client) return;
   for (const C of party) { if (!mine(C) || C.frozen || C.pos.y > GY + 14) continue; const rx = C.pos.x - S.p.x, rz = C.pos.z - S.p.z, d = Math.hypot(rx, rz); if (d < 20 || d > S.R) continue; const ca = (rx * dx + rz * dz) / d; if (ca > .985) knock(C, V3(S.p.x, GY, S.p.z), C === leader ? '被灑水器射中了！' : null); }
@@ -267,12 +261,12 @@ function detectYard(dt) {
   const L = leader; if (L.frozen || !mine(L)) { meter = Math.max(0, meter - dt * .5); KS.watch = null; return; }
   let seen = 0, who = null; const D = YS.dog, O = YS.old;
   if (D && D.sleepK < .5) { const hp = V3(); D.head.getWorldPosition(hp); const q = new THREE.Quaternion(); D.head.getWorldQuaternion(q); const f = V3(0, 0, 1).applyQuaternion(q); const s = seeFrom(hp, f, .5, 320) * 1.2; if (s > seen) { seen = s; who = 'dog'; } }
-  if (O && O.lookK > .5) { const hp = V3(); O.H.head.getWorldPosition(hp); const q = new THREE.Quaternion(); O.H.head.getWorldQuaternion(q); const f = V3(0, 0, 1).applyQuaternion(q); const s = seeFrom(hp, f, .5, 320); if (s > seen) { seen = s; who = 'old'; } }
+  if (O && O.lookK > .5 && O.mode !== 'doze' && O.mode !== 'listen') { const hp = V3(); O.H.head.getWorldPosition(hp); const q = new THREE.Quaternion(); O.H.head.getWorldQuaternion(q); const f = V3(0, 0, 1).applyQuaternion(q); const s = seeFrom(hp, f, .5, 320); if (s > seen) { seen = s; who = 'old'; } }
   KS.watch = seen > 0 ? { p: who === 'dog' ? D.head.getWorldPosition(V3()) : O.H.head.getWorldPosition(V3()), s: seen, who } : null;
   if (seen > 0) {
     const p = V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z); let lit = litAtList(p, YS.lights, .6) * (inDark(L.pos) ? .6 : 1); if (inGrass(L.pos)) lit *= .3;
     const mv = L.spd > 1.5 ? 1 : .5; const cr = L.crouch ? .55 : 1;
-    meter += seen * lit * mv * cr * hideK(L) * dt;
+    meter += seen * lit * mv * cr * hideK(L) * (who === 'old' ? OLDB.eye : 1) * dt;
     if (meter > .3) netSeen(V3(L.pos.x, L.pos.y + 2, L.pos.z), who);
   } else meter -= dt * .24;
   meter = clamp(meter, 0, 1); if (meter >= 1) toyFreeze(who);
@@ -310,7 +304,7 @@ LEVELS.yard = {
   npc(dt) { if (STATE === 'play' || STATE === 'fail' || STATE === 'frozen' || STATE === 'end') { updDog(dt); updOldMan(dt); } },
   detect: detectYard, hear: yardHear, seen: yardSeen,
   update(dt) {
-    lvT += dt; if (NET.on) return; const L = leader;
+    lvT += dt; hxUI(); radioTick(); if (NET.on) return; const L = leader;
     if (QUESTS === YQ_SP2) return;
     if (quest === 0 && L.pos.x > 2108) setQuest(1);
     if (quest === 1 && L.pos.x > 2562 && L.pos.y > DECK - 2) { setQuest(2); toast('進了陽光房'); }
@@ -318,7 +312,7 @@ LEVELS.yard = {
   win() { },
   marker() { if (NET.on) return mpMarker(); if (QUESTS === YQ_SP2) return ST.gate; return quest === 0 ? YS.gap : quest === 1 ? YS.flap : (YS.chip ? null : YS.chipP); },
   reset() { if (YS.dog) { YS.dog.mode = 'home'; } if (YS.old) { YS.old.mode = 'read'; YS.old.t = 8; } },
-  eyeText: () => meter > .3 ? '被看見了！躲進長草' : '鄰居的狗和陳伯',
+  eyeText: () => { if (meter > .3) return '被看見了！躲進長草'; const O = YS.old, m = O && O.mode; return m === 'doze' ? '陳伯睡着了——趁現在' : m === 'listen' ? '陳伯閉着眼聽粵曲' : OLDB.sus >= 2 ? '陳伯起了疑心' : '鄰居的狗和陳伯'; },
   hint(L) { if (inGrass(L.pos)) return '躲在長草裡——比較難被看見'; return ''; },
   onSwitch() { }
 };

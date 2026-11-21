@@ -306,8 +306,8 @@ function brainEyeText() {
   return pre + where('m', '太太') + ' · ' + where('k', '女兒');
 }
 // network: the daughter's body and the household mood
-function brainNet() { return [+HB.sus.toFixed(2), HB.search > 0 ? 1 : 0]; }
-function brainNetRecv(b) { HB.netSus = b[0]; HB.netSearch = !!b[1]; }
+function brainNet() { return [+HB.sus.toFixed(2), HB.search > 0 ? 1 : 0, +AGB.sus.toFixed(2) + (AGB.search > 0 ? 10 : 0)]; }
+function brainNetRecv(b) { HB.netSus = b[0]; HB.netSearch = !!b[1]; if (b[2] !== undefined) AGB.netSus = b[2] >= 10 ? 3 : b[2]; }
 
 // the daughter's body: sitting, standing, walking, reaching, crouching to the cat
 function kidBody(dt, moveD) {
