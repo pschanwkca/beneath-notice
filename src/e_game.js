@@ -295,7 +295,15 @@ function updFollower(F, L, dt) {
   const [sup] = supportAt(F.pos.x, F.pos.z, F.r * .55, F.pos.y + .05);
   const floating = F.pos.y - sup > .35 && F.qst !== 'climb';
   let moved = 0;
-  if (Lp > F.gap || (floating && F.queue.length)) {
+  // personal space: when the leader's path doubles back (climb up and drop down, turn round…) don't walk along it into
+  // him — skip the loop instead — and wait a step away rather than standing inside him
+  const ldx = F.pos.x - L.pos.x, ldz = F.pos.z - L.pos.z, ld = Math.hypot(ldx, ldz), same = Math.abs(F.pos.y - L.pos.y) < 2.2 && !floating;
+  let nearL = same && ld < Math.max(F.r + L.r + 2.4, F.gap * .55);
+  if (nearL && ld > .3) { const o = V3(F.pos.x, F.pos.y + F.h * .5, F.pos.z), d = V3(-ldx, L.pos.y - F.pos.y, -ldz); const len = d.length(); if (rayBlocked(o, d.divideScalar(len), len, false)) nearL = false; }
+  if (nearL) { while (F.queue.length > 1) { const q = F.queue[0]; if (Math.abs(q.y - F.pos.y) > 1.5 || Math.hypot(q.x - L.pos.x, q.z - L.pos.z) < ld - .5) break; F.queue.shift(); } }
+  // …and don't walk into the teammate ahead of you on the path
+  const jam = !floating && party.some(G2 => G2 !== F && G2 !== L && !G2.frozen && G2.gap < F.gap && Math.abs(G2.pos.y - F.pos.y) < 2.2 && Math.hypot(G2.pos.x - F.pos.x, G2.pos.z - F.pos.z) < F.r + G2.r + 1.2);
+  if ((Lp > F.gap && !nearL && !jam) || (floating && F.queue.length)) {
     let move = Math.min(Math.max(Lp - F.gap, floating ? 30 * dt : 0), (Lp - F.gap > 14 || floating ? 32 : 17) * F.S.spd * dt); const m0 = move;
     while (move > 1e-4 && F.queue.length) {
       const q = F.queue[0]; const dx = q.x - F.pos.x, dy = q.y - F.pos.y, dz = q.z - F.pos.z; const d = Math.hypot(dx, dy, dz);
@@ -305,6 +313,15 @@ function updFollower(F, L, dt) {
       else { const k = move / d; F.pos.x += dx * k; F.pos.y += dy * k; F.pos.z += dz * k; move = 0; if (Math.hypot(dx, dz) > .3) F.tyaw = Math.atan2(dx, dz); }
     }
     moved = (m0 - move) / dt;
+  }
+  if (!floating && F.pos.y - sup < .35) {   // step aside from the leader and from each other (measured where everyone is drawn)
+    const DX = F.disp.x - F.pos.x, DZ = F.disp.z - F.pos.z, fx0 = F.pos.x + DX, fz0 = F.pos.z + DZ, edx = fx0 - L.pos.x, edz = fz0 - L.pos.z, ed = Math.hypot(edx, edz);
+    let px = 0, pz = 0; const push = (dx, dz, d, s) => { if (d >= s) return; const k = (s - d) / s; if (d < .05) { const a = F.side > 0 ? 1.2 : -1.2; dx = Math.cos(a); dz = Math.sin(a); d = 1; } px += dx / d * k; pz += dz / d * k; };
+    if (Math.abs(F.pos.y - L.pos.y) < 3) { push(edx, edz, ed, F.r + L.r + 2.2);
+      const lv = Math.hypot(L.vel.x, L.vel.z); if (lv > 2 && ed < F.r + L.r + 6 && (L.vel.x * edx + L.vel.z * edz) > 0) { const s = (L.vel.x * edz - L.vel.z * edx) > 0 ? 1 : -1; px += -L.vel.z / lv * s * .9; pz += L.vel.x / lv * s * .9; } }   // he's walking at you: step to the side
+    for (const G2 of party) if (G2 !== F && G2 !== L && !G2.frozen && !G2.on && !G2.hop && Math.abs(G2.pos.y - F.pos.y) < 3) { const gx = fx0 - G2.disp.x, gz = fz0 - G2.disp.z; push(gx, gz, Math.hypot(gx, gz), F.r + G2.r + 1.4); }
+    const m = Math.hypot(px, pz);
+    if (m > .01) { const step = Math.min(m, 1.5) * 30 * dt, nx = F.pos.x + px / m * step, nz = F.pos.z + pz / m * step; const [s3] = supportAt(nx, nz, F.r * .55, F.pos.y + .5); if (Math.abs(s3 - F.pos.y) < .5 && !solidAt(nx, F.pos.y + F.h * .5, nz)) { F.pos.x = nx; F.pos.z = nz; if (!moved) F.tyaw = Math.atan2(px, pz); } }
   }
   F.spd = moved;
   const st = F.qst || 'idle';
@@ -316,6 +333,7 @@ function updFollower(F, L, dt) {
   const flat = F.state === 'walk' || F.state === 'idle' || F.state === 'sneak' || F.state === 'crouch';
   let ok = false; const lx = Math.cos(F.yaw) * F.side, lz = -Math.sin(F.yaw) * F.side;
   if (flat && F.pos.y - sup < .35) { const px = F.pos.x + lx, pz = F.pos.z + lz; const [s2] = supportAt(px, pz, F.r * .55, F.pos.y + .5); ok = Math.abs(s2 - F.pos.y) < .4 && !solidAt(px, F.pos.y + F.h * .5, pz); }
+  else if (F.state === 'climb') { const px = F.pos.x + lx, pz = F.pos.z + lz, fx = Math.sin(F.yaw) * (F.r + 1), fz = Math.cos(F.yaw) * (F.r + 1); ok = !solidAt(px, F.pos.y + F.h * .5, pz) && !!solidAt(px + fx, F.pos.y + F.h * .5, pz + fz) && !!solidAt(px + fx, F.pos.y + F.h * .1, pz + fz); }
   F.offK = damp(F.offK || 0, ok ? 1 : 0, 5, dt);
   F.disp.set(F.pos.x + lx * F.offK, F.pos.y, F.pos.z + lz * F.offK);
 }

@@ -72,7 +72,7 @@ function buildUpstairs(K) {
   box(748, 900, Y - 6, Y, -498, -472, M.floor, { uv: 100 }); box(828, 900, Y - 6, Y, -472, -244, M.floor, { uv: 100 });
   deco(828, 832, Y, Y + 4, -472, -250, M.wood); deco(827, 833, Y + 88, Y + 92, -472, -250, M.wood);
   for (let z = -468; z < -252; z += 14) deco(829, 831, Y + 4, Y + 88, z, z + 2, M.paint);
-  cols.push({ t: 'b', x0: 827, x1: 833, y0: Y, y1: Y + 92, z0: -472, z1: -250, noRay: true });
+  cols.push({ t: 'b', x0: 827, x1: 833, y0: Y, y1: Y + 92, z0: -472, z1: -250, noRay: true, slick: true });   // a rail between balusters: not something to climb
   // handrail on the wall, on little brass brackets
   tubeM([[751.5, 92, -250], [751.5, Y + 92, -470]], 1.5, M.wood, 24);
   for (let i = 0; i <= N; i += 4) { const z = -250 - i * run - 6; deco(748, 751.5, i * rise + 90, i * rise + 92, z - 1, z + 1, K.brass); }
@@ -122,7 +122,7 @@ function buildUpstairs(K) {
     for (const s of [-1, 1]) { mesh(new THREE.SphereGeometry(3.6, 14, 10), B, s * 7.5, 43.5, 0, { parent: g }); mesh(new THREE.SphereGeometry(5, 14, 10), B, s * 13, 18, 3, { parent: g }); mesh(new THREE.SphereGeometry(5.6, 14, 10), B, s * 7.5, 3, 6, { parent: g }); }
     mesh(new THREE.SphereGeometry(3.4, 14, 10), new THREE.MeshStandardMaterial({ color: 0xf0d8b8, roughness: 1 }), 0, 33, 8, { parent: g });
     mesh(new THREE.TorusGeometry(8.5, 1.4, 8, 24), new THREE.MeshStandardMaterial({ color: 0xc8344a, roughness: .7 }), 0, 26, 0, { parent: g }).rotation.x = Math.PI / 2;   // a ribbon round its neck
-    cols.push({ t: 'c', x: 620, z: 214, r: 14, y0: Y + 42, y1: Y + 88 }); }
+    cols.push({ t: 'c', x: 620, z: 214, r: 13.5, y0: Y + 42, y1: Y + 70 }, { t: 'c', x: 620, z: 213, r: 9.5, y0: Y + 70, y1: Y + 87 }); }
   // the bed: legs, slats, mattress, a starry duvet you can bounce on, pillow, headboard
   box(316, 416, Y, Y + 84, 226, 232, M.wood, { uv: 60 }); cyl(366, 229, 50, Y + 84, Y + 85, M.wood, { col: false, seg: 40 });
   for (const [x, z] of [[319, 43], [413, 43], [319, 223], [413, 223]]) box(x - 3, x + 3, Y, Y + 16, z - 3, z + 3, M.wood);
@@ -131,7 +131,7 @@ function buildUpstairs(K) {
   box(316, 416, Y + 42, Y + 47, 40, 198, M.duvet, { uv: 80 }); last().bouncy = true;
   box(316, 416, Y + 18, Y + 47, 38, 40, M.duvet, { uv: 80 });                 // hangs over the foot: climb it
   box(416, 418, Y + 20, Y + 47, 40, 198, M.duvet, { uv: 80 });                // … and over the side
-  const pil = mesh(new THREE.SphereGeometry(22, 24, 14), M.sheet, 366, Y + 49, 210); pil.scale.set(1.9, .4, .7); cols.push({ t: 'b', x0: 328, x1: 404, y0: Y + 42, y1: Y + 55, z0: 198, z1: 222 }); last().bouncy = true;
+  const pil = mesh(new THREE.SphereGeometry(22, 24, 14), M.sheet, 366, Y + 49, 210); pil.scale.set(1.9, .4, .7); cols.push({ t: 'b', x0: 334, x1: 398, y0: Y + 42, y1: Y + 53, z0: 201, z1: 219 }); last().bouncy = true;
   // under the bed: dust, a lost toy car, a battery
   const dustM = furMat({ color: 0x8a8580, len: .6, den: 1.8, droop: .3, clump: .6, rimK: .05, root: .7 });
   for (const [x, z, r] of [[340, 150, 2.4], [392, 90, 1.8], [372, 200, 2]]) { const b = furMesh(new THREE.SphereGeometry(r, 18, 12), dustM); b.position.set(x, Y + r * .6, z); b.scale.y = .6; LV.add(b); }
@@ -158,10 +158,13 @@ function buildUpstairs(K) {
   // cube shelf (one solid block to climb; the cubbies are just for looks), the music box on top
   cols.push({ t: 'b', x0: 650, x1: 754, y0: Y, y1: Y + 80, z0: -232, z1: -200 });
   const so = { col: false }; deco(650, 754, Y + 76, Y + 80, -232, -200, M.paint); deco(650, 754, Y, Y + 4, -232, -200, M.paint); deco(650, 654, Y, Y + 80, -232, -200, M.paint); deco(750, 754, Y, Y + 80, -232, -200, M.paint); deco(700, 704, Y, Y + 80, -232, -200, M.paint); deco(650, 754, Y + 38, Y + 42, -232, -200, M.paint); deco(650, 754, Y, Y + 80, -232, -229, M.mint);
-  box(658, 696, Y + 4, Y + 34, -228, -204, new THREE.MeshStandardMaterial({ color: 0xf2c84a, roughness: .7 }), so);
-  for (let i = 0; i < 7; i++) box(708 + i * 5, 712 + i * 5, Y + 42, Y + 42 + R(22, 32), -226, -206, new THREE.MeshStandardMaterial({ color: [0x9a3a3a, 0x3a5a9a, 0x3a8a5a, 0xc8a24a, 0x5a3a7a, 0xe86a8a, 0x2a2a2a][i], roughness: .7 }), so);
-  for (const [x, c] of [[716, 0xd83a3a], [730, 0x3a7ad8], [742, 0xe8c040]]) box(x - 5, x + 5, Y + 4, Y + 14, -222, -212, new THREE.MeshStandardMaterial({ color: c, roughness: .6 }), so);
-  { const rb = new THREE.MeshPhysicalMaterial({ color: 0xf2f2f2, roughness: .4 }); mesh(new THREE.SphereGeometry(7, 18, 12), rb, 676, Y + 52, -216); for (const s of [-1, 1]) mesh(new THREE.CapsuleGeometry(1.8, 9, 6, 10), rb, 676 + s * 3, Y + 64, -216); mesh(new THREE.SphereGeometry(1, 8, 6), MAT.black, 673.5, Y + 54, -209.5, { cast: false }); mesh(new THREE.SphereGeometry(1, 8, 6), MAT.black, 678.5, Y + 54, -209.5, { cast: false }); }
+  for (const [x0, x1, y0, col] of [[654, 700, Y + 4, 0xf2c84a], [704, 750, Y + 4, 0xa8d8c8], [654, 700, Y + 42, 0xe8a0b0], [704, 750, Y + 42, 0x9ab8e0]]) {
+    const bm = new THREE.MeshPhysicalMaterial({ color: col, roughness: .95, sheen: .5 }); box(x0 + .6, x1 - .6, y0 + .4, y0 + 33.6, -229, -200.2, bm, so);
+    deco(x0 + 16, x1 - 16, y0 + 22, y0 + 26, -200.3, -199.9, MAT.black);   // the hand-hold slot
+  }
+  for (let i = 0; i < 5; i++) box(656 + i * 4.6, 660 + i * 4.6, Y + 80, Y + 80 + R(20, 27), -228, -212, new THREE.MeshStandardMaterial({ color: [0x9a3a3a, 0x3a5a9a, 0x3a8a5a, 0xc8a24a, 0xe86a8a][i], roughness: .7 }));   // books on top, between the bookend and the music box
+  box(679, 681, Y + 80, Y + 98, -228, -212, MAT.dsteel);
+  { const rb = new THREE.MeshPhysicalMaterial({ color: 0xf2f2f2, roughness: .4 }); mesh(new THREE.SphereGeometry(7, 18, 12), rb, 738, Y + 87, -220); for (const s of [-1, 1]) mesh(new THREE.CapsuleGeometry(1.8, 9, 6, 10), rb, 738 + s * 3, Y + 99, -220); mesh(new THREE.SphereGeometry(1, 8, 6), MAT.black, 735.5, Y + 89, -213.5, { cast: false }); mesh(new THREE.SphereGeometry(1, 8, 6), MAT.black, 740.5, Y + 89, -213.5, { cast: false }); cols.push({ t: 'c', x: 738, z: -220, r: 6.5, y0: Y + 80, y1: Y + 94 }); }   // a toy rabbit on top
   box(686, 714, Y + 80, Y + 93, -224, -208, new THREE.MeshPhysicalMaterial({ color: 0xd8a0b8, roughness: .3, clearcoat: .8 })); box(686, 714, Y + 93, Y + 94.4, -224, -208, K.brass);
   UPS.dancer = mesh(new THREE.ConeGeometry(2.8, 8, 14), new THREE.MeshPhysicalMaterial({ color: 0xffe8f0, roughness: .3 }), 700, Y + 98.4, -216, { cast: false });
   mesh(new THREE.SphereGeometry(1.4, 10, 8), new THREE.MeshPhysicalMaterial({ color: 0xffe0c8 }), 700, Y + 103.6, -216, { cast: false });

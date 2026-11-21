@@ -35,6 +35,7 @@ for (const s of steps) {
   if (s.down) await page.keyboard.down(s.down);
   if (s.up) await page.keyboard.up(s.up);
   if (s.eval) { const r = await page.evaluate(s.eval); if (r !== undefined) console.log('eval:', JSON.stringify(r)); }
+  if (s.evalFile) { const r = await page.evaluate(fs.readFileSync(root + '/test/' + s.evalFile, 'utf8')); if (r !== undefined) console.log('eval:', typeof r === 'string' ? r : JSON.stringify(r)); }
   if (s.wait) await page.waitForTimeout(s.wait);
   if (s.shot) await page.screenshot({ path: root + '/test/' + s.shot + '.png' });
 }

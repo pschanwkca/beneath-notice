@@ -347,7 +347,7 @@ function buildRoom() {
   const hdl = new THREE.Mesh(new THREE.TorusGeometry(2.4, .55, 12, 24, Math.PI * 1.2), M.ceramic); hdl.position.set(36.3, 97, -182); hdl.rotation.z = -Math.PI * .6; LV.add(hdl);
   const cof = new THREE.Mesh(new THREE.CircleGeometry(3.8, 32), M.coffee); cof.rotation.x = -Math.PI / 2; cof.position.set(32, 99.6, -182); LV.add(cof);
   // flask & beaker & tubes
-  const flask = new THREE.Mesh(new THREE.LatheGeometry([V3(0, 0, 0), V3(5.4, 0, 0), V3(5.6, .6, 0), V3(1.6, 9, 0), V3(1.5, 14, 0), V3(1.8, 14.3, 0)], 40), M.glass); flask.position.set(78, 92, -194); LV.add(flask); cols.push({ t: 'c', x: 78, z: -194, r: 5.4, y0: 92, y1: 106, m: flask });
+  const flask = new THREE.Mesh(new THREE.LatheGeometry([V3(0, 0, 0), V3(5.4, 0, 0), V3(5.6, .6, 0), V3(1.6, 9, 0), V3(1.5, 14, 0), V3(1.8, 14.3, 0)], 40), M.glass); flask.position.set(78, 92, -194); LV.add(flask); for (const [r, y0, y1] of [[5.3, 92, 96], [3.6, 96, 100], [1.8, 100, 106.3]]) cols.push({ t: 'c', x: 78, z: -194, r, y0, y1, m: flask });
   const liq = new THREE.Mesh(new THREE.LatheGeometry([V3(0, .3, 0), V3(5.1, .3, 0), V3(3.6, 4, 0), V3(0, 4, 0)], 32), M.green); liq.position.set(78, 92, -194); LV.add(liq);
   const gl = new THREE.PointLight(0x40ff90, 120, 0, 2); gl.position.set(78, 96, -194); LV.add(gl);
   const beaker = cyl(90, -178, 3.8, 92, 102, M.glass, { open: true, seg: 32 }); cyl(90, -178, 3.5, 92.2, 98, M.water, { col: false, seg: 32 });
@@ -357,7 +357,7 @@ function buildRoom() {
   box(45, 77, 92, 93.6, -228, -206, M.dsteel); const scr = new THREE.Group(); scr.position.set(61, 93.6, -228); scr.rotation.x = -.28; LV.add(scr);
   const sb = new THREE.Mesh(new THREE.BoxGeometry(32, 21, .6), M.dsteel); sb.position.set(0, 10.5, 0); sb.castShadow = true; scr.add(sb);
   const sf = new THREE.Mesh(new THREE.PlaneGeometry(29, 18.5), M.screen); sf.position.set(0, 10.8, .32); scr.add(sf);
-  cols.push({ t: 'b', x0: 45, x1: 77, y0: 93, y1: 113, z0: -230, z1: -224, m: sb });
+  cols.push({ t: 'b', x0: 45, x1: 77, y0: 93, y1: 103, z0: -231, z1: -227.4, m: sb }, { t: 'b', x0: 45, x1: 77, y0: 103, y1: 113, z0: -234.4, z1: -230.2, m: sb });   // the screen leans back
   const sl = new THREE.PointLight(0xbfeee8, 160, 0, 2); sl.position.set(61, 104, -218); LV.add(sl);
   // microscope
   box(80, 94, 92, 94.5, -240, -226, M.white); box(85, 89, 94.5, 116, -238, -234, M.white);
@@ -429,9 +429,11 @@ function addResizable(mesh, cx, cz, y0, sx, sy, sz, mn, mx, name) {
   const r = { mesh, c, cx, cz, y0, sx, sy, sz, s: 1, target: 1, min: mn, max: mx, name, pulse: 0 };
   cols.push(c); resizables.push(r); applyResize(r); mesh.userData.res = r; return r;
 }
+// round things (a kettle, a ball, a pot…) get a box pulled in a little, so its corners don't stick out into the air
+const ROUND_FILL = { '生果碗': .74, '毛公仔': .76, '電熱水壺': .82, '馬克杯': .84, '香草盆栽': .82, '貓墊': .84, '油漆罐': .84, '波波': .8, '洗潔精': .86, '鋼杯': .84, '花灑': .62, '皮球': .8, '網球': .8, '監視鏡頭': .84 };
 function applyResize(r) {
   const s = r.s; r.mesh.scale.set(r.sx * s, r.sy * s, r.sz * s); r.mesh.position.set(r.cx, r.y0 + r.sy * s / 2, r.cz);
-  const c = r.c; c.x0 = r.cx - r.sx * s / 2; c.x1 = r.cx + r.sx * s / 2; c.z0 = r.cz - r.sz * s / 2; c.z1 = r.cz + r.sz * s / 2; c.y1 = r.y0 + r.sy * s;
+  const c = r.c, k = ROUND_FILL[r.name] || 1; c.x0 = r.cx - r.sx * s / 2 * k; c.x1 = r.cx + r.sx * s / 2 * k; c.z0 = r.cz - r.sz * s / 2 * k; c.z1 = r.cz + r.sz * s / 2 * k; c.y1 = r.y0 + r.sy * s;
   c.small = Math.max(r.sx, r.sy, r.sz) * s < 4;
 }
 function addBattery(x, y, z) {

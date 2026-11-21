@@ -30,7 +30,7 @@ function buildLivingRoom(K) {
   LIV.gapLight = pointL(0xffd9a8, 0, 306, 20, -55);
   // rubber wedge jammed under the door's free end (kitchen side)
   const wm = new THREE.MeshStandardMaterial({ color: 0x5b3f2c, roughness: .9 });
-  const wg = new THREE.BufferGeometry(); { const P = [-.5, -.5, -.5, .5, -.5, -.5, -.5, .5, -.5, -.5, -.5, .5, .5, -.5, .5, -.5, .5, .5]; wg.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); wg.setIndex([0, 1, 2, 3, 5, 4, 0, 3, 4, 0, 4, 1, 0, 2, 5, 0, 5, 3, 1, 4, 5, 1, 5, 2]); wg.computeVertexNormals(); }
+  const wg = new THREE.BufferGeometry(); { const P = [-.5, -.5, -.5, .5, -.5, -.5, -.5, .5, -.5, -.5, -.5, .5, .5, -.5, .5, -.5, .5, .5]; wg.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); wg.setIndex([2, 1, 0, 4, 5, 3, 4, 3, 0, 1, 4, 0, 5, 2, 0, 3, 5, 0, 5, 4, 1, 2, 5, 1]); const nw = wg.toNonIndexed(); nw.computeVertexNormals(); wg.copy(nw); }
   const wr = resGroup(cmGroup(9, 5, 14, ({ part }) => { const m = part(new THREE.Mesh(wg).geometry, wm, 0, 0, 0, { s: [9, 5, 14] }); m.rotation.y = Math.PI; }, [wm]), 289, -54, 0, 9, 5, 14, .3, 3, '門擋', true);
   LIV.wedge = wr; LIV.wedge0 = V3(wr.cx, 0, wr.cz);
   // ---- dining zone ----
@@ -76,7 +76,7 @@ function buildLivingRoom(K) {
   LIV.tvLight = new THREE.PointLight(0x7aa8ff, 2600, 0, 2); LIV.tvLight.position.set(850, 95, 120); LV.add(LIV.tvLight);
   box(866, 884, 46, 52, 60, 84, new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: .3 })); // console
   for (let i = 0; i < 3; i++) box(870 + i * 4, 872 + i * 4, 52, 52.6, 66, 68, new THREE.MeshBasicMaterial({ color: new THREE.Color(0x52ff9a).multiplyScalar(2) }), { col: false });
-  tubeM([[889, 56, 140], [892, 30, 150], [894, 4, 160], [880, 1, 215]], .7, M.black, 40); cols.push({ t: 'b', x0: 891, x1: 896, y0: 0, y1: 52, z0: 140, z1: 160 }); // a climbable cable bundle
+  for (const [dx, dz] of [[0, 0], [1.6, .8], [-.4, 1.8]]) tubeM([[891 + dx, 56, 142 + dz], [892.6 + dx, 30, 145 + dz], [893 + dx, 4, 148 + dz], [892 + dx, 1, 156 + dz], [880 + dx, 1, 215 + dz]], .7, M.black, 40); cols.push({ t: 'b', x0: 890.5, x1: 895.5, y0: 0, y1: 52, z0: 141, z1: 150.5 }); // a climbable cable bundle
   // bookshelf with walkable shelves
   const bs = new THREE.MeshStandardMaterial({ color: 0x6a4a30, roughness: .6 });
   box(330, 334, 0, 200, 196, 230, bs); box(446, 450, 0, 200, 196, 230, bs); box(330, 450, 0, 200, 228, 232, bs);
@@ -105,7 +105,7 @@ function buildLivingRoom(K) {
     LIV.ventCol = { t: 'b', x0: 897.6, x1: 900, y0: 4, y1: 24, z0: -214, z1: -186 }; cols.push(LIV.ventCol); }
   box(900, 912, 3.4, 4, -214, -186, new THREE.MeshStandardMaterial({ color: 0xb8bec4, metalness: .85, roughness: .4 }), { col: false });
   // houseplant + toy ball for good measure
-  cyl(860, -150, 14, 0, 26, new THREE.MeshPhysicalMaterial({ color: 0xe8e2d6, roughness: .4 }), { seg: 28 }); const leaf = furMat({ color: 0x3f7a33, len: 3, den: .45, droop: -.2, clump: .7, rimK: .12, root: .45 }); const lf = furMesh(new THREE.SphereGeometry(18, 28, 18), leaf); lf.position.set(860, 46, -150); LV.add(lf); cols.push({ t: 'c', x: 860, z: -150, r: 18, y0: 28, y1: 64 });
+  cyl(860, -150, 14, 0, 26, new THREE.MeshPhysicalMaterial({ color: 0xe8e2d6, roughness: .4 }), { seg: 28 }); const leaf = furMat({ color: 0x3f7a33, len: 3, den: .45, droop: -.2, clump: .7, rimK: .12, root: .45 }); const lf = furMesh(new THREE.SphereGeometry(18, 28, 18), leaf); lf.position.set(860, 46, -150); LV.add(lf); for (const [r, y0, y1] of [[9, 28, 33], [14.5, 33, 38], [17.5, 38, 55], [14, 55, 60], [9, 60, 64]]) cols.push({ t: 'c', x: 860, z: -150, r, y0, y1 });
   const pb = new THREE.MeshPhysicalMaterial({ color: 0x4ab0e0, roughness: .3, clearcoat: .8 }); resGroup(cmGroup(14, 14, 14, ({ part }) => { part(new THREE.SphereGeometry(7, 28, 20), pb, 0, 0, 0); }, [pb]), 640, 120, 0, 14, 14, 14, .3, 5, '皮球', true);
   addBattery(420, 164, 212); addVial(670, 143, -200); addCrumb(480, 76.4, -110); addCrumb(740, 12, 150);
   // where the living room's lamps actually light you up (used by 'can they see me')

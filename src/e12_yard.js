@@ -111,13 +111,17 @@ function buildYard() {
   box(2250, 2350, GY, GY + 70, 440, 444, kenM); box(2250, 2254, GY, GY + 70, 380, 444, kenM); box(2346, 2350, GY, GY + 70, 380, 444, kenM);
   box(2250, 2280, GY, GY + 70, 376, 380, kenM); box(2320, 2350, GY, GY + 70, 376, 380, kenM); box(2280, 2320, GY + 50, GY + 70, 376, 380, kenM);
   box(2250, 2350, GY, GY + 2, 380, 440, kenM, { col: false });
-  for (const s of [-1, 1]) { const r = mesh(new THREE.BoxGeometry(62, 4, 76), new THREE.MeshStandardMaterial({ color: 0x5a3a2a, roughness: .8 }), 2300 + s * 26, GY + 86, 410); r.rotation.z = s * -.62; }
-  cols.push({ t: 'b', x0: 2250, x1: 2350, y0: GY + 70, y1: GY + 88, z0: 376, z1: 444 });
+  // a gentler roof the little ones can walk up (stepped underneath, and each step is one you scramble straight onto)
+  const roofM = new THREE.MeshStandardMaterial({ color: 0x5a3a2a, roughness: .8 }), PT = Math.tan(.3);
+  for (const s of [-1, 1]) { const r = mesh(new THREE.BoxGeometry(56, 4, 76), roofM, 2300 + s * 25, GY + 70 + 25 * PT, 410); r.rotation.z = s * -.3; }
+  { const sh = new THREE.Shape(); sh.moveTo(-50, 0); sh.lineTo(50, 0); sh.lineTo(0, 50 * PT); sh.closePath(); for (const z of [376, 440]) { const g = new THREE.ExtrudeGeometry(sh, { depth: 4, bevelEnabled: false }); mesh(g, kenM, 2300, GY + 70, z); } }
+  for (let i = 0; i < 8; i++) { const t = GY + 70 + (i + .5) * 6.25 * PT + 1.8; cols.push({ t: 'b', x0: 2250 + i * 6.25, x1: 2256.25 + i * 6.25, y0: GY + 70, y1: t, z0: 374, z1: 446, grip: true }, { t: 'b', x0: 2343.75 - i * 6.25, x1: 2350 - i * 6.25, y0: GY + 70, y1: t, z0: 374, z1: 446, grip: true }); }
   mesh(new THREE.CylinderGeometry(9, 7, 6, 20), M.dsteel, 2215, GY + 3, 400); // water bowl
   // BBQ
   const bbqM = new THREE.MeshStandardMaterial({ color: 0x1c1c1e, roughness: .4, metalness: .6 });
   cyl(2450, -250, 30, GY + 60, GY + 92, bbqM, { seg: 28 }); mesh(new THREE.SphereGeometry(30, 28, 12, 0, Math.PI * 2, 0, Math.PI / 2), bbqM, 2450, GY + 92, -250);
   for (const a of [0, 2.1, 4.2]) { const l = mesh(new THREE.CylinderGeometry(1.5, 1.5, 62, 8), bbqM, 2450 + Math.cos(a) * 20, GY + 30, -250 + Math.sin(a) * 20); l.rotation.set(Math.sin(a) * .2, 0, -Math.cos(a) * .2); }
+  cyl(2450, -250, 3.6, GY, GY + 60, bbqM, { col: false, seg: 16 }); cyl(2450, -250, 14, GY + 24, GY + 26, bbqM, { col: false, seg: 24 });   // centre post + ash pan
   cols.push({ t: 'c', x: 2450, z: -250, r: 4, y0: GY, y1: GY + 60 });
   // deck in front of the sunroom
   const deckM = new THREE.MeshStandardMaterial({ ...genWood([150, 104, 70], [96, 64, 42], 561, 12), roughness: .75 });

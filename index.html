@@ -1467,7 +1467,7 @@ function buildRoom() {
   const hdl = new THREE.Mesh(new THREE.TorusGeometry(2.4, .55, 12, 24, Math.PI * 1.2), M.ceramic); hdl.position.set(36.3, 97, -182); hdl.rotation.z = -Math.PI * .6; LV.add(hdl);
   const cof = new THREE.Mesh(new THREE.CircleGeometry(3.8, 32), M.coffee); cof.rotation.x = -Math.PI / 2; cof.position.set(32, 99.6, -182); LV.add(cof);
   // flask & beaker & tubes
-  const flask = new THREE.Mesh(new THREE.LatheGeometry([V3(0, 0, 0), V3(5.4, 0, 0), V3(5.6, .6, 0), V3(1.6, 9, 0), V3(1.5, 14, 0), V3(1.8, 14.3, 0)], 40), M.glass); flask.position.set(78, 92, -194); LV.add(flask); cols.push({ t: 'c', x: 78, z: -194, r: 5.4, y0: 92, y1: 106, m: flask });
+  const flask = new THREE.Mesh(new THREE.LatheGeometry([V3(0, 0, 0), V3(5.4, 0, 0), V3(5.6, .6, 0), V3(1.6, 9, 0), V3(1.5, 14, 0), V3(1.8, 14.3, 0)], 40), M.glass); flask.position.set(78, 92, -194); LV.add(flask); for (const [r, y0, y1] of [[5.3, 92, 96], [3.6, 96, 100], [1.8, 100, 106.3]]) cols.push({ t: 'c', x: 78, z: -194, r, y0, y1, m: flask });
   const liq = new THREE.Mesh(new THREE.LatheGeometry([V3(0, .3, 0), V3(5.1, .3, 0), V3(3.6, 4, 0), V3(0, 4, 0)], 32), M.green); liq.position.set(78, 92, -194); LV.add(liq);
   const gl = new THREE.PointLight(0x40ff90, 120, 0, 2); gl.position.set(78, 96, -194); LV.add(gl);
   const beaker = cyl(90, -178, 3.8, 92, 102, M.glass, { open: true, seg: 32 }); cyl(90, -178, 3.5, 92.2, 98, M.water, { col: false, seg: 32 });
@@ -1477,7 +1477,7 @@ function buildRoom() {
   box(45, 77, 92, 93.6, -228, -206, M.dsteel); const scr = new THREE.Group(); scr.position.set(61, 93.6, -228); scr.rotation.x = -.28; LV.add(scr);
   const sb = new THREE.Mesh(new THREE.BoxGeometry(32, 21, .6), M.dsteel); sb.position.set(0, 10.5, 0); sb.castShadow = true; scr.add(sb);
   const sf = new THREE.Mesh(new THREE.PlaneGeometry(29, 18.5), M.screen); sf.position.set(0, 10.8, .32); scr.add(sf);
-  cols.push({ t: 'b', x0: 45, x1: 77, y0: 93, y1: 113, z0: -230, z1: -224, m: sb });
+  cols.push({ t: 'b', x0: 45, x1: 77, y0: 93, y1: 103, z0: -231, z1: -227.4, m: sb }, { t: 'b', x0: 45, x1: 77, y0: 103, y1: 113, z0: -234.4, z1: -230.2, m: sb });   // the screen leans back
   const sl = new THREE.PointLight(0xbfeee8, 160, 0, 2); sl.position.set(61, 104, -218); LV.add(sl);
   // microscope
   box(80, 94, 92, 94.5, -240, -226, M.white); box(85, 89, 94.5, 116, -238, -234, M.white);
@@ -1549,9 +1549,11 @@ function addResizable(mesh, cx, cz, y0, sx, sy, sz, mn, mx, name) {
   const r = { mesh, c, cx, cz, y0, sx, sy, sz, s: 1, target: 1, min: mn, max: mx, name, pulse: 0 };
   cols.push(c); resizables.push(r); applyResize(r); mesh.userData.res = r; return r;
 }
+// round things (a kettle, a ball, a pot…) get a box pulled in a little, so its corners don't stick out into the air
+const ROUND_FILL = { '生果碗': .74, '毛公仔': .76, '電熱水壺': .82, '馬克杯': .84, '香草盆栽': .82, '貓墊': .84, '油漆罐': .84, '波波': .8, '洗潔精': .86, '鋼杯': .84, '花灑': .62, '皮球': .8, '網球': .8, '監視鏡頭': .84 };
 function applyResize(r) {
   const s = r.s; r.mesh.scale.set(r.sx * s, r.sy * s, r.sz * s); r.mesh.position.set(r.cx, r.y0 + r.sy * s / 2, r.cz);
-  const c = r.c; c.x0 = r.cx - r.sx * s / 2; c.x1 = r.cx + r.sx * s / 2; c.z0 = r.cz - r.sz * s / 2; c.z1 = r.cz + r.sz * s / 2; c.y1 = r.y0 + r.sy * s;
+  const c = r.c, k = ROUND_FILL[r.name] || 1; c.x0 = r.cx - r.sx * s / 2 * k; c.x1 = r.cx + r.sx * s / 2 * k; c.z0 = r.cz - r.sz * s / 2 * k; c.z1 = r.cz + r.sz * s / 2 * k; c.y1 = r.y0 + r.sy * s;
   c.small = Math.max(r.sx, r.sy, r.sz) * s < 4;
 }
 function addBattery(x, y, z) {
@@ -2115,7 +2117,15 @@ function updFollower(F, L, dt) {
   const [sup] = supportAt(F.pos.x, F.pos.z, F.r * .55, F.pos.y + .05);
   const floating = F.pos.y - sup > .35 && F.qst !== 'climb';
   let moved = 0;
-  if (Lp > F.gap || (floating && F.queue.length)) {
+  // personal space: when the leader's path doubles back (climb up and drop down, turn round…) don't walk along it into
+  // him — skip the loop instead — and wait a step away rather than standing inside him
+  const ldx = F.pos.x - L.pos.x, ldz = F.pos.z - L.pos.z, ld = Math.hypot(ldx, ldz), same = Math.abs(F.pos.y - L.pos.y) < 2.2 && !floating;
+  let nearL = same && ld < Math.max(F.r + L.r + 2.4, F.gap * .55);
+  if (nearL && ld > .3) { const o = V3(F.pos.x, F.pos.y + F.h * .5, F.pos.z), d = V3(-ldx, L.pos.y - F.pos.y, -ldz); const len = d.length(); if (rayBlocked(o, d.divideScalar(len), len, false)) nearL = false; }
+  if (nearL) { while (F.queue.length > 1) { const q = F.queue[0]; if (Math.abs(q.y - F.pos.y) > 1.5 || Math.hypot(q.x - L.pos.x, q.z - L.pos.z) < ld - .5) break; F.queue.shift(); } }
+  // …and don't walk into the teammate ahead of you on the path
+  const jam = !floating && party.some(G2 => G2 !== F && G2 !== L && !G2.frozen && G2.gap < F.gap && Math.abs(G2.pos.y - F.pos.y) < 2.2 && Math.hypot(G2.pos.x - F.pos.x, G2.pos.z - F.pos.z) < F.r + G2.r + 1.2);
+  if ((Lp > F.gap && !nearL && !jam) || (floating && F.queue.length)) {
     let move = Math.min(Math.max(Lp - F.gap, floating ? 30 * dt : 0), (Lp - F.gap > 14 || floating ? 32 : 17) * F.S.spd * dt); const m0 = move;
     while (move > 1e-4 && F.queue.length) {
       const q = F.queue[0]; const dx = q.x - F.pos.x, dy = q.y - F.pos.y, dz = q.z - F.pos.z; const d = Math.hypot(dx, dy, dz);
@@ -2125,6 +2135,15 @@ function updFollower(F, L, dt) {
       else { const k = move / d; F.pos.x += dx * k; F.pos.y += dy * k; F.pos.z += dz * k; move = 0; if (Math.hypot(dx, dz) > .3) F.tyaw = Math.atan2(dx, dz); }
     }
     moved = (m0 - move) / dt;
+  }
+  if (!floating && F.pos.y - sup < .35) {   // step aside from the leader and from each other (measured where everyone is drawn)
+    const DX = F.disp.x - F.pos.x, DZ = F.disp.z - F.pos.z, fx0 = F.pos.x + DX, fz0 = F.pos.z + DZ, edx = fx0 - L.pos.x, edz = fz0 - L.pos.z, ed = Math.hypot(edx, edz);
+    let px = 0, pz = 0; const push = (dx, dz, d, s) => { if (d >= s) return; const k = (s - d) / s; if (d < .05) { const a = F.side > 0 ? 1.2 : -1.2; dx = Math.cos(a); dz = Math.sin(a); d = 1; } px += dx / d * k; pz += dz / d * k; };
+    if (Math.abs(F.pos.y - L.pos.y) < 3) { push(edx, edz, ed, F.r + L.r + 2.2);
+      const lv = Math.hypot(L.vel.x, L.vel.z); if (lv > 2 && ed < F.r + L.r + 6 && (L.vel.x * edx + L.vel.z * edz) > 0) { const s = (L.vel.x * edz - L.vel.z * edx) > 0 ? 1 : -1; px += -L.vel.z / lv * s * .9; pz += L.vel.x / lv * s * .9; } }   // he's walking at you: step to the side
+    for (const G2 of party) if (G2 !== F && G2 !== L && !G2.frozen && !G2.on && !G2.hop && Math.abs(G2.pos.y - F.pos.y) < 3) { const gx = fx0 - G2.disp.x, gz = fz0 - G2.disp.z; push(gx, gz, Math.hypot(gx, gz), F.r + G2.r + 1.4); }
+    const m = Math.hypot(px, pz);
+    if (m > .01) { const step = Math.min(m, 1.5) * 30 * dt, nx = F.pos.x + px / m * step, nz = F.pos.z + pz / m * step; const [s3] = supportAt(nx, nz, F.r * .55, F.pos.y + .5); if (Math.abs(s3 - F.pos.y) < .5 && !solidAt(nx, F.pos.y + F.h * .5, nz)) { F.pos.x = nx; F.pos.z = nz; if (!moved) F.tyaw = Math.atan2(px, pz); } }
   }
   F.spd = moved;
   const st = F.qst || 'idle';
@@ -2136,6 +2155,7 @@ function updFollower(F, L, dt) {
   const flat = F.state === 'walk' || F.state === 'idle' || F.state === 'sneak' || F.state === 'crouch';
   let ok = false; const lx = Math.cos(F.yaw) * F.side, lz = -Math.sin(F.yaw) * F.side;
   if (flat && F.pos.y - sup < .35) { const px = F.pos.x + lx, pz = F.pos.z + lz; const [s2] = supportAt(px, pz, F.r * .55, F.pos.y + .5); ok = Math.abs(s2 - F.pos.y) < .4 && !solidAt(px, F.pos.y + F.h * .5, pz); }
+  else if (F.state === 'climb') { const px = F.pos.x + lx, pz = F.pos.z + lz, fx = Math.sin(F.yaw) * (F.r + 1), fz = Math.cos(F.yaw) * (F.r + 1); ok = !solidAt(px, F.pos.y + F.h * .5, pz) && !!solidAt(px + fx, F.pos.y + F.h * .5, pz + fz) && !!solidAt(px + fx, F.pos.y + F.h * .1, pz + fz); }
   F.offK = damp(F.offK || 0, ok ? 1 : 0, 5, dt);
   F.disp.set(F.pos.x + lx * F.offK, F.pos.y, F.pos.z + lz * F.offK);
 }
@@ -3961,7 +3981,7 @@ function buildLivingRoom(K) {
   LIV.gapLight = pointL(0xffd9a8, 0, 306, 20, -55);
   // rubber wedge jammed under the door's free end (kitchen side)
   const wm = new THREE.MeshStandardMaterial({ color: 0x5b3f2c, roughness: .9 });
-  const wg = new THREE.BufferGeometry(); { const P = [-.5, -.5, -.5, .5, -.5, -.5, -.5, .5, -.5, -.5, -.5, .5, .5, -.5, .5, -.5, .5, .5]; wg.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); wg.setIndex([0, 1, 2, 3, 5, 4, 0, 3, 4, 0, 4, 1, 0, 2, 5, 0, 5, 3, 1, 4, 5, 1, 5, 2]); wg.computeVertexNormals(); }
+  const wg = new THREE.BufferGeometry(); { const P = [-.5, -.5, -.5, .5, -.5, -.5, -.5, .5, -.5, -.5, -.5, .5, .5, -.5, .5, -.5, .5, .5]; wg.setAttribute('position', new THREE.Float32BufferAttribute(P, 3)); wg.setIndex([2, 1, 0, 4, 5, 3, 4, 3, 0, 1, 4, 0, 5, 2, 0, 3, 5, 0, 5, 4, 1, 2, 5, 1]); const nw = wg.toNonIndexed(); nw.computeVertexNormals(); wg.copy(nw); }
   const wr = resGroup(cmGroup(9, 5, 14, ({ part }) => { const m = part(new THREE.Mesh(wg).geometry, wm, 0, 0, 0, { s: [9, 5, 14] }); m.rotation.y = Math.PI; }, [wm]), 289, -54, 0, 9, 5, 14, .3, 3, '門擋', true);
   LIV.wedge = wr; LIV.wedge0 = V3(wr.cx, 0, wr.cz);
   // ---- dining zone ----
@@ -4007,7 +4027,7 @@ function buildLivingRoom(K) {
   LIV.tvLight = new THREE.PointLight(0x7aa8ff, 2600, 0, 2); LIV.tvLight.position.set(850, 95, 120); LV.add(LIV.tvLight);
   box(866, 884, 46, 52, 60, 84, new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: .3 })); // console
   for (let i = 0; i < 3; i++) box(870 + i * 4, 872 + i * 4, 52, 52.6, 66, 68, new THREE.MeshBasicMaterial({ color: new THREE.Color(0x52ff9a).multiplyScalar(2) }), { col: false });
-  tubeM([[889, 56, 140], [892, 30, 150], [894, 4, 160], [880, 1, 215]], .7, M.black, 40); cols.push({ t: 'b', x0: 891, x1: 896, y0: 0, y1: 52, z0: 140, z1: 160 }); // a climbable cable bundle
+  for (const [dx, dz] of [[0, 0], [1.6, .8], [-.4, 1.8]]) tubeM([[891 + dx, 56, 142 + dz], [892.6 + dx, 30, 145 + dz], [893 + dx, 4, 148 + dz], [892 + dx, 1, 156 + dz], [880 + dx, 1, 215 + dz]], .7, M.black, 40); cols.push({ t: 'b', x0: 890.5, x1: 895.5, y0: 0, y1: 52, z0: 141, z1: 150.5 }); // a climbable cable bundle
   // bookshelf with walkable shelves
   const bs = new THREE.MeshStandardMaterial({ color: 0x6a4a30, roughness: .6 });
   box(330, 334, 0, 200, 196, 230, bs); box(446, 450, 0, 200, 196, 230, bs); box(330, 450, 0, 200, 228, 232, bs);
@@ -4036,7 +4056,7 @@ function buildLivingRoom(K) {
     LIV.ventCol = { t: 'b', x0: 897.6, x1: 900, y0: 4, y1: 24, z0: -214, z1: -186 }; cols.push(LIV.ventCol); }
   box(900, 912, 3.4, 4, -214, -186, new THREE.MeshStandardMaterial({ color: 0xb8bec4, metalness: .85, roughness: .4 }), { col: false });
   // houseplant + toy ball for good measure
-  cyl(860, -150, 14, 0, 26, new THREE.MeshPhysicalMaterial({ color: 0xe8e2d6, roughness: .4 }), { seg: 28 }); const leaf = furMat({ color: 0x3f7a33, len: 3, den: .45, droop: -.2, clump: .7, rimK: .12, root: .45 }); const lf = furMesh(new THREE.SphereGeometry(18, 28, 18), leaf); lf.position.set(860, 46, -150); LV.add(lf); cols.push({ t: 'c', x: 860, z: -150, r: 18, y0: 28, y1: 64 });
+  cyl(860, -150, 14, 0, 26, new THREE.MeshPhysicalMaterial({ color: 0xe8e2d6, roughness: .4 }), { seg: 28 }); const leaf = furMat({ color: 0x3f7a33, len: 3, den: .45, droop: -.2, clump: .7, rimK: .12, root: .45 }); const lf = furMesh(new THREE.SphereGeometry(18, 28, 18), leaf); lf.position.set(860, 46, -150); LV.add(lf); for (const [r, y0, y1] of [[9, 28, 33], [14.5, 33, 38], [17.5, 38, 55], [14, 55, 60], [9, 60, 64]]) cols.push({ t: 'c', x: 860, z: -150, r, y0, y1 });
   const pb = new THREE.MeshPhysicalMaterial({ color: 0x4ab0e0, roughness: .3, clearcoat: .8 }); resGroup(cmGroup(14, 14, 14, ({ part }) => { part(new THREE.SphereGeometry(7, 28, 20), pb, 0, 0, 0); }, [pb]), 640, 120, 0, 14, 14, 14, .3, 5, '皮球', true);
   addBattery(420, 164, 212); addVial(670, 143, -200); addCrumb(480, 76.4, -110); addCrumb(740, 12, 150);
   // where the living room's lamps actually light you up (used by 'can they see me')
@@ -4381,7 +4401,7 @@ function buildHub() {
   const ins = furMat({ color: 0xf2a0b4, len: .9, den: 1.6, droop: .2, clump: .55, rimK: .1, root: .7, rough: 1 });
   const ig = new THREE.SphereGeometry(1, 40, 24); ig.scale(30, 24, 16); const im = furMesh(ig, ins); im.position.set(56, 14, -10); LV.add(im);
   const ig2 = new THREE.SphereGeometry(1, 32, 20); ig2.scale(18, 16, 12); const im2 = furMesh(ig2, ins); im2.position.set(64, 34, -14); LV.add(im2);
-  cols.push({ t: 'b', x0: 28, x1: 80, y0: 0, y1: 34, z0: -26, z1: 4, m: im });
+  cols.push({ t: 'b', x0: 29, x1: 83, y0: 0, y1: 22, z0: -25, z1: 4, m: im }, { t: 'b', x0: 37, x1: 79, y0: 22, y1: 34, z0: -24, z1: 2, m: im }, { t: 'b', x0: 50, x1: 78, y0: 34, y1: 46, z0: -23, z1: -5, m: im2 });
   // mural on the drywall (her three years)
   const mur = mesh(new THREE.PlaneGeometry(170, 42.5), K.mural, 0, 30, 27.8, { cast: false }); mur.rotation.y = Math.PI;
   // camp: matchbox beds, bottle-cap table, thimble cups, LED lamp
@@ -5228,9 +5248,9 @@ function buildCar(cx, cz) {
   // colliders: body, cabin, stepped windscreen (characters climb it), roof on top
   cols.push({ t: 'b', x0, x1, y0: -2, y1: 64, z0: L(140), z1: L(222) });
   cols.push({ t: 'b', x0, x1, y0: -2, y1: 68, z0: L(-220), z1: L(140) });
-  cols.push({ t: 'b', x0: x0 + 8, x1: x1 - 8, y0: 68, y1: 121, z0: L(-160), z1: L(16) });
+  cols.push({ t: 'b', x0: x0 + 8, x1: x1 - 8, y0: 68, y1: 121, z0: L(-118), z1: L(16) });
+  for (const [za, zb, top] of [[-133, -118, 110], [-148, -133, 96], [-162, -148, 83]]) cols.push({ t: 'b', x0: x0 + 8, x1: x1 - 8, y0: 68, y1: top, z0: L(za), z1: L(zb) });   // the rear window, stepped
   cols.push({ t: 'b', x0: x0 + 8, x1: x1 - 8, y0: 68, y1: 102, z0: L(16), z1: L(34) }); cols.push({ t: 'b', x0: x0 + 8, x1: x1 - 8, y0: 68, y1: 84, z0: L(34), z1: L(50) });
-  cols.push({ t: 'b', x0: x0 + 8, x1: x1 - 8, y0: 68, y1: 98, z0: L(-174), z1: L(-160) });
   GS.car = { x0, x1, z0: L(-220), z1: L(222) };
 }
 
@@ -5517,13 +5537,17 @@ function buildYard() {
   box(2250, 2350, GY, GY + 70, 440, 444, kenM); box(2250, 2254, GY, GY + 70, 380, 444, kenM); box(2346, 2350, GY, GY + 70, 380, 444, kenM);
   box(2250, 2280, GY, GY + 70, 376, 380, kenM); box(2320, 2350, GY, GY + 70, 376, 380, kenM); box(2280, 2320, GY + 50, GY + 70, 376, 380, kenM);
   box(2250, 2350, GY, GY + 2, 380, 440, kenM, { col: false });
-  for (const s of [-1, 1]) { const r = mesh(new THREE.BoxGeometry(62, 4, 76), new THREE.MeshStandardMaterial({ color: 0x5a3a2a, roughness: .8 }), 2300 + s * 26, GY + 86, 410); r.rotation.z = s * -.62; }
-  cols.push({ t: 'b', x0: 2250, x1: 2350, y0: GY + 70, y1: GY + 88, z0: 376, z1: 444 });
+  // a gentler roof the little ones can walk up (stepped underneath, and each step is one you scramble straight onto)
+  const roofM = new THREE.MeshStandardMaterial({ color: 0x5a3a2a, roughness: .8 }), PT = Math.tan(.3);
+  for (const s of [-1, 1]) { const r = mesh(new THREE.BoxGeometry(56, 4, 76), roofM, 2300 + s * 25, GY + 70 + 25 * PT, 410); r.rotation.z = s * -.3; }
+  { const sh = new THREE.Shape(); sh.moveTo(-50, 0); sh.lineTo(50, 0); sh.lineTo(0, 50 * PT); sh.closePath(); for (const z of [376, 440]) { const g = new THREE.ExtrudeGeometry(sh, { depth: 4, bevelEnabled: false }); mesh(g, kenM, 2300, GY + 70, z); } }
+  for (let i = 0; i < 8; i++) { const t = GY + 70 + (i + .5) * 6.25 * PT + 1.8; cols.push({ t: 'b', x0: 2250 + i * 6.25, x1: 2256.25 + i * 6.25, y0: GY + 70, y1: t, z0: 374, z1: 446, grip: true }, { t: 'b', x0: 2343.75 - i * 6.25, x1: 2350 - i * 6.25, y0: GY + 70, y1: t, z0: 374, z1: 446, grip: true }); }
   mesh(new THREE.CylinderGeometry(9, 7, 6, 20), M.dsteel, 2215, GY + 3, 400); // water bowl
   // BBQ
   const bbqM = new THREE.MeshStandardMaterial({ color: 0x1c1c1e, roughness: .4, metalness: .6 });
   cyl(2450, -250, 30, GY + 60, GY + 92, bbqM, { seg: 28 }); mesh(new THREE.SphereGeometry(30, 28, 12, 0, Math.PI * 2, 0, Math.PI / 2), bbqM, 2450, GY + 92, -250);
   for (const a of [0, 2.1, 4.2]) { const l = mesh(new THREE.CylinderGeometry(1.5, 1.5, 62, 8), bbqM, 2450 + Math.cos(a) * 20, GY + 30, -250 + Math.sin(a) * 20); l.rotation.set(Math.sin(a) * .2, 0, -Math.cos(a) * .2); }
+  cyl(2450, -250, 3.6, GY, GY + 60, bbqM, { col: false, seg: 16 }); cyl(2450, -250, 14, GY + 24, GY + 26, bbqM, { col: false, seg: 24 });   // centre post + ash pan
   cols.push({ t: 'c', x: 2450, z: -250, r: 4, y0: GY, y1: GY + 60 });
   // deck in front of the sunroom
   const deckM = new THREE.MeshStandardMaterial({ ...genWood([150, 104, 70], [96, 64, 42], 561, 12), roughness: .75 });
@@ -6353,7 +6377,7 @@ function buildRoad() {
   box(-330, 3400, GY - 10, GY, 1664, 2400, grassM, { uv: 90, cast: false });
   const bars = new THREE.InstancedMesh(new THREE.BoxGeometry(2.2, 120, 2.2), new THREE.MeshStandardMaterial({ color: 0x1c2420, metalness: .6, roughness: .45 }), 300); let bi = 0; const m4 = new THREE.Matrix4();
   for (let x = -320; x < 3400 && bi < 300; x += 14) { if (x > 1990 && x < 2130) continue; m4.makeTranslation(x, GY + 60, 1660); bars.setMatrixAt(bi++, m4); } bars.count = bi; bars.castShadow = true; LV.add(bars);
-  for (const [a, b] of [[-330, 1990], [2130, 3400]]) { box(a, b, GY + 112, GY + 116, 1658, 1662, metal, { col: false }); box(a, b, GY + 8, GY + 11, 1658, 1662, metal, { col: false }); cols.push({ t: 'b', x0: a, x1: b, y0: GY, y1: GY + 120, z0: 1657, z1: 1663 }); }
+  for (const [a, b] of [[-330, 1990], [2130, 3400]]) { box(a, b, GY + 112, GY + 116, 1658, 1662, metal, { col: false }); box(a, b, GY + 8, GY + 11, 1658, 1662, metal, { col: false }); cols.push({ t: 'b', x0: a, x1: b, y0: GY, y1: GY + 120, z0: 1657, z1: 1663, slick: true }); }
   for (const x of [1990, 2110]) { box(x, x + 20, GY, GY + 190, 1650, 1670, brick, { uv: 40 }); box(x - 3, x + 23, GY + 190, GY + 196, 1647, 1673, kerbM); mesh(new THREE.SphereGeometry(9, 18, 12), K.bulb, x + 10, GY + 206, 1660, { cast: false }); }
   const sign = mesh(new THREE.PlaneGeometry(150, 47), new THREE.MeshStandardMaterial({ map: signTex(), roughness: .6 }), 2060, GY + 236, 1660, { cast: false }); sign.rotation.y = Math.PI; box(1996, 2004, GY + 196, GY + 260, 1658, 1662, metal, { col: false }); box(2116, 2124, GY + 196, GY + 260, 1658, 1662, metal, { col: false });
   const gateL = new THREE.Group(); gateL.position.set(2010, GY, 1660); gateL.rotation.y = -1.25; LV.add(gateL); const gateR = new THREE.Group(); gateR.position.set(2110, GY, 1660); gateR.rotation.y = 1.25; LV.add(gateR);
@@ -6377,7 +6401,7 @@ function buildRoad() {
     ST.bin = { cx: x + 27, cz: 754, ap: V3(x + 27, 0, 712) }; }
   { const x = 2752, bm = new THREE.MeshStandardMaterial({ color: 0x2e6a32, roughness: .6 }); box(x, x + 54, GY + 6, GY + 104, 728, 780, bm); box(x - 2, x + 56, GY + 104, GY + 110, 726, 784, bm); for (const s of [x + 8, x + 46]) { const w = mesh(new THREE.CylinderGeometry(6, 6, 4, 14), ST.mats.tire, s, GY + 6, 782); w.rotation.z = Math.PI / 2; } }
   // the bins stand on their wheels: the gap underneath counts as solid, so walking into a bin starts a climb instead of strolling under it
-  for (const x of [2690, 2752]) cols.push({ t: 'b', x0: x, x1: x + 54, y0: GY, y1: GY + 6.5, z0: 728, z1: 780 });
+  for (const x of [2690, 2752]) { cols.push({ t: 'b', x0: x, x1: x + 54, y0: GY, y1: GY + 6.5, z0: 728, z1: 780 }); box(x + .4, x + 53.6, GY, GY + 6.2, 728.4, 779.6, new THREE.MeshStandardMaterial({ color: 0x1c2024, roughness: .8 }), { col: false }); }   // the moulded base the bin stands on
   // recycling day: a taped-up cardboard box and a tied bundle of newspapers beside the blue bin — steps up to its rim
   { const kraft = new THREE.MeshStandardMaterial({ map: kraftTex(), roughness: .92 }), news = new THREE.MeshStandardMaterial({ map: newsTex(), roughness: .95 }), twine = new THREE.MeshStandardMaterial({ color: 0xb28a58, roughness: 1 }), tape = new THREE.MeshStandardMaterial({ color: 0xc9a66b, roughness: .4 });
     box(2640, 2688, GY, GY + 58, 734, 776, kraft, { uv: 64 }); box(2662.5, 2665.5, GY + 58, GY + 58.3, 734, 776, tape, { col: false }); box(2662.5, 2665.5, GY + 40, GY + 58.3, 733.7, 734, tape, { col: false });
@@ -7142,7 +7166,7 @@ function buildBathroom(K) {
     mesh(new THREE.SphereGeometry(1.6, 14, 10), M.chrome, 381.6, 70, -455);
     box(388, 412, 0, 20, -447, -414, P);                                                            // foot
     const bowl = mesh(new THREE.LatheGeometry([V3(9, 0, 0), V3(13, 4, 0), V3(17, 12, 0), V3(18.6, 20, 0), V3(18.2, 20.5, 0), V3(16, 12, 0), V3(10, 4, 0), V3(6, 1, 0)], 40), P, cx, 20, -428, { cast: true }); bowl.scale.z = 1.22;
-    box(383, 417, 20, 41, -410, -405, P, { col: true }).visible = false; box(383, 417, 20, 41, -452, -446, P).visible = false; box(382, 388, 20, 41, -446, -410, P).visible = false; box(412, 418, 20, 41, -446, -410, P).visible = false;
+    for (const [y0, y1, rx, rz, h] of [[20, 25, 11, 13.4, 2.4], [25, 31, 14.2, 17.3, 2.5], [31, 41, 16.4, 20, 2.6]]) for (let k = 0; k < 18; k++) { const a = k / 18 * Math.PI * 2, x = cx + Math.cos(a) * rx, z = -428 + Math.sin(a) * rz; cols.push({ t: 'b', x0: x - h, x1: x + h, y0, y1, z0: z - h, z1: z + h }); }
     const seat = mesh(new THREE.TorusGeometry(15.5, 2.4, 10, 40), new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: .3, clearcoat: .6 }), cx, 41.2, -428); seat.rotation.x = Math.PI / 2; seat.scale.y = 1.25;
     const lid = mesh(new THREE.CylinderGeometry(16, 16, 2, 36), new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: .3, clearcoat: .6 }), cx, 60, -449.4); lid.rotation.x = Math.PI / 2 - .12; lid.scale.x = .95;
     box(388, 412, 20, 22, -446, -410, M.water, { cast: false });                                    // water in the bowl (you can stand in it… until someone flushes)
@@ -7337,7 +7361,7 @@ function hxTick(dt) {
   HX.stream.visible = tap.on; if (tap.on) { const top = 116, len = top - wy; HX.stream.scale.y = len; HX.stream.position.y = wy + len / 2; HX.stream.material.opacity = .42 + Math.sin(T * 40) * .06; if (rnd() < dt * 30) emit(V3(-100 + R(-2, 2), wy + .2, -193 + R(-2, 2)), V3(R(-10, 10), R(6, 16), R(-10, 10)), new THREE.Color(.62, .78, .88), R(.12, .25), R(.3, .5), 200, 1); }
   if (HX.water > .98 && tap.on && rnd() < dt * 20) emit(V3(R(-130, -70), 86, -170), V3(R(-4, 4), R(-2, 2), R(4, 12)), new THREE.Color(.6, .76, .86), R(.15, .3), R(.6, 1), 200, 1);
   KS.basinY = wy;
-  const pa = HX.bd.a; HX.bd.a = damp(HX.bd.a, HX.bd.tgt, 3.2, dt); if (Math.abs(HX.bd.a - pa) > 1e-4 || !HX.bd.init) { HX.bd.init = true; HX.bd.g.rotation.y = HX.bd.a; hxDoorSegs(); }
+  const pa = HX.bd.a; HX.bd.a = damp(HX.bd.a, HX.bd.tgt, 3.2, dt); if (Math.abs(HX.bd.a - pa) > 1e-4 || !HX.bd.init) { HX.bd.init = true; HX.bd.g.rotation.y = -HX.bd.a; hxDoorSegs(); }
   if (HX.flushT > 0) { HX.flushT -= dt; if (rnd() < dt * 40) emit(V3(400 + R(-8, 8), 22, -428 + R(-10, 10)), V3(R(-6, 6), R(2, 8), R(-6, 6)), new THREE.Color(.6, .78, .9), R(.15, .3), R(.3, .6), 120, 1); if (HX.lever) HX.lever.rotation.x = HX.flushT > 3 ? -.6 : 0; }
   // sounds
   hxLoopVol('water', 'water', tap.on, V3(-100, 80, -193), .32, 420);
@@ -8000,7 +8024,7 @@ function buildUpstairs(K) {
   box(748, 900, Y - 6, Y, -498, -472, M.floor, { uv: 100 }); box(828, 900, Y - 6, Y, -472, -244, M.floor, { uv: 100 });
   deco(828, 832, Y, Y + 4, -472, -250, M.wood); deco(827, 833, Y + 88, Y + 92, -472, -250, M.wood);
   for (let z = -468; z < -252; z += 14) deco(829, 831, Y + 4, Y + 88, z, z + 2, M.paint);
-  cols.push({ t: 'b', x0: 827, x1: 833, y0: Y, y1: Y + 92, z0: -472, z1: -250, noRay: true });
+  cols.push({ t: 'b', x0: 827, x1: 833, y0: Y, y1: Y + 92, z0: -472, z1: -250, noRay: true, slick: true });   // a rail between balusters: not something to climb
   // handrail on the wall, on little brass brackets
   tubeM([[751.5, 92, -250], [751.5, Y + 92, -470]], 1.5, M.wood, 24);
   for (let i = 0; i <= N; i += 4) { const z = -250 - i * run - 6; deco(748, 751.5, i * rise + 90, i * rise + 92, z - 1, z + 1, K.brass); }
@@ -8050,7 +8074,7 @@ function buildUpstairs(K) {
     for (const s of [-1, 1]) { mesh(new THREE.SphereGeometry(3.6, 14, 10), B, s * 7.5, 43.5, 0, { parent: g }); mesh(new THREE.SphereGeometry(5, 14, 10), B, s * 13, 18, 3, { parent: g }); mesh(new THREE.SphereGeometry(5.6, 14, 10), B, s * 7.5, 3, 6, { parent: g }); }
     mesh(new THREE.SphereGeometry(3.4, 14, 10), new THREE.MeshStandardMaterial({ color: 0xf0d8b8, roughness: 1 }), 0, 33, 8, { parent: g });
     mesh(new THREE.TorusGeometry(8.5, 1.4, 8, 24), new THREE.MeshStandardMaterial({ color: 0xc8344a, roughness: .7 }), 0, 26, 0, { parent: g }).rotation.x = Math.PI / 2;   // a ribbon round its neck
-    cols.push({ t: 'c', x: 620, z: 214, r: 14, y0: Y + 42, y1: Y + 88 }); }
+    cols.push({ t: 'c', x: 620, z: 214, r: 13.5, y0: Y + 42, y1: Y + 70 }, { t: 'c', x: 620, z: 213, r: 9.5, y0: Y + 70, y1: Y + 87 }); }
   // the bed: legs, slats, mattress, a starry duvet you can bounce on, pillow, headboard
   box(316, 416, Y, Y + 84, 226, 232, M.wood, { uv: 60 }); cyl(366, 229, 50, Y + 84, Y + 85, M.wood, { col: false, seg: 40 });
   for (const [x, z] of [[319, 43], [413, 43], [319, 223], [413, 223]]) box(x - 3, x + 3, Y, Y + 16, z - 3, z + 3, M.wood);
@@ -8059,7 +8083,7 @@ function buildUpstairs(K) {
   box(316, 416, Y + 42, Y + 47, 40, 198, M.duvet, { uv: 80 }); last().bouncy = true;
   box(316, 416, Y + 18, Y + 47, 38, 40, M.duvet, { uv: 80 });                 // hangs over the foot: climb it
   box(416, 418, Y + 20, Y + 47, 40, 198, M.duvet, { uv: 80 });                // … and over the side
-  const pil = mesh(new THREE.SphereGeometry(22, 24, 14), M.sheet, 366, Y + 49, 210); pil.scale.set(1.9, .4, .7); cols.push({ t: 'b', x0: 328, x1: 404, y0: Y + 42, y1: Y + 55, z0: 198, z1: 222 }); last().bouncy = true;
+  const pil = mesh(new THREE.SphereGeometry(22, 24, 14), M.sheet, 366, Y + 49, 210); pil.scale.set(1.9, .4, .7); cols.push({ t: 'b', x0: 334, x1: 398, y0: Y + 42, y1: Y + 53, z0: 201, z1: 219 }); last().bouncy = true;
   // under the bed: dust, a lost toy car, a battery
   const dustM = furMat({ color: 0x8a8580, len: .6, den: 1.8, droop: .3, clump: .6, rimK: .05, root: .7 });
   for (const [x, z, r] of [[340, 150, 2.4], [392, 90, 1.8], [372, 200, 2]]) { const b = furMesh(new THREE.SphereGeometry(r, 18, 12), dustM); b.position.set(x, Y + r * .6, z); b.scale.y = .6; LV.add(b); }
@@ -8086,10 +8110,13 @@ function buildUpstairs(K) {
   // cube shelf (one solid block to climb; the cubbies are just for looks), the music box on top
   cols.push({ t: 'b', x0: 650, x1: 754, y0: Y, y1: Y + 80, z0: -232, z1: -200 });
   const so = { col: false }; deco(650, 754, Y + 76, Y + 80, -232, -200, M.paint); deco(650, 754, Y, Y + 4, -232, -200, M.paint); deco(650, 654, Y, Y + 80, -232, -200, M.paint); deco(750, 754, Y, Y + 80, -232, -200, M.paint); deco(700, 704, Y, Y + 80, -232, -200, M.paint); deco(650, 754, Y + 38, Y + 42, -232, -200, M.paint); deco(650, 754, Y, Y + 80, -232, -229, M.mint);
-  box(658, 696, Y + 4, Y + 34, -228, -204, new THREE.MeshStandardMaterial({ color: 0xf2c84a, roughness: .7 }), so);
-  for (let i = 0; i < 7; i++) box(708 + i * 5, 712 + i * 5, Y + 42, Y + 42 + R(22, 32), -226, -206, new THREE.MeshStandardMaterial({ color: [0x9a3a3a, 0x3a5a9a, 0x3a8a5a, 0xc8a24a, 0x5a3a7a, 0xe86a8a, 0x2a2a2a][i], roughness: .7 }), so);
-  for (const [x, c] of [[716, 0xd83a3a], [730, 0x3a7ad8], [742, 0xe8c040]]) box(x - 5, x + 5, Y + 4, Y + 14, -222, -212, new THREE.MeshStandardMaterial({ color: c, roughness: .6 }), so);
-  { const rb = new THREE.MeshPhysicalMaterial({ color: 0xf2f2f2, roughness: .4 }); mesh(new THREE.SphereGeometry(7, 18, 12), rb, 676, Y + 52, -216); for (const s of [-1, 1]) mesh(new THREE.CapsuleGeometry(1.8, 9, 6, 10), rb, 676 + s * 3, Y + 64, -216); mesh(new THREE.SphereGeometry(1, 8, 6), MAT.black, 673.5, Y + 54, -209.5, { cast: false }); mesh(new THREE.SphereGeometry(1, 8, 6), MAT.black, 678.5, Y + 54, -209.5, { cast: false }); }
+  for (const [x0, x1, y0, col] of [[654, 700, Y + 4, 0xf2c84a], [704, 750, Y + 4, 0xa8d8c8], [654, 700, Y + 42, 0xe8a0b0], [704, 750, Y + 42, 0x9ab8e0]]) {
+    const bm = new THREE.MeshPhysicalMaterial({ color: col, roughness: .95, sheen: .5 }); box(x0 + .6, x1 - .6, y0 + .4, y0 + 33.6, -229, -200.2, bm, so);
+    deco(x0 + 16, x1 - 16, y0 + 22, y0 + 26, -200.3, -199.9, MAT.black);   // the hand-hold slot
+  }
+  for (let i = 0; i < 5; i++) box(656 + i * 4.6, 660 + i * 4.6, Y + 80, Y + 80 + R(20, 27), -228, -212, new THREE.MeshStandardMaterial({ color: [0x9a3a3a, 0x3a5a9a, 0x3a8a5a, 0xc8a24a, 0xe86a8a][i], roughness: .7 }));   // books on top, between the bookend and the music box
+  box(679, 681, Y + 80, Y + 98, -228, -212, MAT.dsteel);
+  { const rb = new THREE.MeshPhysicalMaterial({ color: 0xf2f2f2, roughness: .4 }); mesh(new THREE.SphereGeometry(7, 18, 12), rb, 738, Y + 87, -220); for (const s of [-1, 1]) mesh(new THREE.CapsuleGeometry(1.8, 9, 6, 10), rb, 738 + s * 3, Y + 99, -220); mesh(new THREE.SphereGeometry(1, 8, 6), MAT.black, 735.5, Y + 89, -213.5, { cast: false }); mesh(new THREE.SphereGeometry(1, 8, 6), MAT.black, 740.5, Y + 89, -213.5, { cast: false }); cols.push({ t: 'c', x: 738, z: -220, r: 6.5, y0: Y + 80, y1: Y + 94 }); }   // a toy rabbit on top
   box(686, 714, Y + 80, Y + 93, -224, -208, new THREE.MeshPhysicalMaterial({ color: 0xd8a0b8, roughness: .3, clearcoat: .8 })); box(686, 714, Y + 93, Y + 94.4, -224, -208, K.brass);
   UPS.dancer = mesh(new THREE.ConeGeometry(2.8, 8, 14), new THREE.MeshPhysicalMaterial({ color: 0xffe8f0, roughness: .3 }), 700, Y + 98.4, -216, { cast: false });
   mesh(new THREE.SphereGeometry(1.4, 10, 8), new THREE.MeshPhysicalMaterial({ color: 0xffe0c8 }), 700, Y + 103.6, -216, { cast: false });

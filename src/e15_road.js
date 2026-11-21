@@ -204,7 +204,7 @@ function buildRoad() {
   box(-330, 3400, GY - 10, GY, 1664, 2400, grassM, { uv: 90, cast: false });
   const bars = new THREE.InstancedMesh(new THREE.BoxGeometry(2.2, 120, 2.2), new THREE.MeshStandardMaterial({ color: 0x1c2420, metalness: .6, roughness: .45 }), 300); let bi = 0; const m4 = new THREE.Matrix4();
   for (let x = -320; x < 3400 && bi < 300; x += 14) { if (x > 1990 && x < 2130) continue; m4.makeTranslation(x, GY + 60, 1660); bars.setMatrixAt(bi++, m4); } bars.count = bi; bars.castShadow = true; LV.add(bars);
-  for (const [a, b] of [[-330, 1990], [2130, 3400]]) { box(a, b, GY + 112, GY + 116, 1658, 1662, metal, { col: false }); box(a, b, GY + 8, GY + 11, 1658, 1662, metal, { col: false }); cols.push({ t: 'b', x0: a, x1: b, y0: GY, y1: GY + 120, z0: 1657, z1: 1663 }); }
+  for (const [a, b] of [[-330, 1990], [2130, 3400]]) { box(a, b, GY + 112, GY + 116, 1658, 1662, metal, { col: false }); box(a, b, GY + 8, GY + 11, 1658, 1662, metal, { col: false }); cols.push({ t: 'b', x0: a, x1: b, y0: GY, y1: GY + 120, z0: 1657, z1: 1663, slick: true }); }
   for (const x of [1990, 2110]) { box(x, x + 20, GY, GY + 190, 1650, 1670, brick, { uv: 40 }); box(x - 3, x + 23, GY + 190, GY + 196, 1647, 1673, kerbM); mesh(new THREE.SphereGeometry(9, 18, 12), K.bulb, x + 10, GY + 206, 1660, { cast: false }); }
   const sign = mesh(new THREE.PlaneGeometry(150, 47), new THREE.MeshStandardMaterial({ map: signTex(), roughness: .6 }), 2060, GY + 236, 1660, { cast: false }); sign.rotation.y = Math.PI; box(1996, 2004, GY + 196, GY + 260, 1658, 1662, metal, { col: false }); box(2116, 2124, GY + 196, GY + 260, 1658, 1662, metal, { col: false });
   const gateL = new THREE.Group(); gateL.position.set(2010, GY, 1660); gateL.rotation.y = -1.25; LV.add(gateL); const gateR = new THREE.Group(); gateR.position.set(2110, GY, 1660); gateR.rotation.y = 1.25; LV.add(gateR);
@@ -228,7 +228,7 @@ function buildRoad() {
     ST.bin = { cx: x + 27, cz: 754, ap: V3(x + 27, 0, 712) }; }
   { const x = 2752, bm = new THREE.MeshStandardMaterial({ color: 0x2e6a32, roughness: .6 }); box(x, x + 54, GY + 6, GY + 104, 728, 780, bm); box(x - 2, x + 56, GY + 104, GY + 110, 726, 784, bm); for (const s of [x + 8, x + 46]) { const w = mesh(new THREE.CylinderGeometry(6, 6, 4, 14), ST.mats.tire, s, GY + 6, 782); w.rotation.z = Math.PI / 2; } }
   // the bins stand on their wheels: the gap underneath counts as solid, so walking into a bin starts a climb instead of strolling under it
-  for (const x of [2690, 2752]) cols.push({ t: 'b', x0: x, x1: x + 54, y0: GY, y1: GY + 6.5, z0: 728, z1: 780 });
+  for (const x of [2690, 2752]) { cols.push({ t: 'b', x0: x, x1: x + 54, y0: GY, y1: GY + 6.5, z0: 728, z1: 780 }); box(x + .4, x + 53.6, GY, GY + 6.2, 728.4, 779.6, new THREE.MeshStandardMaterial({ color: 0x1c2024, roughness: .8 }), { col: false }); }   // the moulded base the bin stands on
   // recycling day: a taped-up cardboard box and a tied bundle of newspapers beside the blue bin — steps up to its rim
   { const kraft = new THREE.MeshStandardMaterial({ map: kraftTex(), roughness: .92 }), news = new THREE.MeshStandardMaterial({ map: newsTex(), roughness: .95 }), twine = new THREE.MeshStandardMaterial({ color: 0xb28a58, roughness: 1 }), tape = new THREE.MeshStandardMaterial({ color: 0xc9a66b, roughness: .4 });
     box(2640, 2688, GY, GY + 58, 734, 776, kraft, { uv: 64 }); box(2662.5, 2665.5, GY + 58, GY + 58.3, 734, 776, tape, { col: false }); box(2662.5, 2665.5, GY + 40, GY + 58.3, 733.7, 734, tape, { col: false });

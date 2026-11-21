@@ -233,7 +233,7 @@ function buildHub() {
   const ins = furMat({ color: 0xf2a0b4, len: .9, den: 1.6, droop: .2, clump: .55, rimK: .1, root: .7, rough: 1 });
   const ig = new THREE.SphereGeometry(1, 40, 24); ig.scale(30, 24, 16); const im = furMesh(ig, ins); im.position.set(56, 14, -10); LV.add(im);
   const ig2 = new THREE.SphereGeometry(1, 32, 20); ig2.scale(18, 16, 12); const im2 = furMesh(ig2, ins); im2.position.set(64, 34, -14); LV.add(im2);
-  cols.push({ t: 'b', x0: 28, x1: 80, y0: 0, y1: 34, z0: -26, z1: 4, m: im });
+  cols.push({ t: 'b', x0: 29, x1: 83, y0: 0, y1: 22, z0: -25, z1: 4, m: im }, { t: 'b', x0: 37, x1: 79, y0: 22, y1: 34, z0: -24, z1: 2, m: im }, { t: 'b', x0: 50, x1: 78, y0: 34, y1: 46, z0: -23, z1: -5, m: im2 });
   // mural on the drywall (her three years)
   const mur = mesh(new THREE.PlaneGeometry(170, 42.5), K.mural, 0, 30, 27.8, { cast: false }); mur.rotation.y = Math.PI;
   // camp: matchbox beds, bottle-cap table, thimble cups, LED lamp

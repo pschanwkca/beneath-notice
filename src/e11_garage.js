@@ -244,9 +244,9 @@ function buildCar(cx, cz) {
   // colliders: body, cabin, stepped windscreen (characters climb it), roof on top
   cols.push({ t: 'b', x0, x1, y0: -2, y1: 64, z0: L(140), z1: L(222) });
   cols.push({ t: 'b', x0, x1, y0: -2, y1: 68, z0: L(-220), z1: L(140) });
-  cols.push({ t: 'b', x0: x0 + 8, x1: x1 - 8, y0: 68, y1: 121, z0: L(-160), z1: L(16) });
+  cols.push({ t: 'b', x0: x0 + 8, x1: x1 - 8, y0: 68, y1: 121, z0: L(-118), z1: L(16) });
+  for (const [za, zb, top] of [[-133, -118, 110], [-148, -133, 96], [-162, -148, 83]]) cols.push({ t: 'b', x0: x0 + 8, x1: x1 - 8, y0: 68, y1: top, z0: L(za), z1: L(zb) });   // the rear window, stepped
   cols.push({ t: 'b', x0: x0 + 8, x1: x1 - 8, y0: 68, y1: 102, z0: L(16), z1: L(34) }); cols.push({ t: 'b', x0: x0 + 8, x1: x1 - 8, y0: 68, y1: 84, z0: L(34), z1: L(50) });
-  cols.push({ t: 'b', x0: x0 + 8, x1: x1 - 8, y0: 68, y1: 98, z0: L(-174), z1: L(-160) });
   GS.car = { x0, x1, z0: L(-220), z1: L(222) };
 }
 

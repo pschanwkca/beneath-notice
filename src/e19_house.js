@@ -124,7 +124,7 @@ function buildBathroom(K) {
     mesh(new THREE.SphereGeometry(1.6, 14, 10), M.chrome, 381.6, 70, -455);
     box(388, 412, 0, 20, -447, -414, P);                                                            // foot
     const bowl = mesh(new THREE.LatheGeometry([V3(9, 0, 0), V3(13, 4, 0), V3(17, 12, 0), V3(18.6, 20, 0), V3(18.2, 20.5, 0), V3(16, 12, 0), V3(10, 4, 0), V3(6, 1, 0)], 40), P, cx, 20, -428, { cast: true }); bowl.scale.z = 1.22;
-    box(383, 417, 20, 41, -410, -405, P, { col: true }).visible = false; box(383, 417, 20, 41, -452, -446, P).visible = false; box(382, 388, 20, 41, -446, -410, P).visible = false; box(412, 418, 20, 41, -446, -410, P).visible = false;
+    for (const [y0, y1, rx, rz, h] of [[20, 25, 11, 13.4, 2.4], [25, 31, 14.2, 17.3, 2.5], [31, 41, 16.4, 20, 2.6]]) for (let k = 0; k < 18; k++) { const a = k / 18 * Math.PI * 2, x = cx + Math.cos(a) * rx, z = -428 + Math.sin(a) * rz; cols.push({ t: 'b', x0: x - h, x1: x + h, y0, y1, z0: z - h, z1: z + h }); }
     const seat = mesh(new THREE.TorusGeometry(15.5, 2.4, 10, 40), new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: .3, clearcoat: .6 }), cx, 41.2, -428); seat.rotation.x = Math.PI / 2; seat.scale.y = 1.25;
     const lid = mesh(new THREE.CylinderGeometry(16, 16, 2, 36), new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: .3, clearcoat: .6 }), cx, 60, -449.4); lid.rotation.x = Math.PI / 2 - .12; lid.scale.x = .95;
     box(388, 412, 20, 22, -446, -410, M.water, { cast: false });                                    // water in the bowl (you can stand in it… until someone flushes)
@@ -319,7 +319,7 @@ function hxTick(dt) {
   HX.stream.visible = tap.on; if (tap.on) { const top = 116, len = top - wy; HX.stream.scale.y = len; HX.stream.position.y = wy + len / 2; HX.stream.material.opacity = .42 + Math.sin(T * 40) * .06; if (rnd() < dt * 30) emit(V3(-100 + R(-2, 2), wy + .2, -193 + R(-2, 2)), V3(R(-10, 10), R(6, 16), R(-10, 10)), new THREE.Color(.62, .78, .88), R(.12, .25), R(.3, .5), 200, 1); }
   if (HX.water > .98 && tap.on && rnd() < dt * 20) emit(V3(R(-130, -70), 86, -170), V3(R(-4, 4), R(-2, 2), R(4, 12)), new THREE.Color(.6, .76, .86), R(.15, .3), R(.6, 1), 200, 1);
   KS.basinY = wy;
-  const pa = HX.bd.a; HX.bd.a = damp(HX.bd.a, HX.bd.tgt, 3.2, dt); if (Math.abs(HX.bd.a - pa) > 1e-4 || !HX.bd.init) { HX.bd.init = true; HX.bd.g.rotation.y = HX.bd.a; hxDoorSegs(); }
+  const pa = HX.bd.a; HX.bd.a = damp(HX.bd.a, HX.bd.tgt, 3.2, dt); if (Math.abs(HX.bd.a - pa) > 1e-4 || !HX.bd.init) { HX.bd.init = true; HX.bd.g.rotation.y = -HX.bd.a; hxDoorSegs(); }
   if (HX.flushT > 0) { HX.flushT -= dt; if (rnd() < dt * 40) emit(V3(400 + R(-8, 8), 22, -428 + R(-10, 10)), V3(R(-6, 6), R(2, 8), R(-6, 6)), new THREE.Color(.6, .78, .9), R(.15, .3), R(.3, .6), 120, 1); if (HX.lever) HX.lever.rotation.x = HX.flushT > 3 ? -.6 : 0; }
   // sounds
   hxLoopVol('water', 'water', tap.on, V3(-100, 80, -193), .32, 420);
