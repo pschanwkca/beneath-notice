@@ -59,7 +59,8 @@ function requestLock() {
 }
 document.addEventListener('pointerlockchange', () => {
   locked = document.pointerLockElement === canvas;
-  if (!locked && (STATE === 'play' || STATE === 'intro') && !PAUSED && !dragMode) pause();
+  if (!locked && VC.chat) { chatClose(false); return; }   // Esc while typing only closes the chat box
+  if (!locked && (STATE === 'play' || STATE === 'intro') && !PAUSED && !dragMode && performance.now() - VC.chatShut > 400) pause();
 });
 document.addEventListener('pointerlockerror', () => { dragMode = true; });
 addEventListener('mousemove', e => {
@@ -762,7 +763,7 @@ function update(dt) {
 let last = performance.now();
 function frame(now) {
   requestAnimationFrame(frame); musicFrame();
-  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  const dt = Math.min(.05, (now - last) / 1000); last = now; vcFrame(dt);
   { const [w, h] = viewSize(); if (w !== RS.w || h !== RS.h) onResize(); }
   if (STATE === 'load') return;
   if (!PAUSED || NET.on) update(dt);
@@ -792,7 +793,7 @@ function applyQ(q) {
 }
 function pause() { PAUSED = true; $('pause').hidden = false; document.body.classList.add('paused'); $('pauseMP').hidden = !NET.on; if (NET.on) $('pauseCode').textContent = NET.code; pauseRefresh(); }
 function resume() { PAUSED = false; $('pause').hidden = true; document.body.classList.remove('paused'); $('help').hidden = true; $('roster').hidden = true; last = performance.now(); requestLock(); }
-document.querySelectorAll('.sel button').forEach(b => b.addEventListener('click', () => applyQ(b.dataset.q)));
+document.querySelectorAll('.sel button[data-q]').forEach(b => b.addEventListener('click', () => applyQ(b.dataset.q)));
 $('go').addEventListener('click', () => { audioInit(); startGame(0); });
 $('resume').addEventListener('click', () => { audioInit(); resume(); });
 $('again').addEventListener('click', () => location.reload());

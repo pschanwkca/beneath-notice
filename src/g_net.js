@@ -64,11 +64,12 @@ function mpConnect(code, host) {
   try { history.replaceState(null, '', mpLink()); } catch (e) { }
   mpStatus(host ? '房間已開好。把房號或連結傳給朋友，然後各自揀角色。' : '正在尋找房間……');
   let T; try { T = NET.tx = LOCALNET ? localTransport(code) : trysteroTransport(code); } catch (e) { mpStatus('連線失敗：' + e.message); return; }
-  T.onSelf = id => { NET.me = id; if (host) { NET.hostId = id; NET.order = [id]; } mpRender(); };
-  T.onJoin = id => { if (!NET.peers.includes(id)) NET.peers.push(id); if (NET.host) { if (!NET.order.includes(id)) NET.order.push(id); mpBroadcastLobby(); } else nsend({ t: 'hi', tok: NET.tok }, id); mpRender(); };
+  T.onSelf = id => { NET.me = id; if (host) { NET.hostId = id; NET.order = [id]; } mpRender(); vcSelf(); };
+  T.onJoin = id => { if (!NET.peers.includes(id)) NET.peers.push(id); vcJoined(id); if (NET.host) { if (!NET.order.includes(id)) NET.order.push(id); mpBroadcastLobby(); } else nsend({ t: 'hi', tok: NET.tok }, id); mpRender(); };
   T.onLeave = id => mpPeerLeft(id);
   T.onMsg = (d, from) => { try { netMsg(d, from); } catch (e) { console.warn('net msg', d && d.t, e); } };
   T.onErr = e => { if (e && e.code === 'room-full') mpStatus('房間暫時滿了。如果你剛斷線，等半分鐘再試。'); else if (e && e.code === 'peer-connect-failed') $('mpErr').textContent = '有隊友連唔上（網絡限制）。可以試下用另一個網絡。'; };
+  vcMicStart(); vcUI();
   if (!host) { clearTimeout(NET.joinTimer); NET.joinTimer = setTimeout(() => { if (!NET.hostId) mpStatus('找不到這個房間。確認房號，或者等房主開好房間再試。'); }, 15000); }
   mpRender();
 }
@@ -99,6 +100,7 @@ function mpRender() {
   else if (NET.hostId && !NET.started) mpStatus(IDS.some(k => NET.slots[k] === NET.me) ? '已揀好，等房主開始。' : '揀一隻角色。');
 }
 function mpPeerLeft(id) {
+  vcClose(id);
   NET.peers = NET.peers.filter(p => p !== id);
   if (!NET.started) { if (NET.host) { for (const k of IDS) if (NET.slots[k] === id) NET.slots[k] = null; mpBroadcastLobby(); } else if (id === NET.hostId) mpStatus('房主離開了房間。'); mpRender(); return; }
   if (id === NET.hostId && !NET.host) { mpHostLost(); return; }
@@ -113,8 +115,8 @@ function mpHostLost() {
   $('hud').classList.add('off'); $('touch').hidden = true; $('mp').hidden = false; $('mpHome').hidden = true; $('mpRoom').hidden = false; $('mpStart').hidden = true;
   mpStatus('房主離開了，這局結束。'); $('mpLeave').textContent = '返回主畫面';
 }
-function mpLeave() { try { NET.tx && NET.tx.leave(); } catch (e) { } location.href = location.pathname + (LOCALNET ? '?net=local' : ''); }
-function updChip() { const el = $('mpChip'); if (!NET.on) { el.hidden = true; return; } el.hidden = false; const n = 1 + NET.peers.length; el.innerHTML = `<i></i>房號 <b>${NET.code}</b> · ${n} 位玩家`; }
+function mpLeave() { vcCloseAll(); try { NET.tx && NET.tx.leave(); } catch (e) { } location.href = location.pathname + (LOCALNET ? '?net=local' : ''); }
+function updChip() { const el = $('mpChip'); if (!NET.on) { el.hidden = true; return; } el.hidden = false; const n = 1 + NET.peers.length; el.innerHTML = `<i></i>房號 <b>${NET.code}</b> · ${n} 位玩家<span class="vcmic"></span>`; vcUI(); }
 
 // ---------- starting ----------
 function mpStartGame() { if (!NET.host || $('mpStart').disabled) return; NET.started = true; nsend({ t: 'start', slots: NET.slots, order: NET.order }); netBegin(); }
@@ -122,7 +124,8 @@ function netBegin() {
   NET.on = true; NET.started = true; NET.client = !NET.host; NET.my = IDS.find(id => NET.slots[id] === NET.me);
   for (const id of ['bat', 'tort']) if (!NET.slots[id]) { const K = chars[id]; K.root.visible = false; K.pos.set(0, -900, 0); K.state = 'idle'; K.shell = false; K.roost = null; }
   for (const id of IDS) { const C = chars[id]; C.owner = C.baseOwner = NET.slots[id] || NET.hostId; C.net = null; }
-  audioInit(); $('mp').hidden = true; $('start').hidden = true; updChip();
+  audioInit(); $('mp').hidden = true; $('start').hidden = true; updChip(); document.documentElement.classList.add('net');
+  setTimeout(() => toast(TOUCH ? '近距離語音已開：越近越大聲 · 「聊天」打字' : '近距離語音已開：越近越大聲 · Enter 打字 · M 靜音', 4), 2500);
   joinCham(); syncParty(); playT = 0; fails = 0; PROTO = 0;
   if (NET.host) { requestLock(); loadLevel('kitchen'); } // online games start in the kitchen; clients follow the host's level message
 }
@@ -287,6 +290,9 @@ function netMsg(d, from) {
     case 'drg': if (NET.host) { const r = resizables[d.i]; if (r && !r.gone) dragTo(r, d.x, d.z); } break;
     case 'fail': if (NET.on && !NET.host) { cp = d.cp; fail(); } break;
     case 'say': say(d.n, d.x, d.c, d.d); break;
+    case 'vc': vcSignal(d, from); break;
+    case 'vcs': VC.peerMic[from] = d.s; break;
+    case 'chat': chatAdd(from, d.x); break;
     case 'toast': toast(d.x, d.d); break;
     case 'ring': noiseRing(V3(...d.p)); if (d.v) { SND.clang(d.v); for (let i = 0; i < 16; i++) emit(V3(d.p[0], d.p[1] + 1, d.p[2]), V3(R(-30, 30), R(10, 40), R(-30, 30)), new THREE.Color(.5, .45, .4), R(.3, .8), R(.4, .9), 300, 1); } break;
     case 'knock': if (NET.my === d.id && mine(leader)) knock(leader, V3(d.x, leader.pos.y, d.z), d.m); break;

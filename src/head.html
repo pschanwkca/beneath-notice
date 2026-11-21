@@ -47,6 +47,42 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:non
 .pm small{font-size:10px;color:var(--dim);line-height:1}
 .pm kbd{position:absolute;top:-4px;right:-2px;font:600 10px "Fredoka";background:#0d1117;border:1px solid var(--faint);border-radius:6px;padding:1px 5px;color:var(--dim)}
 .pm.lock .ph{filter:grayscale(1) brightness(.6)}
+/* voice + chat */
+:root{--wave:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 11 9'%3E%3Crect x='0' y='3' width='2' height='3' rx='1'/%3E%3Crect x='3' y='1' width='2' height='7' rx='1'/%3E%3Crect x='6' y='0' width='2' height='9' rx='1'/%3E%3Crect x='9' y='2.5' width='2' height='4' rx='1'/%3E%3C/svg%3E")}
+.vconly[hidden]{display:none!important}
+.vcmic{display:inline-flex;align-items:center;gap:5px;color:var(--dim)}
+.mpchip .vcmic{margin-left:4px;padding-left:9px;border-left:1px solid var(--faint)}
+.vcmic svg{width:13px;height:13px;fill:currentColor;flex:none}
+.vcmic em{font-style:normal;font-size:11px;white-space:nowrap}
+.vcmic.open,.vcmic.ptt{color:var(--cyan)}.vcmic.mute{color:var(--rose)}
+.mpchip .vcmic.open svg,.mpchip .vcmic.ptt svg{filter:drop-shadow(0 0 calc(var(--lv,0) * 9px) var(--cyan));transform:scale(calc(1 + var(--lv,0) * .25));transition:transform .08s}
+.ptag.talk{box-shadow:0 0 0 1.5px currentColor,0 0 14px rgba(130,236,230,.3)}
+.ptag.talk::before{content:'';display:inline-block;width:11px;height:9px;margin-right:5px;vertical-align:-1px;background:currentColor;-webkit-mask:var(--wave) center/contain no-repeat;mask:var(--wave) center/contain no-repeat;animation:vcw .42s ease-in-out infinite alternate}
+@keyframes vcw{from{opacity:.55;transform:scaleY(.65)}to{opacity:1;transform:scaleY(1.05)}}
+.pm.talk .ph{border-color:var(--cyan);box-shadow:0 0 0 3px rgba(130,236,230,.28),0 0 18px rgba(130,236,230,.45);animation:vcr .5s ease-in-out infinite alternate}
+@keyframes vcr{to{box-shadow:0 0 0 5px rgba(130,236,230,.12),0 0 22px rgba(130,236,230,.55)}}
+.pm.nomic::after{content:'';position:absolute;top:44px;right:2px;width:18px;height:18px;border-radius:50%;background:#0d1117 url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff8f9f'%3E%3Cpath d='M19 11h-2a5 5 0 0 1-.4 1.97l1.47 1.47A6.96 6.96 0 0 0 19 11zM15 11V5a3 3 0 0 0-5.92-.68L15 10.24V11zM4.27 3 3 4.27l6 6V11a3 3 0 0 0 4.08 2.8l1.53 1.53A5 5 0 0 1 7 11H5a7 7 0 0 0 6 6.92V21h2v-3.08a6.9 6.9 0 0 0 2.92-1.07L19.73 21 21 19.73 4.27 3z'/%3E%3C/svg%3E") center/11px no-repeat;border:1px solid var(--faint)}
+.party.many .pm.nomic::after{top:32px}
+.chat{position:absolute;left:22px;bottom:128px;width:min(360px,62vw);display:flex;flex-direction:column;gap:6px;pointer-events:none}
+.clog{display:flex;flex-direction:column;gap:4px;align-items:flex-start}
+.cl{max-width:100%;font:500 13px/1.45 "Noto Sans TC",sans-serif;color:var(--ink);background:var(--panel);border:1px solid var(--faint);border-radius:12px;padding:5px 11px;-webkit-backdrop-filter:blur(10px);backdrop-filter:blur(10px);transition:opacity .6s;overflow-wrap:anywhere}
+.cl b{font-weight:700;margin-right:7px}
+.cl.old{opacity:0}.chat.open .cl.old{opacity:.8}
+#chatIn{pointer-events:auto;font:500 14px "Noto Sans TC",sans-serif;color:var(--ink);background:rgba(10,13,18,.82);border:1px solid rgba(130,236,230,.55);border-radius:12px;padding:9px 13px;outline:none;box-shadow:0 0 0 3px rgba(130,236,230,.12)}
+#chatIn::placeholder{color:var(--dim)}
+.pbub{position:absolute;transform:translate(-50%,-100%);max-width:220px;font:500 13px/1.4 "Noto Sans TC",sans-serif;color:#1a1612;background:#f5f0e6;border-radius:12px;padding:5px 11px;box-shadow:0 6px 18px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .25s;overflow-wrap:anywhere;text-align:center}
+.pbub::after{content:'';position:absolute;left:50%;bottom:-5px;margin-left:-6px;border:6px solid transparent;border-top-color:#f5f0e6;border-bottom:0}
+.pbub.on{opacity:1}
+.mpvc{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--dim);margin:12px 0 2px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--faint)}
+.mpvc .vcmic em{display:none}.mpvc .vct{flex:1;text-align:left}
+.mpvc .lv{flex:0 0 64px;height:4px;border-radius:99px;background:var(--faint);overflow:hidden}.mpvc .lv i{display:block;height:100%;width:0;background:var(--cyan);transition:width .08s}
+.mps.talk{border-color:var(--cyan);box-shadow:0 0 0 2px rgba(130,236,230,.35)}
+.vctouch{display:none}
+html.net .vctouch{display:flex;position:absolute;left:calc(14px + env(safe-area-inset-left));top:38%;flex-direction:column;gap:10px}
+.vctouch .tb{position:static;width:48px;height:48px;font-size:12px;pointer-events:auto}
+.vctouch .tb.dn{border-color:var(--rose);color:var(--rose)}
+@media (max-width:1100px){.mpchip .vcmic em{display:none}}
+html.touch .chat{left:calc(76px + env(safe-area-inset-left));bottom:auto;top:30%;width:min(300px,50vw)}
 .abil{position:absolute;right:22px;bottom:20px;padding:12px 16px;min-width:190px;text-align:right}
 .an{font-weight:700;font-size:16px}
 .ad{font-size:12px;color:var(--dim)}
@@ -342,6 +378,8 @@ html.touch .mpchip{bottom:auto;top:62px}
     <button class="tb" id="tbAct">抱</button>
     <button class="tb" id="tbScout">偵察</button>
   </div>
+  <div class="vctouch"><button class="tb" id="tbMic">咪</button><button class="tb" id="tbChat">聊天</button>
+  </div>
   <button class="tb" id="tbPause" aria-label="暫停"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><rect x="4" y="3" width="4" height="14" rx="1.5" fill="currentColor"/><rect x="12" y="3" width="4" height="14" rx="1.5" fill="currentColor"/></svg></button>
 </div>
 
@@ -367,6 +405,7 @@ html.touch .mpchip{bottom:auto;top:62px}
     <span id="eyet">太太在地庫</span>
   </div>
   <div class="party" id="party"></div>
+  <div class="chat" id="chat"><div class="clog" id="chatLog" aria-live="polite"></div><input id="chatIn" maxlength="80" placeholder="講嘢……（Enter 發送 · Esc 取消）" autocomplete="off" spellcheck="false" aria-label="聊天" hidden></div>
   <div class="abil panel" id="abil">
     <div class="an" id="an">尺寸槍</div>
     <div class="ad" id="ad">左鍵放大 · 右鍵縮小</div>
@@ -447,6 +486,7 @@ html.touch .mpchip{bottom:auto;top:62px}
     <div id="mpRoom" hidden>
       <div class="mpcode"><span>房號</span><b id="mpRoomCode">----</b><button id="mpCopy" class="ghost small">複製邀請連結</button></div>
       <div class="mpslots" id="mpSlots"></div>
+      <div class="mpvc vconly" id="mpVc"><span class="vcmic"></span><span class="vct"></span><span class="lv"><i></i></span><button id="mpVcBtn" class="ghost small">咪 開／關</button></div>
       <div id="mpStatus" class="mpstatus">連線中…</div>
       <div id="mpErr" class="mperr"></div>
       <div class="mpact"><button id="mpStart" disabled>開始</button><button id="mpLeave" class="ghost small">離開房間</button></div>
@@ -500,6 +540,9 @@ html.touch .mpchip{bottom:auto;top:62px}
       <label for="setSens">視角靈敏度</label><input type="range" id="setSens" min="0.4" max="2.2" step="0.1">
       <label for="setVol">音量</label><input type="range" id="setVol" min="0" max="1" step="0.05">
       <label for="setMus">音樂</label><input type="range" id="setMus" min="0" max="1" step="0.05">
+      <span class="vconly">咪</span>
+      <div class="sel vconly" id="micSel" role="group" aria-label="咪"><button data-m="open">開咪</button><button data-m="ptt">按住 V 講</button><button data-m="off">關</button></div>
+      <label for="setVoice" class="vconly">語音音量</label><input class="vconly" type="range" id="setVoice" min="0" max="1.5" step="0.05">
       <label for="setInv">上下視角反轉</label><input type="checkbox" id="setInv">
     </div>
     <div class="pmp" id="pauseMP" hidden>
