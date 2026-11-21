@@ -1,0 +1,8 @@
+[
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; await b.startChapter('road'); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(30); return [b.LEVEL,b.state,b.W.GY, b.party.map(c=>c.id)]; })()"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn, GY=b.W.GY; const T=[['blue bin',2717,700,0,1,104],['bin via steps',2588,755,1,0,104],['green bin',2779,700,0,1,110],['mailbox',2560,680,0,1,128],['bench leg',2150,1745,1,0,46]]; const out=[]; for(const [id,cap] of [['bear',80],['bear',100],['dad',80]]) for(const [n,x,z,dx,dz,top] of T){ const C=b.chars[id]; if(b.leader!==C) b.switchTo(C); b.step(2); const L=b.leader; L.pos.set(x,GY,z); L.vel.set(0,0,0); L.climbing=false; L.mantle=null; L.stamina=cap; L.stamMax=cap; L.drag=null; for(const F of b.party) if(F!==L){F.pos.set(x-80,GY,z-60); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=Math.atan2(-dx,-dz); b.keys.KeyW=true; let my=0, st='', p30=null; for(let i=0;i<40*60;i++){ b.step(1); if(i===30) p30=L.pos.toArray().map(v=>+v.toFixed(0)); my=Math.max(my,L.pos.y-GY); if(L.grounded && L.pos.y-GY>top-3 && !L.climbing && !L.mantle){ st='TOP'; break; } } b.keys.KeyW=false; b.step(40); out.push([L.id,n,'top '+top,'max '+my.toFixed(0),'end '+(L.pos.y-GY).toFixed(0),st||(L.climbing?'clinging':'down'),'stam '+L.stamina.toFixed(0), 'p30 '+p30]); } return out; })()"
+ }
+]

@@ -110,7 +110,7 @@ function walkerTake(J, W, dt) {
   if (J.mode === 'go') { const a = takeApproach(P, C.pos, 22); a.z = clamp(a.z, 676, 770); H.aimT.copy(C.pos); if (go(a.x, a.z, 60)) { J.mode = 'grab'; J.t = 0; J.from = C.pos.clone(); } }
   else if (J.mode === 'grab') { J.t += dt; H.yaw = angDamp(H.yaw, Math.atan2(J.from.x - P.x, J.from.z - P.z), 6, dt); H.aimT.copy(J.from); const k = clamp((J.t - .55) / .45, 0, 1); if (k > 0) { if (C.toyAt !== 'hand') { C.toyAt = 'hand'; refreshPartyHUD(); } C.pos.lerpVectors(J.from, handW(H, 0).add(V3(0, -C.h * .45, 0)), easeIO(k)); } if (J.t > 1.35) { J.mode = 'carry'; sayW('行人', '誰亂丟玩具……丟進回收桶好了。', '#9ec4e8', 2.6); } }
   else if (J.mode === 'carry') { H.aimT.set(BIN.cx, GY + 100, BIN.cz); if (go(BIN.ap.x, BIN.ap.z, 50)) { J.mode = 'drop'; J.t = 0; } takeHold(C, handW(H, 0)); }
-  else if (J.mode === 'drop') { J.t += dt; H.yaw = angDamp(H.yaw, Math.atan2(BIN.cx - P.x, BIN.cz - P.z), 6, dt); H.aimT.set(BIN.cx, GY + 110, BIN.cz); if (J.t < .7) takeHold(C, V3(BIN.cx, GY + 116, BIN.cz).lerp(handW(H, 0), 1 - J.t / .7)); else { takeDrop(J, V3(BIN.cx + R(-12, 12), GY + 30, BIN.cz + R(-10, 10))); W.mode = 'stop'; W.t = 1.5; } }
+  else if (J.mode === 'drop') { J.t += dt; H.yaw = angDamp(H.yaw, Math.atan2(BIN.cx - P.x, BIN.cz - P.z), 6, dt); H.aimT.set(BIN.cx, GY + 110, BIN.cz); if (J.t < .7) takeHold(C, V3(BIN.cx, GY + 116, BIN.cz).lerp(handW(H, 0), 1 - J.t / .7)); else { takeDrop(J, V3(BIN.cx + R(-12, 12), (BIN.floor || GY + 8) + 14, BIN.cz + R(-10, 10))); W.mode = 'stop'; W.t = 1.5; } }
   H.aim.lerp(H.aimT, 1 - Math.exp(-3 * dt));
   humanAnim(H, moveD, dt); humanAimArm(H, 0, dt);
   J.bend = J.mode === 'grab' ? sstep(.05, .55, J.t) * (1 - sstep(.95, 1.35, J.t)) : 0;

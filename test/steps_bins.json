@@ -1,0 +1,4 @@
+[
+ {"eval": "(async()=>{ const b=window.__bn; window.__NODET=true; await b.startChapter('road'); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(30); const GY=b.W.GY; const L=b.leader; L.pos.set(2575,GY,712); L.yaw=1.4; for(const F of b.party) if(F!==L){F.pos.set(2560+Math.random()*10,GY,700+Math.random()*10); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=-Math.PI/2-0.5; b.cam.pitch=.22; b.cam.dist=70; b.step(40); return 1; })()", "wait": 3000, "shot": "r5_bins"},
+ {"eval": "(()=>{ const b=window.__bn, GY=b.W.GY; const L=b.leader; L.pos.set(2700,GY+46,745); L.vel.set(0,0,0); b.cam.yaw=Math.PI*0.75; b.cam.pitch=1.0; b.cam.dist=45; b.step(40); return [L.pos.y-GY]; })()", "wait": 3000, "shot": "r6_bin_inside"}
+]

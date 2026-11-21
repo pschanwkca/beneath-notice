@@ -227,6 +227,25 @@ function buildRoad() {
     for (const s of [x + 8, x + 46]) { const w = mesh(new THREE.CylinderGeometry(6, 6, 4, 14), ST.mats.tire, s, GY + 6, 782); w.rotation.z = Math.PI / 2; }
     ST.bin = { cx: x + 27, cz: 754, ap: V3(x + 27, 0, 712) }; }
   { const x = 2752, bm = new THREE.MeshStandardMaterial({ color: 0x2e6a32, roughness: .6 }); box(x, x + 54, GY + 6, GY + 104, 728, 780, bm); box(x - 2, x + 56, GY + 104, GY + 110, 726, 784, bm); for (const s of [x + 8, x + 46]) { const w = mesh(new THREE.CylinderGeometry(6, 6, 4, 14), ST.mats.tire, s, GY + 6, 782); w.rotation.z = Math.PI / 2; } }
+  // the bins stand on their wheels: the gap underneath counts as solid, so walking into a bin starts a climb instead of strolling under it
+  for (const x of [2690, 2752]) cols.push({ t: 'b', x0: x, x1: x + 54, y0: GY, y1: GY + 6.5, z0: 728, z1: 780 });
+  // recycling day: a taped-up cardboard box and a tied bundle of newspapers beside the blue bin — steps up to its rim
+  { const kraft = new THREE.MeshStandardMaterial({ map: kraftTex(), roughness: .92 }), news = new THREE.MeshStandardMaterial({ map: newsTex(), roughness: .95 }), twine = new THREE.MeshStandardMaterial({ color: 0xb28a58, roughness: 1 }), tape = new THREE.MeshStandardMaterial({ color: 0xc9a66b, roughness: .4 });
+    box(2640, 2688, GY, GY + 58, 734, 776, kraft, { uv: 64 }); box(2662.5, 2665.5, GY + 58, GY + 58.3, 734, 776, tape, { col: false }); box(2662.5, 2665.5, GY + 40, GY + 58.3, 733.7, 734, tape, { col: false });
+    const flap = new THREE.Group(); flap.position.set(2640, GY + 58, 755); flap.rotation.z = .5; LV.add(flap); mesh(new THREE.BoxGeometry(1, 24, 40), kraft, 0, 12, 0, { parent: flap });
+    { const edge = new THREE.MeshStandardMaterial({ map: paperEdgeTex(), roughness: .95 }); box(2602, 2638, GY, GY + 26, 740, 770, [edge, edge, news, edge, edge, edge], { uv: 40 }); }   // page edges on the sides, the front page on top
+    for (const x of [2612, 2628]) { box(x - .5, x + .5, GY + 26, GY + 26.4, 740, 770, twine, { col: false }); box(x - .5, x + .5, GY, GY + 26.4, 739.6, 740, twine, { col: false }); }
+    box(2602, 2638, GY + 26, GY + 26.4, 754.5, 755.5, twine, { col: false }); }
+  // the blue bin is half full: the toy lands on the recycling, and a rescuer can climb back out
+  { const x0 = 2692.4, x1 = 2741.6, z0 = 730.4, z1 = 777.6, top = GY + 46; cols.push({ t: 'b', x0, x1, y0: GY + 8, y1: top, z0, z1 });
+    const card = new THREE.MeshStandardMaterial({ map: kraftTex(), roughness: .92 }), paper = new THREE.MeshStandardMaterial({ map: newsTex(), roughness: .95 }), bottle = new THREE.MeshPhysicalMaterial({ color: 0x9fd2c8, roughness: .15, transmission: .6, thickness: 2, transparent: true, opacity: .75 });
+    const canM = [new THREE.MeshStandardMaterial({ color: 0xb8322e, roughness: .35, metalness: .7 }), new THREE.MeshStandardMaterial({ color: 0xc9ccd0, roughness: .3, metalness: .85 }), new THREE.MeshStandardMaterial({ color: 0x2f6aa8, roughness: .35, metalness: .7 })];
+    box(x0, x1, top - 2, top, z0, z1, new THREE.MeshStandardMaterial({ color: 0x2a2620, roughness: 1 }), { col: false, cast: false });
+    for (let i = 0; i < 7; i++) { const m = mesh(new THREE.BoxGeometry(R(14, 24), .6, R(10, 20)), i % 2 ? card : paper, R(x0 + 8, x1 - 8), top + R(.2, 1.4), R(z0 + 8, z1 - 8)); m.rotation.set(R(-.25, .25), R(0, 6.28), R(-.25, .25)); }
+    for (let i = 0; i < 4; i++) { const m = mesh(new THREE.CylinderGeometry(2.4, 2.4, 11, 14), bottle, R(x0 + 6, x1 - 6), top + 2.2, R(z0 + 6, z1 - 6)); m.rotation.set(Math.PI / 2, 0, R(0, 6.28)); }
+    for (let i = 0; i < 5; i++) { const m = mesh(new THREE.CylinderGeometry(1.7, 1.7, R(3, 6), 14), canM[i % 3], R(x0 + 5, x1 - 5), top + 1.6, R(z0 + 5, z1 - 5)); m.rotation.set(R(-1.6, 1.6), R(0, 6.28), R(-.4, .4)); }
+    for (let i = 0; i < 4; i++) mesh(new THREE.IcosahedronGeometry(R(2.5, 4), 0), paper, R(x0 + 5, x1 - 5), top + 2, R(z0 + 5, z1 - 5));
+    ST.bin.floor = top; }
   // a fallen-leaf carpet along the pavement and gutter
   { const ls = new THREE.Shape(); ls.moveTo(0, -1.4); ls.quadraticCurveTo(1.1, -.4, 0, 1.6); ls.quadraticCurveTo(-1.1, -.4, 0, -1.4); const leaf = new THREE.ShapeGeometry(ls, 6); leaf.rotateX(-Math.PI / 2); const lm = new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: .85, side: THREE.DoubleSide }); const N = 520; const IM = new THREE.InstancedMesh(leaf, lm, N); const q = new THREE.Quaternion(), e = new THREE.Euler(), s = V3(), t = V3(), col = new THREE.Color();
     for (let i = 0; i < N; i++) { const onRoad = rnd() < .35; t.set(R(1400, 2900), (onRoad ? RY : GY) + .25, onRoad ? R(802, 840) : R(650, 790)); e.set(R(-.2, .2), rnd() * 6.28, R(-.2, .2)); q.setFromEuler(e); const k = R(.7, 1.3); s.set(k, 1, k); m4.compose(t, q, s); IM.setMatrixAt(i, m4); col.setHSL(R(.03, .1), R(.35, .6), R(.12, .26)); IM.setColorAt(i, col); }
@@ -397,4 +416,26 @@ function roadWin() {
   say('爸爸', '到了……公園。晶片要在月光底下才會充電——', '#f5f0e6', 3.6);
   END_TXT = ['第五章 · 完', '馬路', '終於過了馬路。公園裡面……好像有很多狗。（第六章：公園，製作中）'];
   STATE = 'end'; endT = 0;
+}
+
+// ---- printed things for recycling day ----
+let _kraft = null, _news = null, _edge = null;
+function paperEdgeTex() {
+  if (_edge) return _edge; const [c, x] = cnv(256, 256); x.fillStyle = '#ddd6c6'; x.fillRect(0, 0, 256, 256);
+  for (let y = 0; y < 256; y += R(1.6, 3.2)) { const k = R(.75, 1.05), ins = rnd() < .035; x.fillStyle = ins ? `hsla(${R(0, 360)},45%,62%,.8)` : `rgba(${238 * k | 0},${230 * k | 0},${212 * k | 0},1)`; x.fillRect(0, y, 256, R(1, 2.4)); x.fillStyle = 'rgba(60,50,40,.18)'; x.fillRect(0, y, 256, .6); }
+  for (let i = 0; i < 40; i++) { x.fillStyle = 'rgba(255,255,255,.08)'; x.fillRect(R(0, 256), 0, R(1, 4), 256); }
+  return (_edge = tex(c));
+}
+function kraftTex() {
+  if (_kraft) return _kraft; const [c, x] = cnv(256, 256); x.fillStyle = '#a77d4f'; x.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 2600; i++) { x.fillStyle = `rgba(${rnd() < .5 ? '70,45,20' : '220,190,140'},${R(.03, .09)})`; x.fillRect(R(0, 256), R(0, 256), R(1, 3), R(1, 3)); }
+  for (let y = 0; y < 256; y += 4) { x.fillStyle = 'rgba(60,40,20,.05)'; x.fillRect(0, y, 256, 1); }
+  x.strokeStyle = 'rgba(40,28,16,.55)'; x.lineWidth = 3; x.strokeRect(78, 92, 100, 56); x.fillStyle = 'rgba(40,28,16,.6)'; x.font = '700 26px "Noto Sans TC", sans-serif'; x.textAlign = 'center'; x.fillText('小心輕放', 128, 130);
+  return (_kraft = tex(c));
+}
+function newsTex() {
+  if (_news) return _news; const [c, x] = cnv(256, 256); x.fillStyle = '#e8e2d4'; x.fillRect(0, 0, 256, 256);
+  for (let col = 0; col < 4; col++) for (let y = 8; y < 250; y += 7) { const w = R(30, 56); x.fillStyle = `rgba(40,40,40,${R(.25, .45)})`; x.fillRect(8 + col * 62, y, w, 2.2); if (rnd() < .06) { x.fillStyle = 'rgba(30,30,30,.55)'; x.fillRect(8 + col * 62, y, 56, 5); y += 4; } }
+  x.fillStyle = 'rgba(120,110,90,.25)'; x.fillRect(132, 40, 56, 44);
+  return (_news = tex(c));
 }

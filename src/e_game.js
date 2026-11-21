@@ -136,6 +136,20 @@ function lipGrab(C, n, c) {
   C.mantle = { from: C.pos.clone(), to: V3(px, c.y1, pz), t: 0, out: V3(n.x * (ox + C.r * .6), 0, n.z * (ox + C.r * .6)), dur: .5 };
   return true;
 }
+// a thick block overhanging what you're climbing (a mailbox on its post, a shelf on its bracket, a chunky table top):
+// reach out round its bottom edge onto its side and keep climbing up that
+function faceReach(C, n, c) {
+  if (!c || c.t !== 'b' || c.slick || c.y0 < -900 || c.y1 - c.y0 <= 6.5) return false;
+  let ox = 0; while (ox < 16 && xzIn(c, C.pos.x + n.x * ox, C.pos.z + n.z * ox)) ox += .5;
+  if (ox === 0 || ox >= 16) return false;   // not over us, or it sticks out too far to reach round
+  const qx = C.pos.x + n.x * ox, qz = C.pos.z + n.z * ox;
+  const d = [[Math.abs(qx - c.x0), -1, 0], [Math.abs(qx - c.x1), 1, 0], [Math.abs(qz - c.z0), 0, -1], [Math.abs(qz - c.z1), 0, 1]].sort((a, b) => a[0] - b[0])[0];
+  const off = C.r + .15, px = d[1] ? (d[1] < 0 ? c.x0 - off : c.x1 + off) : clamp(qx, c.x0 + C.r * .5, c.x1 - C.r * .5), pz = d[2] ? (d[2] < 0 ? c.z0 - off : c.z1 + off) : clamp(qz, c.z0 + C.r * .5, c.z1 - C.r * .5);
+  const py = c.y0 - C.h * .35;
+  if (solidAt(px, py + C.h * .5, pz) || solidAt(px, py + C.h * .9, pz)) return false;
+  C.mantle = { from: C.pos.clone(), to: V3(px, py, pz), t: 0, dur: .45, climbN: V3(d[1], 0, d[2]) };
+  return true;
+}
 function land(C, imp) {
   if (C !== leader) return;
   if (imp > 130) { C.rollT = .55; C.squash = .9; SND.land(1); for (let i = 0; i < 10; i++) emit(V3(C.pos.x, C.pos.y + .2, C.pos.z), V3(R(-8, 8), R(2, 9), R(-8, 8)), new THREE.Color(.25, .23, .2), R(.3, .7), R(.4, .8), 40, 3); }
@@ -166,7 +180,7 @@ function updLeader(C, dt) {
     C.pos.lerpVectors(M.from, M.to, sstep(0, 1, t)); C.pos.y = lerp(M.from.y, M.to.y, Math.min(1, t * 1.6));
     if (M.out) { const s = Math.sin(Math.PI * Math.min(1, t * 1.25)); C.pos.x += M.out.x * s; C.pos.z += M.out.z * s; }
     C.state = 'climb'; C.spd = 6;
-    if (t >= 1) { C.mantle = null; C.climbing = false; C.grounded = true; C.vel.set(0, 0, 0); C.squash = .35; C.state = 'idle'; }
+    if (t >= 1) { if (M.climbN) { C.mantle = null; C.climbing = true; C.grounded = false; C.climbN.copy(M.climbN); C.vel.set(0, 0, 0); C.yaw = Math.atan2(-M.climbN.x, -M.climbN.z); return; } C.mantle = null; C.climbing = false; C.grounded = true; C.vel.set(0, 0, 0); C.squash = .35; C.state = 'idle'; }
     return;
   }
   if (C.zip) { updZip(C, dt); return; }
@@ -220,12 +234,12 @@ function updClimb(C, dt, inX, inY, ctl, run) {
   if (ctl && pressed.Space) { C.climbing = false; C.vel.set(n.x * 24, 40, n.z * 24); C.climbCD = .45; C.yaw = Math.atan2(n.x, n.z); SND.jump(); C.state = 'air'; return; }
   let sx = n.z, sz = -n.x; if (sx * Math.cos(cam.yaw) + sz * -Math.sin(cam.yaw) < 0) { sx = -sx; sz = -sz; }
   const moving = inX !== 0 || inY !== 0;
-  if (C.id !== 'gecko') C.stamina -= (moving ? (run ? 13 : 6.8) : 2.2) * dt;
+  if (C.id !== 'gecko') C.stamina -= (moving ? (run ? 11 : 5.4) : 1.8) * dt;
   if (C.stamina <= 0) { C.stamina = 0; detach(C, .4, 0); toast('體力用完了，先找個地方站穩休息'); return; }
   const ox = C.pos.x, oz = C.pos.z;
   C.pos.y += inY * sp * dt; C.pos.x += sx * inX * sp * .8 * dt; C.pos.z += sz * inX * sp * .8 * dt;
   if (inY < 0) { const [sup] = supportAt(C.pos.x, C.pos.z, C.r * .55, C.pos.y + .3); if (C.pos.y <= sup + .05) { C.pos.y = sup; detach(C, 0, 0, true); C.state = 'idle'; return; } }
-  const yb = C.pos.y; const cc = ceil(C); if (inY > 0 && C.pos.y < yb - .01) { C.overhang = 1.4; if (C.id === 'bat' && roostOn(C, cc)) { C.overhang = 0; return; } if (lipGrab(C, n, cc)) { C.overhang = 0; return; } }
+  const yb = C.pos.y; const cc = ceil(C); if (inY > 0 && C.pos.y < yb - .01) { C.overhang = 1.4; if (C.id === 'bat' && roostOn(C, cc)) { C.overhang = 0; return; } if (lipGrab(C, n, cc) || faceReach(C, n, cc)) { C.overhang = 0; return; } }
   C.pos.x -= n.x * .35; C.pos.z -= n.z * .35;
   let hit = resolveClimb(C);
   if (!hit && inX !== 0) { C.pos.x = ox - n.x * .35; C.pos.z = oz - n.z * .35; hit = resolveClimb(C); }
