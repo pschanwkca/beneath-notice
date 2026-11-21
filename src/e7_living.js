@@ -14,11 +14,11 @@ function buildLivingRoom(K) {
   const floorM = new THREE.MeshStandardMaterial({ color: 0x8a5c3a, roughness: .7, map: K.floor.map || null });
   box(X0 - 2, X1 + 12, -10, 0, -240, 240, floorM, { uv: 140, cast: false });
   box(X0 - 2, X1 + 12, 260, 270, -240, 240, K.ceil, { cast: false });
-  box(X0, X1 + 12, 0, 260, -244, -232, wallM, { uv: 120 }); // far wall: the vent near the floor leads through a duct into the garage
+  box(X0, 748, 0, 260, -244, -232, wallM, { uv: 120 }); box(828, X1 + 12, 0, 260, -244, -232, wallM, { uv: 120 }); box(748, 828, 205, 260, -244, -232, wallM, { uv: 120 }); // far wall (a doorway to the stairs); the vent near the floor leads through a duct into the garage
   box(X1, X1 + 12, 0, 260, -232, -214, wallM, { uv: 120 }); box(X1, X1 + 12, 0, 260, -186, 232, wallM, { uv: 120 }); box(X1, X1 + 12, 0, 4, -214, -186, wallM, { uv: 120 }); box(X1, X1 + 12, 24, 260, -214, -186, wallM, { uv: 120 });
   // front wall with the window opening (x 700–850, y 100–210)
   box(X0, 700, 0, 260, 232, 244, wallM, { uv: 120 }); box(850, X1 + 12, 0, 260, 232, 244, wallM, { uv: 120 }); box(700, 850, 0, 100, 232, 244, wallM, { uv: 120 }); box(700, 850, 210, 260, 232, 244, wallM, { uv: 120 });
-  box(X0, X1, 0, 9, -232, -230.5, M.white, { col: false }); box(X0, X1, 0, 9, 230.5, 232, M.white, { col: false }); box(X1 - 1.5, X1, 0, 9, -230, 230, M.white, { col: false });
+  box(X0, 744, 0, 9, -232, -230.5, M.white, { col: false }); box(832, X1, 0, 9, -232, -230.5, M.white, { col: false }); box(X0, X1, 0, 9, 230.5, 232, M.white, { col: false }); box(X1 - 1.5, X1, 0, 9, -230, 230, M.white, { col: false });
   // the door: hinged at z=40, closes towards z=-60, swings into the kitchen
   const dg = new THREE.Group(); dg.position.set(300, 0, 40); LV.add(dg); LIV.door = dg;
   const dm = new THREE.MeshPhysicalMaterial({ color: 0xf0ebe2, roughness: .55, clearcoat: .2 });
@@ -199,7 +199,7 @@ const MP_QUESTS = [
   { t: '找齊三個零件', s: '彈簧在爐頭旁、電容在洗手盆下面的櫃、鏡片在廁所的鏡櫃。次序隨意，分頭行動最快——客廳門、遙控器電池都可以隨時先做' },
   { t: '打開通往客廳的門', s: '門被門擋卡住了——熊可以推開或拉走門擋，或者爸爸把它縮小' },
   { t: '全隊進入客廳', s: '所有玩家都要走過去（電腦隊友會跟着）' },
-  { t: '拿走遙控器的電池', s: '遙控器在咖啡枱上——女兒在沙發看電視就引開她：關電視、熄燈、在別處弄點聲音' },
+  { t: '拿走遙控器的電池', s: '遙控器在咖啡枱上——女兒在沙發看電視就引開她：關電視、熄燈、弄點聲音；或者派兩個人沿天花槽爬上她的房間，扭動音樂盒——她一定會跑上樓' },
   { t: '爬過通風口去車房', s: '電池到手，通風口的蓋打開了——全隊一齊爬過去' },
   { t: '弄跌監視鏡頭', s: '鐵架頂有部 Origin Dynamics 的監視鏡頭——爬上去把它推跌（熊推、阿刺撞都得）' },
   { t: '打開狗門的門扣', s: '側門下面有狗門，門扣太高——疊羅漢、跳跳跳上去，或者推木箱過去墊腳' },

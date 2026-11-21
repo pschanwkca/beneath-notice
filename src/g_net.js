@@ -214,7 +214,7 @@ function netSendWorld() {
   netWorldExtra(w);
   {
     const F = TOY.fetch;
-    w.m = [+mom.pos.x.toFixed(1), +mom.pos.z.toFixed(1), +mom.yaw.toFixed(3), +mom.aimT.x.toFixed(1), +mom.aimT.y.toFixed(1), +mom.aimT.z.toFixed(1), KM.mode, KM.pt, F ? F.mode : '', F ? +F.t.toFixed(2) : 0, F && F.from ? +F.from.y.toFixed(1) : 0];
+    w.m = [+mom.pos.x.toFixed(1), +mom.pos.z.toFixed(1), +mom.yaw.toFixed(3), +mom.aimT.x.toFixed(1), +mom.aimT.y.toFixed(1), +mom.aimT.z.toFixed(1), KM.mode, KM.pt, F ? F.mode : '', F ? +F.t.toFixed(2) : 0, F && F.from ? +F.from.y.toFixed(1) : 0, +(mom.fy || 0).toFixed(1)];
     w.k = kidNet();
     w.c = [+CAT.pos.x.toFixed(1), +CAT.pos.z.toFixed(1), +CAT.yaw.toFixed(3), CAT.mode, +(CAT.jump || 0).toFixed(2)];
     w.d = +KS.doorA.toFixed(3);
@@ -250,7 +250,7 @@ function netNPC(dt) {
   const w = NET.npc; if (!w || !w.m) return; netNPCExtra(dt);
   const m = w.m, P = mom.pos, ox = P.x, oz = P.z;
   const dx = m[0] - P.x, dz = m[1] - P.z; if (dx * dx + dz * dz > 3600) { P.x = m[0]; P.z = m[1]; } else { const k = 1 - Math.exp(-8 * dt); P.x += dx * k; P.z += dz * k; }
-  mom.yaw = angDamp(mom.yaw, m[2], 8, dt); mom.aimT.set(m[3], m[4], m[5]); KM.mode = m[6]; KM.pt = m[7];
+  mom.yaw = angDamp(mom.yaw, m[2], 8, dt); mom.aimT.set(m[3], m[4], m[5]); KM.mode = m[6]; KM.pt = m[7]; if (m[11] !== undefined) mom.fy = m[11];
   TOY.fetch = m[8] ? { mode: m[8], t: m[9], from: { y: m[10] }, C: null } : null;
   KS.doorA = damp(KS.doorA, w.d, 10, dt); fridgeDoor();
   momAnimK(dt, Math.hypot(P.x - ox, P.z - oz));

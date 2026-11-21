@@ -1,0 +1,27 @@
+[
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; await b.startChapter('kitchen'); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(10); b.LIV.open=true; const L=b.leader; L.pos.set(788,0,-150); L.yaw=Math.PI; for(const F of b.party) if(F!==L){F.pos.set(780+Math.random()*20,0,-160); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.HB.m.q=[{wait:999}]; b.HB.m.cur=null; b.HB.k.q=[{wait:999,pose:'homework'}]; b.HB.k.cur=null; b.cam.yaw=0.1; b.cam.pitch=.12; b.cam.dist=120; b.step(40); return 1; })()",
+  "wait": 2500,
+  "shot": "u1_stairdoor"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; b.hxSet(b.HX.id.ulight,false,'kid'); b.hxSet(b.HX.id.ustar,true,'kid'); b.hxSet(b.HX.id.udesk,true,'kid'); const L=b.leader; L.pos.set(560,300,40); L.yaw=-2.2; b.cam.yaw=-2.2; b.cam.pitch=-.45; b.cam.dist=60; b.step(90); return 1; })()",
+  "wait": 2500,
+  "shot": "u5_stars"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; b.hxSet(b.HX.id.ustar,false,'kid'); b.hxSet(b.HX.id.udesk,false,'kid'); b.hxSet(b.HX.id.ulight,true,'kid'); const L=b.leader; L.pos.set(760,396,-214); L.yaw=2.3; b.cam.yaw=2.5; b.cam.pitch=.3; b.cam.dist=80; b.step(40); return 1; })()",
+  "wait": 2500,
+  "shot": "u4b_room_from_dresser"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; const L=b.leader; L.pos.set(590,270,-226); L.yaw=-Math.PI/2; b.cam.yaw=Math.PI/2; b.cam.pitch=-.1; b.cam.dist=30; b.hxSet(b.HX.id.ulight,true,'kid'); b.step(40); return 1; })()",
+  "wait": 2500,
+  "shot": "u8_register"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; const L=b.leader; L.pos.set(860,300,-300); L.yaw=Math.PI; b.cam.yaw=-0.3; b.cam.pitch=.45; b.cam.dist=150; b.step(40); return 1; })()",
+  "wait": 2500,
+  "shot": "u9_hall"
+ }
+]

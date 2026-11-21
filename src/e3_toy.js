@@ -88,7 +88,7 @@ function toyHand() { const p = V3(); mom.arms[1].hand.getWorldPosition(p); retur
 function momFetch(dt) {
   let F = TOY.fetch;
   if (!F) {
-    if (!TOY.fetchQ.length || KM.mode === 'fopen' || STATE === 'fail') return null;
+    if (!TOY.fetchQ.length || KM.mode === 'fopen' || STATE === 'fail' || mom.pos.y > 1) return null;
     const C = TOY.fetchQ.shift(); if (!C.frozen || C.toyAt !== 'floor' || !toyReachable(C)) return null;
     F = TOY.fetch = { C, mode: 'walk', t: 0, ap: toyApproach(C.pos) }; KM.mode = 'fetch';
   }

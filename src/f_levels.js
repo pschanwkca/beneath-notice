@@ -576,7 +576,7 @@ function updKitchenMom(dt) {
   momAnimK(dt, moveD);
 }
 function momAnimK(dt, moveD) {
-  const P = mom.pos; P.y = 0; const R0 = mom.root; R0.position.copy(P); R0.rotation.y = mom.yaw;
+  const P = mom.pos; P.y = mom.fy = humanFloor(P.x, P.z, mom.fy || 0); const R0 = mom.root; R0.position.copy(P); R0.rotation.y = mom.yaw;
   const prev = mom.phase; mom.phase += moveD / 62 * Math.PI; const ph = mom.phase; const walking = moveD > 0;
   mom.amp = walking ? .42 : damp(mom.amp || 0, 0, 4, dt); const ak = mom.amp / .42;
   const sitting = KM.mode === 'act' && (KM.pt === 'table' || KM.pt === 'toilet' || KM.pt === 'sofa') && !walking; if (sitting) mom.sitY = { table: 53, toilet: 47, sofa: 50 }[KM.pt]; mom.sitK = damp(mom.sitK || 0, sitting ? 1 : 0, 5, dt); const sk = mom.sitK;
@@ -597,11 +597,11 @@ function momAnimK(dt, moveD) {
   else if (KM.mode === 'fopen') { A1.sh.rotation.set(-1.25, .2, 0); A1.el.rotation.x = -.25; A0.sh.rotation.x = -.2; A0.el.rotation.x = -.2; mom.spoon.visible = false; }
   else { A0.sh.rotation.set(Math.sin(ph) * .3 * ak, 0, 0); A0.el.rotation.x = -.25; A1.sh.rotation.set(-Math.sin(ph) * .3 * ak, 0, 0); A1.el.rotation.x = -.25; mom.spoon.visible = KM.pt === 'stove'; }
   if (walking && Math.floor(prev / Math.PI) !== Math.floor(ph / Math.PI)) {
-    const Lg = mom.legs[Math.floor(ph / Math.PI) % 2 === 0 ? 0 : 1]; const fp = V3(); Lg.ankle.getWorldPosition(fp); fp.y = 0;
+    const Lg = mom.legs[Math.floor(ph / Math.PI) % 2 === 0 ? 0 : 1]; const fp = V3(); Lg.ankle.getWorldPosition(fp); fp.y = P.y;
     const dist = Math.hypot(leader.pos.x - fp.x, leader.pos.y - fp.y, leader.pos.z - fp.z);
     SND.thud(clamp(1.1 - dist / 420, .06, .9)); cam.shake = Math.max(cam.shake, clamp(1 - dist / 240, 0, 1) * .8);
-    for (let i = 0; i < 4; i++) emit(V3(fp.x + R(-6, 6), .5, fp.z + R(-8, 12)), V3(R(-12, 12), R(3, 10), R(-12, 12)), new THREE.Color(.2, .18, .16), R(.5, 1), R(.5, 1), 20, 2.5);
-    if (STATE === 'play' && Math.hypot(leader.pos.x - fp.x, leader.pos.z - (fp.z + 4)) < 14 && leader.pos.y < 8) knock(leader, fp, '差點被踩扁！');
+    for (let i = 0; i < 4; i++) emit(V3(fp.x + R(-6, 6), fp.y + .5, fp.z + R(-8, 12)), V3(R(-12, 12), R(3, 10), R(-12, 12)), new THREE.Color(.2, .18, .16), R(.5, 1), R(.5, 1), 20, 2.5);
+    if (STATE === 'play' && Math.hypot(leader.pos.x - fp.x, leader.pos.z - (fp.z + 4)) < 14 && leader.pos.y - fp.y < 8 && leader.pos.y - fp.y > -3) knock(leader, fp, '差點被踩扁！');
   }
 }
 function updKid(dt) {
@@ -709,7 +709,7 @@ function detectKitchen(dt) {
   const s1 = eyeSee(mom.head, .55, 440); if (s1 > seen) { seen = s1; who = 'mom'; }
   const s2 = eyeSee(KID.head, .5, 360); if (s2 > seen) { seen = s2; who = 'kid'; }
   KS.watch = seen > 0 ? { p: (who === 'kid' ? KID.head : mom.head).getWorldPosition(V3()), s: seen, who } : null;
-  const kd = Math.hypot(L.pos.x - KID.root.position.x, L.pos.z - KID.root.position.z); if (kd < 45 && L.pos.y < 40 && L.spd > 2 && !L.crouch && KID.mode !== 'read') { seen = Math.max(seen, .3); who = who || 'kid'; }
+  const kd = Math.hypot(L.pos.x - KID.root.position.x, L.pos.z - KID.root.position.z); if (kd < 45 && Math.abs(L.pos.y - KID.root.position.y) < 40 && L.spd > 2 && !L.crouch && KID.mode !== 'read') { seen = Math.max(seen, .3); who = who || 'kid'; }
   if (seen > 0) {
     const lit = litAt(V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z)) * (inDark(L.pos) ? .6 : 1); const mv = L.spd > 1.5 ? 1 : .5; const cr = L.crouch ? .55 : 1; const glow = KS.carried && (!NET.on || KS.carrier === L.id) ? 1.35 : 1;
     const k = seen * lit * mv * cr * glow * hideK(L) * HB.eye; meter += k * dt * 1.0;
@@ -750,7 +750,7 @@ LEVELS.kitchen = {
   build() {
     buildKitchen(); buildKid(); buildCat(); buildToyBin(); LEVELS.kitchen.updrafts = [{ x: 57, z: -205, r: 9, y0: 88.5, y1: 178, fx: 5, all: true }, buildVent()];
     addVial(-128, 13, -200); addVial(170, 184, -168); addVial(70, 88.5, -215); for (const p of [[-120, 0, 70], [-70, 0, 100], [20, 0, -146], [-30, 91.8, -182], [246, 1.2, 122]]) addCrumb(...p);
-    buildLivingRoom(kitchenMats()); buildHouseSwitches(kitchenMats());
+    buildLivingRoom(kitchenMats()); buildHouseSwitches(kitchenMats()); buildUpstairs(kitchenMats());
     // online co-op: the three machine parts
     addPart(44, 88.5, -212, 'spring'); addPart(205, 110, -464, 'lens'); addPart(-112, 13, -186, 'cap');
   },
@@ -762,7 +762,7 @@ LEVELS.kitchen = {
     mom.root.visible = true; mom.phone.visible = false; mom.active = false; if (!mom.spoon) { mom.spoon = new THREE.Mesh(new THREE.CylinderGeometry(.5, .7, 26, 8), KMAT.wood); mom.spoon.position.set(0, -27, 8); mom.spoon.rotation.x = 1.2; mom.arms[1].el.add(mom.spoon); }
     mom.pos.set(34, 0, -128); mom.yaw = Math.PI; mom.aim.set(22, 96, -178); mom.aimT.copy(mom.aim); KM.mode = 'act'; KM.pt = 'stove'; KM.sched = 0; KM.t = 10;
     KID.root.visible = true; KID.root.position.set(-90, 0, 157); KID.root.rotation.y = Math.PI; KID.mode = 'read'; KID.t = 7;
-    HX.bd.a = 1.35; for (const o of HX.list) { if (o.lv) continue; o.on = o.def; hxApply(o, true); } HX.water = 0; brainReset();
+    HX.bd.a = 1.35; for (const o of HX.list) { if (o.lv) continue; o.on = o.def; hxApply(o, true); } HX.water = 0; mom.fy = 0; KID.fy = 0; upReset(); brainReset();
     CAT.root.visible = true; CAT.pos.copy(CAT.home); CAT.mode = 'sleep'; CAT.sleepK = 1;
     kitchenMode();
   },
@@ -782,7 +782,7 @@ LEVELS.kitchen = {
   npc(dt) { if (STATE === 'play' || STATE === 'fail' || STATE === 'end' || STATE === 'frozen') { updKitchenMom(dt); updKid(dt); updCat(dt); } },
   detect: detectKitchen,
   update(dt) {
-    lvT += dt; updKitchenPlayer(dt); updCookie(); hxTick(dt); mpChecklist();
+    lvT += dt; updKitchenPlayer(dt); updCookie(); hxTick(dt); upTick(dt); mpChecklist();
     scheduleLines(KS.mp ? KLINES_MP : KLINES_SP, dt);
     if (rnd() < dt * .75) { emit(KS.tap, V3(0, -2, 0), new THREE.Color(.5, .62, .7), .35, .9, 300, 0); setTimeout(() => { if (ZONES.kitchen.near) { for (let i = 0; i < 4; i++) emit(V3(-100, 68.9, -193), V3(R(-6, 6), R(5, 12), R(-6, 6)), new THREE.Color(.5, .62, .72), .2, .35, 200, 1); if (leader.pos.distanceTo(V3(-100, 68, -193)) < 120) SND.drip(); } }, 420); }
   },

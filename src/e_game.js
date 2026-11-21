@@ -166,7 +166,14 @@ function readMove() {
   const x = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0), y = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0);
   return { x, y, m: x || y ? 1 : 0, run: !!(keys.ShiftLeft || keys.ShiftRight) };
 }
-function startClimb(C, hit) { C.climbing = true; C.climbN.set(hit.nx, 0, hit.nz); C.vel.set(0, 0, 0); C.grounded = false; C.crouch = false; C.yaw = Math.atan2(-hit.nx, -hit.nz); SND.swish(); }
+// a carpeted stair: scramble straight up onto the next tread instead of a slow climb
+function scramble(C, hit) {
+  const c = hit.c, px = C.pos.x - hit.nx * (C.r + 1.6), pz = C.pos.z - hit.nz * (C.r + 1.6);
+  const s2 = solidAt(px, c.y1 + .3, pz); if (!xzIn(c, px, pz) || solidAt(px, c.y1 + C.h * .5, pz) || (s2 && s2 !== c)) return false;
+  C.mantle = { from: C.pos.clone(), to: V3(px, c.y1, pz), t: 0, dur: .36 + (c.y1 - C.pos.y) * .012 }; C.yaw = Math.atan2(-hit.nx, -hit.nz);
+  if (C.id !== 'gecko') C.stamina = Math.max(0, C.stamina - 2); SND.swish(); return true;
+}
+function startClimb(C, hit) { C.climbing = true; C.climbC = hit.c; C.climbN.set(hit.nx, 0, hit.nz); C.vel.set(0, 0, 0); C.grounded = false; C.crouch = false; C.yaw = Math.atan2(-hit.nx, -hit.nz); SND.swish(); }
 function detach(C, push, up, grounded) { C.climbing = false; C.vel.set(C.climbN.x * push * 20, up, C.climbN.z * push * 20); C.climbCD = .35; if (grounded) C.grounded = true; }
 function updLeader(C, dt) {
   const ctl = STATE === 'play' && !(C.tumble > 0) && !PAUSED;
@@ -214,7 +221,7 @@ function updLeader(C, dt) {
   moveVert(C, dt);
   if (C.grounded) C.flaps = 0;
   if (C.id === 'bat' && ctl && !C.grounded && keys.Space && C.ceilHit && roostOn(C, C.ceilHit)) return;
-  if (hit && ctl && !base && !hit.c.slick && C.climbCD <= 0 && !C.crouch && (C.stamina > 8 || C.id === 'gecko')) { if (-(wx * hit.nx + wz * hit.nz) > .5) startClimb(C, hit); }
+  if (hit && ctl && !base && !hit.c.slick && C.climbCD <= 0 && !C.crouch && (C.stamina > 8 || C.id === 'gecko')) { if (-(wx * hit.nx + wz * hit.nz) > .5 && !(hit.c.grip && C.grounded && hit.c.y1 - C.pos.y < 21 && scramble(C, hit))) startClimb(C, hit); }
   if (C.grounded && !C.cold) C.stamina = Math.min(C.stamMax || 100, C.stamina + 45 * dt);
   const hs = Math.hypot(C.vel.x, C.vel.z); C.spd = hs;
   C.state = base && C.grounded ? (hs > .8 ? 'stackwalk' : 'stack') : C.dashT > 0 ? 'roll' : C.tumble > 0 ? 'tumble' : C.gliding ? 'glide' : !C.grounded ? 'air' : hs > .8 ? (C.crouch ? 'sneak' : 'walk') : (C.crouch ? 'crouch' : 'idle');
@@ -235,11 +242,11 @@ function resolveClimb(C) {
   return best;
 }
 function updClimb(C, dt, inX, inY, ctl, run) {
-  const n = C.climbN; const sp = 9 * C.S.clb * (run ? 1.4 : 1);
+  const n = C.climbN, grip = C.climbC && C.climbC.grip; const sp = 9 * C.S.clb * (run ? 1.4 : 1) * (grip ? 1.7 : 1);
   if (ctl && pressed.Space) { C.climbing = false; C.vel.set(n.x * 24, 40, n.z * 24); C.climbCD = .45; C.yaw = Math.atan2(n.x, n.z); SND.jump(); C.state = 'air'; return; }
   let sx = n.z, sz = -n.x; if (sx * Math.cos(cam.yaw) + sz * -Math.sin(cam.yaw) < 0) { sx = -sx; sz = -sz; }
   const moving = inX !== 0 || inY !== 0;
-  if (C.id !== 'gecko') C.stamina -= (moving ? (run ? 11 : 5.4) : 1.8) * dt;
+  if (C.id !== 'gecko') C.stamina -= (moving ? (run ? 11 : 5.4) : 1.8) * (grip ? .55 : 1) * dt;
   if (C.stamina <= 0) { C.stamina = 0; detach(C, .4, 0); toast('體力用完了，先找個地方站穩休息'); return; }
   const ox = C.pos.x, oz = C.pos.z;
   C.pos.y += inY * sp * dt; C.pos.x += sx * inX * sp * .8 * dt; C.pos.z += sz * inX * sp * .8 * dt;

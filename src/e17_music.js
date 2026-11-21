@@ -281,7 +281,7 @@ function musicTick(dt) {
   MUS.want = musicWant();
   if (!MUS.cur) { if (!BANK.piano.length) return; MUS.next = C.currentTime + .15; musicSwitch(MUS.want, MUS.next); }
   musicLayers(dt); musicCues();
-  const duck = (PAUSED ? .4 : 1) * (STATE === 'frozen' || STATE === 'fail' ? .3 : 1);
+  const duck = (PAUSED ? .4 : 1) * (STATE === 'frozen' || STATE === 'fail' ? .3 : 1) * (MUS.ext ?? 1);
   MUS.duck = damp(MUS.duck, duck, 3, dt);
   MUS.bus.gain.setTargetAtTime(musVol() * MUS.duck, C.currentTime, .1);
 }

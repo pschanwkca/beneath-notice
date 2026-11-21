@@ -60,6 +60,15 @@ log('door early', await ev(B, () => [window.__bn.W.LIV.open, window.__bn.quest, 
 // the remote's batteries, early (client)
 await ev(B, () => { const r = window.__bn.W.LIV.remote; const L = window.__bn.leader; L.pos.set(r.cx, r.y0 + 2, r.cz); L.vel.set(0, 0, 0); });
 log('remote early', [await until(A, () => window.__bn.W.LIV.remoteGot, 6000), await ev(A, () => window.__bn.quest)]);
+// upstairs: the client winds the music box in the daughter's room; someone in the family comes up to stop it (synced floor height)
+await ev(B, () => { const L = window.__bn.leader; L.climbing = false; L.mantle = null; L.pos.set(722, 380.2, -214); L.vel.set(0, 0, 0); }); await wait(700);
+log('B by music box', await ev(B, () => { const o = window.__bn.HX.near; return o && o.id; }));
+await B.keyboard.press('e'); await wait(1200);
+log('music on', await Promise.all([A, B].map(p => ev(p, () => window.__bn.HX.id.umusic.on))));
+await ev(B, () => { const L = window.__bn.leader; L.pos.set(380, 300.2, 150); L.vel.set(0, 0, 0); });   // hide under the bed
+log('family upstairs (seen on B)', await until(B, () => Math.max(window.__bn.KID.root.position.y, window.__bn.mom.pos.y) > 250, 45000));
+log('who', await ev(B, () => [Math.round(window.__bn.KID.root.position.y), Math.round(window.__bn.mom.pos.y), document.getElementById('eyet').textContent]));
+log('music stopped', [await until(A, () => !window.__bn.HX.id.umusic.on, 40000), await until(B, () => !window.__bn.HX.id.umusic.on, 4000)]);
 // the three parts: one each, the lens from the bathroom cabinet
 for (const [p, i] of [[A, 0], [B, 1], [A, 2]]) { await ev(p, i => { const q = window.__bn.W.LIV.parts[i]; const L = window.__bn.leader; L.pos.set(q.x, q.y + 1, q.z); L.vel.set(0, 0, 0); }, i); await wait(1500); }
 log('parts', await ev(A, () => [window.__bn.W.LIV.parts.map(p => p.kind + ':' + (p.got ? 1 : 0)).join(' '), window.__bn.quest]));

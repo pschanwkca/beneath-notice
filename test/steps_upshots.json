@@ -1,0 +1,22 @@
+[
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; await b.startChapter('kitchen'); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(10); b.LIV.open=true; const L=b.leader; L.pos.set(788,0,-150); L.yaw=Math.PI; for(const F of b.party) if(F!==L){F.pos.set(780+Math.random()*20,0,-160); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.HB.m.q=[{wait:999}]; b.HB.m.cur=null; b.HB.k.q=[{wait:999,pose:'homework'}]; b.HB.k.cur=null; b.cam.yaw=0.1; b.cam.pitch=.12; b.cam.dist=120; b.step(40); return 1; })()",
+  "wait": 2500,
+  "shot": "u1_stairdoor"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; const L=b.leader; L.pos.set(790,75,-307); L.yaw=Math.PI; for(const F of b.party) if(F!==L){F.pos.set(786+Math.random()*10,56.25,-293);} b.cam.yaw=0.02; b.cam.pitch=-.18; b.cam.dist=55; b.step(30); return 1; })()",
+  "wait": 2500,
+  "shot": "u2_stairs_up"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; const L=b.leader; L.pos.set(700,300,-60); L.yaw=Math.PI; for(const F of b.party) if(F!==L){F.pos.set(690+Math.random()*30,300,-70);} b.hxSet(b.HX.id.ulight,true,'kid'); b.cam.yaw=-0.75; b.cam.pitch=.32; b.cam.dist=230; b.step(40); return 1; })()",
+  "wait": 2500,
+  "shot": "u4_bedroom_lit"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; b.hxSet(b.HX.id.ulight,false,'kid'); b.hxSet(b.HX.id.ustar,true,'kid'); b.hxSet(b.HX.id.udesk,true,'kid'); const L=b.leader; L.pos.set(560,300,40); b.cam.yaw=-2.2; b.cam.pitch=-.25; b.cam.dist=160; b.step(60); return 1; })()",
+  "wait": 2500,
+  "shot": "u5_stars"
+ }
+]

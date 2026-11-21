@@ -595,6 +595,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { BokehPass } from 'three/addons/postprocessing/BokehPass.js';
 import { Pass } from 'three/addons/postprocessing/Pass.js';
+import { mergeGeometries } from 'three/addons/utils/BufferGeometryUtils.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { FXAAShader } from 'three/addons/shaders/FXAAShader.js';
 
@@ -803,7 +804,7 @@ function genScales() {
 const BO = V3(28, -336, -229), HO = V3(-400, -340, -94); let MP_CPS = null;
 const ZONES = {}, ZL = []; let WORLD = false;
 function zoneDef(id, o) { const Z = Object.assign({ id, off: V3(), core: [], lv: null, fx: null, cols: [], lights: [], beams: [], dust: null, env: null, near: false, prepped: false }, o); ZONES[id] = Z; ZL.push(Z); return Z; }
-zoneDef('kitchen', { floor: 0, core: [[-312, 912, -12, 300, -250, 250], [-432, -312, -2, 40, -126, -74], [140, 475, -12, 262, -485, -230], [10, 380, 255, 300, -336, -192]], peek: [[930, 1060, -40, 60, -260, -120]], env: 'kitchen' });
+zoneDef('kitchen', { floor: 0, core: [[-312, 912, -12, 300, -250, 250], [-432, -312, -2, 40, -126, -74], [140, 475, -12, 262, -485, -230], [10, 380, 255, 300, -336, -192], [306, 912, 255, 560, -250, 250], [736, 912, -12, 560, -512, -240]], peek: [[930, 1060, -40, 60, -260, -120]], env: 'kitchen' });
 // peek: spots in other places from which you can see in (through a mouse hole) — draw this place too
 zoneDef('wall', { floor: HO.y + 4, off: HO, core: [[-530, -312, -360, -2, -140, -52]], peek: [[-282, -140, -345, -250, -160, 10], [-312, -160, -12, 90, -200, 0]], env: 'hub' });
 zoneDef('garage', { floor: -20, core: [[912, 1460, -40, 300, -270, 312]], peek: [[820, 912, -10, 70, -240, -150], [1460, 1640, -40, 120, 20, 200]], env: 'garage' });
@@ -1985,7 +1986,14 @@ function readMove() {
   const x = (keys.KeyD ? 1 : 0) - (keys.KeyA ? 1 : 0), y = (keys.KeyW ? 1 : 0) - (keys.KeyS ? 1 : 0);
   return { x, y, m: x || y ? 1 : 0, run: !!(keys.ShiftLeft || keys.ShiftRight) };
 }
-function startClimb(C, hit) { C.climbing = true; C.climbN.set(hit.nx, 0, hit.nz); C.vel.set(0, 0, 0); C.grounded = false; C.crouch = false; C.yaw = Math.atan2(-hit.nx, -hit.nz); SND.swish(); }
+// a carpeted stair: scramble straight up onto the next tread instead of a slow climb
+function scramble(C, hit) {
+  const c = hit.c, px = C.pos.x - hit.nx * (C.r + 1.6), pz = C.pos.z - hit.nz * (C.r + 1.6);
+  const s2 = solidAt(px, c.y1 + .3, pz); if (!xzIn(c, px, pz) || solidAt(px, c.y1 + C.h * .5, pz) || (s2 && s2 !== c)) return false;
+  C.mantle = { from: C.pos.clone(), to: V3(px, c.y1, pz), t: 0, dur: .36 + (c.y1 - C.pos.y) * .012 }; C.yaw = Math.atan2(-hit.nx, -hit.nz);
+  if (C.id !== 'gecko') C.stamina = Math.max(0, C.stamina - 2); SND.swish(); return true;
+}
+function startClimb(C, hit) { C.climbing = true; C.climbC = hit.c; C.climbN.set(hit.nx, 0, hit.nz); C.vel.set(0, 0, 0); C.grounded = false; C.crouch = false; C.yaw = Math.atan2(-hit.nx, -hit.nz); SND.swish(); }
 function detach(C, push, up, grounded) { C.climbing = false; C.vel.set(C.climbN.x * push * 20, up, C.climbN.z * push * 20); C.climbCD = .35; if (grounded) C.grounded = true; }
 function updLeader(C, dt) {
   const ctl = STATE === 'play' && !(C.tumble > 0) && !PAUSED;
@@ -2033,7 +2041,7 @@ function updLeader(C, dt) {
   moveVert(C, dt);
   if (C.grounded) C.flaps = 0;
   if (C.id === 'bat' && ctl && !C.grounded && keys.Space && C.ceilHit && roostOn(C, C.ceilHit)) return;
-  if (hit && ctl && !base && !hit.c.slick && C.climbCD <= 0 && !C.crouch && (C.stamina > 8 || C.id === 'gecko')) { if (-(wx * hit.nx + wz * hit.nz) > .5) startClimb(C, hit); }
+  if (hit && ctl && !base && !hit.c.slick && C.climbCD <= 0 && !C.crouch && (C.stamina > 8 || C.id === 'gecko')) { if (-(wx * hit.nx + wz * hit.nz) > .5 && !(hit.c.grip && C.grounded && hit.c.y1 - C.pos.y < 21 && scramble(C, hit))) startClimb(C, hit); }
   if (C.grounded && !C.cold) C.stamina = Math.min(C.stamMax || 100, C.stamina + 45 * dt);
   const hs = Math.hypot(C.vel.x, C.vel.z); C.spd = hs;
   C.state = base && C.grounded ? (hs > .8 ? 'stackwalk' : 'stack') : C.dashT > 0 ? 'roll' : C.tumble > 0 ? 'tumble' : C.gliding ? 'glide' : !C.grounded ? 'air' : hs > .8 ? (C.crouch ? 'sneak' : 'walk') : (C.crouch ? 'crouch' : 'idle');
@@ -2054,11 +2062,11 @@ function resolveClimb(C) {
   return best;
 }
 function updClimb(C, dt, inX, inY, ctl, run) {
-  const n = C.climbN; const sp = 9 * C.S.clb * (run ? 1.4 : 1);
+  const n = C.climbN, grip = C.climbC && C.climbC.grip; const sp = 9 * C.S.clb * (run ? 1.4 : 1) * (grip ? 1.7 : 1);
   if (ctl && pressed.Space) { C.climbing = false; C.vel.set(n.x * 24, 40, n.z * 24); C.climbCD = .45; C.yaw = Math.atan2(n.x, n.z); SND.jump(); C.state = 'air'; return; }
   let sx = n.z, sz = -n.x; if (sx * Math.cos(cam.yaw) + sz * -Math.sin(cam.yaw) < 0) { sx = -sx; sz = -sz; }
   const moving = inX !== 0 || inY !== 0;
-  if (C.id !== 'gecko') C.stamina -= (moving ? (run ? 11 : 5.4) : 1.8) * dt;
+  if (C.id !== 'gecko') C.stamina -= (moving ? (run ? 11 : 5.4) : 1.8) * (grip ? .55 : 1) * dt;
   if (C.stamina <= 0) { C.stamina = 0; detach(C, .4, 0); toast('體力用完了，先找個地方站穩休息'); return; }
   const ox = C.pos.x, oz = C.pos.z;
   C.pos.y += inY * sp * dt; C.pos.x += sx * inX * sp * .8 * dt; C.pos.z += sz * inX * sp * .8 * dt;
@@ -3037,7 +3045,7 @@ function toyHand() { const p = V3(); mom.arms[1].hand.getWorldPosition(p); retur
 function momFetch(dt) {
   let F = TOY.fetch;
   if (!F) {
-    if (!TOY.fetchQ.length || KM.mode === 'fopen' || STATE === 'fail') return null;
+    if (!TOY.fetchQ.length || KM.mode === 'fopen' || STATE === 'fail' || mom.pos.y > 1) return null;
     const C = TOY.fetchQ.shift(); if (!C.frozen || C.toyAt !== 'floor' || !toyReachable(C)) return null;
     F = TOY.fetch = { C, mode: 'walk', t: 0, ap: toyApproach(C.pos) }; KM.mode = 'fetch';
   }
@@ -3937,11 +3945,11 @@ function buildLivingRoom(K) {
   const floorM = new THREE.MeshStandardMaterial({ color: 0x8a5c3a, roughness: .7, map: K.floor.map || null });
   box(X0 - 2, X1 + 12, -10, 0, -240, 240, floorM, { uv: 140, cast: false });
   box(X0 - 2, X1 + 12, 260, 270, -240, 240, K.ceil, { cast: false });
-  box(X0, X1 + 12, 0, 260, -244, -232, wallM, { uv: 120 }); // far wall: the vent near the floor leads through a duct into the garage
+  box(X0, 748, 0, 260, -244, -232, wallM, { uv: 120 }); box(828, X1 + 12, 0, 260, -244, -232, wallM, { uv: 120 }); box(748, 828, 205, 260, -244, -232, wallM, { uv: 120 }); // far wall (a doorway to the stairs); the vent near the floor leads through a duct into the garage
   box(X1, X1 + 12, 0, 260, -232, -214, wallM, { uv: 120 }); box(X1, X1 + 12, 0, 260, -186, 232, wallM, { uv: 120 }); box(X1, X1 + 12, 0, 4, -214, -186, wallM, { uv: 120 }); box(X1, X1 + 12, 24, 260, -214, -186, wallM, { uv: 120 });
   // front wall with the window opening (x 700–850, y 100–210)
   box(X0, 700, 0, 260, 232, 244, wallM, { uv: 120 }); box(850, X1 + 12, 0, 260, 232, 244, wallM, { uv: 120 }); box(700, 850, 0, 100, 232, 244, wallM, { uv: 120 }); box(700, 850, 210, 260, 232, 244, wallM, { uv: 120 });
-  box(X0, X1, 0, 9, -232, -230.5, M.white, { col: false }); box(X0, X1, 0, 9, 230.5, 232, M.white, { col: false }); box(X1 - 1.5, X1, 0, 9, -230, 230, M.white, { col: false });
+  box(X0, 744, 0, 9, -232, -230.5, M.white, { col: false }); box(832, X1, 0, 9, -232, -230.5, M.white, { col: false }); box(X0, X1, 0, 9, 230.5, 232, M.white, { col: false }); box(X1 - 1.5, X1, 0, 9, -230, 230, M.white, { col: false });
   // the door: hinged at z=40, closes towards z=-60, swings into the kitchen
   const dg = new THREE.Group(); dg.position.set(300, 0, 40); LV.add(dg); LIV.door = dg;
   const dm = new THREE.MeshPhysicalMaterial({ color: 0xf0ebe2, roughness: .55, clearcoat: .2 });
@@ -4122,7 +4130,7 @@ const MP_QUESTS = [
   { t: '找齊三個零件', s: '彈簧在爐頭旁、電容在洗手盆下面的櫃、鏡片在廁所的鏡櫃。次序隨意，分頭行動最快——客廳門、遙控器電池都可以隨時先做' },
   { t: '打開通往客廳的門', s: '門被門擋卡住了——熊可以推開或拉走門擋，或者爸爸把它縮小' },
   { t: '全隊進入客廳', s: '所有玩家都要走過去（電腦隊友會跟着）' },
-  { t: '拿走遙控器的電池', s: '遙控器在咖啡枱上——女兒在沙發看電視就引開她：關電視、熄燈、在別處弄點聲音' },
+  { t: '拿走遙控器的電池', s: '遙控器在咖啡枱上——女兒在沙發看電視就引開她：關電視、熄燈、弄點聲音；或者派兩個人沿天花槽爬上她的房間，扭動音樂盒——她一定會跑上樓' },
   { t: '爬過通風口去車房', s: '電池到手，通風口的蓋打開了——全隊一齊爬過去' },
   { t: '弄跌監視鏡頭', s: '鐵架頂有部 Origin Dynamics 的監視鏡頭——爬上去把它推跌（熊推、阿刺撞都得）' },
   { t: '打開狗門的門扣', s: '側門下面有狗門，門扣太高——疊羅漢、跳跳跳上去，或者推木箱過去墊腳' },
@@ -4716,7 +4724,7 @@ function updKitchenMom(dt) {
   momAnimK(dt, moveD);
 }
 function momAnimK(dt, moveD) {
-  const P = mom.pos; P.y = 0; const R0 = mom.root; R0.position.copy(P); R0.rotation.y = mom.yaw;
+  const P = mom.pos; P.y = mom.fy = humanFloor(P.x, P.z, mom.fy || 0); const R0 = mom.root; R0.position.copy(P); R0.rotation.y = mom.yaw;
   const prev = mom.phase; mom.phase += moveD / 62 * Math.PI; const ph = mom.phase; const walking = moveD > 0;
   mom.amp = walking ? .42 : damp(mom.amp || 0, 0, 4, dt); const ak = mom.amp / .42;
   const sitting = KM.mode === 'act' && (KM.pt === 'table' || KM.pt === 'toilet' || KM.pt === 'sofa') && !walking; if (sitting) mom.sitY = { table: 53, toilet: 47, sofa: 50 }[KM.pt]; mom.sitK = damp(mom.sitK || 0, sitting ? 1 : 0, 5, dt); const sk = mom.sitK;
@@ -4737,11 +4745,11 @@ function momAnimK(dt, moveD) {
   else if (KM.mode === 'fopen') { A1.sh.rotation.set(-1.25, .2, 0); A1.el.rotation.x = -.25; A0.sh.rotation.x = -.2; A0.el.rotation.x = -.2; mom.spoon.visible = false; }
   else { A0.sh.rotation.set(Math.sin(ph) * .3 * ak, 0, 0); A0.el.rotation.x = -.25; A1.sh.rotation.set(-Math.sin(ph) * .3 * ak, 0, 0); A1.el.rotation.x = -.25; mom.spoon.visible = KM.pt === 'stove'; }
   if (walking && Math.floor(prev / Math.PI) !== Math.floor(ph / Math.PI)) {
-    const Lg = mom.legs[Math.floor(ph / Math.PI) % 2 === 0 ? 0 : 1]; const fp = V3(); Lg.ankle.getWorldPosition(fp); fp.y = 0;
+    const Lg = mom.legs[Math.floor(ph / Math.PI) % 2 === 0 ? 0 : 1]; const fp = V3(); Lg.ankle.getWorldPosition(fp); fp.y = P.y;
     const dist = Math.hypot(leader.pos.x - fp.x, leader.pos.y - fp.y, leader.pos.z - fp.z);
     SND.thud(clamp(1.1 - dist / 420, .06, .9)); cam.shake = Math.max(cam.shake, clamp(1 - dist / 240, 0, 1) * .8);
-    for (let i = 0; i < 4; i++) emit(V3(fp.x + R(-6, 6), .5, fp.z + R(-8, 12)), V3(R(-12, 12), R(3, 10), R(-12, 12)), new THREE.Color(.2, .18, .16), R(.5, 1), R(.5, 1), 20, 2.5);
-    if (STATE === 'play' && Math.hypot(leader.pos.x - fp.x, leader.pos.z - (fp.z + 4)) < 14 && leader.pos.y < 8) knock(leader, fp, '差點被踩扁！');
+    for (let i = 0; i < 4; i++) emit(V3(fp.x + R(-6, 6), fp.y + .5, fp.z + R(-8, 12)), V3(R(-12, 12), R(3, 10), R(-12, 12)), new THREE.Color(.2, .18, .16), R(.5, 1), R(.5, 1), 20, 2.5);
+    if (STATE === 'play' && Math.hypot(leader.pos.x - fp.x, leader.pos.z - (fp.z + 4)) < 14 && leader.pos.y - fp.y < 8 && leader.pos.y - fp.y > -3) knock(leader, fp, '差點被踩扁！');
   }
 }
 function updKid(dt) {
@@ -4849,7 +4857,7 @@ function detectKitchen(dt) {
   const s1 = eyeSee(mom.head, .55, 440); if (s1 > seen) { seen = s1; who = 'mom'; }
   const s2 = eyeSee(KID.head, .5, 360); if (s2 > seen) { seen = s2; who = 'kid'; }
   KS.watch = seen > 0 ? { p: (who === 'kid' ? KID.head : mom.head).getWorldPosition(V3()), s: seen, who } : null;
-  const kd = Math.hypot(L.pos.x - KID.root.position.x, L.pos.z - KID.root.position.z); if (kd < 45 && L.pos.y < 40 && L.spd > 2 && !L.crouch && KID.mode !== 'read') { seen = Math.max(seen, .3); who = who || 'kid'; }
+  const kd = Math.hypot(L.pos.x - KID.root.position.x, L.pos.z - KID.root.position.z); if (kd < 45 && Math.abs(L.pos.y - KID.root.position.y) < 40 && L.spd > 2 && !L.crouch && KID.mode !== 'read') { seen = Math.max(seen, .3); who = who || 'kid'; }
   if (seen > 0) {
     const lit = litAt(V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z)) * (inDark(L.pos) ? .6 : 1); const mv = L.spd > 1.5 ? 1 : .5; const cr = L.crouch ? .55 : 1; const glow = KS.carried && (!NET.on || KS.carrier === L.id) ? 1.35 : 1;
     const k = seen * lit * mv * cr * glow * hideK(L) * HB.eye; meter += k * dt * 1.0;
@@ -4890,7 +4898,7 @@ LEVELS.kitchen = {
   build() {
     buildKitchen(); buildKid(); buildCat(); buildToyBin(); LEVELS.kitchen.updrafts = [{ x: 57, z: -205, r: 9, y0: 88.5, y1: 178, fx: 5, all: true }, buildVent()];
     addVial(-128, 13, -200); addVial(170, 184, -168); addVial(70, 88.5, -215); for (const p of [[-120, 0, 70], [-70, 0, 100], [20, 0, -146], [-30, 91.8, -182], [246, 1.2, 122]]) addCrumb(...p);
-    buildLivingRoom(kitchenMats()); buildHouseSwitches(kitchenMats());
+    buildLivingRoom(kitchenMats()); buildHouseSwitches(kitchenMats()); buildUpstairs(kitchenMats());
     // online co-op: the three machine parts
     addPart(44, 88.5, -212, 'spring'); addPart(205, 110, -464, 'lens'); addPart(-112, 13, -186, 'cap');
   },
@@ -4902,7 +4910,7 @@ LEVELS.kitchen = {
     mom.root.visible = true; mom.phone.visible = false; mom.active = false; if (!mom.spoon) { mom.spoon = new THREE.Mesh(new THREE.CylinderGeometry(.5, .7, 26, 8), KMAT.wood); mom.spoon.position.set(0, -27, 8); mom.spoon.rotation.x = 1.2; mom.arms[1].el.add(mom.spoon); }
     mom.pos.set(34, 0, -128); mom.yaw = Math.PI; mom.aim.set(22, 96, -178); mom.aimT.copy(mom.aim); KM.mode = 'act'; KM.pt = 'stove'; KM.sched = 0; KM.t = 10;
     KID.root.visible = true; KID.root.position.set(-90, 0, 157); KID.root.rotation.y = Math.PI; KID.mode = 'read'; KID.t = 7;
-    HX.bd.a = 1.35; for (const o of HX.list) { if (o.lv) continue; o.on = o.def; hxApply(o, true); } HX.water = 0; brainReset();
+    HX.bd.a = 1.35; for (const o of HX.list) { if (o.lv) continue; o.on = o.def; hxApply(o, true); } HX.water = 0; mom.fy = 0; KID.fy = 0; upReset(); brainReset();
     CAT.root.visible = true; CAT.pos.copy(CAT.home); CAT.mode = 'sleep'; CAT.sleepK = 1;
     kitchenMode();
   },
@@ -4922,7 +4930,7 @@ LEVELS.kitchen = {
   npc(dt) { if (STATE === 'play' || STATE === 'fail' || STATE === 'end' || STATE === 'frozen') { updKitchenMom(dt); updKid(dt); updCat(dt); } },
   detect: detectKitchen,
   update(dt) {
-    lvT += dt; updKitchenPlayer(dt); updCookie(); hxTick(dt); mpChecklist();
+    lvT += dt; updKitchenPlayer(dt); updCookie(); hxTick(dt); upTick(dt); mpChecklist();
     scheduleLines(KS.mp ? KLINES_MP : KLINES_SP, dt);
     if (rnd() < dt * .75) { emit(KS.tap, V3(0, -2, 0), new THREE.Color(.5, .62, .7), .35, .9, 300, 0); setTimeout(() => { if (ZONES.kitchen.near) { for (let i = 0; i < 4; i++) emit(V3(-100, 68.9, -193), V3(R(-6, 6), R(5, 12), R(-6, 6)), new THREE.Color(.5, .62, .72), .2, .35, 200, 1); if (leader.pos.distanceTo(V3(-100, 68, -193)) < 120) SND.drip(); } }, 420); }
   },
@@ -6998,7 +7006,7 @@ function musicTick(dt) {
   MUS.want = musicWant();
   if (!MUS.cur) { if (!BANK.piano.length) return; MUS.next = C.currentTime + .15; musicSwitch(MUS.want, MUS.next); }
   musicLayers(dt); musicCues();
-  const duck = (PAUSED ? .4 : 1) * (STATE === 'frozen' || STATE === 'fail' ? .3 : 1);
+  const duck = (PAUSED ? .4 : 1) * (STATE === 'frozen' || STATE === 'fail' ? .3 : 1) * (MUS.ext ?? 1);
   MUS.duck = damp(MUS.duck, duck, 3, dt);
   MUS.bus.gain.setTargetAtTime(musVol() * MUS.duck, C.currentTime, .1);
 }
@@ -7200,7 +7208,7 @@ function buildDuct(K) {
   box(62, 348, 268, 270, -330, -308, D); box(14, 374, 270, 294, -332, -330, D); box(62, 320, 270, 294, -308, -306, D); box(344, 374, 270, 294, -308, -306, D); box(372, 374, 270, 294, -330, -308, D); box(62, 374, 292, 294, -332, -306, D);
   // segment C: a branch before the fan, north over the bathroom, east over the living room, then north to the garage
   box(320, 344, 268, 270, -306, -240, D); box(318, 320, 270, 294, -306, -214, D); box(344, 346, 270, 294, -306, -238, D); box(320, 344, 292, 294, -306, -214, D);
-  box(346, 904, 270, 294, -240, -238, D); box(320, 880, 270, 294, -214, -212, D); box(320, 904, 292, 294, -240, -212, D);
+  box(346, 904, 270, 294, -240, -238, D); box(320, 880, 270, 294, -214, -212, D); box(320, 600, 292, 294, -240, -212, D); box(624, 904, 292, 294, -240, -212, D); box(600, 624, 292, 294, -240, -232, D);
   box(904, 906, 270, 294, -240, 108, D); box(878, 880, 270, 294, -214, 134, D); box(878, 904, 292, 294, -214, 134, D);
   for (let x = 380; x < 880; x += 60) box(x, x + 1.2, 270, 292, -239.6, -239.2, new THREE.MeshStandardMaterial({ color: 0x8a9094, metalness: .8, roughness: .5 }), { col: false, cast: false });
   addBattery(620, 270, -226); addCrumb(892, 270, -40);
@@ -7312,7 +7320,7 @@ function hxLights() {
   const B = HX.blight; if (B) { B.l.intensity = HX.id.blight.on ? B.I : 0; if (HX.leak) HX.leak.intensity = HX.id.blight.on ? 260 : 0; }
   const H = HX.hoodL; if (H) { const on = HX.id.hood.on; H.spec.on = on; H.l.intensity = on ? H.I : 0; H.bulb.emissiveIntensity = on ? 7 : .08; }
   if (LEVEL !== 'kitchen') for (const k in HX.snd) HX.snd[k].gain.value = 0;
-  garageLights(); if (RADIO.bus && LEVEL !== 'garage') RADIO.bus.gain.value = 0; if (RADIO2.bus && LEVEL !== 'yard') RADIO2.bus.gain.value = 0;
+  upLights(); garageLights(); if (RADIO.bus && LEVEL !== 'garage') RADIO.bus.gain.value = 0; if (RADIO2.bus && LEVEL !== 'yard') RADIO2.bus.gain.value = 0;
   if (YS.lampL && HX.id.olamp) { if (!HX.id.olamp.on) YS.lampL.intensity = 0; else if (YS.lampL.intensity === 0 && !inDark(YS.lampL.position)) YS.lampL.intensity = 9000; }
   const lp = HX.id.lamp; if (LIV.lamp && lp) { if (!lp.on) { LIV.lamp.intensity = 0; if (LIV.shade) LIV.shade.material.emissiveIntensity = 0; } else if (LIV.lamp.intensity === 0 && !inDark(LIV.lamp.position)) LIV.lamp.intensity = 9000; const s = KS.lights.find(q => q.p.x === 575 && q.p.z === 8); if (s) s.on = lp.on; }
   const tv = HX.id.tv; if (tv && !tv.on) LIV.tvOff = true; if (tv) { const s = KS.lights.find(q => q.p.x === 850 && q.p.z === 120); if (s) s.on = tv.on; }
@@ -7368,20 +7376,25 @@ function hxUI() {
 // =====================================================================
 const HB = { sus: 0, quiet: 0, stage: 0, search: 0, inc: [], mem: [], eye: 1, m: null, k: null, said: {}, glT: 0, kidForgot: 0, lastSay: {} };
 const NAVN = {}, NAVE = {};
-function navN(id, x, z) { NAVN[id] = { id, x, z }; NAVE[id] = []; }
+function navN(id, x, z, y = 0) { NAVN[id] = { id, x, z, y }; NAVE[id] = []; }
 function navL(a, b, gate) { NAVE[a].push({ to: b, gate }); NAVE[b].push({ to: a, gate }); }
 [['stove', 34, -128], ['sink', -100, -127], ['fridge', 176, -88], ['mtable', -90, 12], ['kmid', 0, -40], ['keast', 225, -40], ['bathK', 267, -160], ['kswitch', 284, -84], ['bswitch', 284, -198],
  ['livK', 268, -10], ['ksouth', 40, 186], ['kidstand', -90, 192], ['catspot', 152, -92],
  ['livL', 345, -10], ['lmid', 520, -20], ['llamp', 600, -12], ['lsofa', 672, 10], ['ltv', 842, 76],
  ['toys', 212, 120], ['counter', -30, -122],
- ['bathIn', 262, -270], ['bmid', 296, -350], ['toiletStand', 400, -390], ['bsink', 215, -410]].forEach(n => navN(...n));
+ ['bathIn', 262, -270], ['bmid', 296, -350], ['toiletStand', 400, -390], ['bsink', 215, -410],
+ // upstairs: the stairs behind the living room, the landing and hall, the daughter's bedroom (y 300)
+ ['lstair', 788, -196], ['stairBot', 788, -258], ['stairTop', 788, -484, 300], ['hallN', 864, -484, 300], ['hallS', 864, -262, 300],
+ ['uswitch', 852, -205, 300], ['umid', 640, -40, 300], ['udesk', 495, -112, 300], ['ushelf', 702, -176, 300], ['ubed', 448, 112, 300], ['unight', 478, 178, 300], ['uwin', 620, 168, 300], ['uward', 826, 92, 300]].forEach(n => navN(...n));
 for (const [a, b] of [['stove', 'kmid'], ['sink', 'kmid'], ['stove', 'sink'], ['fridge', 'kmid'], ['fridge', 'keast'], ['mtable', 'kmid'], ['kmid', 'keast'], ['keast', 'bathK'], ['keast', 'kswitch'], ['keast', 'livK'],
   ['livK', 'kswitch'], ['kswitch', 'bswitch'], ['bswitch', 'bathK'], ['kmid', 'ksouth'], ['keast', 'ksouth'], ['ksouth', 'kidstand'], ['catspot', 'kmid'], ['catspot', 'fridge'], ['catspot', 'keast'],
-  ['livL', 'lmid'], ['lmid', 'llamp'], ['llamp', 'lsofa'], ['lmid', 'lsofa'], ['lsofa', 'ltv'], ['bathK', 'bathIn'], ['bathIn', 'bmid'], ['bmid', 'toiletStand'], ['bmid', 'bsink'], ['bathIn', 'bsink'], ['toys', 'keast'], ['toys', 'ksouth'], ['counter', 'kmid'], ['counter', 'sink'], ['counter', 'stove']]) navL(a, b);
+  ['livL', 'lmid'], ['lmid', 'llamp'], ['llamp', 'lsofa'], ['lmid', 'lsofa'], ['lsofa', 'ltv'], ['bathK', 'bathIn'], ['bathIn', 'bmid'], ['bmid', 'toiletStand'], ['bmid', 'bsink'], ['bathIn', 'bsink'], ['toys', 'keast'], ['toys', 'ksouth'], ['counter', 'kmid'], ['counter', 'sink'], ['counter', 'stove'],
+  ['lstair', 'lmid'], ['lstair', 'ltv'], ['lstair', 'stairBot'], ['stairBot', 'stairTop'], ['stairTop', 'hallN'], ['hallN', 'hallS'], ['hallS', 'uswitch'], ['uswitch', 'umid'], ['uswitch', 'ushelf'], ['uswitch', 'uward'],
+  ['umid', 'udesk'], ['umid', 'ushelf'], ['umid', 'ubed'], ['umid', 'uwin'], ['umid', 'uward'], ['umid', 'unight'], ['ubed', 'unight'], ['unight', 'uwin'], ['udesk', 'ubed']]) navL(a, b);
 navL('livK', 'livL', () => LIV.open);
-function roomOf(x, z) { return z < -236 ? 'b' : x > 306 ? 'l' : 'k'; }
-const ROOM_NAME = { k: '廚房', l: '客廳', b: '廁所' };
-function navNearest(x, z) { const r = roomOf(x, z); let best = null, bd = 1e9; for (const id in NAVN) { const n = NAVN[id]; if (roomOf(n.x, n.z) !== r) continue; const d = Math.hypot(n.x - x, n.z - z); if (d < bd) { bd = d; best = id; } } return best; }
+function roomOf(x, z, y = 0) { if (x > 740 && z < -244) return 's'; if (y > 200 && x > 300 && z > -244) return 'u'; return z < -236 ? 'b' : x > 306 ? 'l' : 'k'; }
+const ROOM_NAME = { k: '廚房', l: '客廳', b: '廁所', s: '樓梯', u: '樓上房間' };
+function navNearest(x, z, y = 0) { const r = roomOf(x, z, y); let best = null, bd = 1e9; for (const id in NAVN) { const n = NAVN[id]; if (roomOf(n.x, n.z, n.y) !== r) continue; const d = Math.hypot(n.x - x, n.z - z); if (d < bd) { bd = d; best = id; } } return best; }
 function navPath(from, to) {
   if (!from || !to) return null; if (from === to) return [to];
   const dist = { [from]: 0 }, prev = {}, open = new Set([from]);
@@ -7396,12 +7409,14 @@ const SEATS = {
   kid: { x: -90, z: 157, yaw: Math.PI, k: 'homework', y: 50, stand: 'kidstand' },
   toilet: { x: 400, z: -430, yaw: 0, k: 'toilet', y: 46, stand: 'toiletStand' },
   sofa: { x: 622, z: 112, yaw: Math.PI / 2, k: 'sofa', y: 50, stand: 'lsofa' },
-  sofaM: { x: 622, z: 168, yaw: Math.PI / 2, k: 'sofa', y: 50, stand: 'lsofa' }
+  sofaM: { x: 622, z: 168, yaw: Math.PI / 2, k: 'sofa', y: 50, stand: 'lsofa' },
+  udesk: { x: 495, z: -151, yaw: Math.PI, k: 'homework', y: 45, stand: 'udesk' },
+  ubed: { x: 410, z: 118, yaw: Math.PI / 2, k: 'sofa', y: 48, stand: 'ubed' }
 };
 const MCOL = '#f4bb72', KCOL = '#e8a0c0';
 function mkAgent(who) { return { who, q: [], cur: null, act: '', last: ['', '', ''], need: {}, react: 0, seat: null, after: null, idle: 0 }; }
 function agentPos(A) { return A.who === 'mom' ? mom.pos : KID.pos; }
-function agentRoom(A) { const P = agentPos(A); return roomOf(P.x, P.z); }
+function agentRoom(A) { const P = agentPos(A); return roomOf(P.x, P.z, P.y); }
 function brainSay(who, text, dur = 2.6) {
   const A = who === 'mom' ? HB.m : HB.k; if (!A) return; const k = who; if (HB.lastSay[k] && T - HB.lastSay[k] < 2.2) return; HB.lastSay[k] = T;
   const P = agentPos(A), name = who === 'mom' ? '太太' : '女兒', col = who === 'mom' ? MCOL : KCOL;
@@ -7433,7 +7448,8 @@ const ACTS = {
     window: { rate: 1 / 120, w: .9, steps: () => [{ go: 'sink' }, { wait: R(5, 8), km: ['act', 'idle'], at: [-100, 150, -300], say2: pick(['……你到底去了哪裡。', '下雨了……他有帶傘嗎？']) }] },
     wipe: { rate: 1 / 85, w: .85, steps: () => [{ go: 'mtable' }, { wait: R(5, 8), km: ['act', 'sink'], at: [-120, 76, 80] }] },
     toys: { rate: 1 / 110, w: .8, steps: () => [{ go: 'toys' }, { look: R(4, 6), at: [250, 10, 120], low: true }, { say: pick(['又亂放玩具……', '這些玩具還是他買的。']) }] },
-    recheck: { rate: 0, util: () => HB.sus >= 1.2 && HB.mem.length ? HB.sus * .4 : -1, steps: () => { const m = pick(HB.mem); return [{ say: pick(['剛才那邊……', '我再看看。', '好像是這裡……']) }, { go: navNearest(m.p.x, m.p.z) }, { look: 3 + HB.sus, at: [m.p.x, Math.min(m.p.y, 60), m.p.z], low: HB.sus >= 2 }]; } }
+    recheck: { rate: 0, util: () => HB.sus >= 1.2 && HB.mem.length ? HB.sus * .4 : -1, steps: () => { const m = pick(HB.mem); const fy = m.p.y > 200 ? UPS.y : 0; return [{ say: pick(['剛才那邊……', '我再看看。', '好像是這裡……']) }, { go: navNearest(m.p.x, m.p.z, m.p.y) }, { look: 3 + HB.sus, at: [m.p.x, Math.min(m.p.y, fy + 60), m.p.z], low: HB.sus >= 2 }]; } },
+    laundry: { rate: 1 / 150, w: .9, ok: () => LIV.open && !(HB.k && agentRoom(HB.k) === 'u'), steps: () => [{ go: 'uswitch' }, { sw: 'ulight', on: true }, { go: 'uward' }, { wait: R(6, 9), km: ['act', 'sink'], at: [880, 420, 92], say2: pick(['校服又要洗了……', '……他的外套還掛在這裡。']) }, { go: 'ubed' }, { look: R(3, 4.5), at: [380, 330, 150], low: true }, { go: 'uwin' }, { wait: R(4, 6), km: ['act', 'idle'], at: [620, 420, 400], say2: pick(['小熊還在窗口等……', '……你快點回來吧。']) }, { go: 'uswitch' }, { sw: 'ulight', on: false }] }
   },
   kid: {
     homework: { base: .55, repeat: true, steps: () => [{ go: 'kidstand' }, { sit: 'kid' }, { wait: R(14, 26), pose: 'homework' }] },
@@ -7442,7 +7458,8 @@ const ACTS = {
     toys: { rate: 1 / 90, w: .85, steps: () => [{ go: 'toys' }, { wait: R(5, 8), pose: 'pet', at: [250, 10, 120] }, { say: pick(['這個留給爸爸玩。', '小熊，你也想爸爸嗎？']) }] },
     askMom: { rate: 1 / 130, w: 1, ok: () => HB.m && agentRoom(HB.m) !== 'b' && HB.m.react < 2, steps: () => [{ near: 'mom' }, { say: pick(['媽，爸爸甚麼時候回來？', '媽，爸爸今天會打電話來嗎？']), reply: pick(['……很快就回來了。', '……他很忙，乖。']) }, { wait: 3, pose: 'stand', lookMom: 1 }] },
     cat: { rate: 1 / 80, w: .8, steps: () => [{ say: '小橘～過來～' }, { go: 'catspot' }, { wait: R(4, 7), pose: 'pet', lookCat: 1 }] },
-    tv: { rate: 1 / 58, w: 1.15, ok: () => LIV.open, steps: () => [{ ask: 1 }, { go: 'lsofa' }, { sit: 'sofa' }, { sw: 'tv', on: true }, { wait: R(20, 34), pose: 'sofa', at: [888, 96, 120] }, { tvEnd: 1 }, { stand: 1 }] }
+    tv: { rate: 1 / 58, w: 1.15, ok: () => LIV.open, steps: () => [{ ask: 1 }, { go: 'lsofa' }, { sit: 'sofa' }, { sw: 'tv', on: true }, { wait: R(20, 34), pose: 'sofa', at: [888, 96, 120] }, { tvEnd: 1 }, { stand: 1 }] },
+    room: { rate: 1 / 105, w: 1.05, ok: () => LIV.open, steps: () => roomSteps() }
   }
 };
 function bathBusy() { for (const A of [HB.m, HB.k]) if (A && A.act === 'bath' && agentRoom(A) === 'b') return true; return false; }
@@ -7450,12 +7467,12 @@ function bathBusy() { for (const A of [HB.m, HB.k]) if (A && A.act === 'bath' &&
 // ---------- reacting to what players do ----------
 function brainIncident(id, o, on, by) {
   if (NET.client || !HB.m) return;
-  const add = { klight: .55, tap: .55, hood: .35, blight: .35, flush: .8, tv: .3, lamp: .4 }[id] || .3;
+  const add = { klight: .55, tap: .55, hood: .35, blight: .35, flush: .8, tv: .3, lamp: .4, ulight: .3, udesk: .25, ustar: .3, umusic: .45 }[id] || .3;
   const rep = HB.inc.filter(i => i.id === id && T - i.t < 60).length;
   brainSus(add * (1 + rep * .6), o.p);
   HB.inc.push({ id, t: T, p: o.p.clone() }); if (HB.inc.length > 20) HB.inc.shift();
   const M = HB.m, K = HB.k, mr = agentRoom(M), kr = K ? agentRoom(K) : '';
-  const look = [{ look: 1.5 + HB.sus * .8, at: [o.p.x, 40, o.p.z], low: HB.sus >= 2 }];
+  const look = [{ look: 1.5 + HB.sus * .8, at: [o.p.x, (o.p.y > 200 ? UPS.y : 0) + 40, o.p.z], low: HB.sus >= 2 }];
   if (id === 'klight' && !on) {
     react(M, 3, [{ say: pick(HB.sus > 1.5 ? ['又熄燈？誰在玩開關？', '這燈今天是怎麼了……'] : ['咦？燈怎麼熄了？', '跳掣了？']) }, { go: 'kswitch' }, { sw: 'klight', on: true }, ...look]);
     if (K && kr === 'k') setTimeout(() => brainSay('kid', '媽！好黑呀！'), 900);
@@ -7477,14 +7494,14 @@ function brainIncident(id, o, on, by) {
   } else if (id === 'lamp' && !on) {
     const who = K && kr === 'l' ? K : M, st = [{ say: who === K ? '盞燈怎麼熄了……' : '燈泡壞了？' }, { go: 'llamp' }, { sw: 'lamp', on: true }];
     if (who === M && mr !== 'l') later(M, st); else react(who, 2, st);
-  }
+  } else upIncident(id, o, on, M, K, mr, kr, look);
 }
 // a noise somewhere (something knocked over, a pebble …)
 function brainHear(p, loud = 1) {
   if (NET.client || !HB.m) return; const M = HB.m;
-  if (HX.id.hood && HX.id.hood.on && roomOf(p.x, p.z) === 'k' && (loud < .7 || rnd() < .4)) return;   // the hood drowns small noises out
+  if (HX.id.hood && HX.id.hood.on && roomOf(p.x, p.z, p.y) === 'k' && (loud < .7 || rnd() < .4)) return;   // the hood drowns small noises out
   if (M.react >= 3 || (M.act === 'bath' && M.seat)) return;
-  brainSus(.3, p); const n = navNearest(p.x, p.z);
+  brainSus(.3, p); const n = navNearest(p.x, p.z, p.y);
   react(M, 2, [{ say: pick(['什麼聲音？', '咦？', '誰？']) }, { go: n }, { look: 2.8 + HB.sus * .7, at: [p.x, Math.max(p.y, 10), p.z], low: HB.sus >= 1.5 }, { fn: () => brainSay('mom', CAT.pos && CAT.pos.distanceTo(p) < 90 ? '小橘，又是你？' : pick(['……奇怪。', '是我聽錯了嗎……'])) }]);
 }
 // they caught a glimpse of someone
@@ -7504,7 +7521,7 @@ function brainSearch() {
   setTimeout(() => brainSay('mom', '囡囡，過來幫媽媽找找——家裡好像有老鼠！', 3.2), 600);
   setTimeout(() => brainSay('kid', '老鼠？！好恐怖……', 2.4), 3600);
   const spots = () => { const s = HB.mem.slice(-4).map(m => m.p); for (const id of ['stove', 'fridge', 'kmid', 'bathK', 'lsofa']) if (s.length < 5) s.push(V3(NAVN[id].x, 20, NAVN[id].z)); return s.sort(() => rnd() - .5).slice(0, 4); };
-  const steps = sp => sp.flatMap(p => { const n = navNearest(p.x, p.z); return n ? [{ go: n }, { look: 3.2, at: [p.x, 8, p.z], low: true }] : []; });
+  const steps = sp => sp.flatMap(p => { const n = navNearest(p.x, p.z, p.y); return n ? [{ go: n }, { look: 3.2, at: [p.x, (p.y > 200 ? UPS.y : 0) + 8, p.z], low: true }] : []; });
   react(M, 4, steps(spots()), 'search');
   if (K && agentRoom(K) !== 'b') react(K, 4, steps(spots()), 'search');
 }
@@ -7521,7 +7538,10 @@ function later(A, steps) { if (!A) return; (A.pend = A.pend || []).push(steps); 
 // before choosing what to do next: put right anything in the house that's not as it should be
 function brainChores(A) {
   const H = HX.id; if (!H.klight) return null; const r = agentRoom(A), seesK = r === 'k' || (r === 'l' && LIV.open), K = HB.k;
-  if (A.who === 'kid') { if (r === 'l' && !H.lamp.on) return [{ go: 'llamp' }, { sw: 'lamp', on: true }]; return null; }
+  if (A.who === 'kid') { if (r === 'l' && !H.lamp.on) return [{ go: 'llamp' }, { sw: 'lamp', on: true }]; if (r === 'u' && H.umusic.on) return [{ go: 'ushelf' }, { sw: 'umusic', on: false }]; return null; }
+  const kidUp = K && agentRoom(K) === 'u';
+  if (LIV.open && H.umusic && H.umusic.on && !kidUp) return [{ say: pick(['樓上的音樂盒怎麼響着……', '咦？音樂盒？']) }, { go: 'ushelf' }, { sw: 'umusic', on: false }];
+  if (r === 'u' && !kidUp) { if (H.udesk.on) return [{ go: 'udesk' }, { sw: 'udesk', on: false }]; if (H.ustar.on) return [{ say: '囡囡又忘了關星星燈。' }, { go: 'unight' }, { sw: 'ustar', on: false }]; if (H.ulight.on) return [{ go: 'uswitch' }, { sw: 'ulight', on: false }]; }
   if (!H.klight.on && seesK) return [{ say: pick(['燈怎麼又熄了……', '咦？']) }, { go: 'kswitch' }, { sw: 'klight', on: true }];
   if (H.tap.on && r === 'k') return [{ say: '水龍頭怎麼還開着！' }, { go: 'sink' }, { sw: 'tap', on: false }];
   if (H.blight.on && !bathOccupant() && r === 'k') { const kid = HB.kidForgot && T - HB.kidForgot < 90; HB.kidForgot = 0; return [{ say: kid ? '囡囡！廁所燈又沒關！' : '……誰沒關廁所燈？', reply: kid ? '對不起～' : undefined }, { go: 'bswitch' }, { sw: 'blight', on: false }]; }
@@ -7537,7 +7557,7 @@ function walkA(A, x, z, sp, dt) {
   const P = agentPos(A), dx = x - P.x, dz = z - P.z, d = Math.hypot(dx, dz), st = sp * dt;
   if (d < st + .5) { P.x = x; P.z = z; return [true, d]; }
   P.x += dx / d * st; P.z += dz / d * st; setYaw(A, Math.atan2(dx, dz), 5, dt);
-  if (A.who === 'mom') mom.aimT.set(P.x + dx / d * 150, 0, P.z + dz / d * 150); else KID.lookP.set(P.x + dx / d * 120, 40, P.z + dz / d * 120);
+  if (A.who === 'mom') mom.aimT.set(P.x + dx / d * 150, P.y, P.z + dz / d * 150); else KID.lookP.set(P.x + dx / d * 120, P.y + 40, P.z + dz / d * 120);
   return [false, st];
 }
 function setYaw(A, y, k, dt) { if (A.who === 'mom') mom.yaw = angDamp(mom.yaw, y, k, dt); else KID.byaw = angDamp(KID.byaw, y, k, dt); }
@@ -7550,12 +7570,12 @@ function brainStep(A, dt) {
   if (!s) { brainChoose(A); return 0; }
   const done = () => { A.cur = null; };
   if (s.go !== undefined) {
-    if (!s.path) { s.path = navPath(navNearest(P.x, P.z), s.go); if (!s.path) { done(); return 0; } }
+    if (!s.path) { s.path = navPath(navNearest(P.x, P.z, P.y), s.go); if (!s.path) { done(); return 0; } }
     const n = NAVN[s.path[0]]; const sp = A.who === 'mom' ? (A.react >= 2 ? 96 : 76) : (A.react >= 2 ? 72 : 56);
     const [ok, d] = walkA(A, n.x, n.z, sp, dt); moveD = d; setPose(A, 'walk', ['goto', s.go]);
     if (ok) { s.path.shift(); if (!s.path.length) done(); }
   } else if (s.near) {
-    const T2 = s.near === 'kid' ? HB.k : HB.m; const tp = agentPos(T2); if (!s.path) s.path = navPath(navNearest(P.x, P.z), navNearest(tp.x, tp.z)) || [];
+    const T2 = s.near === 'kid' ? HB.k : HB.m; const tp = agentPos(T2); if (!s.path) s.path = navPath(navNearest(P.x, P.z, P.y), navNearest(tp.x, tp.z, tp.y)) || [];
     if (s.path.length) { const n = NAVN[s.path[0]]; const [ok, d] = walkA(A, n.x, n.z, 76, dt); moveD = d; setPose(A, 'walk', ['goto', 'near']); if (ok) s.path.shift(); } else done();
   } else if (s.sit) {
     const S = SEATS[s.sit]; if (!s.from) { s.from = P.clone(); s.k = 0; }
@@ -7589,6 +7609,7 @@ function brainStep(A, dt) {
   } else if (s.sw) {
     const o = HX.id[s.sw]; if (!o) { done(); return 0; }
     if (s.sw !== 'flush' && o.on === s.on && !s.t) { done(); return 0; }
+    if (!s.t && (Math.abs(o.p.y - P.y) > 200 || Math.hypot(o.p.x - P.x, o.p.z - P.z) > 300)) { done(); return 0; }
     s.t = (s.t || 0) + dt; lookAt(A, o.p); setYaw(A, Math.atan2(o.p.x - P.x, o.p.z - P.z), 6, dt); setPose(A, 'press', ['press', s.sw]);
     if (s.t > .45 && !s.fired) { s.fired = 1; hxSet(o, s.sw === 'flush' ? true : s.on, A.who); }
     if (s.t > .8) done();
@@ -7634,7 +7655,7 @@ function brainReset() {
   M.need = { wash: .3, fridge: .4, sit: .2, bath: R(0, .4), tidy: .2, checkKid: .1, phone: .45, window: .1, wipe: .15, toys: .1 };
   const K = HB.k = mkAgent('kid'); K.act = 'homework'; K.last = ['homework', '', '']; K.seat = SEATS.kid; K.q = [{ wait: R(12, 18), pose: 'homework' }];
   K.need = { bath: R(.1, .5), snack: R(.2, .5), cat: R(.2, .6), tv: .3, bored: .3, toys: .3, askMom: .25 };
-  KID.pos = KID.root.position; KID.byaw = Math.PI; KID.pose = 'homework'; KID.seatY = 50; KID.sitK = 1; KID.lookP = V3(-90, 76, 112);
+  KID.pos = KID.root.position; KID.fy = 0; mom.fy = 0; KID.byaw = Math.PI; KID.pose = 'homework'; KID.seatY = 50; KID.sitK = 1; KID.lookP = V3(-90, 76, 112);
   HX.bd.tgt = 1.35; HB.eye = 1;
 }
 function brainMom(dt) { if (!HB.m) brainReset(); brainNeeds(HB.m, dt); return brainStep(HB.m, dt); }
@@ -7648,12 +7669,12 @@ function brainTick(dt) {
 }
 function bathOccupant() { for (const A of [HB.m, HB.k]) if (A && agentRoom(A) === 'b' && A.act === 'bath') return A; return null; }
 // what the "eye" panel says: where they are and how suspicious
-const ACT_LABEL = { chore: '執手尾', phone: '打電話', window: '望出窗', wipe: '抹枱', toys: '執玩具', askMom: '問媽媽', cook: '煮飯', wash: '洗碗', fridge: '開雪櫃', sit: '坐低', bath: '用廁所', tidy: '執屋', checkKid: '睇女', recheck: '四處查看', lightOff: '關燈', react: '查看', search: '搜屋', homework: '做功課', snack: '搵嘢食', cat: '逗貓', tv: '睇電視' };
+const ACT_LABEL = { room: '回房間', laundry: '執女兒房', chore: '執手尾', phone: '打電話', window: '望出窗', wipe: '抹枱', toys: '執玩具', askMom: '問媽媽', cook: '煮飯', wash: '洗碗', fridge: '開雪櫃', sit: '坐低', bath: '用廁所', tidy: '執屋', checkKid: '睇女', recheck: '四處查看', lightOff: '關燈', react: '查看', search: '搜屋', homework: '做功課', snack: '搵嘢食', cat: '逗貓', tv: '睇電視' };
 function brainEyeText() {
   if (meter > .3) return '她們在看這邊！快躲進影子裡';
   if (HB.search > 0 || HB.netSearch) return '她們在搜屋！先躲好';
   const s = NET.client ? (HB.netSus || 0) : HB.sus;
-  const where = (A, n) => { const P = A === 'm' ? mom.pos : KID.root.position; return `${n}在${ROOM_NAME[roomOf(P.x, P.z)]}`; };
+  const where = (A, n) => { const P = A === 'm' ? mom.pos : KID.root.position; return `${n}在${ROOM_NAME[roomOf(P.x, P.z, P.y)]}`; };
   const pre = s >= 2 ? '太太起了疑心 · ' : s >= 1 ? '太太覺得家裡怪怪的 · ' : '';
   return pre + where('m', '太太') + ' · ' + where('k', '女兒');
 }
@@ -7664,6 +7685,7 @@ function brainNetRecv(b) { HB.netSus = b[0]; HB.netSearch = !!b[1]; if (b[2] !==
 // the daughter's body: sitting, standing, walking, reaching, crouching to the cat
 function kidBody(dt, moveD) {
   const H = KID, pose = H.pose || 'homework', sitting = pose === 'homework' || pose === 'toilet' || pose === 'sofa';
+  { const RP = H.root.position; RP.y = H.fy = humanFloor(RP.x, RP.z, H.fy || 0); }
   H.sitK = damp(H.sitK ?? 1, sitting ? 1 : 0, 6, dt); const sk = H.sitK;
   const prev = H.ph || 0; H.ph = prev + moveD / 30 * Math.PI; const walking = moveD > 0; H.amp = damp(H.amp || 0, walking ? 1 : 0, 9, dt); const a = H.amp;
   const crouch = pose === 'pet' ? 1 : 0; H.crK = damp(H.crK || 0, crouch, 5, dt);
@@ -7687,16 +7709,16 @@ function kidBody(dt, moveD) {
   if (walking && Math.floor(prev / Math.PI) !== Math.floor(H.ph / Math.PI) && leader) {
     const P = H.root.position, d = Math.hypot(leader.pos.x - P.x, leader.pos.z - P.z);
     SND.thud(clamp(.75 - d / 420, .04, .6)); cam.shake = Math.max(cam.shake, clamp(1 - d / 160, 0, 1) * .45);
-    if (STATE === 'play' && d < 11 && leader.pos.y < 6 && mine(leader)) knock(leader, P.clone(), '差點被女兒踩到！');
+    if (STATE === 'play' && d < 11 && leader.pos.y - P.y < 6 && leader.pos.y - P.y > -3 && mine(leader)) knock(leader, P.clone(), '差點被女兒踩到！');
   }
 }
 // what clients get: head + body + pose
 const KPOSE = ['homework', 'stand', 'walk', 'toilet', 'sofa', 'press', 'pet', 'fridge', 'wash'];
-function kidNet() { const P = KID.root.position; return [+KID.yaw.toFixed(3), +KID.pitch.toFixed(3), +P.x.toFixed(1), +P.z.toFixed(1), +(KID.byaw ?? Math.PI).toFixed(3), Math.max(0, KPOSE.indexOf(KID.pose)), +(KID.seatY || 50).toFixed(1)]; }
+function kidNet() { const P = KID.root.position; return [+KID.yaw.toFixed(3), +KID.pitch.toFixed(3), +P.x.toFixed(1), +P.z.toFixed(1), +(KID.byaw ?? Math.PI).toFixed(3), Math.max(0, KPOSE.indexOf(KID.pose)), +(KID.seatY || 50).toFixed(1), +(KID.fy || 0).toFixed(1)]; }
 function kidNetApply(dt) {
   const w = NET.npc; if (!w || !w.k || w.k.length < 7) return 0; const k = w.k, P = KID.root.position, ox = P.x, oz = P.z;
   const dx = k[2] - P.x, dz = k[3] - P.z; if (dx * dx + dz * dz > 3600) { P.x = k[2]; P.z = k[3]; } else { const f = 1 - Math.exp(-8 * dt); P.x += dx * f; P.z += dz * f; }
-  KID.byaw = angDamp(KID.byaw ?? Math.PI, k[4], 8, dt); KID.pose = KPOSE[k[5]] || 'homework'; KID.seatY = k[6];
+  KID.byaw = angDamp(KID.byaw ?? Math.PI, k[4], 8, dt); KID.pose = KPOSE[k[5]] || 'homework'; KID.seatY = k[6]; if (k[7] !== undefined) KID.fy = k[7];
   return Math.hypot(P.x - ox, P.z - oz) > .05 && KID.pose === 'walk' ? Math.hypot(P.x - ox, P.z - oz) : 0;
 }
 // =====================================================================
@@ -7903,6 +7925,281 @@ function oldBrain(dt) {
   if (O.dozeK > .7 && YS.near && rnd() < dt * .8) emit(V3(hp.x - 4, hp.y + 14, hp.z), V3(R(-2, 2), R(5, 8), R(-2, 2)), new THREE.Color(1.4, 1.4, 1.6), R(.3, .5), R(1.6, 2.2), -2, 0);
   if (YS.radioGlow) YS.radioGlow.material.emissiveIntensity = HX.id.oradio && HX.id.oradio.on ? 1.2 : 0;
   if (YS.tapH) YS.tapH.rotation.x = HX.id.otap && HX.id.otap.on ? 0 : Math.PI / 2;
+}
+// =====================================================================
+//  PHASE 3 — UPSTAIRS: the stairwell behind the living room and the daughter's bedroom
+//  · a doorway in the living room's back wall opens onto a real staircase: 16 steps, each one a climb
+//    for someone 5 cm tall (the carpet runner is easy to grip), a landing and a short hallway
+//  · the daughter's bedroom sits over the living room: a bed with a starry duvet (bouncy), her desk with
+//    crayon drawings of Dad and her diary, a cube shelf with a music box, a wardrobe you can scale, a
+//    round rug — and her plush bear sitting in the window, waiting
+//  · the ceiling duct has a floor register into her room: the secret way up (and a quick way down)
+//  · switches: the ceiling light (by the door), her desk lamp, the star projector, the music box —
+//    a lullaby the whole house can hear, which brings someone upstairs to switch it off
+//  · the family walk the stairs too: she goes up to draw and play; Mom comes up to tidy
+// =====================================================================
+const UPS = { y: 300, ceil: 540, stars: null, mNext: 0, mStep: 0, mbus: null, mOn: 0, diary: null, diaryRead: false, said: {} };
+// the family's feet: the stairs ramp up, the landing / hall / bedroom are at y 300 (the bedroom sits over
+// the living room, so there it keeps whichever floor you were already on)
+function humanFloor(x, z, cur = 0) {
+  if (x > 744 && x < 904 && z < -244) { if (x < 830 && z > -472) return clamp((-246 - z) / 214, 0, 1) * UPS.y; return UPS.y; }
+  if (x > 306 && z > -244) return cur > 150 ? UPS.y : 0;
+  return 0;
+}
+// trim, nosing, runners, drawer fronts…: no colliders, merged into one mesh per material (far fewer draw calls)
+const DECO = new Map();
+function deco(x0, x1, y0, y1, z0, z1, mat) { const g = new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0); g.translate((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); if (!DECO.has(mat)) DECO.set(mat, []); DECO.get(mat).push(g); }
+function flushDeco() { for (const [mat, gs] of DECO) { const m = new THREE.Mesh(mergeGeometries(gs), mat); m.receiveShadow = true; LV.add(m); gs.forEach(g => g.dispose()); } DECO.clear(); }
+function upMats(K) {
+  const C2 = (w, h, f) => { const [c, x] = cnv(w, h); f(x, w, h); return tex(c); };
+  const duvet = C2(256, 256, (x) => { x.fillStyle = '#e7a6b6'; x.fillRect(0, 0, 256, 256); for (let i = 0; i < 46; i++) { const px = R(0, 256), py = R(0, 256), r = R(3, 7); x.fillStyle = rnd() < .5 ? '#fff4d6' : '#ffe08a'; x.beginPath(); for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5 - Math.PI / 2, rr = k % 2 ? r * .45 : r; x.lineTo(px + Math.cos(a) * rr, py + Math.sin(a) * rr); } x.fill(); } });
+  const runner = C2(64, 256, (x) => { x.fillStyle = '#6e2430'; x.fillRect(0, 0, 64, 256); x.fillStyle = '#c9a050'; x.fillRect(5, 0, 3, 256); x.fillRect(56, 0, 3, 256); x.fillStyle = '#8a3440'; for (let y = 8; y < 256; y += 32) { x.beginPath(); x.moveTo(32, y); x.lineTo(42, y + 12); x.lineTo(32, y + 24); x.lineTo(22, y + 12); x.fill(); } });
+  const paper = (draw) => new THREE.MeshStandardMaterial({ map: C2(256, 192, (x) => { x.fillStyle = '#fbf8f0'; x.fillRect(0, 0, 256, 192); draw(x); }), roughness: .95 });
+  const crayon = (x, col, w = 5) => { x.strokeStyle = col; x.lineWidth = w; x.lineCap = 'round'; x.lineJoin = 'round'; };
+  const person = (x, cx, s, col, hair, glasses) => { crayon(x, col); x.beginPath(); x.arc(cx, 70, 16 * s, 0, 7); x.stroke(); x.beginPath(); x.moveTo(cx, 70 + 16 * s); x.lineTo(cx, 130); x.moveTo(cx - 22 * s, 100); x.lineTo(cx + 22 * s, 100); x.moveTo(cx, 130); x.lineTo(cx - 14, 165); x.moveTo(cx, 130); x.lineTo(cx + 14, 165); x.stroke(); if (hair) { crayon(x, hair, 4); x.beginPath(); x.arc(cx, 66, 18 * s, Math.PI, 0); x.stroke(); } if (glasses) { crayon(x, '#222', 2.5); x.strokeRect(cx - 11 * s, 64, 9 * s, 7); x.strokeRect(cx + 2 * s, 64, 9 * s, 7); } };
+  const wall = K.wall.clone(); wall.color = new THREE.Color(0xf6e4df); const low = K.wall.clone(); low.color = new THREE.Color(0xd9b8bb);
+  const hall = K.wall.clone(); hall.color = new THREE.Color(0xeadfcd);
+  const floor = K.floor.clone(); floor.color = new THREE.Color(0xfff2e6);
+  return {
+    floor, wall, low, hall, stair: floor,
+    wood: new THREE.MeshStandardMaterial({ color: 0xe9d6bc, roughness: .55, map: K.wood.map || null }),
+    paint: new THREE.MeshPhysicalMaterial({ color: 0xf7f3ec, roughness: .42, clearcoat: .35 }),
+    mint: new THREE.MeshPhysicalMaterial({ color: 0xa8d8c8, roughness: .45, clearcoat: .3 }),
+    duvet: new THREE.MeshPhysicalMaterial({ map: duvet, roughness: 1, sheen: 1, sheenColor: 0xffe0ea }),
+    sheet: new THREE.MeshPhysicalMaterial({ color: 0xfaf6ee, roughness: 1, sheen: .8 }),
+    bear: new THREE.MeshPhysicalMaterial({ color: 0xc49464, roughness: 1, sheen: 1, sheenColor: 0xf0d0a8 }),
+    curtain: new THREE.MeshPhysicalMaterial({ color: 0xeab0c0, roughness: .95, sheen: .8, side: THREE.DoubleSide }),
+    runner: new THREE.MeshStandardMaterial({ map: runner, roughness: 1 }),
+    draw1: paper(x => { person(x, 70, 1.15, '#2a5cb8', '#3a2a1a', true); person(x, 140, 1, '#d8406a', '#3a2a1a'); person(x, 200, .75, '#e89a2a', '#3a2a1a'); crayon(x, '#e8c02a', 4); x.beginPath(); x.arc(228, 28, 14, 0, 7); x.stroke(); x.fillStyle = '#333'; x.font = '700 18px "Noto Sans TC"'; x.fillText('爸爸', 46, 186); x.fillText('媽媽', 120, 186); x.fillText('我', 194, 186); }),
+    draw2: paper(x => { x.fillStyle = '#d8406a'; x.font = '900 30px "Noto Sans TC"'; x.fillText('爸爸', 26, 66); x.fillText('早點回來！', 26, 116); crayon(x, '#e8406a', 5); x.beginPath(); const hx = 210, hy = 140; x.moveTo(hx, hy + 22); x.bezierCurveTo(hx - 40, hy - 6, hx - 14, hy - 34, hx, hy - 12); x.bezierCurveTo(hx + 14, hy - 34, hx + 40, hy - 6, hx, hy + 22); x.stroke(); }),
+    draw3: paper(x => { crayon(x, '#3a8a4a', 6); x.beginPath(); x.moveTo(20, 160); x.lineTo(236, 160); x.stroke(); crayon(x, '#8a5a3a', 5); x.strokeRect(70, 80, 110, 80); crayon(x, '#c83a2a', 5); x.beginPath(); x.moveTo(60, 82); x.lineTo(125, 30); x.lineTo(190, 82); x.stroke(); crayon(x, '#2a5cb8', 3); x.strokeRect(90, 100, 22, 22); x.strokeRect(140, 100, 22, 22); x.fillStyle = '#333'; x.font = '700 16px "Noto Sans TC"'; x.fillText('我們的家', 86, 186); }),
+    draw4: paper(x => { crayon(x, '#2a5cb8', 5); x.beginPath(); x.arc(128, 80, 40, 0, 7); x.stroke(); crayon(x, '#888', 4); x.beginPath(); x.moveTo(98, 58); x.lineTo(70, 30); x.moveTo(158, 58); x.lineTo(186, 30); x.stroke(); x.fillStyle = '#333'; x.font = '700 16px "Noto Sans TC"'; x.fillText('爸爸的實驗室', 74, 160); crayon(x, '#5ff2e6', 4); x.beginPath(); x.moveTo(118, 74); x.lineTo(138, 74); x.lineTo(132, 96); x.lineTo(124, 96); x.closePath(); x.stroke(); })
+  };
+}
+function buildUpstairs(K) {
+  const M = upMats(K), Y = UPS.y, Yc = UPS.ceil, W = MAT.white;
+  const last = () => cols[cols.length - 1];
+  // ================= the stairwell =================
+  box(748, 828, -10, 0, -250, -232, M.floor, { cast: false });                          // floor in the doorway
+  for (const [x0, x1] of [[744, 748], [828, 832]]) deco(x0, x1, 0, 209, -248, -230, M.paint); deco(744, 832, 205, 209, -248, -230, M.paint);
+  box(736, 748, 0, Yc + 10, -510, -244, M.hall, { uv: 120 }); box(900, 912, 0, Yc + 10, -510, -244, M.hall, { uv: 120 }); box(736, 912, 0, Yc + 10, -510, -498, M.hall, { uv: 120 });
+  box(748, 900, 205, Y, -250, -244, M.hall, { uv: 120 });                               // over the doorway, up to the bedroom floor
+  box(828, 900, 0, Y - 6, -472, -244, M.hall, { uv: 120 });                             // the hallway sits on a solid wall beside the stairs
+  box(748, 900, 0, Y - 6, -498, -472, M.hall, { uv: 120 });                             // … and the landing
+  box(748, 828, -10, 0, -498, -244, M.floor, { cast: false }); box(736, 912, Yc, Yc + 10, -510, -244, K.ceil, { cast: false });
+  const N = 16, rise = Y / N, run = 220 / N;
+  for (let i = 0; i < N; i++) {
+    const z1 = -250 - i * run, z0 = z1 - run, t = (i + 1) * rise;
+    box(748, 828, 0, t, z0, z1, M.wood, { uv: 40 }); last().grip = true;
+    deco(748, 828, t - .9, t + .3, z1 - .4, z1 + .7, M.paint);                      // white nosing
+    deco(763, 813, i * rise, t + .4, z1, z1 + .6, M.runner);                       // carpet runner (riser)
+    deco(763, 813, t, t + .5, z0, z1 + .6, M.runner);                              // (tread)
+    deco(762, 814, t + .4, t + 1.3, z0 + .3, z0 + 1.1, K.brass);                   // brass stair rod
+  }
+  // landing + hallway floors, a balustrade along the open side of the hall
+  box(748, 900, Y - 6, Y, -498, -472, M.floor, { uv: 100 }); box(828, 900, Y - 6, Y, -472, -244, M.floor, { uv: 100 });
+  deco(828, 832, Y, Y + 4, -472, -250, M.wood); deco(827, 833, Y + 88, Y + 92, -472, -250, M.wood);
+  for (let z = -468; z < -252; z += 14) deco(829, 831, Y + 4, Y + 88, z, z + 2, M.paint);
+  cols.push({ t: 'b', x0: 827, x1: 833, y0: Y, y1: Y + 92, z0: -472, z1: -250, noRay: true });
+  // handrail on the wall, on little brass brackets
+  tubeM([[751.5, 92, -250], [751.5, Y + 92, -470]], 1.5, M.wood, 24);
+  for (let i = 0; i <= N; i += 4) { const z = -250 - i * run - 6; deco(748, 751.5, i * rise + 90, i * rise + 92, z - 1, z + 1, K.brass); }
+  // family photos up the stairs (the story told in frames)
+  const ph = [['photo', 0, 22, 28], ['photo3', 4, 30, 22], ['photo2', 8, 18, 24], ['photo', 12, 24, 30]];
+  for (const [img, i, w, h] of ph) { const z = -262 - i * run, y = i * rise + 140; deco(748, 749.6, y - h / 2, y + h / 2, z - w / 2, z + w / 2, MAT.black); mesh(new THREE.PlaneGeometry(w - 3, h - 3), livingPhoto(img), 749.8, y, z, { cast: false }).rotation.y = Math.PI / 2; }
+  // a little round window on the landing (dusk outside)
+  { const r = mesh(new THREE.CircleGeometry(26, 40), K.dusk, 824, Y + 140, -497.4, { cast: false }); r.rotation.y = 0; const fr = mesh(new THREE.TorusGeometry(27, 2.4, 10, 48), M.paint, 824, Y + 140, -497, { cast: false }); fr.rotation.y = 0; }
+  // stairwell light: a pendant at the top, a sconce half-way, the hallway ceiling light
+  cyl(790, -380, .4, Yc - 70, Yc, MAT.black, { col: false, seg: 6 }); mesh(new THREE.SphereGeometry(9, 24, 14), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffe2b8, emissiveIntensity: 3 }), 790, Yc - 76, -380, { cast: false });
+  pointL(0xffd8aa, 7000, 790, Yc - 90, -380); pointL(0xffc890, 2200, 756, 170, -330); pointL(0xffd8b0, 3800, 864, Yc - 30, -330);
+  mesh(new THREE.SphereGeometry(5, 16, 10, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xfff4e0, emissive: 0xffd8a0, emissiveIntensity: 2.2, side: THREE.DoubleSide }), 750, 170, -330, { cast: false }).rotation.z = -Math.PI / 2;
+  KS.lights.push({ p: V3(790, Yc - 90, -380), range: 330 }, { p: V3(864, Yc - 30, -330), range: 260 });
+
+  // ================= the bedroom =================
+  // floor (with the duct's register by the back wall at x 600–624), walls in two tones, ceiling
+  box(306, 600, Y - 6, Y, -244, 244, M.floor, { uv: 75 }); box(624, 906, Y - 6, Y, -244, 244, M.floor, { uv: 75 });
+  box(600, 624, Y - 6, Y, -244, -232, M.floor, { uv: 75 }); box(600, 624, Y - 6, Y, -214, 244, M.floor, { uv: 75 });
+  box(600, 624, 270, Y - 6, -214, -212, MAT.white);                                                      // the register's boot: a face to climb up from the duct
+  for (let i = 0; i < 6; i++) deco(601 + i * 4, 602.4 + i * 4, Y - .7, Y - .1, -231.5, -214.5, W);
+  deco(598, 626, Y - .7, Y - .05, -233, -231.5, W); deco(598, 626, Y - .7, Y - .05, -214.5, -213, W);
+  UPS.regL = pointL(0xffd8a8, 40, 612, 284, -223); addBeam(0xffe2b8, V3(612, 299, -223), V3(612, 270, -223), .45, .05);
+  const wallB = (x0, x1, z0, z1, y0 = Y, y1 = Yc) => { box(x0, x1, y0, y1, z0, z1, M.wall, { uv: 120 }); };
+  wallB(300, 312, -244, 244); wallB(900, 912, -244, 244);
+  wallB(312, 574, 232, 244); wallB(666, 900, 232, 244); wallB(574, 666, 232, 244, Y, Y + 40); wallB(574, 666, 232, 244, Y + 150, Yc);
+  wallB(312, 836, -244, -232); wallB(896, 900, -244, -232); wallB(836, 896, -244, -232, Y + 205, Yc);
+  box(300, 912, Yc, Yc + 10, -244, 244, K.ceil, { cast: false });
+  // the lower band of wall in dusty rose, a chair rail, skirting
+  const band = (x0, x1, z0, z1) => deco(x0, x1, Y, Y + 92, z0, z1, M.low);
+  band(312, 312.5, -232, 232); band(899.5, 900, -232, 232); band(312, 574, 231.5, 232); band(666, 900, 231.5, 232); band(312, 836, -232, -231.5);
+  for (const [x0, x1, z0, z1] of [[312, 313.4, -232, 232], [898.6, 900, -232, 232], [312, 574, 230.6, 232], [666, 900, 230.6, 232], [312, 836, -232, -230.6]]) { deco(x0, x1, Y + 91, Y + 94, z0, z1, M.paint); deco(x0, x1, Y, Y + 8, z0, z1, M.paint); }
+  // the doorway to the hall, and its door standing open against the wall
+  for (const [x0, x1] of [[832, 836], [896, 900]]) deco(x0, x1, Y, Y + 209, -233, -230, M.paint); deco(832, 900, Y + 205, Y + 209, -233, -230, M.paint);
+  box(892, 896, Y, Y + 203, -230, -172, M.paint); mesh(new THREE.SphereGeometry(2, 14, 10), K.brass, 891, Y + 100, -178, { cast: false });
+  // window, sill, curtains — and her bear in the window, waiting for Dad to come home
+  box(570, 670, Y, Y + 36, 198, 232, M.paint); deco(574, 666, Y + 18, Y + 19, 197.6, 198, M.wood);                       // a built-in window seat
+  box(572, 668, Y + 36, Y + 42, 198, 234, new THREE.MeshPhysicalMaterial({ color: 0xf0c4cf, roughness: 1, sheen: .9, sheenColor: 0xffe8ee }));   // its cushion
+  for (const [x, c] of [[582, 0xffffff], [656, 0xa8d8c8]]) { const pw = mesh(new THREE.SphereGeometry(10, 18, 12), new THREE.MeshPhysicalMaterial({ color: c, roughness: 1, sheen: .8 }), x, Y + 50, 224); pw.scale.set(.9, .9, .45); }
+  mesh(new THREE.PlaneGeometry(320, 220), K.dusk, 620, Y + 110, 330, { cast: false }).rotation.y = Math.PI;
+  mesh(new THREE.PlaneGeometry(92, 110), MAT.glassThin, 620, Y + 95, 238, { cast: false }).rotation.y = Math.PI;
+  deco(574, 666, Y + 93, Y + 96, 236, 239, M.paint); deco(618.5, 621.5, Y + 42, Y + 150, 236, 239, M.paint);
+  cols.push({ t: 'b', x0: 574, x1: 666, y0: Y + 42, y1: Y + 150, z0: 237, z1: 239, noRay: true });
+  for (const x of [556, 684]) box(x - 12, x + 12, Y + 2, Y + 176, 222, 228, M.curtain);
+  tubeM([[532, Y + 180, 226], [708, Y + 180, 226]], 1.1, K.brass, 8);
+  { const g = new THREE.Group(); g.position.set(620, Y + 42, 214); LV.add(g); const B = M.bear;
+    mesh(new THREE.SphereGeometry(14, 24, 16), B, 0, 14, 0, { parent: g }).scale.set(1, 1.1, .9); mesh(new THREE.SphereGeometry(10, 24, 16), B, 0, 35, -1, { parent: g });
+    for (const s of [-1, 1]) { mesh(new THREE.SphereGeometry(3.6, 14, 10), B, s * 7.5, 43.5, 0, { parent: g }); mesh(new THREE.SphereGeometry(5, 14, 10), B, s * 13, 18, 3, { parent: g }); mesh(new THREE.SphereGeometry(5.6, 14, 10), B, s * 7.5, 3, 6, { parent: g }); }
+    mesh(new THREE.SphereGeometry(3.4, 14, 10), new THREE.MeshStandardMaterial({ color: 0xf0d8b8, roughness: 1 }), 0, 33, 8, { parent: g });
+    mesh(new THREE.TorusGeometry(8.5, 1.4, 8, 24), new THREE.MeshStandardMaterial({ color: 0xc8344a, roughness: .7 }), 0, 26, 0, { parent: g }).rotation.x = Math.PI / 2;   // a ribbon round its neck
+    cols.push({ t: 'c', x: 620, z: 214, r: 14, y0: Y + 42, y1: Y + 88 }); }
+  // the bed: legs, slats, mattress, a starry duvet you can bounce on, pillow, headboard
+  box(316, 416, Y, Y + 84, 226, 232, M.wood, { uv: 60 }); cyl(366, 229, 50, Y + 84, Y + 85, M.wood, { col: false, seg: 40 });
+  for (const [x, z] of [[319, 43], [413, 43], [319, 223], [413, 223]]) box(x - 3, x + 3, Y, Y + 16, z - 3, z + 3, M.wood);
+  box(316, 416, Y + 14, Y + 22, 40, 226, M.wood, { uv: 60 });
+  box(318, 414, Y + 22, Y + 42, 42, 224, M.sheet);
+  box(316, 416, Y + 42, Y + 47, 40, 198, M.duvet, { uv: 80 }); last().bouncy = true;
+  box(316, 416, Y + 18, Y + 47, 38, 40, M.duvet, { uv: 80 });                 // hangs over the foot: climb it
+  box(416, 418, Y + 20, Y + 47, 40, 198, M.duvet, { uv: 80 });                // … and over the side
+  const pil = mesh(new THREE.SphereGeometry(22, 24, 14), M.sheet, 366, Y + 49, 210); pil.scale.set(1.9, .4, .7); cols.push({ t: 'b', x0: 328, x1: 404, y0: Y + 42, y1: Y + 55, z0: 198, z1: 222 }); last().bouncy = true;
+  // under the bed: dust, a lost toy car, a battery
+  const dustM = furMat({ color: 0x8a8580, len: .6, den: 1.8, droop: .3, clump: .6, rimK: .05, root: .7 });
+  for (const [x, z, r] of [[340, 150, 2.4], [392, 90, 1.8], [372, 200, 2]]) { const b = furMesh(new THREE.SphereGeometry(r, 18, 12), dustM); b.position.set(x, Y + r * .6, z); b.scale.y = .6; LV.add(b); }
+  box(352, 366, Y, Y + 5, 118, 126, new THREE.MeshPhysicalMaterial({ color: 0x2a6ad8, roughness: .3, clearcoat: .8 }));
+  addBattery(380, Y, 170); addCrumb(398, Y, 60);
+  // bedside table, star projector, night-light by the skirting
+  box(422, 462, Y, Y + 50, 192, 230, M.mint); deco(422, 462, Y + 24, Y + 25, 191.6, 192, M.paint); mesh(new THREE.SphereGeometry(1.4, 10, 8), K.brass, 442, Y + 37, 191.4, { cast: false });
+  cyl(442, 211, 9, Y + 50, Y + 53, new THREE.MeshStandardMaterial({ color: 0xf4f0e8, roughness: .4 }), { seg: 28 });
+  const sp = mesh(new THREE.SphereGeometry(8, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshPhysicalMaterial({ color: 0x3a4aa8, roughness: .15, clearcoat: 1, emissive: 0x2a3aa8, emissiveIntensity: .3 }), 442, Y + 53, 211); UPS.projM = sp.material;
+  box(466, 474, Y + 10, Y + 18, 230.4, 232, new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffb070, emissiveIntensity: 2 }), { col: false, cast: false });
+  pointL(0xffb070, 260, 470, Y + 16, 224);
+  // desk: drawer pedestal (climb its front), top, legs, chair, lamp, drawings pinned above, diary, Dad's photo
+  box(430, 470, Y, Y + 68, -232, -182, M.paint); for (let i = 0; i < 3; i++) { deco(433, 467, Y + 6 + i * 21, Y + 24 + i * 21, -182, -181.4, M.paint); deco(446, 454, Y + 14 + i * 21, Y + 16 + i * 21, -181.4, -180, K.brass); }
+  box(428, 572, Y + 68, Y + 72, -232, -178, M.wood, { uv: 60 }); for (const [x, z] of [[567, -229], [567, -181]]) box(x - 2, x + 2, Y, Y + 68, z - 2, z + 2, M.wood);
+  box(476, 514, Y + 42, Y + 45, -170, -132, M.wood); for (const [x, z] of [[478, -168], [512, -168], [478, -134], [512, -134]]) box(x - 1.5, x + 1.5, Y, Y + 42, z - 1.5, z + 1.5, M.wood); box(476, 514, Y + 45, Y + 88, -134, -131, M.wood);
+  cyl(550, -220, 5, Y + 72, Y + 74, MAT.dsteel, { seg: 16 }); tubeM([[550, Y + 74, -220], [550, Y + 108, -214], [534, Y + 116, -206]], .7, MAT.dsteel, 20);
+  const lh = mesh(new THREE.ConeGeometry(6, 8, 20, 1, true), new THREE.MeshStandardMaterial({ color: 0xe8c040, roughness: .4, side: THREE.DoubleSide, emissive: 0xffd080, emissiveIntensity: 0 }), 531, Y + 112, -203, { cast: false }); lh.rotation.x = .7; UPS.deskM = lh.material;
+  for (const [x, y, m, r] of [[452, Y + 128, M.draw1, -.05], [500, Y + 140, M.draw2, .06], [548, Y + 124, M.draw3, -.03], [596, Y + 136, M.draw4, .07]]) { const p = mesh(new THREE.PlaneGeometry(40, 30), m, x, y, -231.5, { cast: false }); p.rotation.z = r; mesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshStandardMaterial({ color: 0xd83a3a }), x, y + 13, -231.1, { cast: false }); }
+  box(448, 476, Y + 72, Y + 74.5, -212, -192, new THREE.MeshStandardMaterial({ color: 0x5a8ac8, roughness: .7 })); box(448, 476, Y + 74.5, Y + 75, -211, -193, new THREE.MeshStandardMaterial({ color: 0xf4efe2, roughness: .9 }), { col: false });
+  UPS.diary = V3(462, Y + 75, -202);
+  deco(510, 532, Y + 72, Y + 100, -226, -223, MAT.black); mesh(new THREE.PlaneGeometry(19, 25), livingPhoto('photo2'), 521, Y + 86, -222.8, { cast: false });
+  cyl(492, -222, 4, Y + 72, Y + 84, new THREE.MeshStandardMaterial({ color: 0xe86a5a, roughness: .5 }), { seg: 16 });
+  for (let i = 0; i < 5; i++) { const c = [0xd83a3a, 0x3a7ad8, 0xe8c040, 0x3aa85a, 0x8a4ac8][i]; cyl(489 + (i % 3) * 2.6, -223 + (i > 2 ? 2.6 : 0), .7, Y + 84, Y + 92 + i, new THREE.MeshStandardMaterial({ color: c, roughness: .6 }), { col: false, seg: 8 }); }
+  // cube shelf (one solid block to climb; the cubbies are just for looks), the music box on top
+  cols.push({ t: 'b', x0: 650, x1: 754, y0: Y, y1: Y + 80, z0: -232, z1: -200 });
+  const so = { col: false }; deco(650, 754, Y + 76, Y + 80, -232, -200, M.paint); deco(650, 754, Y, Y + 4, -232, -200, M.paint); deco(650, 654, Y, Y + 80, -232, -200, M.paint); deco(750, 754, Y, Y + 80, -232, -200, M.paint); deco(700, 704, Y, Y + 80, -232, -200, M.paint); deco(650, 754, Y + 38, Y + 42, -232, -200, M.paint); deco(650, 754, Y, Y + 80, -232, -229, M.mint);
+  box(658, 696, Y + 4, Y + 34, -228, -204, new THREE.MeshStandardMaterial({ color: 0xf2c84a, roughness: .7 }), so);
+  for (let i = 0; i < 7; i++) box(708 + i * 5, 712 + i * 5, Y + 42, Y + 42 + R(22, 32), -226, -206, new THREE.MeshStandardMaterial({ color: [0x9a3a3a, 0x3a5a9a, 0x3a8a5a, 0xc8a24a, 0x5a3a7a, 0xe86a8a, 0x2a2a2a][i], roughness: .7 }), so);
+  for (const [x, c] of [[716, 0xd83a3a], [730, 0x3a7ad8], [742, 0xe8c040]]) box(x - 5, x + 5, Y + 4, Y + 14, -222, -212, new THREE.MeshStandardMaterial({ color: c, roughness: .6 }), so);
+  { const rb = new THREE.MeshPhysicalMaterial({ color: 0xf2f2f2, roughness: .4 }); mesh(new THREE.SphereGeometry(7, 18, 12), rb, 676, Y + 52, -216); for (const s of [-1, 1]) mesh(new THREE.CapsuleGeometry(1.8, 9, 6, 10), rb, 676 + s * 3, Y + 64, -216); mesh(new THREE.SphereGeometry(1, 8, 6), MAT.black, 673.5, Y + 54, -209.5, { cast: false }); mesh(new THREE.SphereGeometry(1, 8, 6), MAT.black, 678.5, Y + 54, -209.5, { cast: false }); }
+  box(686, 714, Y + 80, Y + 93, -224, -208, new THREE.MeshPhysicalMaterial({ color: 0xd8a0b8, roughness: .3, clearcoat: .8 })); box(686, 714, Y + 93, Y + 94.4, -224, -208, K.brass);
+  UPS.dancer = mesh(new THREE.ConeGeometry(2.8, 8, 14), new THREE.MeshPhysicalMaterial({ color: 0xffe8f0, roughness: .3 }), 700, Y + 98.4, -216, { cast: false });
+  mesh(new THREE.SphereGeometry(1.4, 10, 8), new THREE.MeshPhysicalMaterial({ color: 0xffe0c8 }), 700, Y + 103.6, -216, { cast: false });
+  deco(712, 716, Y + 85, Y + 87, -217, -215, K.brass);   // the winding key
+  // dresser by the door (stand on it to reach the light switch)
+  box(752, 826, Y, Y + 96, -232, -200, M.paint); for (let i = 0; i < 3; i++) { deco(756, 822, Y + 6 + i * 30, Y + 32 + i * 30, -200, -199.4, M.paint); for (const x of [774, 804]) deco(x - 4, x + 4, Y + 18 + i * 30, Y + 20 + i * 30, -199.4, -198, K.brass); }
+  box(770, 784, Y + 96, Y + 99, -220, -212, new THREE.MeshStandardMaterial({ color: 0xe86a8a, roughness: .5 })); cyl(806, -218, 6, Y + 96, Y + 97, new THREE.MeshStandardMaterial({ color: 0xbfd8e8, metalness: .6, roughness: .2 }), { seg: 20 });
+  // wardrobe, with a stack of storage boxes beside it (a long climb to a battery on top)
+  box(860, 900, Y, Y + 200, 30, 150, M.wood, { uv: 60 }); deco(859.4, 860, Y + 8, Y + 192, 89.5, 90.5, MAT.black);
+  for (const z of [84, 96]) deco(856, 859.4, Y + 96, Y + 116, z - 1, z + 1, K.brass);
+  box(852, 900, Y, Y + 56, 150, 206, new THREE.MeshStandardMaterial({ color: 0x6aa8d8, roughness: .6 })); box(858, 900, Y + 56, Y + 102, 152, 200, new THREE.MeshStandardMaterial({ color: 0xf2c84a, roughness: .6 })); box(864, 900, Y + 102, Y + 146, 152, 192, new THREE.MeshStandardMaterial({ color: 0xe86a8a, roughness: .6 }));
+  addBattery(880, Y + 200, 90); box(866, 892, Y + 200, Y + 206, 50, 74, new THREE.MeshStandardMaterial({ color: 0x5a4a3a, roughness: .8 }));   // an old photo album up there
+  // round rug
+  { const g = new THREE.CircleGeometry(72, 48); g.rotateX(-Math.PI / 2); const m = furMesh(g, furMat({ color: 0xc6d6ee, len: .55, den: 2.5, droop: .15, clump: .5, root: .6, rimK: .04 })); m.position.set(640, Y + .3, 20); LV.add(m); cols.push({ t: 'b', x0: 568, x1: 712, y0: Y, y1: Y + .3, z0: -52, z1: 92, small: true }); }
+  // ---- light ----
+  // ceiling lamp (a shadow-casting spot under a glowing dome), the desk lamp, the star projector, sky light through the window
+  UPS.lampMat = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff0d8, emissiveIntensity: .05 });
+  mesh(new THREE.SphereGeometry(24, 32, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), UPS.lampMat, 620, Yc, 0, { cast: false });
+  UPS.ceilL = spotL(0xffe6c8, 0, V3(620, Yc - 14, 0), V3(620, Y, 0), 1.3, .85, 1024, 10, 500); UPS.fillL = pointL(0xffe8cc, 0, 620, Yc - 40, 0);
+  UPS.deskL = pointL(0xffd890, 0, 532, Y + 104, -200); UPS.starL = pointL(0x6a8aff, 0, 442, Y + 70, 211);
+  UPS.moon = spotL(0xa8bcff, 90000, V3(640, Y + 250, 560), V3(600, Y, 60), .42, .6, 1024, 60, 900);
+  addBeam(0xbcd0ff, V3(620, Y + 130, 228), V3(600, Y, 90), .32, .028);
+  UPS.specs = { ceil: { p: V3(620, Yc - 14, 0), dir: V3(0, -1, 0), cos: Math.cos(1.3), range: 380, on: false }, desk: { p: V3(532, Y + 104, -200), range: 110, on: false }, star: { p: V3(442, Y + 70, 211), range: 150, on: false } };
+  KS.lights.push(UPS.specs.ceil, UPS.specs.desk, UPS.specs.star, { p: V3(620, Y + 112, 226), dir: V3(-.1, -.55, -.83).normalize(), cos: Math.cos(.5), range: 320 });
+  // the star field the projector throws on the ceiling
+  { const n = 160, g = new THREE.BufferGeometry(), p = new Float32Array(n * 3); for (let i = 0; i < n; i++) { p[i * 3] = R(320, 890); p[i * 3 + 1] = Yc - .6; p[i * 3 + 2] = R(-226, 226); } g.setAttribute('position', new THREE.BufferAttribute(p, 3));
+    UPS.stars = new THREE.Points(g, new THREE.PointsMaterial({ color: new THREE.Color(0xc8d6ff).multiplyScalar(2.2), size: 3.4, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending })); UPS.stars.frustumCulled = false; LV.add(UPS.stars); }
+  // ---- switches ----
+  const tg = mesh(new THREE.BoxGeometry(2.4, 3.4, .9), new THREE.MeshPhysicalMaterial({ color: 0xf6f4ee, roughness: .3 }), 829.5, Y + 110, -231.1, { cast: false }); mesh(new THREE.BoxGeometry(5, 7, .6), W, 829.5, Y + 110, -231.6, { cast: false });
+  hxAdd({ id: 'ulight', name: '女兒房間燈掣', kind: 'light', p: V3(829.5, Y + 110, -231), on: false, r: 17, toggle: tg, verb: ['熄房間燈', '開房間燈'] });
+  hxAdd({ id: 'udesk', name: '書枱燈', kind: 'lamp', p: V3(550, Y + 76, -220), on: false, r: 15, verb: ['熄書枱燈', '開書枱燈'] });
+  hxAdd({ id: 'ustar', name: '星空投影燈', kind: 'lamp', p: V3(442, Y + 58, 211), on: false, r: 19, verb: ['熄星空燈', '開星空燈'] });
+  hxAdd({ id: 'umusic', name: '音樂盒', kind: 'music', p: V3(712, Y + 86, -216), on: false, r: 13, verb: ['停音樂盒', '扭音樂盒發條'] });
+  // more things to find up here
+  addVial(436, Y + 72, -214); addCrumb(780, Y + 96, -208); addBattery(884, Y, -488); addCrumb(800, 8 * rise, -353);   // the landing, half-way up the stairs
+  flushDeco();
+}
+// every frame: the upstairs lights follow their switches
+function upLights() {
+  if (LEVEL !== 'kitchen' && UPS.mbus) { UPS.mbus.gain.value = 0; MUS.ext = 1; }
+  if (!UPS.ceilL || !HX.id.ulight) return; const on = k => HX.id[k].on;
+  const cl = on('ulight'); UPS.ceilL.intensity = cl ? 46000 : 0; UPS.fillL.intensity = cl ? 2600 : 0; UPS.lampMat.emissiveIntensity = cl ? 3.2 : .05; UPS.specs.ceil.on = cl; UPS.regL.intensity = cl ? 160 : 40;
+  const dk = on('udesk'); UPS.deskL.intensity = dk ? 2400 : 0; UPS.deskM.emissiveIntensity = dk ? 2.4 : 0; UPS.specs.desk.on = dk;
+  const st = on('ustar'); UPS.starL.intensity = st ? 1400 : 0; UPS.specs.star.on = st; UPS.projM.emissiveIntensity = st ? 2.4 : .3;
+  if (UPS.stars) { const k = UPS.stars.material; k.opacity = damp(k.opacity, st ? .9 + Math.sin(T * 1.7) * .08 : 0, 3, 1 / 60); UPS.stars.visible = k.opacity > .01; UPS.stars.rotation.y = 0; }
+  if (UPS.dancer) UPS.dancer.rotation.y += on('umusic') ? .045 : 0;
+}
+// the music box: a lullaby on the celesta, heard all over the house (quieter further away); the main score
+// steps back while you're close. It winds down by itself after a minute or so.
+const LULLABY = [[81, 1], [78, 1], [74, 1], [76, 1], [78, 1], [79, 1], [81, 2], [78, 1], [76, 3], [83, 1], [81, 1], [79, 1], [78, 1], [76, 1], [74, 1], [76, 2], [73, 1], [74, 3]];
+const LULL_B = [62, 62, 66, 69, 67, 62, 69, 62];
+function upMusic(dt) {
+  const C = AU.ctx, o = HX.id.umusic; if (!C || !o) return;
+  if (!UPS.mbus) { UPS.mbus = C.createGain(); UPS.mbus.gain.value = 0; const lp = C.createBiquadFilter(); lp.type = 'lowpass'; lp.frequency.value = 3800; UPS.mbus.connect(lp); lp.connect(AU.out); UPS.lp = lp; }
+  const L = leader, d = L ? L.pos.distanceTo(o.p) : 999, up = L && L.pos.y > 200, near = clamp(1 - d / 900, 0, 1);
+  const v = o.on && LEVEL === 'kitchen' ? .75 * Math.pow(Math.max(near, .05), 1.2) : 0;
+  UPS.mbus.gain.setTargetAtTime(v, C.currentTime, .15); UPS.lp.frequency.setTargetAtTime(up ? 6000 : 1400, C.currentTime, .3);   // through the floor it's muffled
+  MUS.ext = o.on && LEVEL === 'kitchen' ? 1 - .7 * near : 1;
+  if (!o.on) { UPS.mNext = 0; UPS.mOn = 0; return; }
+  UPS.mOn += dt; if (!NET.client && UPS.mOn > 75) { hxSet(o, false, 'box'); toastW('音樂盒的發條轉完了', 2.2); return; }
+  if (!BANK.cel.length) return;
+  const slow = 1 + sstep(55, 75, UPS.mOn) * .6, beat = .34 * slow;
+  if (UPS.mNext < C.currentTime) UPS.mNext = C.currentTime + .05;
+  while (UPS.mNext < C.currentTime + .4) {
+    const i = UPS.mStep++ % LULLABY.length, [m, len] = LULLABY[i];
+    playS('cel', m, UPS.mNext, .3, 0, UPS.mbus, .15);
+    if (i % 3 === 0) playS('cel', LULL_B[(i / 3) % LULL_B.length | 0], UPS.mNext, .14, 0, UPS.mbus, -.15);
+    UPS.mNext += len * beat;
+  }
+}
+// the diary on her desk
+function upTick(dt) {
+  upMusic(dt); const L = leader; if (!L || !UPS.diary || !mine(L) || STATE !== 'play') return;
+  const p = L.pos, once = (k, t, d) => { if (!UPS.said[k]) { UPS.said[k] = 1; toast(t, d); } };
+  if (p.x > 748 && p.x < 828 && p.z < -256 && p.y < 200) once('stairs', TOUCH ? '樓梯：每一級都要爬，不過地毯很好抓——搖桿推盡就會跑上去' : '樓梯：每一級都要爬，不過地毯很好抓——按住 Shift 跑上去快得多', 3.6);
+  else if (p.y > 266 && p.y < 296 && p.x > 560 && p.x < 660 && p.z > -240 && p.z < -212) once('reg', '上面透出光——爬上去就是女兒的房間', 3);
+  else if (p.y > 296 && p.x > 312 && p.x < 900 && p.z > -232) once('room', '女兒的房間。燈、星空燈、音樂盒都可以開——音樂盒一響，全屋都聽得到', 4.2);
+  const d = UPS.diary; if (!UPS.diaryRead && Math.hypot(L.pos.x - d.x, L.pos.z - d.z) < 20 && Math.abs(L.pos.y - d.y) < 8) { UPS.diaryRead = true; say('女兒的日記', '「今天爸爸還是沒有回家。媽媽在廚房偷偷哭了。我把小熊放在窗口，這樣爸爸回來的時候，第一眼就看見它。」', '#e8a0c0', 7); }
+}
+function upReset() { UPS.diaryRead = false; UPS.said = {}; UPS.mOn = 0; UPS.mStep = 0; MUS.ext = 1; }
+// ---------- the family upstairs ----------
+// the daughter goes up to her room: draw at the desk, wind the music box, or lie under the stars
+function roomSteps() {
+  const S = [{ say: pick(['我上樓一會兒～', '媽，我回房間拿東西。', '我去房間畫畫！']), reply: pick(['小心樓梯。', '別玩太久，等一下吃飯。', '好，記得下來吃飯。']) }, { go: 'uswitch' }, { sw: 'ulight', on: true }];
+  const r = rnd();
+  if (r < .42) { S.push({ go: 'udesk' }, { sw: 'udesk', on: true }, { sit: 'udesk' }, { wait: R(14, 22), pose: 'homework', at: [500, UPS.y + 72, -205], say2: pick(['畫一張新的給爸爸……', '爸爸的眼鏡是這樣的……', '這張要貼在最中間！']) }, { stand: 1 }); if (rnd() < .6) S.push({ sw: 'udesk', on: false }); }
+  else if (r < .72) S.push({ go: 'ushelf' }, { sw: 'umusic', on: true }, { wait: R(9, 13), pose: 'fridge', at: [700, UPS.y + 92, -216], say2: '這是爸爸送給我的……' }, { sw: 'umusic', on: false });
+  else { S.push({ go: 'unight' }, { sw: 'ustar', on: true }, { go: 'ubed' }, { sit: 'ubed' }, { wait: R(10, 15), pose: 'sofa', at: [620, UPS.ceil, 0], say2: '……爸爸，你那邊也看得到星星嗎？' }, { stand: 1 }, { go: 'unight' }); if (rnd() < .65) S.push({ sw: 'ustar', on: false }); }
+  if (rnd() < .6) S.push({ go: 'uswitch' }, { sw: 'ulight', on: false });
+  return S;
+}
+// someone played with something upstairs
+function upIncident(id, o, on, M, K, mr, kr, look) {
+  const kidUp = kr === 'u';
+  if (id === 'umusic' && on) {
+    if (!LIV.open) { setTimeout(() => brainSay('mom', '咦……樓上怎麼有音樂聲？'), 900); return; }
+    if (K && kidUp) react(K, 2, [{ say: '咦？音樂盒自己響了……' }, { go: 'ushelf' }, { wait: 2.5, pose: 'fridge', at: [700, UPS.y + 92, -216] }, { sw: 'umusic', on: false }]);
+    else if (K && kr !== 'b' && K.act !== 'search') {
+      brainSay('kid', pick(['我的音樂盒？！', '咦？我的音樂盒響了！']));
+      react(K, 3, [{ go: 'ushelf' }, { sw: 'umusic', on: false }, { wait: R(3, 5), pose: 'fridge', at: [700, UPS.y + 92, -216] }, { say: pick(['誰開的……？', '它自己響的嗎……', '……爸爸？']) }], 'room');
+      if (mr !== 'u') setTimeout(() => brainSay('mom', '囡囡，樓梯別跑！'), 2200);
+    } else react(M, 2, [{ say: '咦？樓上的音樂盒？' }, { go: 'ushelf' }, { sw: 'umusic', on: false }, ...look, { say: '……奇怪。' }]);
+  } else if (id === 'ulight') {
+    if (!on && K && kidUp) { brainSay('kid', '媽！我房間的燈熄了！'); react(K, 3, [{ go: 'uswitch' }, { sw: 'ulight', on: true }, { say: '……又跳掣？' }]); }
+    else if (on && !kidUp && mr !== 'u' && LIV.open) later(M, [{ go: 'uswitch' }, { sw: 'ulight', on: false }, { say: '囡囡又沒關燈……' }, ...look]);
+  } else if (id === 'udesk' || id === 'ustar') {
+    const n = id === 'ustar' ? 'unight' : 'udesk';
+    if (!on && K && kidUp) react(K, 2, [{ say: id === 'ustar' ? '星星不見了……' : '書枱燈壞了？' }, { go: n }, { sw: id, on: true }]);
+    else if (on && !kidUp && LIV.open) later(M, [{ go: n }, { sw: id, on: false }]);
+  }
 }
 
 // =====================================================================
@@ -8120,7 +8417,7 @@ function netSendWorld() {
   netWorldExtra(w);
   {
     const F = TOY.fetch;
-    w.m = [+mom.pos.x.toFixed(1), +mom.pos.z.toFixed(1), +mom.yaw.toFixed(3), +mom.aimT.x.toFixed(1), +mom.aimT.y.toFixed(1), +mom.aimT.z.toFixed(1), KM.mode, KM.pt, F ? F.mode : '', F ? +F.t.toFixed(2) : 0, F && F.from ? +F.from.y.toFixed(1) : 0];
+    w.m = [+mom.pos.x.toFixed(1), +mom.pos.z.toFixed(1), +mom.yaw.toFixed(3), +mom.aimT.x.toFixed(1), +mom.aimT.y.toFixed(1), +mom.aimT.z.toFixed(1), KM.mode, KM.pt, F ? F.mode : '', F ? +F.t.toFixed(2) : 0, F && F.from ? +F.from.y.toFixed(1) : 0, +(mom.fy || 0).toFixed(1)];
     w.k = kidNet();
     w.c = [+CAT.pos.x.toFixed(1), +CAT.pos.z.toFixed(1), +CAT.yaw.toFixed(3), CAT.mode, +(CAT.jump || 0).toFixed(2)];
     w.d = +KS.doorA.toFixed(3);
@@ -8156,7 +8453,7 @@ function netNPC(dt) {
   const w = NET.npc; if (!w || !w.m) return; netNPCExtra(dt);
   const m = w.m, P = mom.pos, ox = P.x, oz = P.z;
   const dx = m[0] - P.x, dz = m[1] - P.z; if (dx * dx + dz * dz > 3600) { P.x = m[0]; P.z = m[1]; } else { const k = 1 - Math.exp(-8 * dt); P.x += dx * k; P.z += dz * k; }
-  mom.yaw = angDamp(mom.yaw, m[2], 8, dt); mom.aimT.set(m[3], m[4], m[5]); KM.mode = m[6]; KM.pt = m[7];
+  mom.yaw = angDamp(mom.yaw, m[2], 8, dt); mom.aimT.set(m[3], m[4], m[5]); KM.mode = m[6]; KM.pt = m[7]; if (m[11] !== undefined) mom.fy = m[11];
   TOY.fetch = m[8] ? { mode: m[8], t: m[9], from: { y: m[10] }, C: null } : null;
   KS.doorA = damp(KS.doorA, w.d, 10, dt); fridgeDoor();
   momAnimK(dt, Math.hypot(P.x - ox, P.z - oz));
@@ -8530,7 +8827,7 @@ $('mpVcBtn').addEventListener('click', () => vcSetMode(vcMode() === 'off' ? 'ope
 vcUI();
 requestAnimationFrame(frame);
 init().catch(e => { console.error(e); $('err').textContent = '載入失敗：' + (e && e.stack || e); });
-if (location.hash === '#dev') window.__VC = () => VC; if (location.hash === '#dev') window.__bn = { OLDB, YS, AGB, GS, camPowered, doorOpen, mpChecklist, HB, HX, hxSet, hxNear, navPath, NAVN, KM, KID, LIV, scene, THREE, MUS, ARR, BANK, AU, SET, toyFreeze, useProto, TAKE, protoTarget, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, ST, pressButton, LANES, pause, garageHear, TEST, testWarp, WARPS, testAll, startChapter2, NC, batPing, tortShell, crewJoin, hideK, startGame, startChapter, openChapters, step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT, GS, YS, DECK, GY, WC, ventOpen, latchOpen, mpMarker, zoneFloor, KS }; }, info: () => ({ fps: $('fps').textContent, state: STATE, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
+if (location.hash === '#dev') window.__VC = () => VC; if (location.hash === '#dev') window.__bn = { UPS, humanFloor, roomOf, navNearest, ACTS, roomSteps, brainIncident, react, agentRoom, OLDB, YS, AGB, GS, camPowered, doorOpen, mpChecklist, HB, HX, hxSet, hxNear, navPath, NAVN, KM, KID, LIV, scene, THREE, MUS, ARR, BANK, AU, SET, toyFreeze, useProto, TAKE, protoTarget, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, ST, pressButton, LANES, pause, garageHear, TEST, testWarp, WARPS, testAll, startChapter2, NC, batPing, tortShell, crewJoin, hideK, startGame, startChapter, openChapters, step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT, GS, YS, DECK, GY, WC, ventOpen, latchOpen, mpMarker, zoneFloor, KS }; }, info: () => ({ fps: $('fps').textContent, state: STATE, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
 </script>
 </body>
 </html>

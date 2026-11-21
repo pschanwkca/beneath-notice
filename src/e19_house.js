@@ -190,7 +190,7 @@ function buildDuct(K) {
   box(62, 348, 268, 270, -330, -308, D); box(14, 374, 270, 294, -332, -330, D); box(62, 320, 270, 294, -308, -306, D); box(344, 374, 270, 294, -308, -306, D); box(372, 374, 270, 294, -330, -308, D); box(62, 374, 292, 294, -332, -306, D);
   // segment C: a branch before the fan, north over the bathroom, east over the living room, then north to the garage
   box(320, 344, 268, 270, -306, -240, D); box(318, 320, 270, 294, -306, -214, D); box(344, 346, 270, 294, -306, -238, D); box(320, 344, 292, 294, -306, -214, D);
-  box(346, 904, 270, 294, -240, -238, D); box(320, 880, 270, 294, -214, -212, D); box(320, 904, 292, 294, -240, -212, D);
+  box(346, 904, 270, 294, -240, -238, D); box(320, 880, 270, 294, -214, -212, D); box(320, 600, 292, 294, -240, -212, D); box(624, 904, 292, 294, -240, -212, D); box(600, 624, 292, 294, -240, -232, D);
   box(904, 906, 270, 294, -240, 108, D); box(878, 880, 270, 294, -214, 134, D); box(878, 904, 292, 294, -214, 134, D);
   for (let x = 380; x < 880; x += 60) box(x, x + 1.2, 270, 292, -239.6, -239.2, new THREE.MeshStandardMaterial({ color: 0x8a9094, metalness: .8, roughness: .5 }), { col: false, cast: false });
   addBattery(620, 270, -226); addCrumb(892, 270, -40);
@@ -302,7 +302,7 @@ function hxLights() {
   const B = HX.blight; if (B) { B.l.intensity = HX.id.blight.on ? B.I : 0; if (HX.leak) HX.leak.intensity = HX.id.blight.on ? 260 : 0; }
   const H = HX.hoodL; if (H) { const on = HX.id.hood.on; H.spec.on = on; H.l.intensity = on ? H.I : 0; H.bulb.emissiveIntensity = on ? 7 : .08; }
   if (LEVEL !== 'kitchen') for (const k in HX.snd) HX.snd[k].gain.value = 0;
-  garageLights(); if (RADIO.bus && LEVEL !== 'garage') RADIO.bus.gain.value = 0; if (RADIO2.bus && LEVEL !== 'yard') RADIO2.bus.gain.value = 0;
+  upLights(); garageLights(); if (RADIO.bus && LEVEL !== 'garage') RADIO.bus.gain.value = 0; if (RADIO2.bus && LEVEL !== 'yard') RADIO2.bus.gain.value = 0;
   if (YS.lampL && HX.id.olamp) { if (!HX.id.olamp.on) YS.lampL.intensity = 0; else if (YS.lampL.intensity === 0 && !inDark(YS.lampL.position)) YS.lampL.intensity = 9000; }
   const lp = HX.id.lamp; if (LIV.lamp && lp) { if (!lp.on) { LIV.lamp.intensity = 0; if (LIV.shade) LIV.shade.material.emissiveIntensity = 0; } else if (LIV.lamp.intensity === 0 && !inDark(LIV.lamp.position)) LIV.lamp.intensity = 9000; const s = KS.lights.find(q => q.p.x === 575 && q.p.z === 8); if (s) s.on = lp.on; }
   const tv = HX.id.tv; if (tv && !tv.on) LIV.tvOff = true; if (tv) { const s = KS.lights.find(q => q.p.x === 850 && q.p.z === 120); if (s) s.on = tv.on; }
