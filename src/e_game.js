@@ -130,11 +130,13 @@ function ceil(C) {
 function xzIn(c, x, z) { return c.t === 'b' ? x > c.x0 && x < c.x1 && z > c.z0 && z < c.z1 : Math.hypot(x - c.x, z - c.z) < c.r; }
 function lipGrab(C, n, c) {
   if (!c || c.slick || c.y1 - c.y0 > 6.5 || c.y0 < -900) return false;
-  const reach = C.r + 5; if (xzIn(c, C.pos.x + n.x * reach, C.pos.z + n.z * reach)) return false;   // the lip sticks out too far
+  const reach = C.r + 14; if (xzIn(c, C.pos.x + n.x * reach, C.pos.z + n.z * reach)) return false;   // the lip sticks out too far
   let ox = 0; while (ox < reach && xzIn(c, C.pos.x + n.x * ox, C.pos.z + n.z * ox)) ox += .5;   // how far out its edge is
-  const px = C.pos.x - n.x * (C.r + .7), pz = C.pos.z - n.z * (C.r + .7);
+  // land on the top just behind where you are — or, for a shelf fixed to the wall, right above you
+  let px = C.pos.x - n.x * (C.r + .7), pz = C.pos.z - n.z * (C.r + .7);
+  if (!xzIn(c, px, pz)) { px = C.pos.x + n.x * .3; pz = C.pos.z + n.z * .3; }
   if (!xzIn(c, px, pz) || solidAt(px, c.y1 + .3, pz) || solidAt(px, c.y1 + C.h * .5, pz)) return false;
-  C.mantle = { from: C.pos.clone(), to: V3(px, c.y1, pz), t: 0, out: V3(n.x * (ox + C.r * .6), 0, n.z * (ox + C.r * .6)), dur: .5 };
+  C.mantle = { from: C.pos.clone(), to: V3(px, c.y1, pz), t: 0, out: V3(n.x * (ox + C.r * .6), 0, n.z * (ox + C.r * .6)), dur: .5 + ox * .02 };
   return true;
 }
 // a thick block overhanging what you're climbing (a mailbox on its post, a shelf on its bracket, a chunky table top):
@@ -204,6 +206,8 @@ function updLeader(C, dt) {
     C.vel.x = damp(C.vel.x, hx * (30 - 8 * w) + wx * 4, 2.5, dt); C.vel.z = damp(C.vel.z, hz * (30 - 8 * w) + wz * 4, 2.5, dt);
   }
   if (C.id === 'bat' && ctl && !C.grounded && keys.Space && C.vel.y < -14 && !C.gliding) C.vel.y = -14;   // flutter down slowly
+  // strong hot air (over a lit burner) lifts anyone light enough — everyone here is 5 cm tall
+  if (!C.gliding && !C.grounded && !C.climbing) { const ud = updraftAt(C.pos); if (ud && ud.all) { C.vel.y = Math.min(C.vel.y + G * dt + 150 * dt, 30); if (!C.saidUd) { C.saidUd = 1; toast('熱風把你托上去了！'); } } }
   if (C.vel.y < TERM) C.vel.y = TERM;
   C.pos.x += C.vel.x * dt; C.pos.z += C.vel.z * dt;
   const hit = resolveH(C, true);
@@ -573,6 +577,7 @@ function updHUD(dt) {
   else if (L.id === 'cham' && tongueAim && !L.climbing) h = tongueAim.item ? (TOUCH ? '按「舌」用舌頭拿過來' : '左鍵 用舌頭拿過來') : (TOUCH ? '按「舌」黐住那裡飛過去' : '左鍵 吐舌頭黐住那裡飛過去');
   else if (L.id === 'cham' && L.camo > .85) h = '變色中——停着不動很難被看見';
   else if (L.id === 'sq' && L.carry) h = TOUCH ? `抱着${L.carry.S.name}——跳起按住「跳」一起滑翔 · 再按「抱」放下` : `抱着${L.carry.S.name}——跳起按住 <kbd>Space</kbd> 一起滑翔 · 左鍵放下`;
+  else if (hxHint(L)) h = hxHint(L);
   else if (crewHint(L)) h = crewHint(L);
   else if (L.drag) h = TOUCH ? `拉住「${L.drag.r.name}」——向後行拖住走 · 再按「拉」放手` : `拉住「${L.drag.r.name}」——向後行拖住走 · 放開右鍵放手`;
   else if (ph) h = TOUCH ? `按「推」推動「${ph.name}」 · 按「拉」抓住拖走` : `左鍵 推「${ph.name}」 · 按住左鍵 推着走 · 按住右鍵 拉`;
@@ -831,6 +836,7 @@ function setupTouch() {
   hold('tbGrow', () => fireGun(true)); hold('tbShrink', () => fireGun(false));
   hold('tbStack', () => { pressed.KeyF = true; });
   hold('tbProto', () => { pressed.KeyR = true; });
+  hold('tbUse', () => { pressed.KeyE = true; });
   hold('tbAct', () => { const id = leader.id; if (id === 'cham') chamTongue(); else if (id === 'sq') sqCarry(); else if (id === 'hog') hogRoll(); else if (id === 'coon') coonThrow(); else if (id === 'rab' || id === 'frog') keys.Mouse0 = true; else if (id === 'bat') batPing(); else if (id === 'tort') tortShell(); }, () => { keys.Mouse0 = false; });
   hold('tbScout', () => { if (leader.id === 'frog') frogSwitch(); else sqScout(); });
   hold('tbPush', () => { keys.TPush = true; bearShove(); }, () => { keys.TPush = false; });

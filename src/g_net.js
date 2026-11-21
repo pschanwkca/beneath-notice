@@ -215,10 +215,11 @@ function netSendWorld() {
   {
     const F = TOY.fetch;
     w.m = [+mom.pos.x.toFixed(1), +mom.pos.z.toFixed(1), +mom.yaw.toFixed(3), +mom.aimT.x.toFixed(1), +mom.aimT.y.toFixed(1), +mom.aimT.z.toFixed(1), KM.mode, KM.pt, F ? F.mode : '', F ? +F.t.toFixed(2) : 0, F && F.from ? +F.from.y.toFixed(1) : 0];
-    w.k = [+KID.yaw.toFixed(3), +KID.pitch.toFixed(3)];
+    w.k = kidNet();
     w.c = [+CAT.pos.x.toFixed(1), +CAT.pos.z.toFixed(1), +CAT.yaw.toFixed(3), CAT.mode, +(CAT.jump || 0).toFixed(2)];
     w.d = +KS.doorA.toFixed(3);
     w.core = [KS.coreGot ? 1 : 0, KS.carried ? 1 : 0, KS.carrier || '', KS.coreDrop ? [+KS.coreDrop.x.toFixed(1), +KS.coreDrop.y.toFixed(1), +KS.coreDrop.z.toFixed(1)] : 0];
+    w.hx = hxState(); w.hb = brainNet();
     w.liv = [LIV.open ? 1 : 0, LIV.parts.map(p => p.got ? 1 : 0).join(''), LIV.remoteGot ? 1 : 0];
   }
   nsend(w);
@@ -240,6 +241,7 @@ function netRecvWorld(w) {
   });
   if (changed) refreshPartyHUD();
   if (w.m) NET.npc = w; netRecvExtra(w);
+  if (w.hx) hxRecvState(w.hx); if (w.hb) brainNetRecv(w.hb);
   if (w.liv) { if (w.liv[0] && !LIV.open) { LIV.open = true; SND.creak(); } [...w.liv[1]].forEach((g, i) => { const p = LIV.parts[i]; if (g === '1' && p && !p.got) { p.got = true; p.g.visible = false; p.halo.visible = false; } }); LIV.partsGot = LIV.parts.filter(p => p.got).length; LIV.remoteGot = !!w.liv[2]; }
   if (w.core) { KS.coreGot = !!w.core[0]; KS.carried = !!w.core[1]; KS.carrier = w.core[2] || null; KS.coreDrop = w.core[3] ? V3(...w.core[3]) : null; }
 }
@@ -291,6 +293,10 @@ function netMsg(d, from) {
     case 'fail': if (NET.on && !NET.host) { cp = d.cp; fail(); } break;
     case 'say': say(d.n, d.x, d.c, d.d); break;
     case 'vc': vcSignal(d, from); break;
+    case 'bsay': brainSayShow(d.n, d.x, d.c, d.d, d.p[0], d.p[1]); break;
+    case 'hx': if (NET.host) { const o = HX.list[d.i]; if (o) hxSet(o, !o.on, d.by); } break;
+    case 'hxs': if (!NET.host) hxRecv(d); break;
+    case 'hxw': { const C = chars[d.id]; if (C && mine(C)) hxFlushChar(C); } break;
     case 'vcs': VC.peerMic[from] = d.s; break;
     case 'chat': chatAdd(from, d.x); break;
     case 'toast': toast(d.x, d.d); break;
@@ -355,6 +361,7 @@ function hostGet(d) {
 }
 function hostSeen(tp, who) {
   if (who === 'agent' || who === 'cam') { garageSeen(tp, who); return; } if (who === 'dog' || who === 'old') { yardSeen(tp, who); return; } if (who === 'walker' || who === 'wdog') { roadSeen(tp, who); return; }
+  if (who === 'mom' || who === 'kid') brainGlimpse(tp);
   if (who === 'mom' && KM.mode !== 'sus' && KM.mode !== 'fopen' && !TOY.fetch) { KM.prev = KM.mode; KM.mode = 'sus'; KM.susP = tp; KM.trackT = 2.2; if (!KS.said.sus) { KS.said.sus = 1; sayW('太太', '嗯？……什麼東西？', '#f4bb72', 2.2); } }
   if (who === 'mom' && KM.mode === 'sus') { KM.susP = tp; KM.trackT = 2.2; }
   if (who === 'kid') { KID.mode = 'sus'; KID.t = 2.2; KID.look.copy(tp); if (!KS.said.kidsus) { KS.said.kidsus = 1; sayW('女兒', '媽媽……那邊好像有東西在動。', '#e8a0c0', 2.8); } }

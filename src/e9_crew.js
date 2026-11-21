@@ -223,6 +223,7 @@ function swTick() {
     if (s.until > T) { s.lights.forEach(l => { if (!(s.tv && l === LIV.tvLight)) l.intensity = 0; }); }
     else { s.on = false; s.lights.forEach((l, i) => l.intensity = s.orig[i]); for (const q of s.specs) q.on = true; if (s.tv) LIV.tvOff = false; if (s.lamp && LIV.shade) LIV.shade.material.emissiveIntensity = .6; if (STATE === 'play' && ZONES.kitchen.near) toast(`${s.name}：燈又亮了`, 2); }
   }
+  hxLights();
 }
 function inDark(p) { for (const s of CREW.sw) if (s.on && s.until > T && Math.hypot(p.x - s.c.x, p.z - s.c.z) < s.R * .9) return true; return false; }
 function buildSwitches() {
@@ -238,6 +239,7 @@ function buildSwitches() {
 // ability buttons, hints and per-frame upkeep for the crew
 function crewInput(L, ctl) {
   if (!L || !ctl) return;
+  if (hxInput(L, ctl)) return;
   if (pressed.KeyE && L.id === 'frog') frogSwitch();
 }
 function crewHint(L) {

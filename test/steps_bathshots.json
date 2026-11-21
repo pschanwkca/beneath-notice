@@ -1,0 +1,22 @@
+[
+ {
+  "eval": "(async()=>{ const b=window.__bn; window.__NODET=true; await b.startChapter('kitchen'); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(10); b.hxSet(b.HX.id.blight,true,'mom'); const L=b.leader; L.pos.set(300,0,-300); L.yaw=Math.PI; for(const F of b.party) if(F!==L){F.pos.set(290+Math.random()*20,0,-290); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=0.25; b.cam.pitch=.28; b.cam.dist=90; b.step(30); return 1; })()",
+  "wait": 2500,
+  "shot": "h1_bath"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; const L=b.leader; L.pos.set(300,0,-290); b.cam.yaw=-0.55; b.cam.pitch=.3; b.cam.dist=150; b.step(30); return 1; })()",
+  "wait": 2500,
+  "shot": "h2_bath_toilet"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; const L=b.leader; L.pos.set(60,88.5,-150); L.yaw=Math.PI; b.cam.yaw=-0.3; b.cam.pitch=-.35; b.cam.dist=60; b.step(30); return 1; })()",
+  "wait": 2500,
+  "shot": "h4_hood"
+ },
+ {
+  "eval": "(()=>{ const b=window.__bn; const L=b.leader; L.pos.set(286,118,-84); L.yaw=-Math.PI/2; b.cam.yaw=Math.PI/2+0.5; b.cam.pitch=.1; b.cam.dist=40; b.step(30); return [b.HX.near && b.HX.near.id]; })()",
+  "wait": 2500,
+  "shot": "h5_switch"
+ }
+]

@@ -1,0 +1,329 @@
+// =====================================================================
+//  THE HOUSE COMES ALIVE — kitchen, living room and a new bathroom
+//  · a bathroom behind the kitchen (door between the fridge and the living-room wall): Hong Kong
+//    "紙皮石" mosaic floor, a toilet you can climb and flush, a pedestal sink, a mirror cabinet,
+//    a towel, a laundry basket full of towels under the ceiling fan
+//  · a duct through the ceiling void: cooker hood → chimney → over the back wall → the bathroom fan.
+//    A spinning fan blocks its end of the duct: switch it off to get through. You drop into the
+//    laundry basket. The hot air over the lit burner lifts you up into the hood
+//  · things anyone can switch (E / 用): kitchen lights, the sink tap (the basin fills and you float),
+//    the cooker hood (fan + light — loud enough that the family hears less), the bathroom light + fan,
+//    the toilet flush, the TV, the floor lamp. The family notices every one of them (e20_brain)
+// =====================================================================
+const HX = { list: [], id: {}, water: 0, bd: { a: 1.35, tgt: 1.35, segs: [] }, snd: {}, flushT: 0, near: null, ring: null, pend: [], hood: null, bfan: null };
+const BATH = { x0: 150, x1: 460, z0: -470, z1: -244, ceil: 250, door: [236, 298] };
+
+// ---------- textures ----------
+function genMosaic() {
+  // 紙皮石: paper-backed mosaic, pale mint / cream / sky with the odd darker chip
+  const [c, x] = cnv(512, 512); x.fillStyle = '#b9b5aa'; x.fillRect(0, 0, 512, 512);
+  const pal = ['#e3ece8', '#d6e6e1', '#eee9db', '#cfe1dd', '#f3f0e8', '#dde8ea', '#c4dcd6'];
+  for (let i = 0; i < 16; i++) for (let j = 0; j < 16; j++) {
+    const k = rnd(); x.fillStyle = k < .05 ? '#8fb7ae' : k < .08 ? '#d9b7a0' : pal[(rnd() * pal.length) | 0];
+    const px = i * 32 + 2 + R(-.6, .6), py = j * 32 + 2 + R(-.6, .6); x.fillRect(px, py, 28, 28);
+    const g = x.createLinearGradient(px, py, px + 28, py + 28); g.addColorStop(0, 'rgba(255,255,255,.18)'); g.addColorStop(1, 'rgba(0,0,0,.06)'); x.fillStyle = g; x.fillRect(px, py, 28, 28);
+  }
+  return tex(c);
+}
+function genWallTile() {
+  const [c, x] = cnv(256, 256); x.fillStyle = '#c8c3b6'; x.fillRect(0, 0, 256, 256);
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { const g = x.createLinearGradient(0, j * 64, 0, j * 64 + 64); g.addColorStop(0, '#f7f5ef'); g.addColorStop(1, '#ebe7dc'); x.fillStyle = g; x.fillRect(i * 64 + 2, j * 64 + 2, 60, 60); x.fillStyle = 'rgba(255,255,255,.35)'; x.fillRect(i * 64 + 6, j * 64 + 5, 30, 3); }
+  return tex(c);
+}
+function genBasket() {
+  // a pastel plastic laundry basket, rows of rounded slots (very Hong Kong)
+  const [c, x] = cnv(256, 256); x.fillStyle = '#a8d8e8'; x.fillRect(0, 0, 256, 256);
+  const g = x.createLinearGradient(0, 0, 0, 256); g.addColorStop(0, 'rgba(255,255,255,.25)'); g.addColorStop(1, 'rgba(0,40,60,.08)'); x.fillStyle = g; x.fillRect(0, 0, 256, 256);
+  x.fillStyle = '#4c6f7c'; for (let r = 0; r < 4; r++) for (let i = 0; i < 4; i++) { const px = i * 64 + 14 + (r % 2) * 32, py = r * 64 + 22; x.beginPath(); x.roundRect ? x.roundRect(px - 32 * (px > 230), py, 36, 18, 9) : x.rect(px, py, 36, 18); x.fill(); }
+  x.fillStyle = 'rgba(255,255,255,.5)'; for (let r = 0; r < 4; r++) x.fillRect(0, r * 64 + 4, 256, 3);
+  return tex(c);
+}
+let BMAT = null;
+function bathMats(K) {
+  if (BMAT) return BMAT;
+  BMAT = {
+    mosaic: new THREE.MeshPhysicalMaterial({ map: genMosaic(), roughness: .35, clearcoat: .35 }),
+    tile: new THREE.MeshPhysicalMaterial({ map: genWallTile(), roughness: .18, clearcoat: .7 }),
+    paint: new THREE.MeshStandardMaterial({ color: 0xdde6e1, roughness: .92, map: K.wall.map || null }),
+    porc: new THREE.MeshPhysicalMaterial({ color: 0xf5f4f0, roughness: .1, clearcoat: 1, clearcoatRoughness: .04 }),
+    chrome: new THREE.MeshStandardMaterial({ color: 0xe6eaee, metalness: 1, roughness: .1 }),
+    mirror: new THREE.MeshStandardMaterial({ color: 0xffffff, metalness: 1, roughness: .03, envMapIntensity: 1.2 }),
+    towel: new THREE.MeshPhysicalMaterial({ color: 0xe39a72, roughness: 1, sheen: 1, sheenColor: 0xffd6c0 }),
+    towel2: new THREE.MeshPhysicalMaterial({ color: 0x8fb8d8, roughness: 1, sheen: 1, sheenColor: 0xd8ecff }),
+    wicker: new THREE.MeshPhysicalMaterial({ map: genBasket(), roughness: .35, clearcoat: .5 }),
+    duct: new THREE.MeshStandardMaterial({ map: K.steel.map, color: 0xc4cacd, metalness: .5, roughness: .48 }),
+    water: new THREE.MeshPhysicalMaterial({ color: 0x9fd0e0, roughness: .03, transparent: true, opacity: .6, clearcoat: 1, depthWrite: false }),
+    plate: new THREE.MeshPhysicalMaterial({ color: 0xf4f1ea, roughness: .35, clearcoat: .4 }),
+    lamp: new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff0d8, emissiveIntensity: 5 }),
+    frost: new THREE.MeshStandardMaterial({ color: 0x2a3446, emissive: 0x31405a, emissiveIntensity: .7, roughness: .4 })
+  };
+  return BMAT;
+}
+
+// ---------- the cooker hood: hollow, with a way in from below and a fan at the chimney ----------
+function buildHood(K) {
+  const S = K.steel, B = { x0: -2, x1: 78, z0: -220, z1: -172 };
+  // bottom plate with the grease-filter slot open over the hot burner (the hot air lifts you in)
+  box(B.x0, 44, 158, 160, B.z0, B.z1, S, { uv: 60 }); box(70, B.x1, 158, 160, B.z0, B.z1, S, { uv: 60 });
+  box(44, 70, 158, 160, B.z0, -214, S); box(44, 70, 158, 160, -196, B.z1, S);
+  // top plate with the chimney hole
+  box(B.x0, 16, 184, 186, B.z0, B.z1, S); box(60, B.x1, 184, 186, B.z0, B.z1, S); box(16, 60, 184, 186, -198, B.z1, S);
+  // sides
+  box(B.x0, B.x1, 160, 184, -174, B.z1, S, { uv: 60 }); box(B.x0, 0, 160, 184, B.z0, -174, S); box(76, B.x1, 160, 184, B.z0, -174, S);
+  // chimney: hollow, climbable inside, up through the ceiling into the duct
+  box(14, 16, 186, 270, -220, -196, S, { uv: 60 }); box(60, 62, 186, 270, -220, -196, S, { uv: 60 }); box(16, 60, 186, 270, -198, -196, S, { uv: 60 }); box(16, 60, 186, 270, -220, -218, S);
+  // the fan at the foot of the chimney (blocks the way up while it's running)
+  const fg = new THREE.Group(); fg.position.set(38, 189, -208); LV.add(fg);
+  const bm = new THREE.MeshStandardMaterial({ color: 0x3a3e42, metalness: .6, roughness: .45 });
+  mesh(new THREE.CylinderGeometry(2.4, 2.4, 3, 16), bm, 0, 0, 0, { parent: fg });
+  for (let i = 0; i < 5; i++) { const b = mesh(new THREE.BoxGeometry(9, .5, 4), bm, 0, 0, 0, { parent: fg }); b.geometry.translate(5.5, 0, 0); b.rotation.set(.35, i * Math.PI * 2 / 5, 0); }
+  const col = { t: 'b', x0: 16, x1: 60, y0: -999, y1: -998, z0: -218, z1: -198, zone: 'kitchen' }; cols.push(col);
+  HX.hood = { g: fg, col, y: [186, 193] };
+  // the control panel on the hood's right side (next to the wall cupboards)
+  box(78, 78.6, 164, 182, -185, -174, MAT.black, { col: false });
+  HX.hoodLed = new THREE.MeshStandardMaterial({ color: 0x111111, emissive: 0x5fe08a, emissiveIntensity: 1.2 });
+  for (let i = 0; i < 3; i++) mesh(new THREE.CylinderGeometry(1, 1, .8, 12), i === 0 ? HX.hoodLed : MAT.dsteel || S, 79, 178 - i * 5, -179.5, { cast: false }).rotation.z = Math.PI / 2;
+}
+
+// the hood seen from below: grease filters, two little lamps, and one filter missing — the way in
+function hoodUnderside(K) {
+  const [c, x] = cnv(128, 128); x.fillStyle = '#3c3f42'; x.fillRect(0, 0, 128, 128); x.fillStyle = '#23262a'; for (let i = 0; i < 128; i += 8) for (let j = 0; j < 128; j += 4) x.fillRect(i + (j % 8 ? 4 : 0), j, 3, 2);
+  const fm = new THREE.MeshStandardMaterial({ map: tex(c), metalness: .6, roughness: .5 }); fm.map.repeat.set(3, 2);
+  const pl = (x0, x1, z0, z1) => { const m = mesh(new THREE.PlaneGeometry(x1 - x0, z1 - z0), fm, (x0 + x1) / 2, 157.85, (z0 + z1) / 2, { cast: false }); m.rotation.x = Math.PI / 2; };
+  pl(2, 40, -216, -194); pl(74 - 0, 76, -216, -194); pl(2, 76, -192, -178);   // filters (one slot left empty over the burner)
+  const lip = new THREE.MeshStandardMaterial({ color: 0xd8dde2, metalness: .9, roughness: .25 });
+  box(43, 71, 157.6, 158, -215, -214, lip, { col: false }); box(43, 71, 157.6, 158, -196, -195, lip, { col: false }); box(43, 44, 157.6, 158, -215, -195, lip, { col: false }); box(70, 71, 157.6, 158, -215, -195, lip, { col: false });
+  for (const lx of [12, 64]) { const d = mesh(new THREE.CircleGeometry(3.2, 24), HX.hoodBulb, lx, 157.7, -183, { cast: false }); d.rotation.x = Math.PI / 2; }
+}
+// ---------- the bathroom ----------
+function buildBathroom(K) {
+  const M = bathMats(K), { x0, x1, z0, z1, ceil } = BATH, [d0, d1] = BATH.door;
+  // floor, walls, ceiling (with the fan hole), the doorway
+  box(x0, x1, -10, 0, z0, -238, M.mosaic, { uv: 70, cast: false });
+  box(d0, d1, 0, .8, -244, -230, new THREE.MeshPhysicalMaterial({ color: 0xe9e6de, roughness: .25, clearcoat: .6 }), { cast: false });   // marble threshold
+  box(x0 - 12, x1 + 12, 0, ceil + 10, z0 - 12, z0, M.paint, { uv: 120 });
+  box(x0 - 12, x0, 0, ceil + 10, z0, -232, M.paint, { uv: 120 }); box(x1, x1 + 12, 0, ceil + 10, z0, -244, M.paint, { uv: 120 });
+  box(x0, d0, 0, ceil + 10, -244, -232, M.paint, { uv: 120 }); box(d1, 312, 0, ceil + 10, -244, -232, M.paint, { uv: 120 }); box(d0, d1, 205, ceil + 10, -244, -232, M.paint, { uv: 120 });
+  box(x0 - 12, 348, ceil, ceil + 10, z0 - 12, -232, M.paint, { cast: false }); box(372, x1 + 12, ceil, ceil + 10, z0 - 12, -232, M.paint, { cast: false });
+  box(348, 372, ceil, ceil + 10, z0 - 12, -330, M.paint, { cast: false }); box(348, 372, ceil, ceil + 10, -308, -232, M.paint, { cast: false });
+  // white tiles up to shoulder height, a narrow trim on top
+  const tl = (a0, a1, b, axis) => axis === 'z' ? box(a0, a1, 0, 140, b - .2, b + .2, M.tile, { col: false, uv: 32, cast: false }) : box(b - .2, b + .2, 0, 140, a0, a1, M.tile, { col: false, uv: 32, cast: false });
+  tl(x0, x1, z0 + .3, 'z'); tl(z0, -244, x0 + .3, 'x'); tl(z0, -244, x1 - .3, 'x'); tl(x0, d0, -244.3, 'z'); tl(d1, x1, -244.3, 'z');
+  box(x0, x1, 140, 142, z0, z0 + 1.2, M.porc, { col: false }); box(x0, x0 + 1.2, 140, 142, z0, -244, M.porc, { col: false }); box(x1 - 1.2, x1, 140, 142, z0, -244, M.porc, { col: false });
+  // the door: hinged on the right, swings into the bathroom
+  { const g = new THREE.Group(); g.position.set(d1 - 1, 0, -240); LV.add(g); HX.bd.g = g;
+    const dm = new THREE.MeshPhysicalMaterial({ color: 0xe9e2d4, roughness: .55, clearcoat: .2 });
+    mesh(new THREE.BoxGeometry(60, 203, 3), dm, -30, 101.5, 0, { parent: g }); mesh(new THREE.SphereGeometry(2, 14, 10), K.brass, -55, 98, 2.6, { parent: g }); mesh(new THREE.SphereGeometry(2, 14, 10), K.brass, -55, 98, -2.6, { parent: g });
+    mesh(new THREE.BoxGeometry(40, 18, .6), new THREE.MeshStandardMaterial({ color: 0xd8cfbe, roughness: .7 }), -30, 150, 1.8, { parent: g, cast: false });
+    for (let i = 0; i < 8; i++) { const c = { t: 'b', x0: 0, x1: 0, y0: 0, y1: 203, z0: 0, z1: 0, door: true }; cols.push(c); HX.bd.segs.push(c); }
+    box(d0 - 3, d0, 0, 205, -246, -230, MAT.white, { col: false }); box(d1, d1 + 3, 0, 205, -246, -230, MAT.white, { col: false }); box(d0 - 3, d1 + 3, 205, 209, -246, -230, MAT.white, { col: false }); }
+  // ---- toilet (back against the far wall) ----
+  { const cx = 400, P = M.porc;
+    box(382, 418, 38, 76, z0, -452, P); box(380, 420, 76, 79, z0 - .5, -450, P);                   // cistern + lid (stand on it to reach the lever)
+    const lv = mesh(new THREE.CylinderGeometry(.8, .8, 9, 12), M.chrome, 377.5, 70, -455); lv.rotation.z = Math.PI / 2; HX.lever = lv;
+    mesh(new THREE.SphereGeometry(1.6, 14, 10), M.chrome, 381.6, 70, -455);
+    box(388, 412, 0, 20, -447, -414, P);                                                            // foot
+    const bowl = mesh(new THREE.LatheGeometry([V3(9, 0, 0), V3(13, 4, 0), V3(17, 12, 0), V3(18.6, 20, 0), V3(18.2, 20.5, 0), V3(16, 12, 0), V3(10, 4, 0), V3(6, 1, 0)], 40), P, cx, 20, -428, { cast: true }); bowl.scale.z = 1.22;
+    box(383, 417, 20, 41, -410, -405, P, { col: true }).visible = false; box(383, 417, 20, 41, -452, -446, P).visible = false; box(382, 388, 20, 41, -446, -410, P).visible = false; box(412, 418, 20, 41, -446, -410, P).visible = false;
+    const seat = mesh(new THREE.TorusGeometry(15.5, 2.4, 10, 40), new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: .3, clearcoat: .6 }), cx, 41.2, -428); seat.rotation.x = Math.PI / 2; seat.scale.y = 1.25;
+    const lid = mesh(new THREE.CylinderGeometry(16, 16, 2, 36), new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: .3, clearcoat: .6 }), cx, 60, -449.4); lid.rotation.x = Math.PI / 2 - .12; lid.scale.x = .95;
+    box(388, 412, 20, 22, -446, -410, M.water, { cast: false });                                    // water in the bowl (you can stand in it… until someone flushes)
+    HX.bowl = { x0: 386, x1: 414, z0: -448, z1: -408 };
+    // paper on the wall beside it
+    box(x1 - 1, x1, 58, 62, -428, -412, M.chrome, { col: false }); const roll = mesh(new THREE.CylinderGeometry(5.5, 5.5, 11, 24), new THREE.MeshStandardMaterial({ color: 0xfbfaf6, roughness: .95 }), x1 - 7, 56, -420); roll.rotation.x = Math.PI / 2;
+    cols.push({ t: 'c', x: x1 - 7, z: -420, r: 5.5, y0: 50.5, y1: 61.5, m: roll });
+    // a shelf above the cistern: spare rolls, an air freshener, a little plant
+    box(370, 430, 120, 123, z0, -456, new THREE.MeshStandardMaterial({ color: 0xf0ece2, roughness: .5 }));
+    for (const [x, h, c] of [[378, 12, 0xfbfaf6], [390, 12, 0xfbfaf6], [404, 16, 0x7ec8c0], [420, 9, 0x6aa04a]]) cyl(x, -463, 4.8, 123, 123 + h, new THREE.MeshStandardMaterial({ color: c, roughness: .7 }), { seg: 18 });
+  }
+  // ---- pedestal sink + mirror cabinet ----
+  { const P = M.porc;
+    cyl(215, -456, 7.5, 0, 70, P, { seg: 28 });
+    box(190, 240, 70, 84, z0, -432, P);
+    const bw = mesh(new THREE.SphereGeometry(18, 32, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), P, 215, 84.2, -450, { cast: false }); bw.scale.set(1.1, .5, .85);
+    cyl(215, -466, 1.8, 84, 96, M.chrome, { seg: 16 }); const sp = mesh(new THREE.CylinderGeometry(1.4, 1.4, 11, 12), M.chrome, 215, 95, -461); sp.rotation.x = Math.PI / 2;
+    // the cabinet: open, with two glass-ish shelves; climb up from the basin
+    const cm = new THREE.MeshStandardMaterial({ color: 0xf2efe8, roughness: .5 });
+    box(188, 242, 108, 110, z0, -458, cm); box(188, 242, 180, 182, z0, -458, cm); box(188, 190, 110, 180, z0, -458, cm); box(240, 242, 110, 180, z0, -458, cm);
+    box(190, 240, 132, 133.5, z0, -460, M.plate); box(190, 240, 156, 157.5, z0, -460, M.plate);
+    const dg = new THREE.Group(); dg.position.set(242, 145, -458); dg.rotation.y = -1.75; LV.add(dg);
+    mesh(new THREE.BoxGeometry(53, 72, 1.6), cm, -26.5, 0, 0, { parent: dg }); mesh(new THREE.PlaneGeometry(50, 69), M.mirror, -26.5, 0, .9, { parent: dg, cast: false });
+    for (const [x, y, h, r, c] of [[196, 110, 12, 2.6, 0x3a7ac0], [204, 110, 8, 3, 0xe8e2d0], [232, 110, 14, 2.4, 0xd05a6a], [198, 133.5, 10, 2.2, 0x6ab07a], [226, 133.5, 7, 3.4, 0xf0d070], [212, 157.5, 11, 2.6, 0xb08ad0]]) cyl(x, -465, r, y, y + h, new THREE.MeshPhysicalMaterial({ color: c, roughness: .3, clearcoat: .6 }), { seg: 16 });
+    box(214, 230, 110, 114, -468, -462, new THREE.MeshStandardMaterial({ color: 0x2f6fb0, roughness: .6 }));   // toothpaste box
+  }
+  // ---- towel on a rail (soft, climbable) ----
+  box(x0, x0 + 3, 128, 131, -400, -330, M.chrome, { col: false });
+  box(x0 + 1.5, x0 + 6, 70, 132, -396, -334, M.towel, { uv: 40 });
+  // ---- laundry basket under the fan: land in the towels ----
+  { const bx0 = 336, bx1 = 384, bz0 = -344, bz1 = -296, h = 52, W = 2;
+    box(bx0, bx1, 0, h, bz0, bz0 + W, M.wicker, { uv: 48 }); box(bx0, bx1, 0, h, bz1 - W, bz1, M.wicker, { uv: 48 }); box(bx0, bx0 + W, 0, h, bz0 + W, bz1 - W, M.wicker, { uv: 48 }); box(bx1 - W, bx1, 0, h, bz0 + W, bz1 - W, M.wicker, { uv: 48 });
+    box(bx0 - 1, bx1 + 1, h, h + 2.4, bz0 - 1, bz1 + 1, new THREE.MeshPhysicalMaterial({ color: 0x8cc4d8, roughness: .3, clearcoat: .6 }), { col: false });   // rolled rim
+    box(bx0 + W, bx1 - W, 0, 40, bz0 + W, bz1 - W, M.towel2, { uv: 30 });
+    for (let i = 0; i < 6; i++) { const t = mesh(new THREE.SphereGeometry(R(7, 11), 18, 12), [M.towel, M.towel2, new THREE.MeshPhysicalMaterial({ color: 0xf2ede2, roughness: 1, sheen: 1 })][i % 3], R(bx0 + 10, bx1 - 10), 40 + R(0, 3), R(bz0 + 10, bz1 - 10)); t.scale.y = .4; }
+  }
+  // ---- bath mats ----
+  for (const [x, z, w, d, c] of [[400, -378, 64, 34, 0x9cc8d8], [215, -410, 52, 30, 0xe8c0a8]]) { const g = new THREE.PlaneGeometry(w, d); g.rotateX(-Math.PI / 2); const m = furMesh(g, furMat({ color: c, len: .5, den: 2.4, droop: .15, clump: .5, root: .6, rimK: .04 })); m.position.set(x, .3, z); LV.add(m); cols.push({ t: 'b', x0: x - w / 2, x1: x + w / 2, y0: 0, y1: .3, z0: z - d / 2, z1: z + d / 2, small: true }); }
+  // ---- frosted window, ceiling light, extractor fan ----
+  box(270, 340, 150, 206, z0 - .4, z0 + .2, M.frost, { col: false, cast: false }); box(268, 342, 148, 150, z0, z0 + 2, MAT.white, { col: false }); box(268, 342, 206, 208, z0, z0 + 2, MAT.white, { col: false });
+  const lampM = M.lamp.clone(); mesh(new THREE.CylinderGeometry(14, 15, 2.4, 32), lampM, 300, ceil - 1.2, -357, { cast: false });
+  const bl = pointL(0xfff1dc, 0, 300, ceil - 8, -357); const spec = { p: V3(300, ceil - 8, -357), range: 300, on: false }; KS.lights.push(spec);
+  HX.blight = { l: bl, spec, mat: lampM, I: 7200 };
+  // fan: louvres in the ceiling, blades above them
+  for (let i = 0; i < 5; i++) box(349, 371, ceil - .8, ceil, -329 + i * 4.6, -327.6 + i * 4.6, MAT.white, { col: false, cast: false });
+  box(346, 348, ceil, 270, -332, -306, M.duct); box(372, 374, ceil, 270, -332, -306, M.duct); box(348, 372, ceil, 270, -332, -330, M.duct); box(348, 372, ceil, 270, -308, -306, M.duct);
+  const fg = new THREE.Group(); fg.position.set(360, 258, -319); LV.add(fg); const bm = new THREE.MeshStandardMaterial({ color: 0xdedad0, roughness: .5 });
+  mesh(new THREE.CylinderGeometry(2.2, 2.2, 3, 14), bm, 0, 0, 0, { parent: fg }); for (let i = 0; i < 4; i++) { const b = mesh(new THREE.BoxGeometry(9.5, .5, 4.5), bm, 0, 0, 0, { parent: fg }); b.geometry.translate(5.5, 0, 0); b.rotation.set(.3, i * Math.PI / 2, 0); }
+  const fcol = { t: 'b', x0: 348, x1: 372, y0: -999, y1: -998, z0: -330, z1: -308, zone: 'kitchen' }; cols.push(fcol);
+  HX.bfan = { g: fg, col: fcol, y: [254, 262] };
+  // light leaking up through the fan into the duct
+  HX.leak = pointL(0xfff1dc, 0, 360, 266, -319);
+  // a battery for the curious: on the cistern shelf
+  addBattery(392, 123, -463);
+}
+
+// ---------- the duct in the ceiling void ----------
+function buildDuct(K) {
+  const D = bathMats(K).duct;
+  // segment A: from the top of the hood's chimney straight back over the kitchen's back wall
+  box(14, 62, 268, 270, -330, -240, D); box(14, 16, 270, 294, -332, -196, D); box(60, 62, 270, 294, -306, -196, D); box(16, 60, 270, 294, -198, -196, D); box(14, 62, 292, 294, -332, -196, D);
+  // segment B: along the back of the house to the bathroom fan
+  box(62, 348, 268, 270, -330, -308, D); box(14, 374, 270, 294, -332, -330, D); box(62, 374, 270, 294, -308, -306, D); box(372, 374, 270, 294, -330, -308, D); box(62, 374, 292, 294, -332, -306, D);
+  // seams, dust, a lost button and a vial: someone's been up here before
+  for (let x = 80; x < 340; x += 48) box(x, x + 1.2, 270, 292, -330, -329.6, new THREE.MeshStandardMaterial({ color: 0x8a9094, metalness: .8, roughness: .5 }), { col: false, cast: false });
+  const bun = furMat({ color: 0x8a8580, len: .6, den: 1.8, droop: .3, clump: .6, rimK: .05, root: .7 });
+  for (const [x, z, r] of [[38, -262, 2], [120, -318, 2.6], [260, -322, 1.8], [30, -310, 1.4]]) { const b = furMesh(new THREE.SphereGeometry(r, 18, 12), bun); b.position.set(x, 270 + r * .6, z); b.scale.y = .6; LV.add(b); }
+  addVial(200, 270, -319); addBattery(38, 270, -300);
+  pointL(0xffc890, 70, 38, 284, -262); pointL(0x9fc4ff, 60, 200, 284, -319);
+  // a seam that lets a thin line of cool night light in
+  box(196, 204, 292.2, 292.6, -329, -309, new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0x9fc4ff, emissiveIntensity: 2.2 }), { col: false, cast: false });
+}
+
+// ---------- switches, taps and fans ----------
+function hxAdd(o) { o.i = HX.list.length; o.on = !!o.on; o.r = o.r || 8; HX.list.push(o); HX.id[o.id] = o; return o; }
+function buildHouseSwitches(K) {
+  HX.list.length = 0; HX.id = {}; HX.water = 0;
+  const plate = (x, y, z, ry) => { const g = new THREE.Group(); g.position.set(x, y, z); g.rotation.y = ry; LV.add(g); mesh(new THREE.BoxGeometry(7, 7, .6), MAT.white, 0, 0, 0, { parent: g }); const t = mesh(new THREE.BoxGeometry(2.4, 3.4, .9), new THREE.MeshPhysicalMaterial({ color: 0xf6f4ee, roughness: .3 }), 0, 0, .5, { parent: g }); return t; };
+  // kitchen lights: a switch on the wall by the living-room door
+  const kt = plate(299.6, 118, -82, -Math.PI / 2);
+  hxAdd({ id: 'klight', name: '廚房燈掣', kind: 'light', p: V3(299, 118, -82), on: true, toggle: kt, verb: ['熄燈', '開燈'] });
+  // bathroom light + fan: on the kitchen side, next to the bathroom door (Hong Kong style)
+  const bt = plate(299.6, 118, -200, -Math.PI / 2);
+  hxAdd({ id: 'blight', name: '廁所燈掣（連抽氣扇）', kind: 'light', p: V3(299, 118, -200), on: false, toggle: bt, verb: ['熄廁所燈', '開廁所燈'] });
+  hxAdd({ id: 'tap', name: '洗碗盆水龍頭', kind: 'tap', p: V3(-96, 97, -213), on: false, r: 10, verb: ['關水龍頭', '開水龍頭'] });
+  hxAdd({ id: 'hood', name: '抽油煙機', kind: 'fan', p: V3(79, 173, -179.5), on: true, r: 11, verb: ['關抽油煙機', '開抽油煙機'] });
+  hxAdd({ id: 'flush', name: '馬桶', kind: 'flush', p: V3(388, 78, -458), r: 17, oneShot: true, verb: ['沖廁', '沖廁'] });
+  hxAdd({ id: 'tv', name: '電視機', kind: 'tv', p: V3(870, 47, 76), on: true, r: 10, verb: ['關電視', '開電視'] });
+  hxAdd({ id: 'lamp', name: '落地燈', kind: 'lamp', p: V3(588, 1.5, 4), on: true, r: 8, verb: ['熄落地燈', '開落地燈'] });
+  // the water stream from the kitchen tap
+  HX.stream = mesh(new THREE.CylinderGeometry(.9, 1.2, 1, 12, 1, true), new THREE.MeshPhysicalMaterial({ color: 0xcfeaf4, roughness: 0, transparent: true, opacity: .5, transmission: .3, depthWrite: false }), -100, 100, -193, { cast: false }); HX.stream.visible = false;
+  HX.basinW = null; LV.traverse(o => { if (!HX.basinW && o.isMesh && o.material === K.water && Math.abs(o.position.y - 68.6) < .2) HX.basinW = o; });
+  // the pulsing ring that shows a switch is in reach
+  const rg = new THREE.Mesh(new THREE.RingGeometry(2.6, 3.2, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color(0x82ece6).multiplyScalar(1.6), transparent: true, opacity: .8, side: THREE.DoubleSide, depthWrite: false, depthTest: false }));
+  rg.renderOrder = 10; rg.visible = false; LV.add(rg); HX.ring = rg;
+  for (const o of HX.list) hxApply(o, true);
+}
+// what being on or off looks like (runs on everyone; quiet = no sound)
+function hxApply(o, quiet) {
+  if (o.toggle) o.toggle.rotation.x = o.on ? -.35 : .35;
+  if (o.id === 'blight' && HX.blight) { const B = HX.blight; B.spec.on = o.on; B.mat.emissiveIntensity = o.on ? 5 : .05; }
+  if (o.id === 'tv') LIV.tvOff = !o.on;
+  if (o.id === 'lamp' && LIV.shade) LIV.shade.material.emissiveIntensity = o.on ? .6 : 0;
+  if (o.id === 'hood' && HX.hoodLed) HX.hoodLed.emissiveIntensity = o.on ? 1.2 : 0;
+  if (o.id === 'hood' && HX.hood) HX.hood.col.y0 = o.on ? HX.hood.y[0] : -999, HX.hood.col.y1 = o.on ? HX.hood.y[1] : -998;
+  if (o.id === 'blight' && HX.bfan) HX.bfan.col.y0 = o.on ? HX.bfan.y[0] : -999, HX.bfan.col.y1 = o.on ? HX.bfan.y[1] : -998;
+  if (!quiet) { SND.snap && SND.snap(); if (o.kind === 'flush') hxFlushSnd(o.p); }
+}
+// someone pressed it: players ask the host; the family calls this directly on the host
+function hxSet(o, on, by) {
+  if (!o) return; if (o.oneShot) { HX.flushT = 3.6; hxApply(o); if (!NET.client) hxFlushed(); }
+  else { if (o.on === on) return; o.on = on; hxApply(o); }
+  if (NET.on && NET.host) nsend({ t: 'hxs', i: o.i, on: o.on ? 1 : 0, f: o.oneShot ? 1 : 0 });
+  if (!NET.client && isPlayerId(by)) brainIncident(o.id, o, on, by);
+}
+function isPlayerId(by) { return !!(by && chars[by]); }
+function hxRequest(o, C) {
+  if (NET.client) nsend({ t: 'hx', i: o.i, by: C.id }, NET.hostId); else hxSet(o, !o.on, C.id);
+  const say = o.oneShot ? '沖！' : o.on ? o.verb[0] : o.verb[1]; toast(`${C.S.name}：${say}`, 1.4);
+  for (let k = 0; k < 10; k++) emit(o.p.clone(), V3(R(-6, 6), R(3, 10), R(-6, 6)), new THREE.Color(1.6, 2.2, 2.1), R(.08, .16), R(.2, .4), 80, 1);
+}
+function hxRecv(d) { const o = HX.list[d.i]; if (!o) return; if (d.f) { HX.flushT = 3.6; hxApply(o); } else if (o.on !== !!d.on) { o.on = !!d.on; hxApply(o); } }
+function hxState() { return HX.list.map(o => o.on ? 1 : 0).join('') + '|' + HX.water.toFixed(2) + '|' + HX.bd.tgt.toFixed(2); }
+function hxRecvState(s) { if (!s) return; const [f, w, d] = s.split('|'); [...f].forEach((c, i) => { const o = HX.list[i]; if (o && !o.oneShot && o.on !== (c === '1')) { o.on = c === '1'; hxApply(o, true); } }); HX.water = +w; HX.bd.tgt = +d; }
+function hxNear(C) {
+  if (!C || !HX.list.length || LEVEL !== 'kitchen') return null; const cx = C.pos.x, cy = C.pos.y + C.h * .5, cz = C.pos.z; let best = null, bd = 1e9;
+  for (const o of HX.list) { const d = Math.hypot(o.p.x - cx, o.p.y - cy, o.p.z - cz); if (d < o.r && d < bd) { bd = d; best = o; } }
+  return best;
+}
+function hxInput(L, ctl) { if (!ctl || !pressed.KeyE || STATE !== 'play') return false; const o = hxNear(L); if (!o) return false; hxRequest(o, L); return true; }
+function hxHint(L) { const o = HX.near; if (!o || L.frozen) return ''; const v = o.oneShot ? o.verb[0] : o.on ? o.verb[0] : o.verb[1]; return TOUCH ? `按「用」${v}` : `<kbd>E</kbd> ${v}`; }
+// toilet flushed: anyone standing in the bowl goes down the pipe… and comes out of the drain under the fridge
+function hxFlushed() {
+  const B = HX.bowl; for (const C of playerChars()) if (!C.frozen && C.pos.x > B.x0 && C.pos.x < B.x1 && C.pos.z > B.z0 && C.pos.z < B.z1 && C.pos.y < 30) {
+    if (mine(C)) hxFlushChar(C); else if (NET.on) nsend({ t: 'hxw', id: C.id });
+  }
+}
+function hxFlushChar(C) { C.pos.set(191 + R(-6, 6), 0, -196 + R(-4, 4)); C.vel.set(0, 0, 0); C.climbing = false; C.mantle = null; C.squash = .9; if (C === leader) { trail = []; C.lastTrail.copy(C.pos); toastW('被沖走了……從雪櫃底下的去水口冒出來！', 3); } }
+function hxFlushSnd(p) {
+  const C = AU.ctx; if (!C) return; const d = leader ? leader.pos.distanceTo(p) : 0, v = clamp(1.2 - d / 700, .08, 1) * .5;
+  const s = C.createBufferSource(); s.buffer = AU.noise; s.loop = true; const f = C.createBiquadFilter(); f.type = 'bandpass'; f.Q.value = .8; const g = C.createGain(); const t = C.currentTime;
+  f.frequency.setValueAtTime(300, t); f.frequency.linearRampToValueAtTime(1400, t + .6); f.frequency.linearRampToValueAtTime(500, t + 3.4);
+  g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(v, t + .25); g.gain.setValueAtTime(v, t + 1.8); g.gain.linearRampToValueAtTime(0, t + 3.6);
+  s.connect(f); f.connect(g); g.connect(AU.out); s.start(t); s.stop(t + 3.8);
+}
+// steady sounds: running water, the hood, the bathroom fan (louder the closer you are)
+function hxLoop(key, kind) {
+  const C = AU.ctx; if (!C) return null; if (HX.snd[key]) return HX.snd[key];
+  const g = C.createGain(); g.gain.value = 0; g.connect(AU.out);
+  const s = C.createBufferSource(); s.buffer = AU.noise; s.loop = true; const f = C.createBiquadFilter(); s.connect(f); f.connect(g);
+  if (kind === 'water') { f.type = 'bandpass'; f.frequency.value = 1700; f.Q.value = .45; }
+  else { f.type = 'lowpass'; f.frequency.value = kind === 'hood' ? 520 : 1100; const o = C.createOscillator(); o.type = 'triangle'; o.frequency.value = kind === 'hood' ? 98 : 172; const og = C.createGain(); og.gain.value = .25; o.connect(og); og.connect(g); o.start(); }
+  s.start(0, rnd() * 1.5); return (HX.snd[key] = g);
+}
+function hxLoopVol(key, kind, on, p, base, range) { const g = hxLoop(key, kind); if (!g) return; const L = leader; const d = L ? L.pos.distanceTo(p) : 999; g.gain.setTargetAtTime(on && LEVEL === 'kitchen' ? base * Math.pow(clamp(1 - d / range, 0, 1), 1.4) : 0, AU.ctx.currentTime, .12); }
+
+// the bathroom door: a row of overlapping boxes so nothing slips through at any angle
+function hxDoorSegs() {
+  const a = HX.bd.a, n = HX.bd.segs.length, LEN = 60, hx = BATH.door[1] - 1, hz = -240;
+  const dx = -Math.cos(a), dz = -Math.sin(a), nx = -dz, nz = dx;
+  HX.bd.segs.forEach((c, i) => { let x0 = 1e9, x1 = -1e9, z0 = 1e9, z1 = -1e9; for (const t of [i * LEN / n, (i + 1) * LEN / n]) for (const s of [-1.8, 1.8]) { const x = hx + dx * t + nx * s, z = hz + dz * t + nz * s; x0 = Math.min(x0, x); x1 = Math.max(x1, x); z0 = Math.min(z0, z); z1 = Math.max(z1, z); } c.x0 = x0; c.x1 = x1; c.z0 = z0; c.z1 = z1; });
+}
+// lights the switches control: kept dark every frame while off (runs after the frog's blackout code)
+function hxLights() {
+  if (!HX.list.length) return; const kl = HX.id.klight;
+  for (const P of HX.pend) { const on = kl.on; P.spec.on = on; if (!on) P.l.intensity = 0; else if (P.l.intensity === 0 && !inDark(P.spec.p)) P.l.intensity = P.I; P.bulb.emissiveIntensity = on ? 7 : .08; P.rec.k = on ? 1 : 0; P.beam.material.uniforms.uK.value = on ? P.k : 0; }
+  const B = HX.blight; if (B) { B.l.intensity = HX.id.blight.on ? B.I : 0; if (HX.leak) HX.leak.intensity = HX.id.blight.on ? 260 : 0; }
+  const H = HX.hoodL; if (H) { const on = HX.id.hood.on; H.spec.on = on; H.l.intensity = on ? H.I : 0; H.bulb.emissiveIntensity = on ? 7 : .08; }
+  if (LEVEL !== 'kitchen') for (const k in HX.snd) HX.snd[k].gain.value = 0;
+  const lp = HX.id.lamp; if (LIV.lamp && lp) { if (!lp.on) { LIV.lamp.intensity = 0; if (LIV.shade) LIV.shade.material.emissiveIntensity = 0; } else if (LIV.lamp.intensity === 0 && !inDark(LIV.lamp.position)) LIV.lamp.intensity = 9000; const s = KS.lights.find(q => q.p.x === 575 && q.p.z === 8); if (s) s.on = lp.on; }
+  const tv = HX.id.tv; if (tv && !tv.on) LIV.tvOff = true; if (tv) { const s = KS.lights.find(q => q.p.x === 850 && q.p.z === 120); if (s) s.on = tv.on; }
+}
+// every frame in the kitchen level
+function hxTick(dt) {
+  if (!HX.list.length) return; const L = leader;
+  // fans spin, water rises while the tap runs (and drains slowly), the door swings
+  const hood = HX.id.hood, bl = HX.id.blight, tap = HX.id.tap;
+  if (HX.hood) HX.hood.g.rotation.y += dt * (hood.on ? 26 : 0);
+  if (HX.bfan) HX.bfan.g.rotation.y += dt * (bl.on ? 22 : 0);
+  HX.water = clamp(HX.water + dt * (tap.on ? 1 / 22 : -1 / 90), 0, 1);
+  const wy = 68.6 + HX.water * 15.4; if (HX.basinW) HX.basinW.position.y = wy;
+  HX.stream.visible = tap.on; if (tap.on) { const top = 116, len = top - wy; HX.stream.scale.y = len; HX.stream.position.y = wy + len / 2; HX.stream.material.opacity = .42 + Math.sin(T * 40) * .06; if (rnd() < dt * 30) emit(V3(-100 + R(-2, 2), wy + .2, -193 + R(-2, 2)), V3(R(-10, 10), R(6, 16), R(-10, 10)), new THREE.Color(.62, .78, .88), R(.12, .25), R(.3, .5), 200, 1); }
+  if (HX.water > .98 && tap.on && rnd() < dt * 20) emit(V3(R(-130, -70), 86, -170), V3(R(-4, 4), R(-2, 2), R(4, 12)), new THREE.Color(.6, .76, .86), R(.15, .3), R(.6, 1), 200, 1);
+  KS.basinY = wy;
+  const pa = HX.bd.a; HX.bd.a = damp(HX.bd.a, HX.bd.tgt, 3.2, dt); if (Math.abs(HX.bd.a - pa) > 1e-4 || !HX.bd.init) { HX.bd.init = true; HX.bd.g.rotation.y = HX.bd.a; hxDoorSegs(); }
+  if (HX.flushT > 0) { HX.flushT -= dt; if (rnd() < dt * 40) emit(V3(400 + R(-8, 8), 22, -428 + R(-10, 10)), V3(R(-6, 6), R(2, 8), R(-6, 6)), new THREE.Color(.6, .78, .9), R(.15, .3), R(.3, .6), 120, 1); if (HX.lever) HX.lever.rotation.x = HX.flushT > 3 ? -.6 : 0; }
+  // sounds
+  hxLoopVol('water', 'water', tap.on, V3(-100, 80, -193), .32, 420);
+  hxLoopVol('hood', 'hood', hood.on, V3(38, 175, -196), .22, 520);
+  hxLoopVol('bfan', 'fan', bl.on, V3(360, 255, -319), .16, 300);
+  // you float in the filling basin
+  if (L && mine(L)) {
+    const B = KS.basin; if (L.pos.x > B.x0 && L.pos.x < B.x1 && L.pos.z > B.z0 && L.pos.z < B.z1 && L.pos.y < wy - .8 && L.pos.y > 60) { L.pos.y = Math.min(wy - .8, L.pos.y + dt * 30); L.vel.y = Math.max(L.vel.y, 0); L.grounded = true; L.swim = true; } else L.swim = false;
+    // spinning fans knock you back
+    const H = HX.hood; if (hood.on && L.pos.x > 16 && L.pos.x < 60 && L.pos.z > -218 && L.pos.z < -198 && L.pos.y > 176 && L.pos.y < 196) { knock(L, V3(38, 195, -208), '抽油煙機的風扇在轉！先把它關掉'); L.vel.y = -30; }
+    if (bl.on && L.pos.x > 344 && L.pos.x < 374 && L.pos.z > -332 && L.pos.z < -306 && L.pos.y > 262 && L.pos.y < 272 && Math.abs(L.vel.y) < 60) { if (!HX.saidFan || T - HX.saidFan > 4) { HX.saidFan = T; toast('抽氣扇在轉，下不去——要有人關廁所燈（連抽氣扇）', 3); } }
+  }
+  // which switch is in reach (and the ring that shows it)
+  HX.near = L && mine(L) && !L.frozen && STATE === 'play' ? hxNear(L) : null;
+  const rg = HX.ring; if (HX.near) { rg.visible = true; rg.position.copy(HX.near.p); rg.lookAt(camera.position); const s = 1 + Math.sin(T * 6) * .12; rg.scale.setScalar(s); } else rg.visible = false;
+  if (TOUCH) $('touch').classList.toggle('use', !!HX.near);
+}

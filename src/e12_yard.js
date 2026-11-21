@@ -327,7 +327,8 @@ LEVELS.yard = {
 function mpObjectives() {
   if (!NET.on || NET.client || STATE !== 'play' || !WORLD) return;
   const P = playerChars().filter(C => !C.frozen); if (!P.length) return;
-  if (quest === 2 && P.every(C => C.pos.x > 316 && C.pos.x < 912)) { setQuest(3); toastW('全隊到齊客廳！', 2.4); }
+  if (quest === 2 && P.every(C => C.pos.x > 316 && C.pos.x < 912 && C.pos.z > -232)) { setQuest(3); toastW('全隊到齊客廳！', 2.4); }
+  if (quest <= 3) mpAdvance();
   if (quest === 4 && !LIV.ventOpen) ventOpen();
   if (quest === 4 && P.every(C => C.pos.x > 924)) { setQuest(5); toastW('全隊到了車房！', 2.4); }
   if (quest === 5 && GS.camBroken) setQuest(6);

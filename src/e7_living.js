@@ -144,11 +144,26 @@ function updLiving(dt) {
     if (STATE === 'play' && !L.frozen && mine(L) && Math.hypot(L.pos.x - p.x, L.pos.y + 1 - p.y - 2, L.pos.z - p.z) < 4) netGet('part', LIV.parts.indexOf(p)); }
   if (remoteOn() && !LIV.remoteGot && LIV.remote && !L.frozen && mine(L) && STATE === 'play') { const r = LIV.remote; if (Math.hypot(L.pos.x - r.cx, L.pos.z - r.cz) < 6 && Math.abs(L.pos.y - (r.y0 + 2)) < 5) netGet('remote'); }
 }
-function remoteOn() { return KS.mp ? quest === 3 : (KS.ch2 && quest === 1); }
+function remoteOn() { return KS.mp ? LIV.open && quest <= 3 : (KS.ch2 && quest === 1); }
+// online chapter one: the objectives can be done in any order — skip whatever is already done
+function mpAdvance() {
+  if (!KS.mp || NET.client) return;
+  if (quest === 0 && LIV.partsGot >= 3) setQuest(1);
+  if (quest === 1 && LIV.open) setQuest(2);
+  if (quest === 3 && LIV.remoteGot) setQuest(4);
+}
+// the quest card shows what's done so far, so a split team can see where help is needed
+function mpChecklist() {
+  if (!KS.mp || quest > 3 || LEVEL !== 'kitchen') { if (HX.ckShown) { $('qck').hidden = true; HX.ckShown = false; } return; }
+  const it = (ok, t) => `<span class="${ok ? 'ok' : ''}">${ok ? '✓' : '○'} ${t}</span>`;
+  const P = k => LIV.parts.find(p => p.kind === k);
+  const html = it(P('spring') && P('spring').got, '彈簧') + it(P('cap') && P('cap').got, '電容') + it(P('lens') && P('lens').got, '鏡片') + it(LIV.open, '客廳門') + it(LIV.remoteGot, '遙控器電池');
+  if (html !== HX.ck) { HX.ck = html; $('qck').innerHTML = html; } if (!HX.ckShown) { $('qck').hidden = false; HX.ckShown = true; }
+}
 function doorOpen() {
   if (LIV.open) return; LIV.open = true; SND.creak(); noise(V3(296, 0, -10), .6); const w = LIV.wedge; if (!w.gone) { w.svx = -34; w.svz = 0; }
   toastW('門擋移開了——一陣風把門吹開了！', 3);
-  if (KS.mp && quest === 1) setQuest(2);
+  if (KS.mp) mpAdvance();
   else if (KS.ch2 && quest === 0) { setQuest(1); say('爸爸', '門開了！遙控器應該在沙發前面的咖啡枱上。', '#f5f0e6', 3); }
 }
 // someone picked up a part / the batteries (runs on the host, or directly in single player)
@@ -157,11 +172,11 @@ function livingGet(d, C) {
     const p = LIV.parts[d.i]; if (!p || p.got) return; p.got = true; p.g.visible = false; p.halo.visible = false; LIV.partsGot = LIV.parts.filter(q => q.got).length; SND.pick();
     for (let i = 0; i < 24; i++) emit(V3(p.x, p.y + 2, p.z), V3(R(-10, 10), R(4, 18), R(-10, 10)), new THREE.Color(2, 1.6, .7), R(.15, .35), R(.4, 1), 30, 2);
     toastW(`${C.S.name}找到了${PART_NAME[p.kind]}！（零件 ${LIV.partsGot}/3）`, 3);
-    if (LIV.partsGot >= 3 && quest === 0) { setQuest(1); sayW('爸爸', '三個零件齊了！下一步：打開去客廳的門。', '#f5f0e6', 3.2); }
+    if (LIV.partsGot >= 3 && quest === 0) { sayW('爸爸', LIV.open ? '三個零件齊了！門也開了——全隊去客廳！' : '三個零件齊了！下一步：打開去客廳的門。', '#f5f0e6', 3.2); mpAdvance(); }
   } else if (d.k === 'remote') {
     if (LIV.remoteGot) return; LIV.remoteGot = true; SND.pick(); const r = LIV.remote;
     for (let i = 0; i < 30; i++) emit(V3(r.cx, r.y0 + 3, r.cz), V3(R(-10, 10), R(4, 20), R(-10, 10)), new THREE.Color(.6, 2, 1.9), R(.15, .35), R(.4, 1), 30, 2);
-    if (KS.mp) { setQuest(4); toastW('電池到手！全隊到客廳最裡面的通風口集合', 3.4); sayW(C.S.name, '電池拿到了！去通風口！', C.S.col, 2.6); }
+    if (KS.mp) { if (quest === 3) { setQuest(4); toastW('電池到手！全隊到客廳最裡面的通風口集合', 3.4); sayW(C.S.name, '電池拿到了！去通風口！', C.S.col, 2.6); } else toastW(`${C.S.name}先拿到了遙控器的電池！其餘目標完成後就可以去通風口`, 3.4); }
     else {
       say('爸爸', '兩粒電池……夠核心撐一陣子了。', '#f5f0e6', 3.2); unlockKey('ch2');
       // chapter two is done; the vent behind the TV cabinet leads on to the garage — no stopping
@@ -181,10 +196,10 @@ function addPart(x, y, z, kind) {
 }
 const PART_NAME = { spring: '彈簧', lens: '鏡片', cap: '電容' };
 const MP_QUESTS = [
-  { t: '找齊三個零件', s: '縮小機的零件散落在廚房：彈簧（爐頭旁）、鏡片（餐桌上）、電容（洗手盆下面的櫃）' },
-  { t: '打開通往客廳的門', s: '門被門擋卡住了——熊可以推開門擋，或者爸爸把它縮小' },
+  { t: '找齊三個零件', s: '彈簧在爐頭旁、電容在洗手盆下面的櫃、鏡片在廁所的鏡櫃。次序隨意，分頭行動最快——客廳門、遙控器電池都可以隨時先做' },
+  { t: '打開通往客廳的門', s: '門被門擋卡住了——熊可以推開或拉走門擋，或者爸爸把它縮小' },
   { t: '全隊進入客廳', s: '所有玩家都要走過去（電腦隊友會跟着）' },
-  { t: '拿走遙控器的電池', s: '遙控器在客廳的咖啡枱上' },
+  { t: '拿走遙控器的電池', s: '遙控器在咖啡枱上——女兒在沙發看電視就引開她：關電視、熄燈、在別處弄點聲音' },
   { t: '爬過通風口去車房', s: '電池到手，通風口的蓋打開了——全隊一齊爬過去' },
   { t: '弄跌監視鏡頭', s: '鐵架頂有部 Origin Dynamics 的監視鏡頭——爬上去把它推跌（熊推、阿刺撞都得）' },
   { t: '打開狗門的門扣', s: '側門下面有狗門，門扣太高——疊羅漢、跳跳跳上去，或者推木箱過去墊腳' },

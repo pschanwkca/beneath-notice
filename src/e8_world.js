@@ -16,7 +16,7 @@
 const BO = V3(28, -336, -229), HO = V3(-400, -340, -94); let MP_CPS = null;
 const ZONES = {}, ZL = []; let WORLD = false;
 function zoneDef(id, o) { const Z = Object.assign({ id, off: V3(), core: [], lv: null, fx: null, cols: [], lights: [], beams: [], dust: null, env: null, near: false, prepped: false }, o); ZONES[id] = Z; ZL.push(Z); return Z; }
-zoneDef('kitchen', { floor: 0, core: [[-312, 912, -12, 300, -250, 250], [-432, -312, -2, 40, -126, -74]], peek: [[930, 1060, -40, 60, -260, -120]], env: 'kitchen' });
+zoneDef('kitchen', { floor: 0, core: [[-312, 912, -12, 300, -250, 250], [-432, -312, -2, 40, -126, -74], [140, 475, -12, 262, -485, -230], [10, 380, 255, 300, -336, -192]], peek: [[930, 1060, -40, 60, -260, -120]], env: 'kitchen' });
 // peek: spots in other places from which you can see in (through a mouse hole) — draw this place too
 zoneDef('wall', { floor: HO.y + 4, off: HO, core: [[-530, -312, -360, -2, -140, -52]], peek: [[-282, -140, -345, -250, -160, 10], [-312, -160, -12, 90, -200, 0]], env: 'hub' });
 zoneDef('garage', { floor: -20, core: [[912, 1460, -40, 300, -270, 312]], peek: [[820, 912, -10, 70, -240, -150], [1460, 1640, -40, 120, 20, 200]], env: 'garage' });
@@ -63,7 +63,7 @@ async function buildWorld(prog) {
 
 // ---------- colliders: each place keeps its own list (plus anything within 60 cm of it) ----------
 const CMARGIN = 60;
-function colZonesFor(c) { const b = colBounds(c); const out = []; for (const Z of ZL) for (const q of Z.core) if (b[0] < q[1] + CMARGIN && b[1] > q[0] - CMARGIN && b[2] < q[3] + CMARGIN && b[3] > q[2] - CMARGIN && b[4] < q[5] + CMARGIN && b[5] > q[4] - CMARGIN) { out.push(Z); break; } return out; }
+function colZonesFor(c) { if (c.zone) return [ZONES[c.zone]]; const b = colBounds(c); const out = []; for (const Z of ZL) for (const q of Z.core) if (b[0] < q[1] + CMARGIN && b[1] > q[0] - CMARGIN && b[2] < q[3] + CMARGIN && b[3] > q[2] - CMARGIN && b[4] < q[5] + CMARGIN && b[5] > q[4] - CMARGIN) { out.push(Z); break; } return out; }
 function partitionCols() {
   for (const Z of ZL) Z.cols = [];
   for (const c of cols) for (const Z of colZonesFor(c)) Z.cols.push(c);

@@ -321,9 +321,11 @@ function buildKitchen() {
   const K = kitchenMats(), M = MAT;
   // shell
   box(-312, 330, -10, 0, -240, 240, K.floor, { uv: 140, cast: false });
-  box(-330, 330, 260, 270, -240, 240, K.ceil, { cast: false });
-  box(-312, -150, 0, 260, -232, -220, K.wall, { uv: 120 }); box(-50, 312, 0, 260, -232, -220, K.wall, { uv: 120 });
+  // ceiling (with the hole the hood's chimney goes up through)
+  box(-330, 16, 260, 270, -240, 240, K.ceil, { cast: false }); box(60, 330, 260, 270, -240, 240, K.ceil, { cast: false }); box(16, 60, 260, 270, -240, -218, K.ceil, { cast: false }); box(16, 60, 260, 270, -198, 240, K.ceil, { cast: false });
+  box(-312, -150, 0, 260, -232, -220, K.wall, { uv: 120 }); box(-50, 236, 0, 260, -232, -220, K.wall, { uv: 120 }); box(298, 312, 0, 260, -232, -220, K.wall, { uv: 120 }); box(236, 298, 205, 260, -232, -220, K.wall, { uv: 120 });
   box(-150, -50, 0, 110, -232, -220, K.wall, { uv: 120 }); box(-150, -50, 190, 260, -232, -220, K.wall, { uv: 120 });
+  // (the back wall has the bathroom door in it, between the fridge and the living-room wall)
   box(-312, 312, 0, 260, 220, 232, K.wall, { uv: 120 }); box(300, 312, 0, 260, -232, -62, K.wall, { uv: 120 }); box(300, 312, 0, 260, 44, 232, K.wall, { uv: 120 }); box(300, 312, 212, 260, -62, 44, K.wall, { uv: 120 });
   box(-312, -300, 0, 260, -232, -104, K.wall, { uv: 120 }); box(-312, -300, 0, 260, -96, 232, K.wall, { uv: 120 }); box(-312, -300, 8, 260, -104, -96, K.wall, { uv: 120 });
   // behind the mouse hole: a crawl tunnel, then a small chamber over the gap that drops into the wall cavity
@@ -382,8 +384,8 @@ function buildKitchen() {
   KS.potTop = V3(19, 104, -178);
   for (const s of [-1, 1]) { const h = mesh(new THREE.TorusGeometry(2.4, .7, 8, 16, Math.PI), MAT.black, 19 + s * 12.5, 100, -178); h.rotation.set(0, s > 0 ? -Math.PI / 2 : Math.PI / 2, 0); }
   // hood
-  box(-2, 78, 158, 186, -220, -172, K.steel, { uv: 60 }); box(14, 62, 186, 260, -220, -196, K.steel, { col: false });
-  mesh(new THREE.PlaneGeometry(76, 44), K.bulb, 38, 157.8, -196, { cast: false }).rotation.x = Math.PI / 2;
+  buildHood(K);
+  HX.hoodBulb = K.bulb.clone(); hoodUnderside(K);
   // upper cabinets
   upperRun(-300, -160, K); upperRun(-40, -2, K); upperRun(78, 148, K); box(150, 232, 200, 236, -220, -150, K.cab, { uv: 60 });
   // counter props
@@ -458,23 +460,25 @@ function buildKitchen() {
   const pend = (x, z, y, tx, tz, I, sh) => {
     cyl(x, z, .25, y + 8, 260, MAT.black, { col: false, seg: 6 });
     const sd = mesh(new THREE.SphereGeometry(13, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2), K.shade, x, y, z); sd.scale.y = .8;
-    mesh(new THREE.SphereGeometry(3, 16, 12), K.bulb, x, y - 2, z, { cast: false });
-    const l = spotL(0xffc68e, I, V3(x, y - 4, z), V3(tx, 0, tz), 1.0, .75, sh, 10, 700); KS.lights.push({ p: V3(x, y - 4, z), dir: V3(tx - x, -(y - 4), tz - z).normalize(), cos: Math.cos(1.0), range: 520 });
+    const bm = K.bulb.clone(); mesh(new THREE.SphereGeometry(3, 16, 12), bm, x, y - 2, z, { cast: false });
+    const l = spotL(0xffc68e, I, V3(x, y - 4, z), V3(tx, 0, tz), 1.0, .75, sh, 10, 700); const spec = { p: V3(x, y - 4, z), dir: V3(tx - x, -(y - 4), tz - z).normalize(), cos: Math.cos(1.0), range: 520 }; KS.lights.push(spec);
+    HX.pend.push({ l, I, spec, bulb: bm });
     return l;
   };
-  KS.lights = [];
+  KS.lights = []; HX.pend = [];
   pend(-130, 85, 196, -130, 85, 60000, 2048); pend(-40, -110, 206, -40, -150, 64000, 2048);
-  pointL(0xffd2a0, 3200, 38, 154, -194); KS.lights.push({ p: V3(38, 154, -194), range: 110 });
+  { const l = pointL(0xffd2a0, 3200, 38, 154, -194), spec = { p: V3(38, 154, -194), range: 110 }; KS.lights.push(spec); HX.hoodL = { l, I: 3200, spec, bulb: HX.hoodBulb }; }
   for (const x of [-230, -20, 110]) { pointL(0xffd8a8, 1300, x, 146, -196); KS.lights.push({ p: V3(x, 146, -196), range: 75 }); }
   mesh(new THREE.BoxGeometry(140, .6, 2), K.bulb, -230, 149.6, -192, { cast: false }); mesh(new THREE.BoxGeometry(36, .6, 2), K.bulb, -21, 149.6, -192, { cast: false }); mesh(new THREE.BoxGeometry(66, .6, 2), K.bulb, 113, 149.6, -192, { cast: false });
   pointL(0xff8a3a, 700, 38, 30, -148); KS.lights.push({ p: V3(38, 30, -150), range: 55 });
   pointL(0xff4a1a, 220, 57, 92, -205);
   KS.fridgeL = { p: V3(191, 160, -160), range: 150, on: false }; KS.lights.push(KS.fridgeL);
-  addBeam(0xffc68e, V3(-130, 190, 85), V3(-130, 0, 85), .55, .05);
-  addBeam(0xffc68e, V3(-40, 200, -110), V3(-40, 0, -150), .55, .05);
+  HX.pend[0].beam = addBeam(0xffc68e, V3(-130, 190, 85), V3(-130, 0, 85), .55, .05); HX.pend[0].rec = beams[beams.length - 1]; HX.pend[0].k = .05;
+  HX.pend[1].beam = addBeam(0xffc68e, V3(-40, 200, -110), V3(-40, 0, -150), .55, .05); HX.pend[1].rec = beams[beams.length - 1]; HX.pend[1].k = .05;
   KS.fridgeBeam = addBeam(0xeaf4ff, V3(191, 120, -175), V3(191, 0, -60), .45, 0); KS.fridgeBeamRec = beams[beams.length - 1]; KS.fridgeBeamRec.k = 0;
   STATIC.home = V3(-296, 0, -100);
   KS.coreGot = false; KS.carried = false; KS.doorA = 0; KS.closeT = 0; KS.said = {};
+  buildBathroom(K); buildDuct(K);
 }
 
 // ---------------- daughter (seated at the dining table) ----------------
@@ -506,7 +510,7 @@ function buildKid() {
   for (const s of [-1, 1]) { const pt = furMesh(ell(3, 5.4, 3, 20, 14), hairM); pt.position.set(s * 8.4, -2, -3); pt.rotation.z = s * .4; head.add(pt); mk(new THREE.TorusGeometry(1.6, .6, 8, 16), new THREE.MeshPhysicalMaterial({ color: 0xe8607a, roughness: .5 }), head, s * 7.4, 2.4, -2.6).rotation.y = Math.PI / 2; }
   KID.arms = [];
   for (const s of [-1, 1]) { const sh = new THREE.Group(); sh.position.set(s * 12.5, 32, 0); chest.add(sh); mk(capG(3.4, 13), hood, sh, 0, -9, 0); const el = new THREE.Group(); el.position.y = -19; sh.add(el); mk(capG(2.9, 12), hood, el, 0, -8, 0); mk(ell(2.4, 3.2, 1.6, 12, 10), MAT.skin, el, 0, -17, 0); KID.arms.push({ sh, el, s }); }
-  const pen = mk(new THREE.CylinderGeometry(.35, .35, 12, 8), new THREE.MeshStandardMaterial({ color: 0xf2c230 }), KID.arms[1].el, 0, -17, 3); pen.rotation.x = 1;
+  const pen = mk(new THREE.CylinderGeometry(.35, .35, 12, 8), new THREE.MeshStandardMaterial({ color: 0xf2c230 }), KID.arms[1].el, 0, -17, 3); pen.rotation.x = 1; KID.pen = pen;
   KID.mode = 'read'; KID.t = 6; KID.yaw = 0; KID.pitch = .6; KID.look = V3();
 }
 // ---------------- the cat (小橘) ----------------
@@ -552,10 +556,7 @@ const KM = { mode: 'act', sched: 0, pt: 'stove', t: 10, inv: null, prev: null, t
 const MOMK_LINES = { fridge: '雞蛋……還有半盒。', sink: '那間公司的人今天又來了，說要拿走地庫的東西。', table: '先吃吧。警察說，要等四十八小時才能立案。' };
 function momLineK(k) { const t = MOMK_LINES[k]; if (!t || KS.said['m_' + k]) return; KS.said['m_' + k] = 1; sayW('太太', t, '#f4bb72', 3.6); if (k === 'table') setTimeout(() => { if (LEVEL === 'kitchen') sayW('女兒', '……我想爸爸。', '#e8a0c0', 2.8); }, 3800); }
 function nextSched() { KM.sched = (KM.sched + 1) % MSCHED.length; KM.pt = MSCHED[KM.sched][0]; KM.mode = 'goto'; }
-function momHear(p, loud) {
-  if (KM.mode === 'fopen' || TOY.fetch) return;
-  KM.inv = V3(clamp(p.x, -270, 270), 0, clamp(p.z, -132, 24)); KM.invP = p.clone(); KM.mode = 'inv'; sayW('太太', '什麼聲音？', '#f4bb72', 2.2);
-}
+function momHear(p, loud) { if (TOY.fetch) return; brainHear(p, loud); }
 function kidHear(p) { if (!KID.root) return; KID.mode = 'noise'; KID.t = 2.6; KID.look.copy(p); }
 function momWalk(x, z, sp, dt) {
   const P = mom.pos; const dx = x - P.x, dz = z - P.z, d = Math.hypot(dx, dz); const st = sp * dt;
@@ -564,25 +565,13 @@ function momWalk(x, z, sp, dt) {
 }
 function updKitchenMom(dt) {
   let moveD = 0; const P = mom.pos; const fd = momFetch(dt);
-  if (fd !== null) moveD = fd;
-  else if (KM.mode === 'goto') { const p = MKP[KM.pt]; const [ok, d] = momWalk(p.x, p.z, 74, dt); moveD = d; if (ok) { KM.mode = KM.pt === 'fridge' ? 'fopen' : 'act'; KM.t = KM.pt === 'fridge' ? 2.8 : MSCHED[KM.sched][1]; momLineK(KM.pt); } }
-  else if (KM.mode === 'act' || KM.mode === 'fopen') {
-    const p = MKP[KM.pt]; const la = V3(...p.look); mom.yaw = angDamp(mom.yaw, Math.atan2(la.x - P.x, la.z - P.z), 4, dt); mom.aimT.copy(la);
-    if (KM.pt === 'stove') { mom.aimT.x += Math.sin(T * 2.2) * 5; if (rnd() < dt * 2) emit(V3(19 + R(-6, 6), 104, -178 + R(-6, 6)), V3(R(-3, 3), R(10, 18), R(-3, 3)), new THREE.Color(.16, .16, .17), R(1.2, 2.4), R(1.4, 2.2), -4, .4); }
-    if (KM.pt === 'table' && KM.mode === 'act') { mom.yaw = angDamp(mom.yaw, 0, 4, dt); const gl = Math.sin(T * .55) > .86 ? 1 : 0; mom.aimT.set(la.x + gl * 140, la.y - 10 - gl * 20, la.z - gl * 120); }
-    if (KM.mode === 'fopen') { KS.doorTarget = 1.5; KS.closeT = 2.4; }
-    KM.t -= dt; if (KM.t <= 0) nextSched();
-  } else if (KM.mode === 'inv') {
-    const [ok, d] = momWalk(KM.inv.x, KM.inv.z, 92, dt); moveD = d; if (ok) { KM.mode = 'invlook'; KM.t = 3.4; }
-  } else if (KM.mode === 'invlook') {
-    const la = KM.invP; mom.yaw = angDamp(mom.yaw, Math.atan2(la.x - P.x, la.z - P.z), 3, dt); mom.aimT.copy(la).add(V3(Math.sin(T * 1.4) * 25, 0, 0)); KM.t -= dt;
-    if (KM.t <= 0) { const nearCat = CAT.pos && CAT.pos.distanceTo(KM.invP) < 90; sayW('太太', nearCat ? '小橘，又是你？' : '……奇怪。', '#f4bb72', 2.2); KM.mode = 'goto'; }
-  } else if (KM.mode === 'sus') {
-    mom.aimT.copy(KM.susP); mom.yaw = angDamp(mom.yaw, Math.atan2(KM.susP.x - P.x, KM.susP.z - P.z), 1.6, dt); KM.trackT -= dt;
-    if (KM.trackT <= 0) { KM.mode = KM.prev || 'goto'; if (KM.mode === 'act' && KM.t <= 0) KM.mode = 'goto'; }
-  }
-  // fridge door
-  if (KS.closeT > 0 && KM.mode !== 'fopen') { KS.closeT -= dt; if (KS.closeT <= 0) KS.doorTarget = 0; }
+  if (fd !== null) { moveD = fd; const A = HB.m; if (A && (A.q.length || A.cur || A.seat)) { if (A.act === 'bath' && HX.bd.tgt < .5) HX.bd.tgt = 1.35; A.q = []; A.cur = null; A.seat = null; A.act = ''; A.react = 0; } }
+  else if (KM.mode === 'sus') { mom.aimT.copy(KM.susP); mom.yaw = angDamp(mom.yaw, Math.atan2(KM.susP.x - P.x, KM.susP.z - P.z), 1.6, dt); KM.trackT -= dt; if (KM.trackT <= 0) KM.mode = 'goto'; }
+  else if (KM.mode === 'inv' && KM.invP) { const p = KM.invP; KM.invP = null; KM.mode = 'goto'; brainHear(p, 1); }
+  else moveD = brainMom(dt);
+  brainTick(dt);
+  // the fridge door stays open while someone's getting something out
+  if (HB.fridgeHold > 0) { HB.fridgeHold -= dt; KS.doorTarget = 1.5; KS.closeT = 2.4; } else if (KS.closeT > 0) { KS.closeT -= dt; if (KS.closeT <= 0) KS.doorTarget = 0; }
   KS.doorA = damp(KS.doorA, KS.doorTarget || 0, KS.doorTarget ? 3.2 : 2.4, dt); fridgeDoor();
   momAnimK(dt, moveD);
 }
@@ -590,15 +579,18 @@ function momAnimK(dt, moveD) {
   const P = mom.pos; P.y = 0; const R0 = mom.root; R0.position.copy(P); R0.rotation.y = mom.yaw;
   const prev = mom.phase; mom.phase += moveD / 62 * Math.PI; const ph = mom.phase; const walking = moveD > 0;
   mom.amp = walking ? .42 : damp(mom.amp || 0, 0, 4, dt); const ak = mom.amp / .42;
-  const sitting = KM.mode === 'act' && KM.pt === 'table' && !walking; mom.sitK = damp(mom.sitK || 0, sitting ? 1 : 0, 5, dt); const sk = mom.sitK;
+  const sitting = KM.mode === 'act' && (KM.pt === 'table' || KM.pt === 'toilet' || KM.pt === 'sofa') && !walking; if (sitting) mom.sitY = { table: 53, toilet: 47, sofa: 50 }[KM.pt]; mom.sitK = damp(mom.sitK || 0, sitting ? 1 : 0, 5, dt); const sk = mom.sitK;
   for (const L of mom.legs) { const s = L.s; const a = Math.sin(ph) * s * mom.amp; L.hip.rotation.x = lerp(-a, -1.5, sk); L.knee.rotation.x = lerp(.08 + Math.max(0, Math.cos(ph) * s) * .75 * ak, 1.55, sk); L.ankle.rotation.x = lerp(-(-a + .08) * .6, -.05, sk); }
-  mom.pelvis.position.y = lerp(88 + Math.abs(Math.cos(ph)) * 1.6 * ak - .8, 53, sk); mom.pelvis.rotation.y = Math.sin(ph) * .06 * ak * (1 - sk);
+  mom.pelvis.position.y = lerp(88 + Math.abs(Math.cos(ph)) * 1.6 * ak - .8, mom.sitY || 53, sk); mom.pelvis.rotation.y = Math.sin(ph) * .06 * ak * (1 - sk);
   mom.aim.x = damp(mom.aim.x, mom.aimT.x, 3, dt); mom.aim.y = damp(mom.aim.y, mom.aimT.y, 3, dt); mom.aim.z = damp(mom.aim.z, mom.aimT.z, 3, dt);
   R0.updateMatrixWorld(true); const hp = V3(); mom.head.getWorldPosition(hp);
   const ad = V3().subVectors(mom.aim, hp); const yr = Math.atan2(Math.sin(Math.atan2(ad.x, ad.z) - mom.yaw), Math.cos(Math.atan2(ad.x, ad.z) - mom.yaw)); const pitch = Math.atan2(-ad.y, Math.hypot(ad.x, ad.z));
   mom.head.rotation.y = damp(mom.head.rotation.y, clamp(yr, -.9, .9), 4, dt); mom.head.rotation.x = damp(mom.head.rotation.x, clamp(pitch * .7, -.25, .75), 4, dt);
-  const A0 = mom.arms[0], A1 = mom.arms[1]; if (!(KM.mode === 'fetch' && TOY.fetch && TOY.fetch.mode !== 'walk')) mom.chest.rotation.x = damp(mom.chest.rotation.x, 0, 6, dt);
-  if (sk > .5) { const e = Math.max(0, Math.sin(T * 1.3)); A1.sh.rotation.set(-.9 - e * .55, .25, 0); A1.el.rotation.x = -.9 - e * .9; A0.sh.rotation.set(-.55, -.1, 0); A0.el.rotation.x = -.9; mom.spoon.visible = true; }
+  const A0 = mom.arms[0], A1 = mom.arms[1]; if (!(KM.mode === 'fetch' && TOY.fetch && TOY.fetch.mode !== 'walk')) mom.chest.rotation.x = damp(mom.chest.rotation.x, KM.mode === 'look' && mom.aimT.y < 30 ? .5 : 0, 4, dt);
+  if (sk > .5 && KM.pt !== 'table') { A1.sh.rotation.set(-.55, .15, 0); A1.el.rotation.x = -.75; A0.sh.rotation.set(-.55, -.15, 0); A0.el.rotation.x = -.75; mom.spoon.visible = false; }
+  else if (KM.mode === 'act' && KM.pt === 'phone') { A1.sh.rotation.set(-1.05, .35, 0); A1.el.rotation.x = -1.25; A0.sh.rotation.set(-.2, 0, 0); A0.el.rotation.x = -.3; mom.spoon.visible = false; }
+  else if (KM.mode === 'press') { const up = clamp(1.65 - (140 - mom.aimT.y) / 75, .35, 1.9); A1.sh.rotation.set(-up, .12, 0); A1.el.rotation.x = -.15; A0.sh.rotation.set(-.15, 0, 0); A0.el.rotation.x = -.3; mom.spoon.visible = false; }
+  else if (sk > .5) { const e = Math.max(0, Math.sin(T * 1.3)); A1.sh.rotation.set(-.9 - e * .55, .25, 0); A1.el.rotation.x = -.9 - e * .9; A0.sh.rotation.set(-.55, -.1, 0); A0.el.rotation.x = -.9; mom.spoon.visible = true; }
   else if (KM.mode === 'act' && KM.pt === 'stove') { A1.sh.rotation.set(-.95 + Math.sin(T * 4) * .08, .25, Math.cos(T * 4) * .06); A1.el.rotation.x = -.85 + Math.cos(T * 4) * .1; A0.sh.rotation.set(-.3, 0, 0); A0.el.rotation.x = -.6; mom.spoon.visible = true; }
   else if (KM.mode === 'act' && KM.pt === 'sink') { A1.sh.rotation.set(-.75 + Math.sin(T * 5) * .05, 0, 0); A1.el.rotation.x = -.7; A0.sh.rotation.set(-.75 + Math.cos(T * 5) * .05, 0, 0); A0.el.rotation.x = -.7; mom.spoon.visible = false; }
   else if (KM.mode === 'fetch' && TOY.fetch && TOY.fetch.mode !== 'walk') { const F = TOY.fetch; const reach = F.mode === 'grab' ? sstep(0, .5, F.t) * (1 - sstep(.9, 1.15, F.t)) : F.mode === 'drop' ? Math.sin(clamp(F.t / 1.1, 0, 1) * Math.PI) : 0; const low = F.from && F.from.y < 40 ? 1 : .4; A1.sh.rotation.set(-.55 - reach * (.25 + low * .2), 0, 0); A1.el.rotation.x = F.mode === 'carry' ? -1.35 : -.9 + reach * .7; mom.chest.rotation.x = reach * low * .5; A0.sh.rotation.set(-.15, 0, 0); A0.el.rotation.x = -.3; mom.spoon.visible = false; }
@@ -613,16 +605,18 @@ function momAnimK(dt, moveD) {
   }
 }
 function updKid(dt) {
-  const H = KID; H.t -= dt;
+  const H = KID; H.t -= dt; let moveD = 0;
+  if (NET.client) moveD = kidNetApply(dt); else if (LEVEL === 'kitchen') moveD = brainKid(dt);
   let ty = 0, tp = .62;
   if (NET.client) { const w = NET.npc; if (w && w.k) { ty = w.k[0]; tp = w.k[1]; } H.mode = '_net'; }
-  if (H.mode === 'read') { ty = Math.sin(T * .7) * .08; tp = .62; if (H.t <= 0) { H.mode = 'look'; H.t = 2.8; H.dir = rnd() < .5 ? -1 : 1; } }
-  else if (H.mode === 'look') { ty = H.dir * Math.sin((2.8 - H.t) / 2.8 * Math.PI) * 1.15; tp = .2; if (H.t <= 0) { H.mode = 'read'; H.t = R(6, 11); } }
   else if (H.mode === 'noise' || H.mode === 'sus') { const hp = V3(); H.head.getWorldPosition(hp); const d = V3().subVectors(H.look, hp); const by = H.root.rotation.y; ty = clamp(Math.atan2(Math.sin(Math.atan2(d.x, d.z) - by), Math.cos(Math.atan2(d.x, d.z) - by)), -1.3, 1.3); tp = clamp(Math.atan2(-d.y, Math.hypot(d.x, d.z)), -.3, .9); if (H.t <= 0) { H.mode = 'read'; H.t = R(5, 9); } }
-  if (!NET.client && KM.mode === 'act' && KM.pt === 'table') { const hp = V3(); H.head.getWorldPosition(hp); const d = V3().subVectors(mom.head.getWorldPosition(V3()), hp); const by = H.root.rotation.y; ty = clamp(Math.atan2(Math.sin(Math.atan2(d.x, d.z) - by), Math.cos(Math.atan2(d.x, d.z) - by)), -1.2, 1.2); tp = -.25; }
+  else if ((H.pose || 'homework') === 'homework') {
+    if (H.mode === 'look') { ty = H.dir * Math.sin((2.8 - H.t) / 2.8 * Math.PI) * 1.15; tp = .2; if (H.t <= 0) { H.mode = 'read'; H.t = R(6, 11); } }
+    else { H.mode = 'read'; ty = Math.sin(T * .7) * .08; tp = .62; if (H.t <= 0) { H.mode = 'look'; H.t = 2.8; H.dir = rnd() < .5 ? -1 : 1; } }
+    if (KM.mode === 'act' && KM.pt === 'table') { const hp = V3(); H.head.getWorldPosition(hp); const d = V3().subVectors(mom.head.getWorldPosition(V3()), hp); const by = H.root.rotation.y; ty = clamp(Math.atan2(Math.sin(Math.atan2(d.x, d.z) - by), Math.cos(Math.atan2(d.x, d.z) - by)), -1.2, 1.2); tp = -.25; }
+  } else if (H.lookP) { const hp = V3(); H.head.getWorldPosition(hp); const d = V3().subVectors(H.lookP, hp); const by = H.root.rotation.y; ty = clamp(Math.atan2(Math.sin(Math.atan2(d.x, d.z) - by), Math.cos(Math.atan2(d.x, d.z) - by)), -1.1, 1.1); tp = clamp(Math.atan2(-d.y, Math.hypot(d.x, d.z)), -.4, .8); }
   H.yaw = damp(H.yaw, ty, NET.client ? 9 : 4, dt); H.pitch = damp(H.pitch, tp, NET.client ? 9 : 4, dt); H.head.rotation.set(H.pitch, H.yaw, 0);
-  for (const L of H.legs) L.knee.rotation.x = 1.5 + Math.sin(T * 2.2 + L.s * 1.6) * .25;
-  H.arms[1].sh.rotation.set(-.95 + Math.sin(T * 6) * .03, .3, 0); H.arms[1].el.rotation.x = -.9 + Math.sin(T * 9) * .04; H.arms[0].sh.rotation.set(-1, -.3, 0); H.arms[0].el.rotation.x = -.8;
+  kidBody(dt, moveD);
 }
 function catHear(p) {
   if (!CAT.root || CAT.mode === 'pounce' || CAT.mode === 'stalk') return;
@@ -718,7 +712,7 @@ function detectKitchen(dt) {
   const kd = Math.hypot(L.pos.x - KID.root.position.x, L.pos.z - KID.root.position.z); if (kd < 45 && L.pos.y < 40 && L.spd > 2 && !L.crouch && KID.mode !== 'read') { seen = Math.max(seen, .3); who = who || 'kid'; }
   if (seen > 0) {
     const lit = litAt(V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z)) * (inDark(L.pos) ? .6 : 1); const mv = L.spd > 1.5 ? 1 : .5; const cr = L.crouch ? .55 : 1; const glow = KS.carried && (!NET.on || KS.carrier === L.id) ? 1.35 : 1;
-    const k = seen * lit * mv * cr * glow * hideK(L); meter += k * dt * 1.0;
+    const k = seen * lit * mv * cr * glow * hideK(L) * HB.eye; meter += k * dt * 1.0;
     const tp = V3(L.pos.x, L.pos.y + 2, L.pos.z);
     if (meter > .32) netSeen(tp, who);
   } else meter -= dt * .24;
@@ -754,11 +748,11 @@ LEVELS.kitchen = {
   dust: { N: 2600, box: [-300, 900, 0, 250, -220, 220], beamFrac: .45, door: false },
   toys: true, npcNear: true,
   build() {
-    buildKitchen(); buildKid(); buildCat(); buildToyBin(); LEVELS.kitchen.updrafts = [{ x: 57, z: -205, r: 9, y0: 88.5, y1: 156, fx: 5 }, buildVent()];
+    buildKitchen(); buildKid(); buildCat(); buildToyBin(); LEVELS.kitchen.updrafts = [{ x: 57, z: -205, r: 9, y0: 88.5, y1: 178, fx: 5, all: true }, buildVent()];
     addVial(-128, 13, -200); addVial(170, 184, -168); addVial(70, 88.5, -215); for (const p of [[-120, 0, 70], [-70, 0, 100], [20, 0, -146], [-30, 91.8, -182], [246, 1.2, 122]]) addCrumb(...p);
-    buildLivingRoom(kitchenMats());
+    buildLivingRoom(kitchenMats()); buildHouseSwitches(kitchenMats());
     // online co-op: the three machine parts
-    addPart(44, 88.5, -212, 'spring'); addPart(-122, 76, 116, 'lens'); addPart(-112, 13, -186, 'cap');
+    addPart(44, 88.5, -212, 'spring'); addPart(205, 110, -464, 'lens'); addPart(-112, 13, -186, 'cap');
   },
   cps: [[-286, 0, -100], [-100, 13, -192], [-130, 0, 86], [191, 0, -190], [260, 0, 190], [340, 0, -10], [640, 0, 60]],
   quests: SP_Q1,
@@ -768,6 +762,7 @@ LEVELS.kitchen = {
     mom.root.visible = true; mom.phone.visible = false; mom.active = false; if (!mom.spoon) { mom.spoon = new THREE.Mesh(new THREE.CylinderGeometry(.5, .7, 26, 8), KMAT.wood); mom.spoon.position.set(0, -27, 8); mom.spoon.rotation.x = 1.2; mom.arms[1].el.add(mom.spoon); }
     mom.pos.set(34, 0, -128); mom.yaw = Math.PI; mom.aim.set(22, 96, -178); mom.aimT.copy(mom.aim); KM.mode = 'act'; KM.pt = 'stove'; KM.sched = 0; KM.t = 10;
     KID.root.visible = true; KID.root.position.set(-90, 0, 157); KID.root.rotation.y = Math.PI; KID.mode = 'read'; KID.t = 7;
+    HX.bd.a = 1.35; for (const o of HX.list) { o.on = { klight: true, hood: true, tv: true, lamp: true }[o.id] || false; hxApply(o, true); } HX.water = 0; brainReset();
     CAT.root.visible = true; CAT.pos.copy(CAT.home); CAT.mode = 'sleep'; CAT.sleepK = 1;
     kitchenMode();
   },
@@ -787,7 +782,7 @@ LEVELS.kitchen = {
   npc(dt) { if (STATE === 'play' || STATE === 'fail' || STATE === 'end' || STATE === 'frozen') { updKitchenMom(dt); updKid(dt); updCat(dt); } },
   detect: detectKitchen,
   update(dt) {
-    lvT += dt; updKitchenPlayer(dt); updCookie();
+    lvT += dt; updKitchenPlayer(dt); updCookie(); hxTick(dt); mpChecklist();
     scheduleLines(KS.mp ? KLINES_MP : KLINES_SP, dt);
     if (rnd() < dt * .75) { emit(KS.tap, V3(0, -2, 0), new THREE.Color(.5, .62, .7), .35, .9, 300, 0); setTimeout(() => { if (ZONES.kitchen.near) { for (let i = 0; i < 4; i++) emit(V3(-100, 68.9, -193), V3(R(-6, 6), R(5, 12), R(-6, 6)), new THREE.Color(.5, .62, .72), .2, .35, 200, 1); if (leader.pos.distanceTo(V3(-100, 68, -193)) < 120) SND.drip(); } }, 420); }
   },
@@ -812,8 +807,8 @@ LEVELS.kitchen = {
     if (KS.ch2) return quest === 0 ? V3(LIV.wedge.cx, 4, LIV.wedge.cz) : (LIV.remoteGot ? null : V3(LIV.remote.cx, 46, LIV.remote.cz));
     if (KS.coreDrop) return KS.coreDrop; return quest >= 2 ? STATIC.home : (KS.coreGot ? null : V3(212, 2, -194));
   },
-  reset() { if (KS.coreGot && !KS.carried) KS.coreDrop = KS.home ? null : coreGround(KS.coreDrop || KS.core.position); else KS.coreDrop = null; KS.carrier = null; KM.mode = 'goto'; KM.pt = 'stove'; KS.doorTarget = 0; KS.closeT = 0; CAT.mode = 'home'; KID.mode = 'read'; KID.t = 6; if (KS.carried) { const C = leader; KS.core.position.set(C.pos.x, C.pos.y + 6, C.pos.z); } },
-  eyeText: () => meter > .3 ? '她們在看這邊！快躲進影子裡' : '太太和女兒在廚房',
+  reset() { if (KS.coreGot && !KS.carried) KS.coreDrop = KS.home ? null : coreGround(KS.coreDrop || KS.core.position); else KS.coreDrop = null; KS.carrier = null; KM.mode = 'goto'; KM.pt = 'stove'; KS.doorTarget = 0; KS.closeT = 0; CAT.mode = 'home'; KID.mode = 'read'; KID.t = 6; if (HB.m) { HB.m.q = []; HB.m.cur = null; HB.m.seat = null; HB.m.react = 0; } HB.search = 0; if (KS.carried) { const C = leader; KS.core.position.set(C.pos.x, C.pos.y + 6, C.pos.z); } },
+  eyeText: () => brainEyeText(),
   hint(L) {
     if (TOUCH) return '';
     if (L.id === 'bear' && !KS.said.bearhint && L.pos.y > 80) { return '熊可以把檯面上的瓶子推下去，製造聲音引開別人'; }
