@@ -13,7 +13,7 @@ const PORT = { mats: null, pads: [], debris: [], out: 0, outSeen: 0, cd: 0, rdy:
 const PR_R = 10;
 const prC = () => V3(0, 0, 26).add(PO);                 // the ready circle, in front of the exit
 const PR_ANG = [-.13, .13, -.39, .39, -.65, .65, -.91, .91];
-function prPad(i) { const a = PR_ANG[i % 8]; return V3(Math.sin(a) * 34, 0, 10 - Math.cos(a) * 34).add(PO); }
+function prPad(i) { const a = PR_ANG[i % 8], r = i >= 8 ? 27 : 34; return V3(Math.sin(a) * r, 0, 10 - Math.cos(a) * r).add(PO); }   // 9th/10th: a step inside the ring
 const PR_TIP = TOUCH ? '按「表情」掣' : '按住 T';
 const PORTAL_Q = [{ t: '走出縮小機', s: `這裡是縮小機的場域裡面。可以先試試走、跳、爬上箱子和用表情（${PR_TIP}）——準備好就站上出口前面的光圈` }];
 const MP_PRO = [
@@ -142,9 +142,12 @@ function buildPortal() {
 }
 
 // ---------- starting here ----------
+// a stable spot number for each player: the same on every machine, whatever order the party list happens to be in
+// (by character, not by the party list: a client can run this before it knows the whole party)
+function slotOf(C) { const i = IDS.indexOf(C.id); return i < 0 ? Math.max(0, party.indexOf(C)) : i; }
 function portalSpawn() {
   placeStart(); unstkReset();   // the lab as it should be when you come out (bench, the old partner by the crack…)
-  party.forEach((C, i) => { const p = prPad(i); C.pos.copy(p); C.yaw = Math.atan2(PO.x - p.x, PO.z + 40 - p.z); C.state = 'idle'; C.wave = false; C.lieK = 0; C.root.visible = true; C.vel.set(0, 0, 0); C.ptw = null; C.lastTrail = C.pos.clone(); C.disp = C.pos.clone(); C.queue = []; });
+  party.forEach(C => { const p = prPad(slotOf(C)); C.pos.copy(p); C.yaw = Math.atan2(PO.x - p.x, PO.z + 40 - p.z); C.state = 'idle'; C.wave = false; C.lieK = 0; C.root.visible = true; C.vel.set(0, 0, 0); C.ptw = null; C.lastTrail = C.pos.clone(); C.disp = C.pos.clone(); C.queue = []; });
   leader = NET.on && NET.my && chars[NET.my] ? chars[NET.my] : chars.dad; trail = [];
   PORT.cd = 0; PORT.pend = 0; PORT.flare = 0; PORT.lastN = -1; PORT.late = !!NET.late; PORT.outSeen = PORT.late ? null : PORT.out; PORT.tagSig = '';
   setQuest(quest);
@@ -172,9 +175,9 @@ function portalLand() {
   if (NET.on && NET.resume && !PORT.resumed) { PORT.resumed = true; portalResumeLand(NET.resume); return; }
   const mx = machine.x, mz = machine.z, my = machine.y - 22;   // the machine's ring stands on the bench
   enterZone('basement', true); LP.snap = true; unstkReset();
-  party.forEach((C, i) => {
-    if (!mine(C)) return; const k = i % 8;
-    const from = V3(mx + EXIT_SX[k], my + 7.4, mz - .6), to = V3(mx + EXIT_LX[k], my, mz + EXIT_LZ[k]);
+  party.forEach(C => {
+    if (!mine(C)) return; const i = slotOf(C), k = i % 8;
+    const dx = i >= 8 ? 2.4 : 0, from = V3(mx + EXIT_SX[k] + dx, my + 7.4, mz - .6), to = V3(mx + EXIT_LX[k] + dx, my, mz + EXIT_LZ[k] + (i >= 8 ? 4 : 0));
     C.ptw = { from, to, t: -i * .14, dur: .62 }; C.pos.copy(from); C.vel.set(0, 0, 0); C.climbing = false; C.mantle = null; C.tumble = 0; C.yaw = 0; C.queue = []; if (C.disp) C.disp.copy(C.pos);
   });
   trail = []; cam.tgt.set(leader.pos.x, leader.pos.y + leader.h * .8, leader.pos.z); cam.curD = cam.dist; cam.yaw = .55; cam.pitch = .22;
@@ -201,7 +204,7 @@ function portalTick(dt) {
   for (const d of P.debris) { d.o.rotation.y += dt * d.sp * .5; d.o.rotation.x += dt * d.sp * .2; d.o.position.y = PO.y + d.y + Math.sin(T * .5 + d.ph) * 4; }
   if (LEVEL !== 'portal' || STATE !== 'play') { portalTag(false); return; }
   // fell off somehow? back onto a pad
-  party.forEach((C, i) => { if (mine(C) && !C.ptw && C.pos.y < PO.y - 50) { C.pos.copy(prPad(i)).add(V3(0, 2, 0)); C.vel.set(0, 0, 0); C.grounded = false; if (C.disp) C.disp.copy(C.pos); if (C === leader) { trail = []; cam.tgt.copy(C.pos); } } });
+  party.forEach(C => { if (mine(C) && !C.ptw && C.pos.y < PO.y - 50) { C.pos.copy(prPad(slotOf(C))).add(V3(0, 2, 0)); C.vel.set(0, 0, 0); C.grounded = false; if (C.disp) C.disp.copy(C.pos); if (C === leader) { trail = []; cam.tgt.copy(C.pos); } } });
   // who's standing in the circle
   const c = prC(), on = C => Math.hypot(C.pos.x - c.x, C.pos.z - c.z) < PR_R && Math.abs(C.pos.y - c.y) < 8;
   const need = NET.on ? 2.4 : .5;
@@ -213,7 +216,7 @@ function portalTick(dt) {
     else P.cd = 0;
   }
   if (P.rdy !== P.lastN) { if (P.rdy > P.lastN && P.lastN >= 0) tone(520 + P.rdy * 60, 0, .08, .04, 'triangle'); P.lastN = P.rdy; }
-  for (let i = 0; i < P.pads.length; i++) { const pd = P.pads[i], C = party[i]; const occ = C && Math.hypot(C.pos.x - pd.p.x, C.pos.z - pd.p.z) < 3.6; pd.gm.opacity = occ ? 1 : i < party.length ? .7 : .25; }
+  for (let i = 0; i < P.pads.length; i++) { const pd = P.pads[i], C = party.find(q => slotOf(q) % 8 === i); const occ = C && Math.hypot(C.pos.x - pd.p.x, C.pos.z - pd.p.z) < 3.6; pd.gm.opacity = occ ? 1 : i < party.length ? .7 : .25; }
   P.circle.uniforms.uP.value = P.cd / need; P.circle.uniforms.uOn.value = damp(P.circle.uniforms.uOn.value, P.rdy ? 1 : 0, 6, dt);
   P.field.material.uniforms.uK.value = .62 + (P.tot ? P.rdy / P.tot : 0) * .45 + P.cd / need * 1.4;
   portalTag(true);
@@ -268,7 +271,7 @@ function proRecv(w) {
 // dev / tests: skip the online prologue (everyone to the kitchen mouse hole, the online story starts)
 function proSkip() {
   const P = [[-288, 0, -100], [-294, 0, -96], [-294, 0, -104], [-300, 0, -92], [-300, 0, -108], [-282, 0, -94], [-282, 0, -106], [-276, 0, -100]];
-  party.forEach((C, i) => { if (!mine(C)) return; C.ptw = null; C.pos.set(...P[i % 8]); C.vel.set(0, 0, 0); C.grounded = false; C.queue = []; if (C.disp) C.disp.copy(C.pos); });
+  party.forEach(C => { if (!mine(C)) return; C.ptw = null; C.pos.set(...P[slotOf(C) % 8]); C.vel.set(0, 0, 0); C.grounded = false; C.queue = []; if (C.disp) C.disp.copy(C.pos); });
   PORT.pend = 0; trail = []; if (leader) cam.tgt.copy(leader.pos); LP.snap = true; if (STATE === 'intro') STATE = 'play';
   if (!NET.client && PRO.on) proEnd();
 }

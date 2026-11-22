@@ -769,7 +769,7 @@ LEVELS.kitchen = {
   },
   // an online game starts here (everyone comes out of the mouse hole)
   spawn() {
-    const P = [[-288, 0, -100], [-294, 0, -96], [-294, 0, -104], [-318, 0, -100], [-322, 0, -94], [-322, 0, -106], [-330, 0, -100], [-336, 0, -95]]; party.forEach((C, i) => { C.pos.set(...P[i % 8]); C.yaw = Math.PI / 2; C.state = 'idle'; C.wave = false; C.root.visible = true; C.lieK = 0; });
+    const P = [[-288, 0, -100], [-294, 0, -96], [-294, 0, -104], [-318, 0, -100], [-322, 0, -94], [-322, 0, -106], [-330, 0, -100], [-336, 0, -95]]; party.forEach((C, i) => { C.pos.set(...P[(NET.on ? slotOf(C) : i) % 8]); C.yaw = Math.PI / 2; C.state = 'idle'; C.wave = false; C.root.visible = true; C.lieK = 0; });
     chars.gecko.pos.set(-340, 0, -100); chars.gecko.yaw = Math.PI / 2; chars.gecko.state = 'idle'; chars.gecko.wave = false; chars.gecko.root.visible = true;
     chars.cham.root.visible = true; leader = chars.dad; if (!party.includes(chars.cham)) joinCham(); PROTO = Math.max(PROTO, 1);
     momReset(); ZONES.kitchen.prepped = false; this.prep(); kitchenMode();

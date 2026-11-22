@@ -199,7 +199,7 @@ function updLeader(C, dt) {
   if (C.shell) { C.state = 'shell'; C.vel.set(0, 0, 0); C.spd = 0; C.stamina = Math.min(C.stamMax || 100, C.stamina + 30 * dt); if (ctl && pressed.Space) { C.shell = false; C.state = 'idle'; } return; }
   if (C.leapT > 0) C.leapT -= dt;
   const sp = speedOf(C, mv.run) * (joy.on ? clamp(mv.m / .85, .35, 1) : 1); const tx = wx * sp, tz = wz * sp; const acc = (C.grounded ? 150 : C.leapT > 0 ? 9 : 50) * dt;
-  let dvx = tx - C.vel.x, dvz = tz - C.vel.z; const dl = Math.hypot(dvx, dvz); if (dl > acc) { dvx *= acc / dl; dvz *= acc / dl; }
+  let dvx = tx - C.vel.x, dvz = tz - C.vel.z; const dl = Math.hypot(dvx, dvz); if (dl > acc && acc > 0) { dvx *= acc / dl; dvz *= acc / dl; }
   if (C.tumble > 0) { if (C.grounded) { C.vel.x *= 1 - 5 * dt; C.vel.z *= 1 - 5 * dt; } } else { C.vel.x += dvx; C.vel.z += dvz; }
   if (wl > 0 && !(C.tumble > 0)) C.yaw = angDamp(C.yaw, Math.atan2(wx, wz), 13, dt);
   if (ctl && pressed.Space && C.grounded && base) { if (!C.noJumpT || T - C.noJumpT > 3) { C.noJumpT = T; toast('頭上有人，跳唔到——叫佢哋先落嚟'); } }
@@ -225,7 +225,10 @@ function updLeader(C, dt) {
   if (C.grounded && !C.cold) C.stamina = Math.min(C.stamMax || 100, C.stamina + 45 * dt);
   const hs = Math.hypot(C.vel.x, C.vel.z); C.spd = hs;
   C.state = base && C.grounded ? (hs > .8 ? 'stackwalk' : 'stack') : C.dashT > 0 ? 'roll' : C.tumble > 0 ? 'tumble' : C.gliding ? 'glide' : !C.grounded ? 'air' : hs > .8 ? (C.crouch ? 'sneak' : 'walk') : (C.crouch ? 'crouch' : 'idle');
-  if (C.pos.y < -400 || (WORLD && C.pos.y < -5 && !zoneAt(C.pos, 30))) { C.pos.set(...CPS[cp]); C.vel.set(0, 0, 0); }
+  // a broken number (NaN) is put back where this character last stood, not sent to the checkpoint
+  if (!Number.isFinite(C.pos.x + C.pos.y + C.pos.z)) { if (C.okPos) C.pos.copy(C.okPos); else C.pos.set(...CPS[cp]); C.vel.set(0, 0, 0); }
+  else if (C.pos.y < -400 || (WORLD && C.pos.y < -5 && !zoneAt(C.pos, 30))) { C.pos.set(...CPS[cp]); C.vel.set(0, 0, 0); }
+  else (C.okPos || (C.okPos = V3())).copy(C.pos);
 }
 function resolveClimb(C) {
   let best = null;
@@ -312,7 +315,7 @@ function updFollower(F, L, dt) {
       if (d <= move) { F.pos.set(q.x, q.y, q.z); move -= d; F.queue.shift(); if (Math.hypot(dx, dz) > .3) F.tyaw = Math.atan2(dx, dz); }
       else { const k = move / d; F.pos.x += dx * k; F.pos.y += dy * k; F.pos.z += dz * k; move = 0; if (Math.hypot(dx, dz) > .3) F.tyaw = Math.atan2(dx, dz); }
     }
-    moved = (m0 - move) / dt;
+    moved = dt > 0 ? (m0 - move) / dt : 0;
   }
   if (!floating && F.pos.y - sup < .35) {   // step aside from the leader and from each other (measured where everyone is drawn)
     const DX = F.disp.x - F.pos.x, DZ = F.disp.z - F.pos.z, fx0 = F.pos.x + DX, fz0 = F.pos.z + DZ, edx = fx0 - L.pos.x, edz = fz0 - L.pos.z, ed = Math.hypot(edx, edz);
@@ -616,14 +619,14 @@ function updHUD(dt) {
     else if (LEVEL === 'basement' && quest === 2 && L.id !== 'bear' && L.id !== 'dad') h = '點右上角頭像，換熊去推或換爸爸用尺寸槍';
     else if (LVL.hint(L)) h = LVL.hint(L);
     else if (L.crouch) h = '潛行中，比較不容易被發現';
-    else if (playT < 14) h = '推搖桿撞向牆壁就會攀爬 · 點頭像換角色';
+    else if (playT < 14) h = NET.on ? '推搖桿撞向牆壁就會攀爬 · 按「表情」同隊友打招呼' : '推搖桿撞向牆壁就會攀爬 · 點頭像換角色';
   } else if (L.climbing) h = '<kbd>W</kbd><kbd>S</kbd> 上下 · <kbd>A</kbd><kbd>D</kbd> 橫移 · <kbd>Space</kbd> 跳開';
   else if (L.id === 'sq' && !L.grounded) h = '按住 <kbd>Space</kbd> 滑翔';
   else if (aimRes) h = `左鍵 放大 · 右鍵 縮小「${aimRes.r.name}」`;
   else if (LEVEL === 'basement' && quest === 2 && L.id !== 'bear' && L.id !== 'dad') h = '<kbd>Tab</kbd> 換成熊去推，或換爸爸用尺寸槍';
   else if (LVL.hint(L)) h = LVL.hint(L);
   else if (L.crouch) h = '潛行中，比較不容易被發現 · <kbd>C</kbd> 站起來';
-  else if (playT < 14) h = '走向牆壁按住 <kbd>W</kbd> 就會攀爬 · <kbd>Tab</kbd> 換角色';
+  else if (playT < 14) h = NET.on ? '走向牆壁按住 <kbd>W</kbd> 就會攀爬 · 按住 <kbd>T</kbd> 用表情' : '走向牆壁按住 <kbd>W</kbd> 就會攀爬 · <kbd>Tab</kbd> 換角色';
   hint(h);
 }
 
@@ -789,7 +792,8 @@ function update(dt) {
 let last = performance.now();
 function frame(now) {
   requestAnimationFrame(frame); musicFrame();
-  const dt = Math.min(.05, (now - last) / 1000); last = now; vcFrame(dt); emoTick(dt); watchTick();
+  // a frame time that goes backwards (it happens: tab switches, some phones) must never reach the physics — a negative step turned into NaN positions
+  const raw = (now - last) / 1000; last = now; const dt = raw > 0 ? Math.min(.05, raw) : 1 / 240; vcFrame(dt); emoTick(dt); watchTick();
   { const [w, h] = viewSize(); if (w !== RS.w || h !== RS.h) onResize(); }
   if (STATE === 'load') return;
   if (!PAUSED || NET.on) update(dt);

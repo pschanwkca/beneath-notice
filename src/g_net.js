@@ -211,7 +211,7 @@ function netSendChars() {
 }
 function netRecvChars(d, from) {
   const now = performance.now();
-  for (const a of d.c) { const C = chars[a[0]]; if (!C || C.owner !== from) continue; const o = C.net, gap = o ? (now - o.t) / 1000 : 0; const v = o && gap > .02 && gap < .5 ? [(a[1] - o.x) / gap, (a[2] - o.y) / gap, (a[3] - o.z) / gap] : [0, 0, 0];
+  for (const a of d.c) { const C = chars[a[0]]; if (!C || C.owner !== from || !Number.isFinite(a[1] + a[2] + a[3])) continue; const o = C.net, gap = o ? (now - o.t) / 1000 : 0; const v = o && gap > .02 && gap < .5 ? [(a[1] - o.x) / gap, (a[2] - o.y) / gap, (a[3] - o.z) / gap] : [0, 0, 0];
     if (Math.hypot(v[0], v[2]) > 160) v[0] = v[1] = v[2] = 0;
     C.net = { x: a[1], y: a[2], z: a[3], yaw: a[4], st: a[5], spd: a[6], fl: a[7], t: now, vx: v[0], vy: v[1], vz: v[2] }; C.stamina = a[8]; C.stamMax = a[9]; C.camo = a[10]; C.on = a[11] || null; }
 }

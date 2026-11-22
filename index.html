@@ -2222,7 +2222,7 @@ function updLeader(C, dt) {
   if (C.shell) { C.state = 'shell'; C.vel.set(0, 0, 0); C.spd = 0; C.stamina = Math.min(C.stamMax || 100, C.stamina + 30 * dt); if (ctl && pressed.Space) { C.shell = false; C.state = 'idle'; } return; }
   if (C.leapT > 0) C.leapT -= dt;
   const sp = speedOf(C, mv.run) * (joy.on ? clamp(mv.m / .85, .35, 1) : 1); const tx = wx * sp, tz = wz * sp; const acc = (C.grounded ? 150 : C.leapT > 0 ? 9 : 50) * dt;
-  let dvx = tx - C.vel.x, dvz = tz - C.vel.z; const dl = Math.hypot(dvx, dvz); if (dl > acc) { dvx *= acc / dl; dvz *= acc / dl; }
+  let dvx = tx - C.vel.x, dvz = tz - C.vel.z; const dl = Math.hypot(dvx, dvz); if (dl > acc && acc > 0) { dvx *= acc / dl; dvz *= acc / dl; }
   if (C.tumble > 0) { if (C.grounded) { C.vel.x *= 1 - 5 * dt; C.vel.z *= 1 - 5 * dt; } } else { C.vel.x += dvx; C.vel.z += dvz; }
   if (wl > 0 && !(C.tumble > 0)) C.yaw = angDamp(C.yaw, Math.atan2(wx, wz), 13, dt);
   if (ctl && pressed.Space && C.grounded && base) { if (!C.noJumpT || T - C.noJumpT > 3) { C.noJumpT = T; toast('頭上有人，跳唔到——叫佢哋先落嚟'); } }
@@ -2248,7 +2248,10 @@ function updLeader(C, dt) {
   if (C.grounded && !C.cold) C.stamina = Math.min(C.stamMax || 100, C.stamina + 45 * dt);
   const hs = Math.hypot(C.vel.x, C.vel.z); C.spd = hs;
   C.state = base && C.grounded ? (hs > .8 ? 'stackwalk' : 'stack') : C.dashT > 0 ? 'roll' : C.tumble > 0 ? 'tumble' : C.gliding ? 'glide' : !C.grounded ? 'air' : hs > .8 ? (C.crouch ? 'sneak' : 'walk') : (C.crouch ? 'crouch' : 'idle');
-  if (C.pos.y < -400 || (WORLD && C.pos.y < -5 && !zoneAt(C.pos, 30))) { C.pos.set(...CPS[cp]); C.vel.set(0, 0, 0); }
+  // a broken number (NaN) is put back where this character last stood, not sent to the checkpoint
+  if (!Number.isFinite(C.pos.x + C.pos.y + C.pos.z)) { if (C.okPos) C.pos.copy(C.okPos); else C.pos.set(...CPS[cp]); C.vel.set(0, 0, 0); }
+  else if (C.pos.y < -400 || (WORLD && C.pos.y < -5 && !zoneAt(C.pos, 30))) { C.pos.set(...CPS[cp]); C.vel.set(0, 0, 0); }
+  else (C.okPos || (C.okPos = V3())).copy(C.pos);
 }
 function resolveClimb(C) {
   let best = null;
@@ -2335,7 +2338,7 @@ function updFollower(F, L, dt) {
       if (d <= move) { F.pos.set(q.x, q.y, q.z); move -= d; F.queue.shift(); if (Math.hypot(dx, dz) > .3) F.tyaw = Math.atan2(dx, dz); }
       else { const k = move / d; F.pos.x += dx * k; F.pos.y += dy * k; F.pos.z += dz * k; move = 0; if (Math.hypot(dx, dz) > .3) F.tyaw = Math.atan2(dx, dz); }
     }
-    moved = (m0 - move) / dt;
+    moved = dt > 0 ? (m0 - move) / dt : 0;
   }
   if (!floating && F.pos.y - sup < .35) {   // step aside from the leader and from each other (measured where everyone is drawn)
     const DX = F.disp.x - F.pos.x, DZ = F.disp.z - F.pos.z, fx0 = F.pos.x + DX, fz0 = F.pos.z + DZ, edx = fx0 - L.pos.x, edz = fz0 - L.pos.z, ed = Math.hypot(edx, edz);
@@ -2639,14 +2642,14 @@ function updHUD(dt) {
     else if (LEVEL === 'basement' && quest === 2 && L.id !== 'bear' && L.id !== 'dad') h = '點右上角頭像，換熊去推或換爸爸用尺寸槍';
     else if (LVL.hint(L)) h = LVL.hint(L);
     else if (L.crouch) h = '潛行中，比較不容易被發現';
-    else if (playT < 14) h = '推搖桿撞向牆壁就會攀爬 · 點頭像換角色';
+    else if (playT < 14) h = NET.on ? '推搖桿撞向牆壁就會攀爬 · 按「表情」同隊友打招呼' : '推搖桿撞向牆壁就會攀爬 · 點頭像換角色';
   } else if (L.climbing) h = '<kbd>W</kbd><kbd>S</kbd> 上下 · <kbd>A</kbd><kbd>D</kbd> 橫移 · <kbd>Space</kbd> 跳開';
   else if (L.id === 'sq' && !L.grounded) h = '按住 <kbd>Space</kbd> 滑翔';
   else if (aimRes) h = `左鍵 放大 · 右鍵 縮小「${aimRes.r.name}」`;
   else if (LEVEL === 'basement' && quest === 2 && L.id !== 'bear' && L.id !== 'dad') h = '<kbd>Tab</kbd> 換成熊去推，或換爸爸用尺寸槍';
   else if (LVL.hint(L)) h = LVL.hint(L);
   else if (L.crouch) h = '潛行中，比較不容易被發現 · <kbd>C</kbd> 站起來';
-  else if (playT < 14) h = '走向牆壁按住 <kbd>W</kbd> 就會攀爬 · <kbd>Tab</kbd> 換角色';
+  else if (playT < 14) h = NET.on ? '走向牆壁按住 <kbd>W</kbd> 就會攀爬 · 按住 <kbd>T</kbd> 用表情' : '走向牆壁按住 <kbd>W</kbd> 就會攀爬 · <kbd>Tab</kbd> 換角色';
   hint(h);
 }
 
@@ -2812,7 +2815,8 @@ function update(dt) {
 let last = performance.now();
 function frame(now) {
   requestAnimationFrame(frame); musicFrame();
-  const dt = Math.min(.05, (now - last) / 1000); last = now; vcFrame(dt); emoTick(dt); watchTick();
+  // a frame time that goes backwards (it happens: tab switches, some phones) must never reach the physics — a negative step turned into NaN positions
+  const raw = (now - last) / 1000; last = now; const dt = raw > 0 ? Math.min(.05, raw) : 1 / 240; vcFrame(dt); emoTick(dt); watchTick();
   { const [w, h] = viewSize(); if (w !== RS.w || h !== RS.h) onResize(); }
   if (STATE === 'load') return;
   if (!PAUSED || NET.on) update(dt);
@@ -4021,7 +4025,9 @@ $('pauseTitle').addEventListener('click', () => {
 function openHelp() {
   const K = TOUCH ? [['移動', '左邊拖動搖桿'], ['視角', '右邊拖動'], ['跳／攀爬時跳開', '「跳」'], ['攀爬', '推搖桿撞向牆壁'], ['潛行', '「潛行」'], ['疊羅漢', '「疊」'], ['換角色', '「換人」或點頭像'], ['角色能力', '右下角的能力按鈕'], ['救隊友', '「復活」用 Prototype'], ['卡住了', '暫停選單「我卡住了」']]
     : [['移動', '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>'], ['視角', '滑鼠'], ['跑', '<kbd>Shift</kbd>'], ['潛行', '<kbd>C</kbd>'], ['跳／攀爬時跳開', '<kbd>Space</kbd>'], ['攀爬', '走向牆壁按住 <kbd>W</kbd>'], ['換角色', NET.on ? '多人模式不能換' : '<kbd>Tab</kbd> 或數字鍵'], ['角色能力', '左鍵／右鍵'], ['疊羅漢', '<kbd>F</kbd>（只疊最近的隊友）'], ['用 Prototype 救隊友', '<kbd>R</kbd>'], ['阿蛙搞電器', '<kbd>E</kbd>'], ['隱藏介面', '<kbd>H</kbd>'], ['暫停選單', '<kbd>Esc</kbd>'], ['卡住了', '長按 <kbd>K</kbd>']];
-  $('helpKeys').innerHTML = K.map(([a, b]) => `<div><span>${a}</span><span>${b}</span></div>`).join('');
+  // online: no switching characters; Tab / ← → watch a teammate while you're a toy
+  const KK = NET.on ? [...K.filter(r => r[0] !== '換角色'), ['變成玩具時看隊友', TOUCH ? '「‹ ›」' : '<kbd>Tab</kbd> 或 <kbd>←</kbd><kbd>→</kbd>']] : K;
+  $('helpKeys').innerHTML = KK.map(([a, b]) => `<div><span>${a}</span><span>${b}</span></div>`).join('');
   const who = (party.length ? IDS.filter(id => party.includes(chars[id])) : CORE);
   $('helpAbil').innerHTML = who.map(id => { const S = SP[id]; return `<div>${PORTRAITS[id] ? `<img alt="" src="${PORTRAITS[id]}">` : ''}<span><b style="color:${S.col}">${S.name} · ${S.abil}</b><small>${S.desc}</small></span></div>`; }).join('');
   $('help').hidden = false; if (!$('pause').hidden) $('pause').classList.add('covered');
@@ -5142,7 +5148,7 @@ LEVELS.kitchen = {
   },
   // an online game starts here (everyone comes out of the mouse hole)
   spawn() {
-    const P = [[-288, 0, -100], [-294, 0, -96], [-294, 0, -104], [-318, 0, -100], [-322, 0, -94], [-322, 0, -106], [-330, 0, -100], [-336, 0, -95]]; party.forEach((C, i) => { C.pos.set(...P[i % 8]); C.yaw = Math.PI / 2; C.state = 'idle'; C.wave = false; C.root.visible = true; C.lieK = 0; });
+    const P = [[-288, 0, -100], [-294, 0, -96], [-294, 0, -104], [-318, 0, -100], [-322, 0, -94], [-322, 0, -106], [-330, 0, -100], [-336, 0, -95]]; party.forEach((C, i) => { C.pos.set(...P[(NET.on ? slotOf(C) : i) % 8]); C.yaw = Math.PI / 2; C.state = 'idle'; C.wave = false; C.root.visible = true; C.lieK = 0; });
     chars.gecko.pos.set(-340, 0, -100); chars.gecko.yaw = Math.PI / 2; chars.gecko.state = 'idle'; chars.gecko.wave = false; chars.gecko.root.visible = true;
     chars.cham.root.visible = true; leader = chars.dad; if (!party.includes(chars.cham)) joinCham(); PROTO = Math.max(PROTO, 1);
     momReset(); ZONES.kitchen.prepped = false; this.prep(); kitchenMode();
@@ -8649,7 +8655,7 @@ function netSendChars() {
 }
 function netRecvChars(d, from) {
   const now = performance.now();
-  for (const a of d.c) { const C = chars[a[0]]; if (!C || C.owner !== from) continue; const o = C.net, gap = o ? (now - o.t) / 1000 : 0; const v = o && gap > .02 && gap < .5 ? [(a[1] - o.x) / gap, (a[2] - o.y) / gap, (a[3] - o.z) / gap] : [0, 0, 0];
+  for (const a of d.c) { const C = chars[a[0]]; if (!C || C.owner !== from || !Number.isFinite(a[1] + a[2] + a[3])) continue; const o = C.net, gap = o ? (now - o.t) / 1000 : 0; const v = o && gap > .02 && gap < .5 ? [(a[1] - o.x) / gap, (a[2] - o.y) / gap, (a[3] - o.z) / gap] : [0, 0, 0];
     if (Math.hypot(v[0], v[2]) > 160) v[0] = v[1] = v[2] = 0;
     C.net = { x: a[1], y: a[2], z: a[3], yaw: a[4], st: a[5], spd: a[6], fl: a[7], t: now, vx: v[0], vy: v[1], vz: v[2] }; C.stamina = a[8]; C.stamMax = a[9]; C.camo = a[10]; C.on = a[11] || null; }
 }
@@ -9375,7 +9381,7 @@ const PORT = { mats: null, pads: [], debris: [], out: 0, outSeen: 0, cd: 0, rdy:
 const PR_R = 10;
 const prC = () => V3(0, 0, 26).add(PO);                 // the ready circle, in front of the exit
 const PR_ANG = [-.13, .13, -.39, .39, -.65, .65, -.91, .91];
-function prPad(i) { const a = PR_ANG[i % 8]; return V3(Math.sin(a) * 34, 0, 10 - Math.cos(a) * 34).add(PO); }
+function prPad(i) { const a = PR_ANG[i % 8], r = i >= 8 ? 27 : 34; return V3(Math.sin(a) * r, 0, 10 - Math.cos(a) * r).add(PO); }   // 9th/10th: a step inside the ring
 const PR_TIP = TOUCH ? '按「表情」掣' : '按住 T';
 const PORTAL_Q = [{ t: '走出縮小機', s: `這裡是縮小機的場域裡面。可以先試試走、跳、爬上箱子和用表情（${PR_TIP}）——準備好就站上出口前面的光圈` }];
 const MP_PRO = [
@@ -9504,9 +9510,12 @@ function buildPortal() {
 }
 
 // ---------- starting here ----------
+// a stable spot number for each player: the same on every machine, whatever order the party list happens to be in
+// (by character, not by the party list: a client can run this before it knows the whole party)
+function slotOf(C) { const i = IDS.indexOf(C.id); return i < 0 ? Math.max(0, party.indexOf(C)) : i; }
 function portalSpawn() {
   placeStart(); unstkReset();   // the lab as it should be when you come out (bench, the old partner by the crack…)
-  party.forEach((C, i) => { const p = prPad(i); C.pos.copy(p); C.yaw = Math.atan2(PO.x - p.x, PO.z + 40 - p.z); C.state = 'idle'; C.wave = false; C.lieK = 0; C.root.visible = true; C.vel.set(0, 0, 0); C.ptw = null; C.lastTrail = C.pos.clone(); C.disp = C.pos.clone(); C.queue = []; });
+  party.forEach(C => { const p = prPad(slotOf(C)); C.pos.copy(p); C.yaw = Math.atan2(PO.x - p.x, PO.z + 40 - p.z); C.state = 'idle'; C.wave = false; C.lieK = 0; C.root.visible = true; C.vel.set(0, 0, 0); C.ptw = null; C.lastTrail = C.pos.clone(); C.disp = C.pos.clone(); C.queue = []; });
   leader = NET.on && NET.my && chars[NET.my] ? chars[NET.my] : chars.dad; trail = [];
   PORT.cd = 0; PORT.pend = 0; PORT.flare = 0; PORT.lastN = -1; PORT.late = !!NET.late; PORT.outSeen = PORT.late ? null : PORT.out; PORT.tagSig = '';
   setQuest(quest);
@@ -9534,9 +9543,9 @@ function portalLand() {
   if (NET.on && NET.resume && !PORT.resumed) { PORT.resumed = true; portalResumeLand(NET.resume); return; }
   const mx = machine.x, mz = machine.z, my = machine.y - 22;   // the machine's ring stands on the bench
   enterZone('basement', true); LP.snap = true; unstkReset();
-  party.forEach((C, i) => {
-    if (!mine(C)) return; const k = i % 8;
-    const from = V3(mx + EXIT_SX[k], my + 7.4, mz - .6), to = V3(mx + EXIT_LX[k], my, mz + EXIT_LZ[k]);
+  party.forEach(C => {
+    if (!mine(C)) return; const i = slotOf(C), k = i % 8;
+    const dx = i >= 8 ? 2.4 : 0, from = V3(mx + EXIT_SX[k] + dx, my + 7.4, mz - .6), to = V3(mx + EXIT_LX[k] + dx, my, mz + EXIT_LZ[k] + (i >= 8 ? 4 : 0));
     C.ptw = { from, to, t: -i * .14, dur: .62 }; C.pos.copy(from); C.vel.set(0, 0, 0); C.climbing = false; C.mantle = null; C.tumble = 0; C.yaw = 0; C.queue = []; if (C.disp) C.disp.copy(C.pos);
   });
   trail = []; cam.tgt.set(leader.pos.x, leader.pos.y + leader.h * .8, leader.pos.z); cam.curD = cam.dist; cam.yaw = .55; cam.pitch = .22;
@@ -9563,7 +9572,7 @@ function portalTick(dt) {
   for (const d of P.debris) { d.o.rotation.y += dt * d.sp * .5; d.o.rotation.x += dt * d.sp * .2; d.o.position.y = PO.y + d.y + Math.sin(T * .5 + d.ph) * 4; }
   if (LEVEL !== 'portal' || STATE !== 'play') { portalTag(false); return; }
   // fell off somehow? back onto a pad
-  party.forEach((C, i) => { if (mine(C) && !C.ptw && C.pos.y < PO.y - 50) { C.pos.copy(prPad(i)).add(V3(0, 2, 0)); C.vel.set(0, 0, 0); C.grounded = false; if (C.disp) C.disp.copy(C.pos); if (C === leader) { trail = []; cam.tgt.copy(C.pos); } } });
+  party.forEach(C => { if (mine(C) && !C.ptw && C.pos.y < PO.y - 50) { C.pos.copy(prPad(slotOf(C))).add(V3(0, 2, 0)); C.vel.set(0, 0, 0); C.grounded = false; if (C.disp) C.disp.copy(C.pos); if (C === leader) { trail = []; cam.tgt.copy(C.pos); } } });
   // who's standing in the circle
   const c = prC(), on = C => Math.hypot(C.pos.x - c.x, C.pos.z - c.z) < PR_R && Math.abs(C.pos.y - c.y) < 8;
   const need = NET.on ? 2.4 : .5;
@@ -9575,7 +9584,7 @@ function portalTick(dt) {
     else P.cd = 0;
   }
   if (P.rdy !== P.lastN) { if (P.rdy > P.lastN && P.lastN >= 0) tone(520 + P.rdy * 60, 0, .08, .04, 'triangle'); P.lastN = P.rdy; }
-  for (let i = 0; i < P.pads.length; i++) { const pd = P.pads[i], C = party[i]; const occ = C && Math.hypot(C.pos.x - pd.p.x, C.pos.z - pd.p.z) < 3.6; pd.gm.opacity = occ ? 1 : i < party.length ? .7 : .25; }
+  for (let i = 0; i < P.pads.length; i++) { const pd = P.pads[i], C = party.find(q => slotOf(q) % 8 === i); const occ = C && Math.hypot(C.pos.x - pd.p.x, C.pos.z - pd.p.z) < 3.6; pd.gm.opacity = occ ? 1 : i < party.length ? .7 : .25; }
   P.circle.uniforms.uP.value = P.cd / need; P.circle.uniforms.uOn.value = damp(P.circle.uniforms.uOn.value, P.rdy ? 1 : 0, 6, dt);
   P.field.material.uniforms.uK.value = .62 + (P.tot ? P.rdy / P.tot : 0) * .45 + P.cd / need * 1.4;
   portalTag(true);
@@ -9630,7 +9639,7 @@ function proRecv(w) {
 // dev / tests: skip the online prologue (everyone to the kitchen mouse hole, the online story starts)
 function proSkip() {
   const P = [[-288, 0, -100], [-294, 0, -96], [-294, 0, -104], [-300, 0, -92], [-300, 0, -108], [-282, 0, -94], [-282, 0, -106], [-276, 0, -100]];
-  party.forEach((C, i) => { if (!mine(C)) return; C.ptw = null; C.pos.set(...P[i % 8]); C.vel.set(0, 0, 0); C.grounded = false; C.queue = []; if (C.disp) C.disp.copy(C.pos); });
+  party.forEach(C => { if (!mine(C)) return; C.ptw = null; C.pos.set(...P[slotOf(C) % 8]); C.vel.set(0, 0, 0); C.grounded = false; C.queue = []; if (C.disp) C.disp.copy(C.pos); });
   PORT.pend = 0; trail = []; if (leader) cam.tgt.copy(leader.pos); LP.snap = true; if (STATE === 'intro') STATE = 'play';
   if (!NET.client && PRO.on) proEnd();
 }
@@ -9962,7 +9971,7 @@ function saveCps(S) { return S.pro ? (PRO.cps || MP_CPS) : MP_CPS; }
 function portalResumeLand(S) {
   const L = saveCps(S), p = L[Math.min(S.cp, L.length - 1)] || L[0];
   PRO.on = !!S.pro; QUESTS = PRO.on ? MP_PRO : MP_QUESTS; LEVELS.kitchen.quests = QUESTS; CPS = PRO.on ? (PRO.cps || MP_CPS) : MP_CPS; cp = S.cp;
-  party.forEach((C, i) => { if (!mine(C)) return; const a = i * 2.39996; C.pos.set(p[0] + Math.cos(a) * (2 + i * .9), p[1] + .5, p[2] + Math.sin(a) * (2 + i * .9)); C.vel.set(0, 0, 0); C.grounded = false; C.climbing = false; C.mantle = null; C.ptw = null; C.queue = []; C.lastTrail = C.pos.clone(); if (C.disp) C.disp.copy(C.pos); unPoof(C.pos); });
+  party.forEach(C => { if (!mine(C)) return; const i = slotOf(C), a = i * 2.39996; C.pos.set(p[0] + Math.cos(a) * (2 + i * .9), p[1] + .5, p[2] + Math.sin(a) * (2 + i * .9)); C.vel.set(0, 0, 0); C.grounded = false; C.climbing = false; C.mantle = null; C.ptw = null; C.queue = []; C.lastTrail = C.pos.clone(); if (C.disp) C.disp.copy(C.pos); unPoof(C.pos); });
   const nz = zoneAt(leader.pos); if (nz) enterZone(nz.id, true); LP.snap = true; trail = []; cam.tgt.set(leader.pos.x, leader.pos.y + leader.h * .8, leader.pos.z); cam.curD = cam.dist;
   if (!NET.client) { setQuest(S.q); toastW('回到上次的進度！', 2.6); }
 }

@@ -166,7 +166,7 @@ function saveCps(S) { return S.pro ? (PRO.cps || MP_CPS) : MP_CPS; }
 function portalResumeLand(S) {
   const L = saveCps(S), p = L[Math.min(S.cp, L.length - 1)] || L[0];
   PRO.on = !!S.pro; QUESTS = PRO.on ? MP_PRO : MP_QUESTS; LEVELS.kitchen.quests = QUESTS; CPS = PRO.on ? (PRO.cps || MP_CPS) : MP_CPS; cp = S.cp;
-  party.forEach((C, i) => { if (!mine(C)) return; const a = i * 2.39996; C.pos.set(p[0] + Math.cos(a) * (2 + i * .9), p[1] + .5, p[2] + Math.sin(a) * (2 + i * .9)); C.vel.set(0, 0, 0); C.grounded = false; C.climbing = false; C.mantle = null; C.ptw = null; C.queue = []; C.lastTrail = C.pos.clone(); if (C.disp) C.disp.copy(C.pos); unPoof(C.pos); });
+  party.forEach(C => { if (!mine(C)) return; const i = slotOf(C), a = i * 2.39996; C.pos.set(p[0] + Math.cos(a) * (2 + i * .9), p[1] + .5, p[2] + Math.sin(a) * (2 + i * .9)); C.vel.set(0, 0, 0); C.grounded = false; C.climbing = false; C.mantle = null; C.ptw = null; C.queue = []; C.lastTrail = C.pos.clone(); if (C.disp) C.disp.copy(C.pos); unPoof(C.pos); });
   const nz = zoneAt(leader.pos); if (nz) enterZone(nz.id, true); LP.snap = true; trail = []; cam.tgt.set(leader.pos.x, leader.pos.y + leader.h * .8, leader.pos.z); cam.curD = cam.dist;
   if (!NET.client) { setQuest(S.q); toastW('回到上次的進度！', 2.6); }
 }

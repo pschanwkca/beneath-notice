@@ -94,7 +94,9 @@ $('pauseTitle').addEventListener('click', () => {
 function openHelp() {
   const K = TOUCH ? [['移動', '左邊拖動搖桿'], ['視角', '右邊拖動'], ['跳／攀爬時跳開', '「跳」'], ['攀爬', '推搖桿撞向牆壁'], ['潛行', '「潛行」'], ['疊羅漢', '「疊」'], ['換角色', '「換人」或點頭像'], ['角色能力', '右下角的能力按鈕'], ['救隊友', '「復活」用 Prototype'], ['卡住了', '暫停選單「我卡住了」']]
     : [['移動', '<kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd>'], ['視角', '滑鼠'], ['跑', '<kbd>Shift</kbd>'], ['潛行', '<kbd>C</kbd>'], ['跳／攀爬時跳開', '<kbd>Space</kbd>'], ['攀爬', '走向牆壁按住 <kbd>W</kbd>'], ['換角色', NET.on ? '多人模式不能換' : '<kbd>Tab</kbd> 或數字鍵'], ['角色能力', '左鍵／右鍵'], ['疊羅漢', '<kbd>F</kbd>（只疊最近的隊友）'], ['用 Prototype 救隊友', '<kbd>R</kbd>'], ['阿蛙搞電器', '<kbd>E</kbd>'], ['隱藏介面', '<kbd>H</kbd>'], ['暫停選單', '<kbd>Esc</kbd>'], ['卡住了', '長按 <kbd>K</kbd>']];
-  $('helpKeys').innerHTML = K.map(([a, b]) => `<div><span>${a}</span><span>${b}</span></div>`).join('');
+  // online: no switching characters; Tab / ← → watch a teammate while you're a toy
+  const KK = NET.on ? [...K.filter(r => r[0] !== '換角色'), ['變成玩具時看隊友', TOUCH ? '「‹ ›」' : '<kbd>Tab</kbd> 或 <kbd>←</kbd><kbd>→</kbd>']] : K;
+  $('helpKeys').innerHTML = KK.map(([a, b]) => `<div><span>${a}</span><span>${b}</span></div>`).join('');
   const who = (party.length ? IDS.filter(id => party.includes(chars[id])) : CORE);
   $('helpAbil').innerHTML = who.map(id => { const S = SP[id]; return `<div>${PORTRAITS[id] ? `<img alt="" src="${PORTRAITS[id]}">` : ''}<span><b style="color:${S.col}">${S.name} · ${S.abil}</b><small>${S.desc}</small></span></div>`; }).join('');
   $('help').hidden = false; if (!$('pause').hidden) $('pause').classList.add('covered');
