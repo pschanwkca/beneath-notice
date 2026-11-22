@@ -7,7 +7,7 @@
 //    online you can also go to a teammate instead
 //  · each time, the spot is noted (pause menu → 複製位置) so it can be sent in and fixed
 // =====================================================================
-const UNSTK = { safe: [], t: 0, hold: 0, inT: {}, moveT: 0, ref: null, hint: 0, last: '', shown: '' };
+const UNSTK = { safe: [], t: 0, hold: 0, inT: {}, moveT: 0, ref: null, hint: 0, last: '', shown: '', seq: { n: 0, t: -99, last: null } };
 function unstkReset() { UNSTK.safe.length = 0; UNSTK.hold = 0; UNSTK.inT = {}; UNSTK.moveT = 0; UNSTK.ref = null; UNSTK.hint = 0; }
 const UN_SKIP = c => c.door || c.y0 < -900 || c.cat || c.noStk;
 function unInside(C) {   // the body is inside something solid (not just touching it)
@@ -42,14 +42,21 @@ function unstuck(how) {
     const M = playerChars().filter(C => C !== L && !C.frozen && C.grounded).sort((a, b) => a.pos.distanceTo(from) - b.pos.distanceTo(from))[0];
     if (M) { const a = M.yaw + Math.PI; to = V3(M.pos.x + Math.sin(a) * (M.r + L.r + 2), M.pos.y, M.pos.z + Math.cos(a) * (M.r + L.r + 2)); if (solidAt(to.x, to.y + L.h * .5, to.z)) to = M.pos.clone().add(V3(0, M.h + .5, 0)); }
   }
-  if (!to) for (let i = UNSTK.safe.length - 1; i >= 0; i--) { const s = UNSTK.safe[i]; if (s.z === LEVEL || i < UNSTK.safe.length - 1 || how !== 'key') { if (how !== 'key' || s.p.distanceTo(from) > 3.5 || i === 0) { to = s.p.clone(); break; } } }
-  if (!to && CPS) { const p = CPS[cp] || CPS[0]; to = V3(p[0] + (NET.on ? IDS.indexOf(L.id) * 3 : 0), p[1], p[2]); }
+  let toCp = false;
+  if (!to && how === 'key') {
+    // asked for: a good spot well away from here; pressed again straight after (still stuck) → one further back each time
+    const Q = UNSTK.seq, again = T - Q.t < 30 && Q.last && from.distanceTo(Q.last) < 8; Q.n = again ? Q.n + 1 : 0;
+    const cands = UNSTK.safe.filter(s => s.z !== 'portal' && s.p.distanceTo(from) > 8).reverse();
+    if (cands[Q.n]) to = cands[Q.n].p.clone();
+  } else if (!to && UNSTK.safe.length) to = UNSTK.safe[UNSTK.safe.length - 1].p.clone();
+  if (!to && CPS) { const p = CPS[cp] || CPS[0]; to = V3(p[0] + (NET.on ? IDS.indexOf(L.id) * 3 : 0), p[1], p[2]); toCp = true; }
+  if (how === 'key') { UNSTK.seq.t = T; UNSTK.seq.last = to ? to.clone() : null; }
   if (!to) return false;
   unPlace(L, to); trail = []; cam.tgt.set(to.x, to.y + L.h * .8, to.z); LP.snap = from.distanceTo(to) > 120;
   // single player: the rest of the party comes along
   if (!NET.on) party.forEach((F, i) => { if (F === L || F.frozen || F.carried || !mine(F)) return; const a = L.yaw + Math.PI + (i % 2 ? .7 : -.7); const p = V3(to.x + Math.sin(a) * (3 + i * 1.4), to.y, to.z + Math.cos(a) * (3 + i * 1.4)); unPlace(F, solidAt(p.x, p.y + F.h * .5, p.z) ? to : p); });
   unPoof(to); UNSTK.hint = 0; UNSTK.moveT = 0;
-  toast(how === 'mate' ? '已經去到隊友身邊' : how === 'fell' ? '跌出了地圖——送回剛才站得穩的位置' : how === 'wedged' ? '卡在東西裡面——已經把你移出來' : '已經送回剛才站得穩的位置', 2.6);
+  toast(how === 'mate' ? '已經去到隊友身邊' : toCp ? '已經送回存檔點' : how === 'fell' ? '跌出了地圖——送回剛才站得穩的位置' : how === 'wedged' ? '卡在東西裡面——已經把你移出來' : UNSTK.seq.n ? '再退後一點——如果仍然卡住，再按一次' : '已經送回剛才站得穩的位置', 2.8);
   return true;
 }
 function unstuckTick(dt) {
@@ -58,7 +65,7 @@ function unstuckTick(dt) {
   const free = C => !C.frozen && !C.carried && !C.climbing && !C.mantle && !C.zip && !C.on && !C.hop && !C.ptw && !C.roost && !(C.pullT > 0);
   // remember good places to come back to
   UNSTK.t -= dt;
-  if (UNSTK.t <= 0 && free(L) && L.grounded && !isBase(L)) {
+  if (UNSTK.t <= 0 && free(L) && L.grounded && !isBase(L) && LEVEL !== 'portal') {
     UNSTK.t = .4;
     if (unRoomy(L)) { const S = UNSTK.safe, last = S[S.length - 1]; if (!last || last.p.distanceTo(L.pos) > 3) { S.push({ p: L.pos.clone(), z: LEVEL }); if (S.length > 16) S.shift(); } else if (last) last.p.copy(L.pos); }
   }

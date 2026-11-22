@@ -45,10 +45,16 @@ function rosterCard(r, opts = {}) {
 function openRoster() {
   $('rosterN').textContent = `已解鎖 ${unlockedCount()} / ${ROSTER.length}`;
   $('rosterGrid').innerHTML = ROSTER.map(r => rosterCard(r)).join('');
-  $('roster').hidden = false;
+  $('roster').hidden = false; if (!$('pause').hidden) $('pause').classList.add('covered');
 }
 $('goRoster').addEventListener('click', () => { audioInit(); openRoster(); });
-$('rosterClose').addEventListener('click', () => { $('roster').hidden = true; });
+$('rosterClose').addEventListener('click', () => subClose('roster'));
+// sub-panels (chapters, characters, help): the corner ×, tapping outside the panel, or Esc closes them;
+// while one is open over the pause menu, the pause card steps aside so the two don't show through each other
+function subClose(id) { $(id).hidden = true; if (['roster', 'help'].every(k => $(k).hidden)) $('pause').classList.remove('covered'); }
+document.querySelectorAll('.xclose').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); subClose(b.dataset.close); }));
+for (const id of ['chaps', 'roster', 'help']) $(id).addEventListener('click', e => { if (e.target === $(id)) subClose(id); });
+addEventListener('keydown', e => { if (e.code !== 'Escape') return; for (const id of ['help', 'roster', 'chaps']) if (!$(id).hidden) { subClose(id); e.stopImmediatePropagation(); return; } }, true);
 
 // ---------- settings (kept on this device) ----------
 const SET = Object.assign({ sens: 1, vol: 1, mus: .6, inv: false }, (() => { try { return JSON.parse(localStorage.getItem('bn_set_v1') || '{}') || {}; } catch (e) { return {}; } })());
@@ -72,7 +78,7 @@ function pauseRefresh() {
 let pauseTitleArm = 0;
 $('pauseRoster').addEventListener('click', () => openRoster());
 $('pauseHelp').addEventListener('click', () => openHelp());
-$('helpClose').addEventListener('click', () => { $('help').hidden = true; });
+$('helpClose').addEventListener('click', () => subClose('help'));
 $('pauseCp').addEventListener('click', () => {
   if (STATE !== 'play' || !CPS) return;
   if (NET.on) { const L = leader; if (!L || L.frozen) return; const p = CPS[cp] || CPS[0]; L.pos.set(p[0] + IDS.indexOf(L.id) * 3, p[1], p[2]); L.vel.set(0, 0, 0); L.climbing = false; L.mantle = null; L.on = null; L.hop = null; trail = []; L.lastTrail.copy(L.pos); cam.tgt.copy(L.pos); }
@@ -91,7 +97,7 @@ function openHelp() {
   $('helpKeys').innerHTML = K.map(([a, b]) => `<div><span>${a}</span><span>${b}</span></div>`).join('');
   const who = (party.length ? IDS.filter(id => party.includes(chars[id])) : CORE);
   $('helpAbil').innerHTML = who.map(id => { const S = SP[id]; return `<div>${PORTRAITS[id] ? `<img alt="" src="${PORTRAITS[id]}">` : ''}<span><b style="color:${S.col}">${S.name} · ${S.abil}</b><small>${S.desc}</small></span></div>`; }).join('');
-  $('help').hidden = false;
+  $('help').hidden = false; if (!$('pause').hidden) $('pause').classList.add('covered');
 }
 
 // ---------- chapter list (title screen) ----------
@@ -125,4 +131,4 @@ function openChapters() {
   $('chaps').hidden = false;
 }
 $('goCh').addEventListener('click', () => { audioInit(); openChapters(); });
-$('chapsClose').addEventListener('click', () => { $('chaps').hidden = true; });
+$('chapsClose').addEventListener('click', () => subClose('chaps'));

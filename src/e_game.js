@@ -565,7 +565,7 @@ $('quest').addEventListener('pointerdown', e => { if (TOUCH) { e.stopPropagation
 const _pv = V3();
 function project(p, el, offX = 0, offY = 0, clampEdge = false) {
   _pv.copy(p).project(camera); let x = (_pv.x * .5 + .5) * innerWidth, y = (-_pv.y * .5 + .5) * innerHeight; const behind = _pv.z > 1;
-  if (clampEdge) { if (behind) { x = innerWidth - x; y = innerHeight - 40; } x = clamp(x, 60, innerWidth - 60); y = clamp(y, 170, innerHeight - 170);
+  if (clampEdge) { if (behind) { x = innerWidth - x; y = innerHeight - 40; } const mx = TOUCH ? 84 : 60; x = clamp(x, mx, innerWidth - mx); y = clamp(y, TOUCH ? 90 : 170, innerHeight - (TOUCH ? 120 : 170));
     const q = $('quest'); if (q && q.offsetParent) { const r = q.getBoundingClientRect(); if (x < r.right + 30 && y < r.bottom + 28) y = r.bottom + 28; } }   // never on top of the quest card
   el.style.left = (x + offX) + 'px'; el.style.top = (y + offY) + 'px'; return !behind;
 }
@@ -797,7 +797,7 @@ function frame(now) {
   fpsAcc += dt; fpsN++;
   if (fpsAcc > 2) {
     const fps = fpsN / fpsAcc; $('fps').textContent = Math.round(fps) + ' fps · ' + ({ high: '高', med: '中', low: '低' })[QUAL]; fpsAcc = 0; fpsN = 0;
-    if (STATE === 'play' && !PAUSED && TOUCH && QUAL === 'low') { const k0 = DYN.k; if (fps < 27) DYN.k = Math.max(.7, DYN.k - .1); else if (fps > 50) DYN.k = Math.min(1, DYN.k + .1); if (DYN.k !== k0) applyQ('low'); }
+    if ((STATE === 'play' || STATE === 'title') && !PAUSED && TOUCH && QUAL === 'low') { const k0 = DYN.k; if (fps < 27) DYN.k = Math.max(.7, DYN.k - .1); else if (fps > 50) DYN.k = Math.min(1, DYN.k + .1); if (DYN.k !== k0) applyQ('low'); }
     if (STATE === 'play' && !PAUSED) { if ((QUAL === 'high' && fps < 30) || (QUAL === 'med' && fps < 22)) { if (++fpsLow >= 2) { applyQ(QUAL === 'high' ? 'med' : 'low'); toast('畫質已自動調低，保持流暢'); fpsLow = 0; } } else fpsLow = 0; }
   }
 }
@@ -813,13 +813,13 @@ function onResize() {
 }
 addEventListener('resize', onResize); addEventListener('orientationchange', () => { onResize(); setTimeout(onResize, 250); setTimeout(onResize, 700); }); if (window.visualViewport) visualViewport.addEventListener('resize', onResize);
 function applyQ(q) {
-  QUAL = q; const P = { high: [Math.min(devicePixelRatio, 1.5), true, true, 16], med: [Math.min(devicePixelRatio, 1.1), true, false, 12], low: [TOUCH ? Math.min(devicePixelRatio, 1.25) * DYN.k : .85, false, false, TOUCH ? 6 : 8] }[q];
+  QUAL = q; const P = { high: [Math.min(devicePixelRatio, 1.5), true, true, 16], med: [Math.min(devicePixelRatio, 1.1), true, false, 12], low: [TOUCH ? Math.min(devicePixelRatio, 1.25) * DYN.k : .85, false, false, TOUCH ? 5 : 8] }[q];
   BLOOM_K = q === 'low' ? .5 : 1; fxaa.enabled = TOUCH || q === 'low'; grade.uniforms.uGrain.value = TOUCH ? .014 : .035;
   renderer.setPixelRatio(P[0]); composer.setPixelRatio(P[0]); onResize(); gtao.enabled = P[1]; bokeh.enabled = P[2]; setShells(P[3]);
   document.querySelectorAll('.sel button').forEach(b => b.classList.toggle('on', b.dataset.q === q));
 }
 function pause() { PAUSED = true; $('pause').hidden = false; document.body.classList.add('paused'); $('pauseMP').hidden = !NET.on; if (NET.on) $('pauseCode').textContent = NET.code; pauseRefresh(); }
-function resume() { PAUSED = false; $('pause').hidden = true; document.body.classList.remove('paused'); $('help').hidden = true; $('roster').hidden = true; last = performance.now(); requestLock(); }
+function resume() { PAUSED = false; $('pause').hidden = true; $('pause').classList.remove('covered'); document.body.classList.remove('paused'); $('help').hidden = true; $('roster').hidden = true; last = performance.now(); requestLock(); }
 document.querySelectorAll('.sel button[data-q]').forEach(b => b.addEventListener('click', () => applyQ(b.dataset.q)));
 $('go').addEventListener('click', () => { audioInit(); startGame(0); });
 $('resume').addEventListener('click', () => { audioInit(); resume(); });

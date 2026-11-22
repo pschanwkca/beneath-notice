@@ -1,0 +1,6 @@
+[{"eval":"document.getElementById('go').click()","wait":2500},
+ {"eval":"(()=>{const b=window.__bn; window.__NR=true; b.step(30); return [b.info().state, b.info().lv]})()","frame":1,"wait":300,"shot":"mob_portal"},
+ {"eval":"(()=>{const b=window.__bn; const c=b.prC(); b.leader.pos.set(c.x,c.y+.5,c.z); b.step(60); b.step(420); return [b.info().state, b.info().lv]})()","frame":1,"wait":300,"shot":"mob_sp_play"},
+ {"eval":"(()=>{const b=window.__bn; document.getElementById('tbPause').click(); return [!!document.getElementById('pause').hidden]})()","frame":1,"wait":300,"shot":"mob_pause"},
+ {"eval":"(()=>{const b=window.__bn; const L=b.leader; const p0=L.pos.clone(); for(let i=0;i<5;i++) b.step(1); L.pos.x+=0; window.__p0=p0.toArray(); document.getElementById('pauseStuck').click(); return [document.getElementById('pause').hidden, b.info().state]})()","wait":400},
+ {"eval":"(()=>{const b=window.__bn; b.step(10); return [window.__p0.map(v=>Math.round(v)), b.leader.pos.toArray().map(v=>Math.round(v)), b.UNSTK.last, b.UNSTK.safe.length]})()"}]

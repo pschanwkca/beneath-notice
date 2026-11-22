@@ -476,7 +476,7 @@ function buildLights() {
 }
 let dust = null;
 function buildDust(o = {}) {
-  const N = o.N ?? 4200, pos = new Float32Array(N * 3), sd = new Float32Array(N); const bx = o.box ?? [-300, 300, 0, 250, -250, 250]; const bf = o.beamFrac ?? .55; const door = o.door ?? true;
+  const N = Math.round((o.N ?? 4200) * (TOUCH ? .5 : 1)), pos = new Float32Array(N * 3), sd = new Float32Array(N); const bx = o.box ?? [-300, 300, 0, 250, -250, 250]; const bf = o.beamFrac ?? .55; const door = o.door ?? true;
   for (let i = 0; i < N; i++) {
     let p;
     if (i < N * bf && beams[0].len > 1) { const b = beams[(i % 3 === 0 && beams[1].len > 1) ? 1 : 0]; const t = rnd() * b.len * .95; const rr = Math.tan(Math.acos(b.ca)) * t * Math.sqrt(rnd()); const a = rnd() * 6.28; const ax = V3().copy(b.d); const u = V3(1, 0, 0).cross(ax).normalize(), v = V3().crossVectors(ax, u); p = V3().copy(b.o).addScaledVector(ax, t).addScaledVector(u, Math.cos(a) * rr).addScaledVector(v, Math.sin(a) * rr); }

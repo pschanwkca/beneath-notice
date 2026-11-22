@@ -142,9 +142,10 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:non
 .ew-it.on img{filter:drop-shadow(0 0 10px rgba(255,210,120,.65))}
 html.touch .ew-it kbd{display:none}
 .tbemo{display:none}
-html.touch .tbemo{display:block;position:absolute;left:calc(14px + env(safe-area-inset-left));top:24%;width:52px;height:52px;font-size:12px;pointer-events:auto}
+html.touch .tbemo{display:block}
 @media(max-width:600px){.emowheel{transform:scale(.82)}}
-html.net .vctouch{display:flex;position:absolute;left:calc(14px + env(safe-area-inset-left));top:38%;flex-direction:column;gap:10px}
+html.touch .vctouch{display:flex;position:absolute;left:calc(12px + env(safe-area-inset-left));top:50%;transform:translateY(-50%);flex-direction:column;gap:10px}
+.vctouch .vcb{display:none}html.net .vctouch .vcb{display:block}
 .vctouch .tb{position:static;width:48px;height:48px;font-size:12px;pointer-events:auto}
 .vctouch .tb.dn{border-color:var(--rose);color:var(--rose)}
 @media (max-width:1100px){.mpchip .vcmic em{display:none}}
@@ -185,6 +186,10 @@ html.touch .bat .pk{display:none}
 .xtag.go{border-color:rgba(244,187,114,.8);box-shadow:0 0 34px rgba(244,187,114,.35),0 10px 30px rgba(0,0,0,.35)}.xtag.go small{color:var(--amber);font-weight:700}
 .pflash{position:fixed;inset:0;z-index:45;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 55%,#fff 0,#e6fffd 40%,#9ff3ee 100%);transition:opacity .5s ease}
 .pflash.on{opacity:1;transition:opacity .16s ease-in}
+.xclose{position:sticky;top:0;float:right;margin:-6px -8px 0 8px;z-index:2;width:36px;height:36px;min-height:0;padding:0;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid var(--faint);color:var(--ink);font:400 22px/1 "Fredoka",sans-serif;box-shadow:none;display:grid;place-items:center}
+.xclose:hover{background:rgba(255,255,255,.16)}
+#pause.covered .pcard{visibility:hidden}
+html.touch .ov .panel,html.touch .pcard{background:rgba(10,13,18,.94)}
 .unstk{position:absolute;left:50%;bottom:238px;transform:translateX(-50%);pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:6px;font:500 13px "Noto Sans TC",sans-serif;color:var(--ink);background:rgba(10,13,18,.74);border:1px solid rgba(244,187,114,.55);border-radius:99px;padding:7px 16px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.3)}
 .unstk[hidden]{display:none}
 .unstk kbd{font:600 11px "Fredoka";background:rgba(255,255,255,.08);border:1px solid var(--faint);border-bottom-width:2px;border-radius:6px;padding:1px 6px;margin:0 2px}
@@ -272,6 +277,8 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--fain
 .ch.lock small{color:var(--dim)}
 @media (max-height:520px){.ch{padding:10px 12px}.ch b{font-size:15px;margin:3px 0 4px}.ch em{font-size:11px}}
 .pcard{max-width:520px;max-height:94vh;overflow-y:auto;overscroll-behavior:contain}
+.pcard .ptitle{font-size:44px}
+@media (max-height:520px){.pcard .ptitle{font-size:26px}.pcard .tag{margin:4px auto 8px;font-size:12px}.pcard{padding-top:10px}}
 .ch small i{font-style:normal;margin-left:8px;padding:1px 7px;border-radius:99px;border:1px solid rgba(110,220,230,.55);color:var(--cyan);letter-spacing:.08em;font-size:10px}
 .ch.tst{border-color:rgba(110,220,230,.28)}
 .mpact.chfoot{justify-content:space-between;padding-top:4px}
@@ -297,6 +304,33 @@ body.paused #chap{opacity:0!important}
 .testchip[hidden]{display:none}
 body.paused .testchip{display:none}
 html.touch .testchip{bottom:auto;top:8px}
+/* ---- phone HUD (landscape): quest top-left, status top-centre, party + pause top-right,
+        social buttons down the left edge, the stick bottom-left, actions in one arc bottom-right ---- */
+html.touch .q{max-width:min(31vw,250px);padding:6px 10px 7px}
+html.touch .q .qh{display:none}
+html.touch #qt{font-size:13px;margin-top:0;line-height:1.3}
+html.touch .qck{gap:2px 8px;margin-top:4px;font-size:10.5px}
+html.touch .bat{display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;margin-top:5px;padding-top:5px;font-size:10.5px}
+html.touch .bat > *{margin:0}
+html.touch .mpchip{display:none}
+html.touch .pm,html.touch .pm .ph{width:40px}html.touch .pm .ph{height:40px}
+html.touch .party{gap:4px;right:calc(60px + env(safe-area-inset-right))}
+html.touch .pm b{font-size:9.5px}
+html.touch .vctouch .tb{width:46px;height:46px;font-size:11.5px}
+html.touch .tbtns .tb{background:rgba(10,13,18,.58);border-color:rgba(245,240,230,.3)}
+html.touch #tbJump{width:84px;height:84px;font-size:17px;right:0;bottom:0}
+html.touch #tbCrouch{right:113px;bottom:13px;width:58px;height:58px}
+html.touch #tbSwap{right:13px;bottom:113px;width:58px;height:58px}
+html.touch #tbAct,html.touch #tbPush,html.touch #tbGrow{right:84px;bottom:84px;width:58px;height:58px}
+html.touch #tbScout,html.touch #tbPull,html.touch #tbShrink{right:127px;bottom:148px;width:52px;height:52px}
+html.touch #tbStack{right:182px;bottom:60px;width:52px;height:52px}
+html.touch #tbProto{right:37px;bottom:187px;width:52px;height:52px}
+html.touch #tbUse{right:200px;bottom:128px;width:52px;height:52px}
+html.net #tbSwap{display:none}
+html.net #tbProto{right:13px;bottom:113px;width:58px;height:58px}
+html.touch .sub{bottom:104px}
+html.touch .hint{bottom:64px}
+
 body.paused .hud{opacity:0}
 #pause{background:radial-gradient(ellipse at 50% 50%,rgba(7,9,12,.55),rgba(7,9,12,.88))}
 .ploc{margin:6px 0 0;font:600 13px "Noto Sans TC";letter-spacing:.06em;color:var(--amber)}
@@ -490,8 +524,7 @@ html.touch .mpchip{bottom:auto;top:62px}
     <button class="tb" id="tbAct">抱</button>
     <button class="tb" id="tbScout">偵察</button>
   </div>
-  <button class="tb tbemo" id="tbEmo" aria-label="表情">表情</button>
-  <div class="vctouch"><button class="tb" id="tbMic">咪</button><button class="tb" id="tbChat">聊天</button>
+  <div class="vctouch"><button class="tb tbemo" id="tbEmo" aria-label="表情">表情</button><button class="tb vcb" id="tbMic">咪</button><button class="tb vcb" id="tbChat">聊天</button>
   </div>
   <button class="tb" id="tbPause" aria-label="暫停"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><rect x="4" y="3" width="4" height="14" rx="1.5" fill="currentColor"/><rect x="12" y="3" width="4" height="14" rx="1.5" fill="currentColor"/></svg></button>
 </div>
@@ -629,7 +662,7 @@ html.touch .mpchip{bottom:auto;top:62px}
 <div class="testchip" id="testChip" hidden>測試模式</div>
 
 <div class="ov" id="chaps" hidden>
-  <div class="rbox panel cbox">
+  <div class="rbox panel cbox"><button class="xclose" data-close="chaps" aria-label="關閉">×</button>
     <div class="mph"><b>章節</b><span id="chapsN"></span></div>
     <div class="clist" id="chapsList"></div>
     <div class="mpact chfoot"><label class="tsw" title="全部章節開放，進度不會儲存；暫停選單會多出測試工具"><input type="checkbox" id="testOn"><i></i><span>測試模式</span></label><button id="chapsClose" class="ghost small">關閉</button></div>
@@ -637,7 +670,7 @@ html.touch .mpchip{bottom:auto;top:62px}
 </div>
 
 <div class="ov" id="roster" hidden>
-  <div class="rbox panel">
+  <div class="rbox panel"><button class="xclose" data-close="roster" aria-label="關閉">×</button>
     <div class="mph"><b>角色</b><span id="rosterN"></span></div>
     <p class="rtip">四位主角一開始就可以在多人模式使用；其他角色要在單人故事裡解鎖，解鎖後多人模式就可以揀。</p>
     <div class="rgrid" id="rosterGrid"></div>
@@ -647,7 +680,7 @@ html.touch .mpchip{bottom:auto;top:62px}
 
 <div class="ov" id="pause" hidden>
   <div class="card pcard">
-    <div class="logo" style="font-size:44px">暫停</div>
+    <div class="logo ptitle">暫停</div>
     <p class="ploc" id="pauseLoc"></p>
     <p class="tag" id="pauseTip">按「繼續」回到遊戲。</p>
     <div class="row"><button id="resume">繼續</button></div>
@@ -688,7 +721,7 @@ html.touch .mpchip{bottom:auto;top:62px}
 </div>
 
 <div class="ov" id="help" hidden>
-  <div class="rbox panel hbox">
+  <div class="rbox panel hbox"><button class="xclose" data-close="help" aria-label="關閉">×</button>
     <div class="mph"><b>操作說明</b><span>任何時候都可以在暫停選單打開</span></div>
     <div class="keys hkeys" id="helpKeys"></div>
     <div class="habil" id="helpAbil"></div>

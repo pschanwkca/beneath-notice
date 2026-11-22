@@ -142,9 +142,10 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:non
 .ew-it.on img{filter:drop-shadow(0 0 10px rgba(255,210,120,.65))}
 html.touch .ew-it kbd{display:none}
 .tbemo{display:none}
-html.touch .tbemo{display:block;position:absolute;left:calc(14px + env(safe-area-inset-left));top:24%;width:52px;height:52px;font-size:12px;pointer-events:auto}
+html.touch .tbemo{display:block}
 @media(max-width:600px){.emowheel{transform:scale(.82)}}
-html.net .vctouch{display:flex;position:absolute;left:calc(14px + env(safe-area-inset-left));top:38%;flex-direction:column;gap:10px}
+html.touch .vctouch{display:flex;position:absolute;left:calc(12px + env(safe-area-inset-left));top:50%;transform:translateY(-50%);flex-direction:column;gap:10px}
+.vctouch .vcb{display:none}html.net .vctouch .vcb{display:block}
 .vctouch .tb{position:static;width:48px;height:48px;font-size:12px;pointer-events:auto}
 .vctouch .tb.dn{border-color:var(--rose);color:var(--rose)}
 @media (max-width:1100px){.mpchip .vcmic em{display:none}}
@@ -185,6 +186,10 @@ html.touch .bat .pk{display:none}
 .xtag.go{border-color:rgba(244,187,114,.8);box-shadow:0 0 34px rgba(244,187,114,.35),0 10px 30px rgba(0,0,0,.35)}.xtag.go small{color:var(--amber);font-weight:700}
 .pflash{position:fixed;inset:0;z-index:45;pointer-events:none;opacity:0;background:radial-gradient(circle at 50% 55%,#fff 0,#e6fffd 40%,#9ff3ee 100%);transition:opacity .5s ease}
 .pflash.on{opacity:1;transition:opacity .16s ease-in}
+.xclose{position:sticky;top:0;float:right;margin:-6px -8px 0 8px;z-index:2;width:36px;height:36px;min-height:0;padding:0;border-radius:50%;background:rgba(255,255,255,.08);border:1px solid var(--faint);color:var(--ink);font:400 22px/1 "Fredoka",sans-serif;box-shadow:none;display:grid;place-items:center}
+.xclose:hover{background:rgba(255,255,255,.16)}
+#pause.covered .pcard{visibility:hidden}
+html.touch .ov .panel,html.touch .pcard{background:rgba(10,13,18,.94)}
 .unstk{position:absolute;left:50%;bottom:238px;transform:translateX(-50%);pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:6px;font:500 13px "Noto Sans TC",sans-serif;color:var(--ink);background:rgba(10,13,18,.74);border:1px solid rgba(244,187,114,.55);border-radius:99px;padding:7px 16px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.3)}
 .unstk[hidden]{display:none}
 .unstk kbd{font:600 11px "Fredoka";background:rgba(255,255,255,.08);border:1px solid var(--faint);border-bottom-width:2px;border-radius:6px;padding:1px 6px;margin:0 2px}
@@ -272,6 +277,8 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--fain
 .ch.lock small{color:var(--dim)}
 @media (max-height:520px){.ch{padding:10px 12px}.ch b{font-size:15px;margin:3px 0 4px}.ch em{font-size:11px}}
 .pcard{max-width:520px;max-height:94vh;overflow-y:auto;overscroll-behavior:contain}
+.pcard .ptitle{font-size:44px}
+@media (max-height:520px){.pcard .ptitle{font-size:26px}.pcard .tag{margin:4px auto 8px;font-size:12px}.pcard{padding-top:10px}}
 .ch small i{font-style:normal;margin-left:8px;padding:1px 7px;border-radius:99px;border:1px solid rgba(110,220,230,.55);color:var(--cyan);letter-spacing:.08em;font-size:10px}
 .ch.tst{border-color:rgba(110,220,230,.28)}
 .mpact.chfoot{justify-content:space-between;padding-top:4px}
@@ -297,6 +304,33 @@ body.paused #chap{opacity:0!important}
 .testchip[hidden]{display:none}
 body.paused .testchip{display:none}
 html.touch .testchip{bottom:auto;top:8px}
+/* ---- phone HUD (landscape): quest top-left, status top-centre, party + pause top-right,
+        social buttons down the left edge, the stick bottom-left, actions in one arc bottom-right ---- */
+html.touch .q{max-width:min(31vw,250px);padding:6px 10px 7px}
+html.touch .q .qh{display:none}
+html.touch #qt{font-size:13px;margin-top:0;line-height:1.3}
+html.touch .qck{gap:2px 8px;margin-top:4px;font-size:10.5px}
+html.touch .bat{display:flex;flex-wrap:wrap;align-items:center;gap:2px 10px;margin-top:5px;padding-top:5px;font-size:10.5px}
+html.touch .bat > *{margin:0}
+html.touch .mpchip{display:none}
+html.touch .pm,html.touch .pm .ph{width:40px}html.touch .pm .ph{height:40px}
+html.touch .party{gap:4px;right:calc(60px + env(safe-area-inset-right))}
+html.touch .pm b{font-size:9.5px}
+html.touch .vctouch .tb{width:46px;height:46px;font-size:11.5px}
+html.touch .tbtns .tb{background:rgba(10,13,18,.58);border-color:rgba(245,240,230,.3)}
+html.touch #tbJump{width:84px;height:84px;font-size:17px;right:0;bottom:0}
+html.touch #tbCrouch{right:113px;bottom:13px;width:58px;height:58px}
+html.touch #tbSwap{right:13px;bottom:113px;width:58px;height:58px}
+html.touch #tbAct,html.touch #tbPush,html.touch #tbGrow{right:84px;bottom:84px;width:58px;height:58px}
+html.touch #tbScout,html.touch #tbPull,html.touch #tbShrink{right:127px;bottom:148px;width:52px;height:52px}
+html.touch #tbStack{right:182px;bottom:60px;width:52px;height:52px}
+html.touch #tbProto{right:37px;bottom:187px;width:52px;height:52px}
+html.touch #tbUse{right:200px;bottom:128px;width:52px;height:52px}
+html.net #tbSwap{display:none}
+html.net #tbProto{right:13px;bottom:113px;width:58px;height:58px}
+html.touch .sub{bottom:104px}
+html.touch .hint{bottom:64px}
+
 body.paused .hud{opacity:0}
 #pause{background:radial-gradient(ellipse at 50% 50%,rgba(7,9,12,.55),rgba(7,9,12,.88))}
 .ploc{margin:6px 0 0;font:600 13px "Noto Sans TC";letter-spacing:.06em;color:var(--amber)}
@@ -490,8 +524,7 @@ html.touch .mpchip{bottom:auto;top:62px}
     <button class="tb" id="tbAct">抱</button>
     <button class="tb" id="tbScout">偵察</button>
   </div>
-  <button class="tb tbemo" id="tbEmo" aria-label="表情">表情</button>
-  <div class="vctouch"><button class="tb" id="tbMic">咪</button><button class="tb" id="tbChat">聊天</button>
+  <div class="vctouch"><button class="tb tbemo" id="tbEmo" aria-label="表情">表情</button><button class="tb vcb" id="tbMic">咪</button><button class="tb vcb" id="tbChat">聊天</button>
   </div>
   <button class="tb" id="tbPause" aria-label="暫停"><svg viewBox="0 0 20 20" width="16" height="16" aria-hidden="true"><rect x="4" y="3" width="4" height="14" rx="1.5" fill="currentColor"/><rect x="12" y="3" width="4" height="14" rx="1.5" fill="currentColor"/></svg></button>
 </div>
@@ -629,7 +662,7 @@ html.touch .mpchip{bottom:auto;top:62px}
 <div class="testchip" id="testChip" hidden>測試模式</div>
 
 <div class="ov" id="chaps" hidden>
-  <div class="rbox panel cbox">
+  <div class="rbox panel cbox"><button class="xclose" data-close="chaps" aria-label="關閉">×</button>
     <div class="mph"><b>章節</b><span id="chapsN"></span></div>
     <div class="clist" id="chapsList"></div>
     <div class="mpact chfoot"><label class="tsw" title="全部章節開放，進度不會儲存；暫停選單會多出測試工具"><input type="checkbox" id="testOn"><i></i><span>測試模式</span></label><button id="chapsClose" class="ghost small">關閉</button></div>
@@ -637,7 +670,7 @@ html.touch .mpchip{bottom:auto;top:62px}
 </div>
 
 <div class="ov" id="roster" hidden>
-  <div class="rbox panel">
+  <div class="rbox panel"><button class="xclose" data-close="roster" aria-label="關閉">×</button>
     <div class="mph"><b>角色</b><span id="rosterN"></span></div>
     <p class="rtip">四位主角一開始就可以在多人模式使用；其他角色要在單人故事裡解鎖，解鎖後多人模式就可以揀。</p>
     <div class="rgrid" id="rosterGrid"></div>
@@ -647,7 +680,7 @@ html.touch .mpchip{bottom:auto;top:62px}
 
 <div class="ov" id="pause" hidden>
   <div class="card pcard">
-    <div class="logo" style="font-size:44px">暫停</div>
+    <div class="logo ptitle">暫停</div>
     <p class="ploc" id="pauseLoc"></p>
     <p class="tag" id="pauseTip">按「繼續」回到遊戲。</p>
     <div class="row"><button id="resume">繼續</button></div>
@@ -688,7 +721,7 @@ html.touch .mpchip{bottom:auto;top:62px}
 </div>
 
 <div class="ov" id="help" hidden>
-  <div class="rbox panel hbox">
+  <div class="rbox panel hbox"><button class="xclose" data-close="help" aria-label="關閉">×</button>
     <div class="mph"><b>操作說明</b><span>任何時候都可以在暫停選單打開</span></div>
     <div class="keys hkeys" id="helpKeys"></div>
     <div class="habil" id="helpAbil"></div>
@@ -1730,7 +1763,7 @@ function buildLights() {
 }
 let dust = null;
 function buildDust(o = {}) {
-  const N = o.N ?? 4200, pos = new Float32Array(N * 3), sd = new Float32Array(N); const bx = o.box ?? [-300, 300, 0, 250, -250, 250]; const bf = o.beamFrac ?? .55; const door = o.door ?? true;
+  const N = Math.round((o.N ?? 4200) * (TOUCH ? .5 : 1)), pos = new Float32Array(N * 3), sd = new Float32Array(N); const bx = o.box ?? [-300, 300, 0, 250, -250, 250]; const bf = o.beamFrac ?? .55; const door = o.door ?? true;
   for (let i = 0; i < N; i++) {
     let p;
     if (i < N * bf && beams[0].len > 1) { const b = beams[(i % 3 === 0 && beams[1].len > 1) ? 1 : 0]; const t = rnd() * b.len * .95; const rr = Math.tan(Math.acos(b.ca)) * t * Math.sqrt(rnd()); const a = rnd() * 6.28; const ax = V3().copy(b.d); const u = V3(1, 0, 0).cross(ax).normalize(), v = V3().crossVectors(ax, u); p = V3().copy(b.o).addScaledVector(ax, t).addScaledVector(u, Math.cos(a) * rr).addScaledVector(v, Math.sin(a) * rr); }
@@ -2522,7 +2555,7 @@ $('quest').addEventListener('pointerdown', e => { if (TOUCH) { e.stopPropagation
 const _pv = V3();
 function project(p, el, offX = 0, offY = 0, clampEdge = false) {
   _pv.copy(p).project(camera); let x = (_pv.x * .5 + .5) * innerWidth, y = (-_pv.y * .5 + .5) * innerHeight; const behind = _pv.z > 1;
-  if (clampEdge) { if (behind) { x = innerWidth - x; y = innerHeight - 40; } x = clamp(x, 60, innerWidth - 60); y = clamp(y, 170, innerHeight - 170);
+  if (clampEdge) { if (behind) { x = innerWidth - x; y = innerHeight - 40; } const mx = TOUCH ? 84 : 60; x = clamp(x, mx, innerWidth - mx); y = clamp(y, TOUCH ? 90 : 170, innerHeight - (TOUCH ? 120 : 170));
     const q = $('quest'); if (q && q.offsetParent) { const r = q.getBoundingClientRect(); if (x < r.right + 30 && y < r.bottom + 28) y = r.bottom + 28; } }   // never on top of the quest card
   el.style.left = (x + offX) + 'px'; el.style.top = (y + offY) + 'px'; return !behind;
 }
@@ -2754,7 +2787,7 @@ function frame(now) {
   fpsAcc += dt; fpsN++;
   if (fpsAcc > 2) {
     const fps = fpsN / fpsAcc; $('fps').textContent = Math.round(fps) + ' fps · ' + ({ high: '高', med: '中', low: '低' })[QUAL]; fpsAcc = 0; fpsN = 0;
-    if (STATE === 'play' && !PAUSED && TOUCH && QUAL === 'low') { const k0 = DYN.k; if (fps < 27) DYN.k = Math.max(.7, DYN.k - .1); else if (fps > 50) DYN.k = Math.min(1, DYN.k + .1); if (DYN.k !== k0) applyQ('low'); }
+    if ((STATE === 'play' || STATE === 'title') && !PAUSED && TOUCH && QUAL === 'low') { const k0 = DYN.k; if (fps < 27) DYN.k = Math.max(.7, DYN.k - .1); else if (fps > 50) DYN.k = Math.min(1, DYN.k + .1); if (DYN.k !== k0) applyQ('low'); }
     if (STATE === 'play' && !PAUSED) { if ((QUAL === 'high' && fps < 30) || (QUAL === 'med' && fps < 22)) { if (++fpsLow >= 2) { applyQ(QUAL === 'high' ? 'med' : 'low'); toast('畫質已自動調低，保持流暢'); fpsLow = 0; } } else fpsLow = 0; }
   }
 }
@@ -2770,13 +2803,13 @@ function onResize() {
 }
 addEventListener('resize', onResize); addEventListener('orientationchange', () => { onResize(); setTimeout(onResize, 250); setTimeout(onResize, 700); }); if (window.visualViewport) visualViewport.addEventListener('resize', onResize);
 function applyQ(q) {
-  QUAL = q; const P = { high: [Math.min(devicePixelRatio, 1.5), true, true, 16], med: [Math.min(devicePixelRatio, 1.1), true, false, 12], low: [TOUCH ? Math.min(devicePixelRatio, 1.25) * DYN.k : .85, false, false, TOUCH ? 6 : 8] }[q];
+  QUAL = q; const P = { high: [Math.min(devicePixelRatio, 1.5), true, true, 16], med: [Math.min(devicePixelRatio, 1.1), true, false, 12], low: [TOUCH ? Math.min(devicePixelRatio, 1.25) * DYN.k : .85, false, false, TOUCH ? 5 : 8] }[q];
   BLOOM_K = q === 'low' ? .5 : 1; fxaa.enabled = TOUCH || q === 'low'; grade.uniforms.uGrain.value = TOUCH ? .014 : .035;
   renderer.setPixelRatio(P[0]); composer.setPixelRatio(P[0]); onResize(); gtao.enabled = P[1]; bokeh.enabled = P[2]; setShells(P[3]);
   document.querySelectorAll('.sel button').forEach(b => b.classList.toggle('on', b.dataset.q === q));
 }
 function pause() { PAUSED = true; $('pause').hidden = false; document.body.classList.add('paused'); $('pauseMP').hidden = !NET.on; if (NET.on) $('pauseCode').textContent = NET.code; pauseRefresh(); }
-function resume() { PAUSED = false; $('pause').hidden = true; document.body.classList.remove('paused'); $('help').hidden = true; $('roster').hidden = true; last = performance.now(); requestLock(); }
+function resume() { PAUSED = false; $('pause').hidden = true; $('pause').classList.remove('covered'); document.body.classList.remove('paused'); $('help').hidden = true; $('roster').hidden = true; last = performance.now(); requestLock(); }
 document.querySelectorAll('.sel button[data-q]').forEach(b => b.addEventListener('click', () => applyQ(b.dataset.q)));
 $('go').addEventListener('click', () => { audioInit(); startGame(0); });
 $('resume').addEventListener('click', () => { audioInit(); resume(); });
@@ -3906,10 +3939,16 @@ function rosterCard(r, opts = {}) {
 function openRoster() {
   $('rosterN').textContent = `已解鎖 ${unlockedCount()} / ${ROSTER.length}`;
   $('rosterGrid').innerHTML = ROSTER.map(r => rosterCard(r)).join('');
-  $('roster').hidden = false;
+  $('roster').hidden = false; if (!$('pause').hidden) $('pause').classList.add('covered');
 }
 $('goRoster').addEventListener('click', () => { audioInit(); openRoster(); });
-$('rosterClose').addEventListener('click', () => { $('roster').hidden = true; });
+$('rosterClose').addEventListener('click', () => subClose('roster'));
+// sub-panels (chapters, characters, help): the corner ×, tapping outside the panel, or Esc closes them;
+// while one is open over the pause menu, the pause card steps aside so the two don't show through each other
+function subClose(id) { $(id).hidden = true; if (['roster', 'help'].every(k => $(k).hidden)) $('pause').classList.remove('covered'); }
+document.querySelectorAll('.xclose').forEach(b => b.addEventListener('click', e => { e.stopPropagation(); subClose(b.dataset.close); }));
+for (const id of ['chaps', 'roster', 'help']) $(id).addEventListener('click', e => { if (e.target === $(id)) subClose(id); });
+addEventListener('keydown', e => { if (e.code !== 'Escape') return; for (const id of ['help', 'roster', 'chaps']) if (!$(id).hidden) { subClose(id); e.stopImmediatePropagation(); return; } }, true);
 
 // ---------- settings (kept on this device) ----------
 const SET = Object.assign({ sens: 1, vol: 1, mus: .6, inv: false }, (() => { try { return JSON.parse(localStorage.getItem('bn_set_v1') || '{}') || {}; } catch (e) { return {}; } })());
@@ -3933,7 +3972,7 @@ function pauseRefresh() {
 let pauseTitleArm = 0;
 $('pauseRoster').addEventListener('click', () => openRoster());
 $('pauseHelp').addEventListener('click', () => openHelp());
-$('helpClose').addEventListener('click', () => { $('help').hidden = true; });
+$('helpClose').addEventListener('click', () => subClose('help'));
 $('pauseCp').addEventListener('click', () => {
   if (STATE !== 'play' || !CPS) return;
   if (NET.on) { const L = leader; if (!L || L.frozen) return; const p = CPS[cp] || CPS[0]; L.pos.set(p[0] + IDS.indexOf(L.id) * 3, p[1], p[2]); L.vel.set(0, 0, 0); L.climbing = false; L.mantle = null; L.on = null; L.hop = null; trail = []; L.lastTrail.copy(L.pos); cam.tgt.copy(L.pos); }
@@ -3952,7 +3991,7 @@ function openHelp() {
   $('helpKeys').innerHTML = K.map(([a, b]) => `<div><span>${a}</span><span>${b}</span></div>`).join('');
   const who = (party.length ? IDS.filter(id => party.includes(chars[id])) : CORE);
   $('helpAbil').innerHTML = who.map(id => { const S = SP[id]; return `<div>${PORTRAITS[id] ? `<img alt="" src="${PORTRAITS[id]}">` : ''}<span><b style="color:${S.col}">${S.name} · ${S.abil}</b><small>${S.desc}</small></span></div>`; }).join('');
-  $('help').hidden = false;
+  $('help').hidden = false; if (!$('pause').hidden) $('pause').classList.add('covered');
 }
 
 // ---------- chapter list (title screen) ----------
@@ -3986,7 +4025,7 @@ function openChapters() {
   $('chaps').hidden = false;
 }
 $('goCh').addEventListener('click', () => { audioInit(); openChapters(); });
-$('chapsClose').addEventListener('click', () => { $('chaps').hidden = true; });
+$('chapsClose').addEventListener('click', () => subClose('chaps'));
 
 // =====================================================================
 //  KITCHEN, second pass
@@ -9108,7 +9147,8 @@ function emoDecorate(x, e, eyes, C) {
 // build every character's set, a little at a time so the game never stutters
 function emoBuildAll() {
   if (EMO.built) return; EMO.built = true;
-  for (const id of (window.__EMO_IDS || IDS)) for (const E of EMOTES) EMO.queue.push([id, E.id]);
+  // phones: just the four main characters now (the rest are drawn the first time they're needed)
+  for (const id of (window.__EMO_IDS || (TOUCH ? CORE : IDS))) for (const E of EMOTES) EMO.queue.push([id, E.id]);
   // one sticker per idle slot (never in the middle of a busy frame); the wheel fills in as they arrive
   const later = window.requestIdleCallback ? f => requestIdleCallback(f, { timeout: 1200 }) : f => setTimeout(f, 50);
   const step = dl => {
@@ -9121,13 +9161,17 @@ function emoBuildAll() {
   };
   later(step);
 }
-function stickerFor(id, e) { return STICK[id] && STICK[id][e]; }
+function stickerFor(id, e, make) {
+  if (STICK[id] && STICK[id][e]) return STICK[id][e];
+  if (!make || !chars[id] || !WORLD) return null;
+  try { const K = emoKit(); (STICK[id] = STICK[id] || {})[e] = renderSticker(chars[id], e); if (!EMO.queue.length) emoKitDone(); return STICK[id][e]; } catch (err) { return null; }
+}
 
 // ---------- the wheel ----------
 function emoWheelFill() {
   const W = $('emoWheel'); if (!W) return; const id = leader ? leader.id : 'dad';
   W.innerHTML = '<div class="ew-hub"><b>表情</b><small>' + (TOUCH ? '點一個' : '甩滑鼠揀 · 1–8') + '</small></div>' + EMOTES.map((E, i) => {
-    const a = i / EMOTES.length * Math.PI * 2 - Math.PI / 2, src = stickerFor(id, E.id);
+    const a = i / EMOTES.length * Math.PI * 2 - Math.PI / 2, src = stickerFor(id, E.id, EMO.open);
     return `<button class="ew-it${i === EMO.sel ? ' on' : ''}" data-i="${i}" style="--x:${(Math.cos(a) * 142).toFixed(1)}px;--y:${(Math.sin(a) * 142).toFixed(1)}px">${src ? `<img alt="" src="${src}">` : `<span class="ew-fb">${EMO_FALL[E.id]}</span>`}<em>${E.name}</em><kbd>${i + 1}</kbd></button>`;
   }).join('');
 }
@@ -9167,7 +9211,7 @@ function emoRecv(d) { const C = chars[d.c]; if (C && EMOTES.some(E => E.id === d
 function emoShow(C, e) {
   C.emo = { e, t: 0, dur: 1.7 };
   for (let i = EMO.bubbles.length - 1; i >= 0; i--) if (EMO.bubbles[i].C === C) { EMO.bubbles[i].el.remove(); EMO.bubbles.splice(i, 1); }
-  const el = document.createElement('div'); el.className = 'emob'; const src = stickerFor(C.id, e);
+  const el = document.createElement('div'); el.className = 'emob'; const src = stickerFor(C.id, e, true);
   el.innerHTML = src ? `<img alt="" src="${src}">` : `<span>${(EMOTES.find(E => E.id === e) || {}).name || EMO_FALL[e]}</span>`; $('emoLayer').appendChild(el);
   EMO.bubbles.push({ C, e, t: 0, el });
   if (AU.ctx && C.pos.distanceTo(camera.position) < 420) { const v = clamp(1 - C.pos.distanceTo(camera.position) / 420, .2, 1); const f = { wave: 660, laugh: 880, love: 740, good: 990, huh: 520, shock: 1180, cry: 440, angry: 330 }[e]; tone(f, f * 1.5, .09, .05 * v, 'sine'); tone(f * 1.5, f * 1.2, .12, .04 * v, 'triangle', .07); }
@@ -9406,7 +9450,7 @@ function buildPortal() {
 
 // ---------- starting here ----------
 function portalSpawn() {
-  placeStart();   // the lab as it should be when you come out (bench, the old partner by the crack…)
+  placeStart(); unstkReset();   // the lab as it should be when you come out (bench, the old partner by the crack…)
   party.forEach((C, i) => { const p = prPad(i); C.pos.copy(p); C.yaw = Math.atan2(PO.x - p.x, PO.z + 40 - p.z); C.state = 'idle'; C.wave = false; C.lieK = 0; C.root.visible = true; C.vel.set(0, 0, 0); C.ptw = null; C.lastTrail = C.pos.clone(); C.disp = C.pos.clone(); C.queue = []; });
   leader = NET.on && NET.my && chars[NET.my] ? chars[NET.my] : chars.dad; trail = [];
   PORT.cd = 0; PORT.pend = 0; PORT.flare = 0; PORT.lastN = -1; PORT.late = !!NET.late; PORT.outSeen = PORT.late ? null : PORT.out; PORT.tagSig = '';
@@ -9434,7 +9478,7 @@ const EXIT_SX = [0, -3.5, 3.5, -6, 6, -1.8, 1.8, 0], EXIT_LX = [0, -6, 6, -11, 1
 function portalLand() {
   if (NET.on && NET.resume && !PORT.resumed) { PORT.resumed = true; portalResumeLand(NET.resume); return; }
   const mx = machine.x, mz = machine.z, my = machine.y - 22;   // the machine's ring stands on the bench
-  enterZone('basement', true); LP.snap = true;
+  enterZone('basement', true); LP.snap = true; unstkReset();
   party.forEach((C, i) => {
     if (!mine(C)) return; const k = i % 8;
     const from = V3(mx + EXIT_SX[k], my + 7.4, mz - .6), to = V3(mx + EXIT_LX[k], my, mz + EXIT_LZ[k]);
@@ -9586,7 +9630,7 @@ $('specR').addEventListener('click', e => { e.stopPropagation(); watchCycle(1); 
 //    online you can also go to a teammate instead
 //  · each time, the spot is noted (pause menu → 複製位置) so it can be sent in and fixed
 // =====================================================================
-const UNSTK = { safe: [], t: 0, hold: 0, inT: {}, moveT: 0, ref: null, hint: 0, last: '', shown: '' };
+const UNSTK = { safe: [], t: 0, hold: 0, inT: {}, moveT: 0, ref: null, hint: 0, last: '', shown: '', seq: { n: 0, t: -99, last: null } };
 function unstkReset() { UNSTK.safe.length = 0; UNSTK.hold = 0; UNSTK.inT = {}; UNSTK.moveT = 0; UNSTK.ref = null; UNSTK.hint = 0; }
 const UN_SKIP = c => c.door || c.y0 < -900 || c.cat || c.noStk;
 function unInside(C) {   // the body is inside something solid (not just touching it)
@@ -9621,14 +9665,21 @@ function unstuck(how) {
     const M = playerChars().filter(C => C !== L && !C.frozen && C.grounded).sort((a, b) => a.pos.distanceTo(from) - b.pos.distanceTo(from))[0];
     if (M) { const a = M.yaw + Math.PI; to = V3(M.pos.x + Math.sin(a) * (M.r + L.r + 2), M.pos.y, M.pos.z + Math.cos(a) * (M.r + L.r + 2)); if (solidAt(to.x, to.y + L.h * .5, to.z)) to = M.pos.clone().add(V3(0, M.h + .5, 0)); }
   }
-  if (!to) for (let i = UNSTK.safe.length - 1; i >= 0; i--) { const s = UNSTK.safe[i]; if (s.z === LEVEL || i < UNSTK.safe.length - 1 || how !== 'key') { if (how !== 'key' || s.p.distanceTo(from) > 3.5 || i === 0) { to = s.p.clone(); break; } } }
-  if (!to && CPS) { const p = CPS[cp] || CPS[0]; to = V3(p[0] + (NET.on ? IDS.indexOf(L.id) * 3 : 0), p[1], p[2]); }
+  let toCp = false;
+  if (!to && how === 'key') {
+    // asked for: a good spot well away from here; pressed again straight after (still stuck) → one further back each time
+    const Q = UNSTK.seq, again = T - Q.t < 30 && Q.last && from.distanceTo(Q.last) < 8; Q.n = again ? Q.n + 1 : 0;
+    const cands = UNSTK.safe.filter(s => s.z !== 'portal' && s.p.distanceTo(from) > 8).reverse();
+    if (cands[Q.n]) to = cands[Q.n].p.clone();
+  } else if (!to && UNSTK.safe.length) to = UNSTK.safe[UNSTK.safe.length - 1].p.clone();
+  if (!to && CPS) { const p = CPS[cp] || CPS[0]; to = V3(p[0] + (NET.on ? IDS.indexOf(L.id) * 3 : 0), p[1], p[2]); toCp = true; }
+  if (how === 'key') { UNSTK.seq.t = T; UNSTK.seq.last = to ? to.clone() : null; }
   if (!to) return false;
   unPlace(L, to); trail = []; cam.tgt.set(to.x, to.y + L.h * .8, to.z); LP.snap = from.distanceTo(to) > 120;
   // single player: the rest of the party comes along
   if (!NET.on) party.forEach((F, i) => { if (F === L || F.frozen || F.carried || !mine(F)) return; const a = L.yaw + Math.PI + (i % 2 ? .7 : -.7); const p = V3(to.x + Math.sin(a) * (3 + i * 1.4), to.y, to.z + Math.cos(a) * (3 + i * 1.4)); unPlace(F, solidAt(p.x, p.y + F.h * .5, p.z) ? to : p); });
   unPoof(to); UNSTK.hint = 0; UNSTK.moveT = 0;
-  toast(how === 'mate' ? '已經去到隊友身邊' : how === 'fell' ? '跌出了地圖——送回剛才站得穩的位置' : how === 'wedged' ? '卡在東西裡面——已經把你移出來' : '已經送回剛才站得穩的位置', 2.6);
+  toast(how === 'mate' ? '已經去到隊友身邊' : toCp ? '已經送回存檔點' : how === 'fell' ? '跌出了地圖——送回剛才站得穩的位置' : how === 'wedged' ? '卡在東西裡面——已經把你移出來' : UNSTK.seq.n ? '再退後一點——如果仍然卡住，再按一次' : '已經送回剛才站得穩的位置', 2.8);
   return true;
 }
 function unstuckTick(dt) {
@@ -9637,7 +9688,7 @@ function unstuckTick(dt) {
   const free = C => !C.frozen && !C.carried && !C.climbing && !C.mantle && !C.zip && !C.on && !C.hop && !C.ptw && !C.roost && !(C.pullT > 0);
   // remember good places to come back to
   UNSTK.t -= dt;
-  if (UNSTK.t <= 0 && free(L) && L.grounded && !isBase(L)) {
+  if (UNSTK.t <= 0 && free(L) && L.grounded && !isBase(L) && LEVEL !== 'portal') {
     UNSTK.t = .4;
     if (unRoomy(L)) { const S = UNSTK.safe, last = S[S.length - 1]; if (!last || last.p.distanceTo(L.pos) > 3) { S.push({ p: L.pos.clone(), z: LEVEL }); if (S.length > 16) S.shift(); } else if (last) last.p.copy(L.pos); }
   }

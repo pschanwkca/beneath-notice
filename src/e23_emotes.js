@@ -110,7 +110,8 @@ function emoDecorate(x, e, eyes, C) {
 // build every character's set, a little at a time so the game never stutters
 function emoBuildAll() {
   if (EMO.built) return; EMO.built = true;
-  for (const id of (window.__EMO_IDS || IDS)) for (const E of EMOTES) EMO.queue.push([id, E.id]);
+  // phones: just the four main characters now (the rest are drawn the first time they're needed)
+  for (const id of (window.__EMO_IDS || (TOUCH ? CORE : IDS))) for (const E of EMOTES) EMO.queue.push([id, E.id]);
   // one sticker per idle slot (never in the middle of a busy frame); the wheel fills in as they arrive
   const later = window.requestIdleCallback ? f => requestIdleCallback(f, { timeout: 1200 }) : f => setTimeout(f, 50);
   const step = dl => {
@@ -123,13 +124,17 @@ function emoBuildAll() {
   };
   later(step);
 }
-function stickerFor(id, e) { return STICK[id] && STICK[id][e]; }
+function stickerFor(id, e, make) {
+  if (STICK[id] && STICK[id][e]) return STICK[id][e];
+  if (!make || !chars[id] || !WORLD) return null;
+  try { const K = emoKit(); (STICK[id] = STICK[id] || {})[e] = renderSticker(chars[id], e); if (!EMO.queue.length) emoKitDone(); return STICK[id][e]; } catch (err) { return null; }
+}
 
 // ---------- the wheel ----------
 function emoWheelFill() {
   const W = $('emoWheel'); if (!W) return; const id = leader ? leader.id : 'dad';
   W.innerHTML = '<div class="ew-hub"><b>表情</b><small>' + (TOUCH ? '點一個' : '甩滑鼠揀 · 1–8') + '</small></div>' + EMOTES.map((E, i) => {
-    const a = i / EMOTES.length * Math.PI * 2 - Math.PI / 2, src = stickerFor(id, E.id);
+    const a = i / EMOTES.length * Math.PI * 2 - Math.PI / 2, src = stickerFor(id, E.id, EMO.open);
     return `<button class="ew-it${i === EMO.sel ? ' on' : ''}" data-i="${i}" style="--x:${(Math.cos(a) * 142).toFixed(1)}px;--y:${(Math.sin(a) * 142).toFixed(1)}px">${src ? `<img alt="" src="${src}">` : `<span class="ew-fb">${EMO_FALL[E.id]}</span>`}<em>${E.name}</em><kbd>${i + 1}</kbd></button>`;
   }).join('');
 }
@@ -169,7 +174,7 @@ function emoRecv(d) { const C = chars[d.c]; if (C && EMOTES.some(E => E.id === d
 function emoShow(C, e) {
   C.emo = { e, t: 0, dur: 1.7 };
   for (let i = EMO.bubbles.length - 1; i >= 0; i--) if (EMO.bubbles[i].C === C) { EMO.bubbles[i].el.remove(); EMO.bubbles.splice(i, 1); }
-  const el = document.createElement('div'); el.className = 'emob'; const src = stickerFor(C.id, e);
+  const el = document.createElement('div'); el.className = 'emob'; const src = stickerFor(C.id, e, true);
   el.innerHTML = src ? `<img alt="" src="${src}">` : `<span>${(EMOTES.find(E => E.id === e) || {}).name || EMO_FALL[e]}</span>`; $('emoLayer').appendChild(el);
   EMO.bubbles.push({ C, e, t: 0, el });
   if (AU.ctx && C.pos.distanceTo(camera.position) < 420) { const v = clamp(1 - C.pos.distanceTo(camera.position) / 420, .2, 1); const f = { wave: 660, laugh: 880, love: 740, good: 990, huh: 520, shock: 1180, cry: 440, angry: 330 }[e]; tone(f, f * 1.5, .09, .05 * v, 'sine'); tone(f * 1.5, f * 1.2, .12, .04 * v, 'triangle', .07); }

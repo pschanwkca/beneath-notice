@@ -143,7 +143,7 @@ function buildPortal() {
 
 // ---------- starting here ----------
 function portalSpawn() {
-  placeStart();   // the lab as it should be when you come out (bench, the old partner by the crack…)
+  placeStart(); unstkReset();   // the lab as it should be when you come out (bench, the old partner by the crack…)
   party.forEach((C, i) => { const p = prPad(i); C.pos.copy(p); C.yaw = Math.atan2(PO.x - p.x, PO.z + 40 - p.z); C.state = 'idle'; C.wave = false; C.lieK = 0; C.root.visible = true; C.vel.set(0, 0, 0); C.ptw = null; C.lastTrail = C.pos.clone(); C.disp = C.pos.clone(); C.queue = []; });
   leader = NET.on && NET.my && chars[NET.my] ? chars[NET.my] : chars.dad; trail = [];
   PORT.cd = 0; PORT.pend = 0; PORT.flare = 0; PORT.lastN = -1; PORT.late = !!NET.late; PORT.outSeen = PORT.late ? null : PORT.out; PORT.tagSig = '';
@@ -171,7 +171,7 @@ const EXIT_SX = [0, -3.5, 3.5, -6, 6, -1.8, 1.8, 0], EXIT_LX = [0, -6, 6, -11, 1
 function portalLand() {
   if (NET.on && NET.resume && !PORT.resumed) { PORT.resumed = true; portalResumeLand(NET.resume); return; }
   const mx = machine.x, mz = machine.z, my = machine.y - 22;   // the machine's ring stands on the bench
-  enterZone('basement', true); LP.snap = true;
+  enterZone('basement', true); LP.snap = true; unstkReset();
   party.forEach((C, i) => {
     if (!mine(C)) return; const k = i % 8;
     const from = V3(mx + EXIT_SX[k], my + 7.4, mz - .6), to = V3(mx + EXIT_LX[k], my, mz + EXIT_LZ[k]);
