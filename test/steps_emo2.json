@@ -1,0 +1,1 @@
+[{"eval":"(async()=>{const b=window.__bn; const t0=performance.now(); for(let i=0;i<300 && (b.EMO.queue.length || !b.EMO.built);i++) await new Promise(r=>setTimeout(r,500)); return [Object.keys(b.STICK), ((performance.now()-t0)/1000).toFixed(1)]})()", "wait":500, "shot":"emo_title_after"}]

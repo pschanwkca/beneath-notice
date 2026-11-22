@@ -53,7 +53,7 @@ function buildZone(Z) {
 }
 async function buildWorld(prog) {
   if (WORLD) return;
-  for (const id of ['basement', 'wall', 'kitchen', 'garage', 'yard', 'road']) { if (prog) await prog(id); buildZone(ZONES[id]); }
+  for (const id of ['basement', 'wall', 'kitchen', 'garage', 'yard', 'road', 'portal']) { if (prog) await prog(id); buildZone(ZONES[id]); }
   ZONES.garage.prepped = ZONES.yard.prepped = ZONES.road.prepped = true;
   MP_CPS = [...LEVELS.kitchen.cps, ...LEVELS.garage.cps, ...LEVELS.yard.cps, ...LEVELS.road.cps];
   ncPlace();
@@ -181,7 +181,7 @@ function enterZone(id, quiet) {
   if (P && prev !== id) { P.save = { qs: QUESTS, q: quest, cp, lvT }; if (LVL && LVL.leave) LVL.leave(id); }
   LEVEL = id; LVL = D; LV = Z.lv; LVFX = Z.fx; beams = Z.beams; dust = Z.dust; CPS = D.cps;
   const again = !quiet && !!Z.save;   // walking back into a place you've been: carry on where you left off
-  if (NET.on && MP_CPS) { CPS = MP_CPS; QUESTS = MP_QUESTS; setQuest(quest); if (!quiet && !Z.mpSeen) { Z.mpSeen = true; if (D.mpChapter) chapterBanner(D.mpChapter, D.title); } if (party.length && PORTRAITS.dad) buildPartyHUD(); return; }
+  if (NET.on && MP_CPS) { if (PRO.on) { CPS = PRO.cps || MP_CPS; QUESTS = MP_PRO; } else { CPS = MP_CPS; QUESTS = MP_QUESTS; } setQuest(quest); if (!quiet && !Z.mpSeen) { Z.mpSeen = true; if (D.mpChapter) chapterBanner(D.mpChapter, D.title); } if (party.length && PORTRAITS.dad) buildPartyHUD(); return; }
   if (again) { QUESTS = Z.save.qs; cp = Z.save.cp; lvT = Z.save.lvT; setQuest(Z.save.q); } else { QUESTS = D.quests; cp = 0; lvT = 0; setQuest(0); }
   if (D.enter) D.enter(prev, again);
   if (!quiet && !again) chapterBanner(D.chapter, D.title);

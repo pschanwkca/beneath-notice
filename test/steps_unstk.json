@@ -1,0 +1,5 @@
+[{"eval":"document.getElementById('go').click()","wait":2500},
+ {"eval":"(()=>{const b=window.__bn; b.step(90); return [b.info().lv, b.UNSTK.safe.length]})()"},
+ {"eval":"(()=>{const b=window.__bn; const L=b.leader; L.pos.set(b.PO.x-36,b.PO.y+1,b.PO.z-2); L.vel.set(0,0,0); const c=b.unInside(L); b.step(40); return [!!c, L.pos.toArray().map(v=>+v.toFixed(1)), b.UNSTK.last, !!b.unInside(L)]})()"},
+ {"eval":"(()=>{const b=window.__bn; const L=b.leader; L.pos.set(b.PO.x+5,b.PO.y-90,b.PO.z); b.step(3); return [L.pos.toArray().map(v=>+v.toFixed(1)), b.UNSTK.last]})()"},
+ {"eval":"(()=>{const b=window.__bn; const L=b.leader; b.step(30); window.dispatchEvent(new KeyboardEvent('keydown',{code:'KeyK'})); b.step(30); const h=b.UNSTK.hold; b.step(30); window.dispatchEvent(new KeyboardEvent('keyup',{code:'KeyK'})); return [h, b.UNSTK.last, L.pos.toArray().map(v=>+v.toFixed(1))]})()","frame":1,"wait":300,"shot":"unstk"}]

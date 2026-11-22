@@ -24,7 +24,7 @@ function playerChars() { return NET.on ? party.filter(C => NET.slots[C.id]) : [l
 function nsend(d, to) { if (!NET.tx) return; try { NET.tx.send(d, to); } catch (e) { console.warn('net send', e); } }
 function sayW(n, x, c, d) { say(n, x, c, d); if (NET.on && NET.host) nsend({ t: 'say', n, x, c, d }); }
 function toastW(x, d) { toast(x, d); if (NET.on && NET.host) nsend({ t: 'toast', x, d }); }
-function playerLabel(id) { const p = NET.slots[id]; if (!p) return '電腦'; if (p === NET.me) return '你'; return 'P' + (NET.order.indexOf(p) + 1); }
+function playerLabel(id) { const p = NET.slots[id]; if (!p) return '電腦'; if (p === NET.me) return '你'; return nameOf(p) || 'P' + (NET.order.indexOf(p) + 1); }
 
 // ---------- transports ----------
 function trysteroTransport(code) {
@@ -60,12 +60,13 @@ function mpOpen(code) { $('start').hidden = true; $('mp').hidden = false; $('mpH
 function mpLink() { return location.origin + location.pathname + '?room=' + NET.code + (LOCALNET ? '&net=local' : ''); }
 function mpConnect(code, host) {
   NET.code = code; NET.host = host; NET.client = !host; NET.slots = { dad: null, sq: null, bear: null, cham: null }; NET.peers = []; NET.hostId = ''; NET.order = [];
-  $('mpHome').hidden = true; $('mpRoom').hidden = false; $('mpRoomCode').textContent = code; $('mpStart').hidden = !host; $('mpErr').textContent = '';
+  $('mpHome').hidden = true; $('mpRoom').hidden = false; $('mp').classList.add('inroom'); $('mpRoomCode').textContent = code; $('mpStart').hidden = !host; $('mpErr').textContent = '';
+  NET.names = {}; const sv = host ? mpSaveLoad() : null; NET.save = sv; NET.useSave = !!sv; $('mpSave').hidden = !sv; if (sv) { $('mpSaveTxt').textContent = mpSaveWhere(sv); mpSaveSel(); }
   try { history.replaceState(null, '', mpLink()); } catch (e) { }
   mpStatus(host ? '房間已開好。把房號或連結傳給朋友，然後各自揀角色。' : '正在尋找房間……');
   let T; try { T = NET.tx = LOCALNET ? localTransport(code) : trysteroTransport(code); } catch (e) { mpStatus('連線失敗：' + e.message); return; }
-  T.onSelf = id => { NET.me = id; if (host) { NET.hostId = id; NET.order = [id]; } mpRender(); vcSelf(); };
-  T.onJoin = id => { if (!NET.peers.includes(id)) NET.peers.push(id); vcJoined(id); if (NET.host) { if (!NET.order.includes(id)) NET.order.push(id); mpBroadcastLobby(); } else nsend({ t: 'hi', tok: NET.tok }, id); mpRender(); };
+  T.onSelf = id => { NET.me = id; if (host) { NET.hostId = id; NET.order = [id]; NET.names[id] = myName(); } mpRender(); vcSelf(); };
+  T.onJoin = id => { if (!NET.peers.includes(id)) NET.peers.push(id); vcJoined(id); if (NET.host) { if (!NET.order.includes(id)) NET.order.push(id); mpBroadcastLobby(); } else nsend({ t: 'hi', tok: NET.tok, n: myName() }, id); mpRender(); };
   T.onLeave = id => mpPeerLeft(id);
   T.onMsg = (d, from) => { try { netMsg(d, from); } catch (e) { console.warn('net msg', d && d.t, e); } };
   T.onErr = e => { if (e && e.code === 'room-full') mpStatus('房間暫時滿了。如果你剛斷線，等半分鐘再試。'); else if (e && e.code === 'peer-connect-failed') $('mpErr').textContent = '有隊友連唔上（網絡限制）。可以試下用另一個網絡。'; };
@@ -73,7 +74,7 @@ function mpConnect(code, host) {
   if (!host) { clearTimeout(NET.joinTimer); NET.joinTimer = setTimeout(() => { if (!NET.hostId) mpStatus('找不到這個房間。確認房號，或者等房主開好房間再試。'); }, 15000); }
   mpRender();
 }
-function mpBroadcastLobby(to) { nsend({ t: 'lobby', host: NET.me, slots: NET.slots, started: NET.started, order: NET.order }, to); }
+function mpBroadcastLobby(to) { nsend({ t: 'lobby', host: NET.me, slots: NET.slots, started: NET.started, order: NET.order, names: NET.names }, to); }
 function mpPick(id) {
   if (NET.on || !NET.me) return;
   const cur = NET.slots[id]; if (cur && cur !== NET.me) return; if (!isUnlocked(id)) return;
@@ -88,13 +89,13 @@ function hostPick(peer, id) {
 function mpRender() {
   const box = $('mpSlots'); if (!box) return;
   box.innerHTML = IDS.map(id => {
-    const p = NET.slots[id]; const S = SP[id]; const who = p ? (p === NET.me ? '你' : p === NET.hostId ? '房主' : '玩家 ' + (NET.order.indexOf(p) + 1)) : CORE.includes(id) ? '空位 · 電腦控制' : '空位';
+    const p = NET.slots[id]; const S = SP[id]; const nm = nameOf(p); const who = p ? (p === NET.me ? (nm ? nm + '（你）' : '你') : nm || (p === NET.hostId ? '房主' : '玩家 ' + (NET.order.indexOf(p) + 1))) : CORE.includes(id) ? '電腦控制' : '空位';
     // not unlocked on this device yet: a silhouette and how to get it
-    if (!p && !isUnlocked(id)) { const r = ROSTER.find(q => q.id === id); return `<button class="mps lock" disabled><span class="ph">${PORTRAITS[id] ? `<img class="sil" alt="" src="${PORTRAITS[id]}">` : SIL_SVG}<i>?</i></span><b>？？？</b><small>${r.how}</small></button>`; }
+    if (!p && !isUnlocked(id)) { const r = ROSTER.find(q => q.id === id); return `<button class="mps lock" disabled title="${r.how}"><span class="ph">${PORTRAITS[id] ? `<img class="sil" alt="" src="${PORTRAITS[id]}">` : SIL_SVG}<i>?</i></span><b>？？？</b><small>${r.how}</small><em>未解鎖</em></button>`; }
     return `<button class="mps${p === NET.me ? ' me' : p ? ' taken' : ''}" data-id="${id}" ${p && p !== NET.me ? 'disabled' : ''}><span class="ph">${PORTRAITS[id] ? `<img alt="" src="${PORTRAITS[id]}">` : ''}</span><b>${S.name}</b><small>${S.abil}</small><em>${who}</em></button>`;
   }).join('');
-  box.querySelectorAll('.mps').forEach(b => b.addEventListener('click', () => mpPick(b.dataset.id)));
-  const n = (NET.me ? 1 : 0) + NET.peers.length; $('mpCount').textContent = `${n} / 8 人在房間`;
+  box.querySelectorAll('.mps').forEach(b => { b.addEventListener('click', () => mpPick(b.dataset.id)); b.addEventListener('pointerenter', () => { LOBBY.hover = b.dataset.id; }); b.addEventListener('pointerleave', () => { LOBBY.hover = null; }); });
+  const n = (NET.me ? 1 : 0) + NET.peers.length; $('mpCount').textContent = $('mpCount2').textContent = `${n} / 8 人在房間`;
   if (NET.host) { const everyone = [NET.me, ...NET.peers]; const ok = everyone.every(p => IDS.some(k => NET.slots[k] === p)); $('mpStart').disabled = !ok; $('mpStart').textContent = ok ? '開始' : '等大家揀好角色'; }
   else if (NET.hostId && NET.remoteStarted && !NET.on) mpStatus(IDS.some(k => !NET.slots[k]) ? '遊戲進行中：揀一隻「電腦控制」的角色加入。之前斷了線的話，會自動拿回原本的角色。' : '房間已滿，八隻角色都有人玩。');
   else if (NET.hostId && !NET.started) mpStatus(IDS.some(k => NET.slots[k] === NET.me) ? '已揀好，等房主開始。' : '揀一隻角色。');
@@ -119,15 +120,18 @@ function mpLeave() { vcCloseAll(); try { NET.tx && NET.tx.leave(); } catch (e) {
 function updChip() { const el = $('mpChip'); if (!NET.on) { el.hidden = true; return; } el.hidden = false; const n = 1 + NET.peers.length; el.innerHTML = `<i></i>房號 <b>${NET.code}</b> · ${n} 位玩家<span class="vcmic"></span>`; vcUI(); }
 
 // ---------- starting ----------
-function mpStartGame() { if (!NET.host || $('mpStart').disabled) return; NET.started = true; nsend({ t: 'start', slots: NET.slots, order: NET.order }); netBegin(); }
+function mpStartGame() { if (!NET.host || $('mpStart').disabled) return; NET.started = true; NET.resume = NET.useSave ? NET.save : null; nsend({ t: 'start', slots: NET.slots, order: NET.order, names: NET.names, res: NET.resume }); netBegin(); }
+function mpSaveSel() { $('mpSaveSel').querySelectorAll('button').forEach(b => b.classList.toggle('on', (b.dataset.s === 'cont') === NET.useSave)); }
+$('mpSaveSel').querySelectorAll('button').forEach(b => b.addEventListener('click', () => { NET.useSave = b.dataset.s === 'cont'; mpSaveSel(); }));
 function netBegin() {
+  titleEnd(); lobbyEnd();
   NET.on = true; NET.started = true; NET.client = !NET.host; NET.my = IDS.find(id => NET.slots[id] === NET.me);
   for (const id of ['bat', 'tort']) if (!NET.slots[id]) { const K = chars[id]; K.root.visible = false; K.pos.set(0, -900, 0); K.state = 'idle'; K.shell = false; K.roost = null; }
   for (const id of IDS) { const C = chars[id]; C.owner = C.baseOwner = NET.slots[id] || NET.hostId; C.net = null; }
   audioInit(); $('mp').hidden = true; $('start').hidden = true; updChip(); document.documentElement.classList.add('net');
   setTimeout(() => toast(TOUCH ? '近距離語音已開：越近越大聲 · 「聊天」打字' : '近距離語音已開：越近越大聲 · Enter 打字 · M 靜音', 4), 2500);
   joinCham(); syncParty(); playT = 0; fails = 0; PROTO = 0;
-  if (NET.host) { requestLock(); loadLevel('kitchen'); } // online games start in the kitchen; clients follow the host's level message
+  proStart(); if (NET.host) { requestLock(); loadLevel('portal'); } // online games start in the prep area; clients follow the host's level message
 }
 // the four Origin Dynamics characters only come along when a player picks them
 function syncParty() {
@@ -158,7 +162,7 @@ function hostAssignLate(peer, id, back) {
   if (!NET.order.includes(peer)) NET.order.push(peer);
   const own = {}; for (const k of IDS) own[k] = chars[k].owner;
   nsend({ t: 'slot', id, peer, order: NET.order, own });
-  nsend({ t: 'late', slots: NET.slots, order: NET.order, lv: LEVEL, own, me: [C.pos.x, C.pos.y, C.pos.z, C.yaw, C.stamMax || 100], back }, peer);
+  nsend({ t: 'late', names: NET.names, slots: NET.slots, order: NET.order, lv: PRO.on ? 'portal' : ['portal', 'basement', 'wall'].includes(LEVEL) ? 'kitchen' : LEVEL, own, me: [C.pos.x, C.pos.y, C.pos.z, C.yaw, C.stamMax || 100], back }, peer);
   C.queue = []; refreshPartyHUD(); updChip(); toastW(back ? `${C.S.name}的玩家回來了！` : `有新玩家加入，操控${C.S.name}`, 3);
 }
 
@@ -211,7 +215,7 @@ function netSendWorld() {
   w.bat = batteries.map(b => b.got ? 1 : 0); w.vi = VIALS.map(v => v.got ? 1 : 0); w.cr = CRUMBS.map(c => c.got ? 1 : 0);
   w.res = resizables.map(r => [+r.cx.toFixed(2), +r.cz.toFixed(2), +r.y0.toFixed(2), +r.target.toFixed(3), r.gone ? 1 : 0]);
   w.toy = IDS.map(id => { const C = chars[id]; return C.frozen ? [1, C.toyAt === 'hand' ? 2 : C.toyAt === 'box' ? 3 : 1, +(C.toyTilt || 0).toFixed(2), +(C.toyRoll || 0).toFixed(2), +(C.rescueT || 0).toFixed(2), Math.max(0, PLACES.indexOf(C.toyPlace || ''))] : 0; });
-  netWorldExtra(w);
+  netWorldExtra(w); proSend(w); mpSaveTick();
   {
     const F = TOY.fetch;
     w.m = [+mom.pos.x.toFixed(1), +mom.pos.z.toFixed(1), +mom.yaw.toFixed(3), +mom.aimT.x.toFixed(1), +mom.aimT.y.toFixed(1), +mom.aimT.z.toFixed(1), KM.mode, KM.pt, F ? F.mode : '', F ? +F.t.toFixed(2) : 0, F && F.from ? +F.from.y.toFixed(1) : 0, +(mom.fy || 0).toFixed(1)];
@@ -227,6 +231,7 @@ function netSendWorld() {
 function netRecvWorld(w) {
   syncParty();
   if (STATE === 'loading') return;
+  proRecv(w);
   if (w.q !== quest) setQuest(w.q); cp = w.cp; PROTO = w.pr; gotBat = w.gb; if (w.cm !== cellMax) { cellMax = w.cm; cells = cellMax; }
   const hide = o => { o.got = true; if (o.g) o.g.visible = false; if (o.halo) o.halo.visible = false; };
   w.bat.forEach((g, i) => { if (g && batteries[i] && !batteries[i].got) hide(batteries[i]); });
@@ -275,12 +280,14 @@ function netTags() {
 // ---------- messages ----------
 function netMsg(d, from) {
   switch (d.t) {
-    case 'hi': if (NET.host) { if (d.tok) NET.tokOf[from] = d.tok; if (NET.started && hostRejoin(from)) break; mpBroadcastLobby(from); } break;
-    case 'lobby': if (NET.host) break; NET.hostId = d.host; NET.slots = d.slots; NET.order = d.order || []; clearTimeout(NET.joinTimer); NET.remoteStarted = !!d.started; mpRender(); syncParty(); break;
+    case 'hi': if (NET.host) { if (d.tok) NET.tokOf[from] = d.tok; NET.names = NET.names || {}; NET.names[from] = cleanName(d.n); if (NET.started && hostRejoin(from)) break; mpBroadcastLobby(from); } break;
+    case 'lobby': if (NET.host) break; NET.hostId = d.host; NET.slots = d.slots; NET.order = d.order || []; NET.names = d.names || {}; clearTimeout(NET.joinTimer); NET.remoteStarted = !!d.started; mpRender(); syncParty(); break;
     case 'pick': if (NET.host) { if (!NET.started) hostPick(from, d.id); else hostAssignLate(from, d.id, false); } break;
     case 'slot': if (NET.on && !NET.host) { NET.slots[d.id] = d.peer; NET.order = d.order; const C = chars[d.id]; C.baseOwner = d.peer; C.owner = d.own[d.id]; refreshPartyHUD(); updChip(); } break;
-    case 'late': if (!NET.host && !NET.on) { NET.slots = d.slots; NET.order = d.order; NET.late = d; netBegin(); loadLevel(d.lv); } break;
-    case 'start': if (!NET.host && !NET.started) { NET.slots = d.slots; NET.order = d.order || NET.order; netBegin(); } break;
+    case 'late': if (!NET.host && !NET.on) { NET.slots = d.slots; NET.order = d.order; NET.names = d.names || NET.names || {}; NET.late = d; netBegin(); loadLevel(d.lv); } break;
+    case 'start': if (!NET.host && !NET.started) { NET.slots = d.slots; NET.order = d.order || NET.order; NET.names = d.names || NET.names || {}; NET.resume = d.res || null; netBegin(); } break;
+    case 'name': if (NET.host) hostName(from, d.n); break;
+    case 'names': if (!NET.host) { NET.names = d.names || {}; refreshPartyHUD(); } break;
     case 'p': if (NET.on) netRecvChars(d, from); break;
     case 'w': if (NET.on && !NET.host) netRecvWorld(d); break;
     case 'lease': for (const id of d.ids) chars[id].owner = d.to; break;
@@ -299,6 +306,7 @@ function netMsg(d, from) {
     case 'hxw': { const C = chars[d.id]; if (C && mine(C)) hxFlushChar(C); } break;
     case 'vcs': VC.peerMic[from] = d.s; break;
     case 'chat': chatAdd(from, d.x); break;
+    case 'emo': emoRecv(d); break;
     case 'toast': toast(d.x, d.d); break;
     case 'ring': noiseRing(V3(...d.p)); if (d.v) { SND.clang(d.v); for (let i = 0; i < 16; i++) emit(V3(d.p[0], d.p[1] + 1, d.p[2]), V3(R(-30, 30), R(10, 40), R(-30, 30)), new THREE.Color(.5, .45, .4), R(.3, .8), R(.4, .9), 300, 1); } break;
     case 'knock': if (NET.my === d.id && mine(leader)) knock(leader, V3(d.x, leader.pos.y, d.z), d.m); break;

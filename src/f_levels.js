@@ -27,6 +27,7 @@ function tubeM(pts, r, mat, seg = 60) { const c = new THREE.CatmullRomCurve3(pts
 // Starting a game somewhere (title → chapter, or joining an online room). The whole world is already
 // built at start-up, so this only places everyone; moving between places later never comes back here.
 async function loadLevel(name, opt) {
+  titleEnd();
   window.__loads = (window.__loads || 0) + 1; if (NET.on && NET.host) nsend({ t: 'lvl', n: name });
   STATE = 'loading'; const D = LEVELS[name];
   $('lvlA').textContent = opt && opt.chapter || D.chapter; $('lvlB').textContent = opt && opt.title || D.title; $('lvl').hidden = false; requestAnimationFrame(() => $('lvl').classList.add('on'));
@@ -290,10 +291,10 @@ LEVELS.wall = {
     const K = chars.cham; if (!party.includes(K) && lvT > 3 && leader.pos.distanceTo(K.pos) < 13) { joinCham(); toast('實習生小彩加入隊伍！停着不動會變色隱身，' + (TOUCH ? '按「舌」吐舌頭（點頭像操控）' : '左鍵吐舌頭（按 4 或點頭像操控）'), 4.5); }
     for (const K of [chars.gecko, chars.cham]) if (!party.includes(K) && !NPCW.some(w => w.C === K)) { const dx = leader.pos.x - K.pos.x, dz = leader.pos.z - K.pos.z; K.yaw = angDamp(K.yaw, Math.atan2(dx, dz), 3, dt); K.state = 'idle'; K.spd = 0; }
     const lx = leader.pos.x - HO.x, lz = leader.pos.z - HO.z;
-    if (!NET.client && quest === 0 && (lvT > 17 || (lx < 20 && Math.abs(lx) < 85 && lvT > 4))) setQuest(1);
+    if (!NET.on && quest === 0 && (lvT > 17 || (lx < 20 && Math.abs(lx) < 85 && lvT > 4))) setQuest(1);
   },
   win() { },
-  marker() { return quest >= 1 ? STATIC.hubTop : null; },
+  marker() { if (NET.on) return proMarker(); return quest >= 1 ? STATIC.hubTop : null; },
   reset() { }, eyeText: () => '', hint: () => ''
 };
 
@@ -819,18 +820,20 @@ LEVELS.kitchen = {
 // single player and online co-op tell different stories in the same rooms
 function kitchenMode() {
   KS.mp = NET.on;
-  if (KS.grate) { KS.grate.g.visible = KS.mp; KS.grate.c.y0 = KS.mp ? 0 : -999; KS.grate.c.y1 = KS.mp ? .6 : -998; }
+  // online games now come up through the wall, so the grate over the shaft only closes for games that started in the kitchen
+  const shut = KS.mp && !PRO.used; if (KS.grate) { KS.grate.g.visible = shut; KS.grate.c.y0 = shut ? 0 : -999; KS.grate.c.y1 = shut ? .6 : -998; }
   if (KS.core) KS.core.visible = !KS.mp;
   for (const p of LIV.parts) { const on = KS.mp && !p.got; p.g.visible = on; p.halo.visible = on; }
-  if (KS.mp && QUESTS !== MP_QUESTS) { QUESTS = MP_QUESTS; LEVELS.kitchen.quests = MP_QUESTS; setQuest(0); }
+  if (KS.mp && QUESTS !== MP_QUESTS && !PRO.on) { QUESTS = MP_QUESTS; LEVELS.kitchen.quests = MP_QUESTS; setQuest(0); }
 }
 LEVELS.basement = {
   chapter: '序章', title: '地庫實驗室', env: 'basement', envI: .85, fog: [0x0a0d12, .00135], expo: 1.3, dust: {},
   build() { buildRoom(); buildLights(); },
   afterShift(o) { machine.x += o.x; machine.y += o.y; machine.z += o.z; },
   cps: CPS_B, quests: BASE_Q, spawn() { placeStart(); },
-  npc(dt) { if (STATE === 'play' || STATE === 'fail' || STATE === 'end' || STATE === 'frozen') updMom(dt); }, detect(dt) { updDetect(dt); }, update(dt) { updTrap(); }, win() { winBasement(); },
-  marker() { return quest === 3 ? V3(70, 6, 15).add(HO) : quest >= 1 ? V3(-300, 7, 150).add(BO) : null; }, reset() { momReset(); },
-  eyeText: () => meter > .3 ? '她在看這邊！快躲起來' : mom.mode === 'door' ? '樓上的門打開了' : '太太在地庫', hint: () => ''
+  // online, nobody is home in the basement: no wife, no timer, no getting caught
+  npc(dt) { if (NET.on) return; if (STATE === 'play' || STATE === 'fail' || STATE === 'end' || STATE === 'frozen') updMom(dt); }, detect(dt) { if (NET.on) { meter = 0; return; } updDetect(dt); }, update(dt) { updTrap(); }, win() { if (!NET.on) winBasement(); },
+  marker() { if (NET.on) return proMarker(); return quest === 3 ? V3(70, 6, 15).add(HO) : quest >= 1 ? V3(-300, 7, 150).add(BO) : null; }, reset() { momReset(); },
+  eyeText: () => NET.on ? '地庫今晚沒有人' : meter > .3 ? '她在看這邊！快躲起來' : mom.mode === 'door' ? '樓上的門打開了' : '太太在地庫', hint: () => ''
 };
 LVL = LEVELS.basement;

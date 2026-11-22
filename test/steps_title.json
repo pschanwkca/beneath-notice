@@ -1,0 +1,2 @@
+[{"eval":"(()=>{const b=window.__bn; window.__NR=true; b.step(170); b.emoShow(b.chars.dad,'angry'); b.emoShow(b.chars.rab,'laugh'); b.emoShow(b.chars.cham,'love'); return [b.TTL.inCloud, b.EMO.bubbles.length]})()","frame":1,"wait":300,"shot":"title_a"},
+ {"eval":"(()=>{const b=window.__bn; b.step(95); for(const B of b.EMO.bubbles) B.t=.5; return b.TTL.fly.map(f=>f.id+':'+f.ph)})()","frame":1,"wait":300,"shot":"title_b"}]

@@ -323,7 +323,7 @@ LEVELS.yard = {
 
 // ---------- online co-op: one shared chain of objectives across the whole house (host decides) ----------
 function mpObjectives() {
-  if (!NET.on || NET.client || STATE !== 'play' || !WORLD) return;
+  if (!NET.on || NET.client || STATE !== 'play' || !WORLD || PRO.on) return;
   const P = playerChars().filter(C => !C.frozen); if (!P.length) return;
   if (quest === 2 && P.every(C => C.pos.x > 316 && C.pos.x < 912 && C.pos.z > -232)) { setQuest(3); toastW('全隊到齊客廳！', 2.4); }
   if (quest <= 3) mpAdvance();

@@ -66,6 +66,7 @@ function buildEnv(kind = 'basement') {
   else if (kind === 'garage') { room.material.color.setHex(0x16191d); panel(0xdfe8ff, 4, 3, .3, 0, 2.45, 0); panel(0xffa860, 2, 4, .2, 0, -.2, 4.9); panel(0x2a2c30, 1, 10, 3, 0, -2.4, 0); }
   else if (kind === 'yard') { room.material.color.setHex(0x0a1020); panel(0x3a5a9a, 1.6, 10, 10, 0, 2.48, 0); panel(0xb8c8ff, 3, 1, 1, 3, 2, -4); panel(0xffc890, 2.2, .6, .6, 4.9, .6, 0, Math.PI / 2); panel(0x14200f, 1, 10, 3, 0, -2.4, 0); }
   else if (kind === 'road') { room.material.color.setHex(0x0b111c); panel(0x2a3a60, 1.4, 10, 10, 0, 2.48, 0); panel(0xffb466, 2.6, 1.2, 1.2, 3, 2.2, -3); panel(0xffb466, 2.2, 1.2, 1.2, -3.4, 2.2, 2); panel(0x14180f, 1, 10, 3, 0, -2.4, 0); }
+  else if (kind === 'portal') { room.material.color.setHex(0x061419); panel(0x6ff6ee, 4.5, 4, 4, 0, 0, 4.9); panel(0x9fe8ff, 1.6, 10, 2, 0, 2.45, 0); panel(0xffc890, 1.4, 1.2, 1.2, -3, 1.2, -4.9); panel(0x0a1a20, 1, 10, 3, 0, -2.4, 0); }
   else if (kind === 'hub') { room.material.color.setHex(0x1a1410); panel(0xffb066, 4, .6, .6, -1, .2, 0); panel(0xffd0a0, 6, 1, 1, 0, 2.4, 0); panel(0x3a2a22, 1, 10, 3, 0, -2.4, 0); }
   else { panel(0x9db8ff, 3.2, 2, 1, 1, 2, -4.9); panel(0xffc27a, 6, .6, .6, -1, .5, -3); panel(0x5ff4ee, 3, .8, .8, -2, .3, -3.4);
   panel(0xffb066, 1.4, 1.6, 2.2, -4.9, 2, -2, Math.PI / 2); panel(0x2a3346, 1, 10, 3, 0, -2.4, 0); }

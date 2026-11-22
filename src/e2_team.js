@@ -39,6 +39,7 @@ function standable(x, z, y, C) { const [s] = supportAt(x, z, C.r * .55, y + .4);
 function isBase(C) { for (const q of party) if (q.on === C.id && !q.frozen && q !== C) return q; return null; }
 function towerBottom(C) { let b = C, g = 0; while (b.on && chars[b.on] && g++ < 9) b = chars[b.on]; return b; }
 function towerTop(C) { let t = towerBottom(C), g = 0, k; while ((k = isBase(t)) && g++ < 9) t = k; return t; }
+function towerH(C) { let h = 0, t = C, g = 0, k; while ((k = isBase(t)) && g++ < 9) { h += t.h * STK_ON; t = k; } return h + t.h; }
 function towerSize(C) { let n = 1, t = towerBottom(C), g = 0, k; while ((k = isBase(t)) && g++ < 9) { n++; t = k; } return n; }
 function topPos(B) { return V3(B.pos.x, B.pos.y + B.h * STK_ON, B.pos.z); }
 function stkClear() { for (const C of party) { C.on = null; C.hop = null; C.drop = false; C.pullT = 0; } }

@@ -93,7 +93,7 @@ function resolveH(C, allowStep) {
   for (let it = 0; it < 3; it++) {
     let any = false;
     for (const c of colsNear(C.pos.x, C.pos.y + 1, C.pos.z)) {
-      if (c.y1 <= C.pos.y + .001 || c.y0 >= C.pos.y + C.h) continue;
+      if (c.y1 <= C.pos.y + .001 || c.y0 >= C.pos.y + (C.colH || C.h)) continue;   // a tower collides as tall as the whole tower
       if (!xzHit(c, C.pos.x, C.pos.z, C.r, _h)) continue;
       const rise = c.y1 - C.pos.y;
       if (allowStep && rise <= STEP && C.grounded) { C.pos.y = c.y1; continue; }
@@ -178,7 +178,7 @@ function detach(C, push, up, grounded) { C.climbing = false; C.vel.set(C.climbN.
 function updLeader(C, dt) {
   const ctl = STATE === 'play' && !(C.tumble > 0) && !PAUSED;
   // the bottom of a tower can still walk, carrying everyone on top (slower; no jumping or climbing)
-  const base = isBase(C); C.stackN = base ? towerSize(C) - 1 : 0;
+  const base = isBase(C); C.stackN = base ? towerSize(C) - 1 : 0; C.colH = base ? towerH(C) : 0;
   const mv = ctl ? readMove() : { x: 0, y: 0, m: 0, run: false }; const inX = mv.x, inY = mv.y;
   const fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
   let wx = fx * inY + rx * inX, wz = fz * inY + rz * inX; const wl = Math.hypot(wx, wz); if (wl > 0) { wx /= wl; wz /= wl; }
@@ -366,9 +366,10 @@ function switchTo(N) {
 
 // ---------- camera ----------
 function updCam(dt) {
+  if (EMO.open) { EMO.dx += mouseDX; EMO.dy += mouseDY; mouseDX = mouseDY = 0; }
   if (STATE === 'play' && !PAUSED) { cam.yaw -= mouseDX * .0024 * SET.sens; cam.pitch = clamp(cam.pitch + mouseDY * .0022 * SET.sens * (SET.inv ? -1 : 1), -1.4, 1.35); }
   mouseDX = mouseDY = 0;
-  const L = leader; const ty = L.pos.y + L.h * (L.crouch ? .62 : .8);
+  const L = watchTarget() || leader; const ty = L.pos.y + L.h * (L.crouch ? .62 : .8);
   cam.tgt.x = damp(cam.tgt.x, L.pos.x, 16, dt); cam.tgt.y = damp(cam.tgt.y, ty, 10, dt); cam.tgt.z = damp(cam.tgt.z, L.pos.z, 16, dt);
   const d = cam.dist * (L.climbing ? 1.18 : 1) * (L.on || isBase(L) ? 1.3 : 1);
   // the camera stays behind the head; tilting further only turns the view up (to the ceiling / sky)
@@ -668,7 +669,7 @@ function animChar(C, dt) {
   const bl = C.blinkT > 0 ? (C.blinkT -= dt, .08) : 1.12; for (const e of C.eyes) e.scale.y = bl;
   if (C.S.cham) chamAnim(C, dt);
   if (C.wing) { C.glideK = damp(C.glideK, st === 'glide' ? 1 : 0, 10, dt); for (const w of C.wing) { w.visible = C.glideK > .02; w.scale.y = Math.max(.01, C.glideK); } }
-  ncAnim(C, dt, st);
+  ncAnim(C, dt, st); emoAnim(C, dt);
 }
 
 // ---------- flow ----------
@@ -680,32 +681,25 @@ function placeStart() {
   leader = D; trail = [];
 }
 function startGame(ch = 0) {
+  titleEnd();
   if (ch === 1) { $('start').hidden = true; playT = 0; fails = 0; requestLock(); loadLevel('wall'); return; }
-  enterZone('basement', true); LP.snap = true;
-  $('start').hidden = true; if (TOUCH) $('touch').hidden = false; $('hud').classList.remove('off'); $('hud').classList.add('cine'); STATE = 'intro'; introT = 0; playT = 0; quest = 0; setQuest(0); cp = 0; meter = 0; fails = 0;
-  chars.dad.lieK = 1; chars.sq.lieK = 1; chars.bear.lieK = 1; momReset(); mom.timer = 70; mom.visits = 0; mom.said = {};
-  refreshPartyHUD(); requestLock();
+  // the prologue starts inside the machine's field (the prep area); walking out drops you on the workbench
+  $('start').hidden = true; playT = 0; quest = 0; cp = 0; meter = 0; fails = 0; requestLock(); loadLevel('portal');
 }
 const INTRO = [[.5, '爸爸', '……我、我真的變小了？', '#f5f0e6'], [2.5, '助手', '教授！我們全部都縮小了——還變成了動物？！', '#e8c9a8'], [4.6, '老友', '這張工作枱怎麼高得像懸崖一樣……', '#d9a675'], [6.6, '爸爸', '先下去。記住，千萬不能被任何人看見。一被看見，縮小態就會定型。', '#f5f0e6']];
 function updIntro(dt) {
   introT += dt; const t = introT;
   for (const L of INTRO) if (t - dt < L[0] && t >= L[0]) say(L[1], L[2], L[3], L[0] === 6.6 ? 4.6 : 2.1);
-  chars.dad.lieK = clamp(1 - (t - 1.2) / .9, 0, 1); chars.sq.lieK = clamp(1 - (t - 2.2) / .9, 0, 1); chars.bear.lieK = clamp(1 - (t - 3.6) / 1, 0, 1);
   chars.sq.look = t > 2.5 && t < 4.5 ? .5 : 0;
   const k = sstep(0, 6.4, t);
-  const p0 = V3(-38, 108, -172).add(BO), l0 = V3(-55, 112, -212).add(BO);
+  const p0 = V3(-24, 106, -150).add(BO), l0 = V3(-55, 101, -200).add(BO);
   cam.yaw = .55; cam.pitch = .22; const D = chars.dad;
   const dir = V3(Math.sin(cam.yaw) * Math.cos(cam.pitch), Math.sin(cam.pitch), Math.cos(cam.yaw) * Math.cos(cam.pitch));
   const tg = V3(D.pos.x, D.pos.y + D.h * .8, D.pos.z); const p1 = tg.clone().addScaledVector(dir, 15);
   camera.position.lerpVectors(p0, p1, k); const look = V3().lerpVectors(l0, tg, k); camera.lookAt(look);
   bokeh.uniforms.focus.value = camera.position.distanceTo(look);
   cam.tgt.copy(D.pos); cam.tgt.y = tg.y; cam.curD = 15;
-  if (t > 6.5 || ((pressed.Space || pressed.Enter) && t > .6)) { STATE = 'play'; $('hud').classList.remove('cine'); for (const C of party) C.lieK = 0; if (t < 6.5) say(INTRO[3][1], INTRO[3][2], INTRO[3][3], 4.6); }
-}
-function updTitle(dt) {
-  const a = T * .09; const c = V3(-34, 96, -196).add(BO);
-  camera.position.set(c.x + Math.sin(a) * 46, c.y + 16 + Math.sin(T * .2) * 4, c.z + 26 + Math.cos(a) * 22); camera.lookAt(c.x, c.y + 6, c.z);
-  bokeh.uniforms.focus.value = camera.position.distanceTo(c);
+  if (t > 6.5 || ((pressed.Space || pressed.Enter) && t > 1.4)) { STATE = 'play'; $('hud').classList.remove('cine'); for (const C of party) C.lieK = 0; if (t < 6.5) say(INTRO[3][1], INTRO[3][2], INTRO[3][3], 4.6); }
 }
 function winBasement() {
   if (quest === 0 && leader.grounded && leader.pos.y < BO.y + 2) { setQuest(1); toast('下到地面了'); mom.timer = Math.min(mom.timer, 9); }
@@ -749,17 +743,17 @@ function update(dt) {
   else if (STATE === 'intro') { updIntro(dt); for (const C of party) { C.state = 'idle'; C.spd = 0; } }
   else if (STATE === 'play') {
     playT += dt;
-    if (!NET.on) for (let i = 0; i < party.length; i++) if (pressed['Digit' + (i + 1)]) switchTo(party[i]);
+    if (!NET.on && !EMO.open) for (let i = 0; i < party.length; i++) if (pressed['Digit' + (i + 1)]) switchTo(party[i]);
     if (!NET.on) if (pressed.Tab) { const act = party.filter(C => !C.frozen); if (act.length > 1) switchTo(act[(act.indexOf(leader) + 1) % act.length]); }
     if (pressed.KeyR) useProto();
     if (!NET.on) for (const C of party) if (pressed['sw_' + C.id]) switchTo(C);
     if (pressed.KeyC || pressed.Tab) setTimeout(refreshPartyHUD, 30);
     if (pressed.KeyH) { hudOn = !hudOn; $('hud').classList.toggle('off', !hudOn); }
     if (pressed.KeyF) stackPress(); crewInput(leader, !leader.frozen && mine(leader));
-    const lockL = !mine(leader) || leader.frozen || !!leader.on || !!leader.hop || leader.pullT > 0;
+    const lockL = !mine(leader) || leader.frozen || !!leader.on || !!leader.hop || leader.pullT > 0 || !!leader.ptw;
     if (!lockL) { const sub = dt > 1 / 30 ? 2 : 1; for (let s = 0; s < sub; s++) updLeader(leader, dt / sub); bearDrag(dt); }
     updHops(dt); stackInput(); stackSolve(dt);
-    if (!lockL) pushTrail(leader); for (const F of party) if (F !== leader && !F.on && !F.hop && !F.drop && !F.frozen && !F.carried && mine(F) && !isBase(F)) updFollower(F, leader, dt);
+    if (!lockL) pushTrail(leader); for (const F of party) if (F !== leader && !F.on && !F.hop && !F.drop && !F.frozen && !F.carried && !F.ptw && mine(F) && !isBase(F)) updFollower(F, leader, dt);
     updCarry(dt); updTongueAim(); updVentFx(dt);
     stackScan(dt);
     updAim(); LVL.detect(dt); if (!NET.client) updCheckpoints(); LVL.update(dt); if (!NET.client) LVL.win();
@@ -782,7 +776,7 @@ function update(dt) {
   }
   zoneTick(dt); if (WORLD && (ZONES.kitchen.near || LEVEL === 'kitchen')) updLiving(dt);
   if (NET.client) netNPC(dt); else for (const Z of ZL) { const D = LEVELS[Z.id]; if (!D || !D.npc) continue; if (Z.id === LEVEL || (Z.near && Z.prepped && D.npcNear) || (NET.on && Z.prepped && D.npcNear && playerChars().some(C => inZone(Z, C.pos.x, C.pos.y, C.pos.z, 60)))) D.npc(dt); }
-  mpObjectives();
+  mpObjectives(); portalTick(dt); mpProTick(dt); unstuckTick(dt);
   const cr = STATE === 'frozen' ? clamp(1 - failT / 2.3, 0, 1) * .8 : STATE === 'fail' ? clamp(failT / .7, 0, 1) * (failT < 2.4 ? 1 : clamp(1 - (failT - 2.4) / .8, 0, 1)) : meter * .55;
   grade.uniforms.uCrys.value = damp(grade.uniforms.uCrys.value, cr, 8, dt);
   grade.uniforms.uFlash.value = STATE === 'fail' && failT > .6 && failT < 1.1 ? (1 - Math.abs(failT - .85) / .25) * .5 : 0;
@@ -795,7 +789,7 @@ function update(dt) {
 let last = performance.now();
 function frame(now) {
   requestAnimationFrame(frame); musicFrame();
-  const dt = Math.min(.05, (now - last) / 1000); last = now; vcFrame(dt);
+  const dt = Math.min(.05, (now - last) / 1000); last = now; vcFrame(dt); emoTick(dt); watchTick();
   { const [w, h] = viewSize(); if (w !== RS.w || h !== RS.h) onResize(); }
   if (STATE === 'load') return;
   if (!PAUSED || NET.on) update(dt);
@@ -897,11 +891,11 @@ async function init() {
   for (const id of ['hog', 'rab', 'coon', 'frog', 'bat', 'tort']) { chars[id].root.visible = false; chars[id].pos.set(0, -900, 0); }
   party.push(chars.dad, chars.sq, chars.bear); buildMom();
   // the whole house is built now, once: walking from room to room never loads anything
-  const WL = { basement: [.42, '搭建地庫…'], wall: [.52, '搭建牆內…'], kitchen: [.58, '搭建廚房和客廳…'], garage: [.64, '搭建車房…'], yard: [.7, '搭建後園和陽光房…'] , road: [.74, '搭建馬路和公園門口…'] };
+  const WL = { basement: [.42, '搭建地庫…'], wall: [.52, '搭建牆內…'], kitchen: [.58, '搭建廚房和客廳…'], garage: [.64, '搭建車房…'], yard: [.7, '搭建後園和陽光房…'] , road: [.74, '搭建馬路和公園門口…'], portal: [.78, '打開縮小機的場域…'] };
   await buildWorld(async id => { setLoad(...WL[id]); await tick(); });
   buildParticles(); enterZone('basement', true); scene.environment = ZONES.basement.envTex; placeStart();
   for (const id in chars) animChar(chars[id], .016);
-  setLoad(.82, '拍攝頭像…'); await tick(); makePortraits();
+  setLoad(.82, '拍攝頭像…'); await tick(); makePortraits(); setTimeout(emoBuildAll, 2500);
   setLoad(.92, '編譯著色器…'); await tick();
   applyQ(TOUCH ? 'low' : 'high'); onResize(); if (TOUCH) setupTouch();
   for (const Z of ZL) Z.lv.visible = Z.fx.visible = true; const kv = [KID.root.visible, CAT.root.visible]; KID.root.visible = CAT.root.visible = true;

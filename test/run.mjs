@@ -18,6 +18,8 @@ await page.route('**/*', async route => {
   if (u.startsWith('file://') || u.startsWith('http://localhost')) return route.continue();
   return route.continue();
 });
+if (process.env.INIT) await page.addInitScript(process.env.INIT);
+page.on('crash', () => { console.log('PAGE CRASHED'); console.log(logs.slice(-30).join('\n')); });
 await page.goto('file://' + root + '/index.html#dev'); page.setDefaultTimeout(180000);
 const t0 = Date.now();
 await page.waitForFunction(() => document.getElementById('start') && !document.getElementById('start').hidden || document.getElementById('err').textContent.length > 0, null, { timeout: 240000 });
@@ -26,7 +28,7 @@ const err = await page.$eval('#err', e => e.textContent);
 if (err) console.log('ERR:', err);
 if (process.env.Q) await page.evaluate(q => window.__bn.applyQ(q), process.env.Q);
 await page.waitForTimeout(1500);
-await page.screenshot({ path: root + '/test/01_title.png' });
+if (!process.env.NOTITLE) await page.screenshot({ path: root + '/test/01_title.png' });
 // expose hooks via window for scripted tests
 const steps = JSON.parse(fs.readFileSync(root + '/test/steps_' + shots + '.json', 'utf8'));
 for (const s of steps) {
@@ -36,6 +38,7 @@ for (const s of steps) {
   if (s.up) await page.keyboard.up(s.up);
   if (s.eval) { const r = await page.evaluate(s.eval); if (r !== undefined) console.log('eval:', JSON.stringify(r)); }
   if (s.evalFile) { const r = await page.evaluate(fs.readFileSync(root + '/test/' + s.evalFile, 'utf8')); if (r !== undefined) console.log('eval:', typeof r === 'string' ? r : JSON.stringify(r)); }
+  if (s.frame) await page.evaluate(() => new Promise(r => { window.__NR = false; requestAnimationFrame(() => requestAnimationFrame(() => { window.__NR = true; r(); })); }));
   if (s.wait) await page.waitForTimeout(s.wait);
   if (s.shot) await page.screenshot({ path: root + '/test/' + s.shot + '.png' });
 }
