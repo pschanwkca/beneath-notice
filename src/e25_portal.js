@@ -138,7 +138,7 @@ function buildPortal() {
   dm(new THREE.CylinderGeometry(11, 11, 3.2, 48), M.steel, -62, 62, -96, .35).rotation.set(.4, 0, .8);
   // lights
   spotL(0xd8fbff, 68000, V3(26, 140, -36), V3(0, 0, 4), .5, .6, 2048, 60, 320);
-  pointL(0x7ff8f0, 2400, 0, 20, 33); pointL(0xffcf9a, 1500, 0, 30, -26); pointL(0x4fe8e0, 1800, 0, -26, 0); pointL(0x9ff0ff, 800, -40, 18, 10);
+  pointL(0x7ff8f0, 2400, 0, 20, 33); pointL(0xffcf9a, 1500, 0, 30, -26); pointL(0x4fe8e0, 1800, 0, -26, 0); pointL(0x9ff0ff, 800, -40, 18, 10); pointL(0xffd6a8, 1300, 0, 11, -6);   // a warm light on the faces of whoever stands in line (the online room)
 }
 
 // ---------- starting here ----------

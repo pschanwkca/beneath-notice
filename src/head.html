@@ -74,50 +74,76 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:non
 .pbub{position:absolute;transform:translate(-50%,-100%);max-width:220px;font:500 13px/1.4 "Noto Sans TC",sans-serif;color:#1a1612;background:#f5f0e6;border-radius:12px;padding:5px 11px;box-shadow:0 6px 18px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .25s;overflow-wrap:anywhere;text-align:center}
 .pbub::after{content:'';position:absolute;left:50%;bottom:-5px;margin-left:-6px;border:6px solid transparent;border-top-color:#f5f0e6;border-bottom:0}
 .pbub.on{opacity:1}
-/* ---- the character select page (online room) ---- */
+/* ---- the character select page (online room): a stage in the machine's prep area ---- */
 #mp.inroom:not([hidden]){background:none;padding:0;display:block}
 #mp.inroom .mpbox{display:none}
-.mproom{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
+.mproom{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none;
+  background:radial-gradient(120% 70% at 50% 108%,rgba(3,8,10,.92) 18%,rgba(3,8,10,0) 58%),radial-gradient(90% 60% at 50% -14%,rgba(3,8,10,.8),rgba(3,8,10,0) 60%)}
 .mproom[hidden]{display:none}
-.mpr-top,.mpr-bot{pointer-events:auto}
-.mpr-top{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px clamp(16px,3vw,34px) 34px;background:linear-gradient(180deg,rgba(5,9,12,.82),rgba(5,9,12,0))}
-.mpr-l{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-.mpr-t{font:700 22px "Noto Sans TC",sans-serif;letter-spacing:.14em;color:var(--ink)}
-.mpr-top .mpcode{margin:0;gap:10px;padding:4px 14px;border-radius:99px;background:rgba(255,255,255,.05);border:1px solid var(--faint)}
-.mpr-top .mpcode b{font-size:24px}
-.mpr-r{display:flex;align-items:center;gap:14px;color:var(--dim);font-size:13px}
-.mpr-bot{display:flex;flex-direction:column;align-items:center;gap:14px;padding:46px clamp(14px,3vw,34px) 20px;background:linear-gradient(0deg,rgba(5,9,12,.94) 0,rgba(5,9,12,.84) 62%,rgba(5,9,12,0))}
-.mpr-row1{display:flex;gap:12px 18px;align-items:center;justify-content:center;flex-wrap:wrap;width:min(1120px,100%)}
+.mpr-top,.mpr-bot,.mpinfo{pointer-events:auto}
+.mpr-top{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px clamp(16px,3vw,36px) 0}
+.mpr-l,.mpr-r{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.mpr-t{display:flex;flex-direction:column;line-height:1.05;margin-right:6px}
+.mpr-t small{font:600 11px "Fredoka","Noto Sans TC";letter-spacing:.24em;color:var(--cyan);text-transform:uppercase}
+.mpr-t b{font:700 26px "Noto Sans TC",sans-serif;letter-spacing:.12em;color:var(--ink)}
+.mpr-top .mpcode{margin:0;gap:10px;padding:5px 16px;border-radius:99px;background:rgba(6,14,18,.6);border:1px solid rgba(111,246,238,.28)}
+.mpr-top .mpcode b{font-size:22px}
+.mpcount{font-size:13px;color:var(--dim);padding:6px 12px;border-radius:99px;background:rgba(6,14,18,.5);border:1px solid var(--faint)}
+#mpRoom .mpvc{margin:0;padding:4px 6px 4px 12px;gap:8px;border-radius:99px;background:rgba(6,14,18,.5)}
+#mpRoom .mpvc .vct{font-size:12px;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#mpRoom .mpvc .lv{width:46px}
+/* who you are: a card on the left */
+.mpinfo{position:absolute;left:clamp(16px,3vw,36px);top:50%;transform:translateY(-58%);width:min(300px,26vw);padding:18px 18px 16px;border-radius:20px;background:linear-gradient(160deg,rgba(14,22,27,.86),rgba(8,12,15,.78));border:1px solid rgba(255,255,255,.09);box-shadow:0 24px 60px rgba(0,0,0,.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:opacity .25s}
+.mpinfo:empty{opacity:0;pointer-events:none}
+.mpinfo .ih{display:flex;align-items:center;gap:14px}
+.mpinfo .ip{width:64px;height:64px;border-radius:50%;overflow:hidden;flex:none;background:#0d1418;border:3px solid var(--c,#fff);box-shadow:0 0 22px color-mix(in srgb,var(--c,#fff) 35%,transparent)}
+.mpinfo .ip img{width:100%;height:100%;object-fit:cover}
+.mpinfo .in b{display:block;font:700 22px "Noto Sans TC";color:var(--c,#fff)}
+.mpinfo .in small{font-size:12px;color:var(--dim);letter-spacing:.1em}
+.mpinfo .ia{margin-top:14px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--faint)}
+.mpinfo .ia em{font:700 12px "Noto Sans TC";font-style:normal;color:var(--amber);letter-spacing:.06em}
+.mpinfo .ia p{margin:4px 0 0;font-size:13px;line-height:1.5;color:var(--ink)}
+.mpinfo .is{margin-top:12px;display:grid;grid-template-columns:auto 1fr;gap:7px 12px;align-items:center;font-size:12px;color:var(--dim)}
+.mpinfo .is i{display:block;height:6px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden}
+.mpinfo .is i::after{content:'';display:block;height:100%;width:var(--v);background:linear-gradient(90deg,var(--c,#fff),color-mix(in srgb,var(--c,#fff) 60%,#fff));border-radius:6px}
+.mpinfo .iw{margin-top:12px;font-size:12px;color:var(--dim)}.mpinfo .iw b{color:var(--ink)}
+/* the dock along the bottom */
+.mpr-bot{display:flex;flex-direction:column;align-items:center;gap:12px;padding:0 clamp(14px,3vw,36px) 18px}
+#mpRoom .mpslots{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:12px 16px 10px;border-radius:24px;background:rgba(8,13,16,.62);border:1px solid rgba(255,255,255,.07);box-shadow:0 18px 48px rgba(0,0,0,.4)}
+#mpRoom .mps{width:74px;padding:0;background:none;border:0;gap:4px;border-radius:0;position:relative}
+#mpRoom .mps:hover{transform:none}
+#mpRoom .mps .ph{width:62px;height:62px;border:3px solid rgba(255,255,255,.14);box-shadow:0 8px 18px rgba(0,0,0,.45);transition:transform .16s,border-color .16s,box-shadow .16s;background:#0d1418}
+#mpRoom .mps:not(.lock):not(.taken):hover .ph{transform:translateY(-5px) scale(1.07);border-color:rgba(255,255,255,.65)}
+#mpRoom .mps.me .ph{border-color:var(--amber);box-shadow:0 0 0 4px rgba(244,187,114,.22),0 0 26px rgba(244,187,114,.4),0 8px 18px rgba(0,0,0,.45);transform:translateY(-5px)}
+#mpRoom .mps.me::before{content:'你';position:absolute;top:-8px;left:50%;transform:translateX(-50%);z-index:1;font:700 10px "Noto Sans TC";color:#1b1208;background:var(--amber);padding:1px 7px;border-radius:99px}
+#mpRoom .mps.taken{opacity:1}#mpRoom .mps.taken .ph{border-color:var(--cyan)}
+#mpRoom .mps b{font-size:12.5px;margin-top:3px;color:var(--ink)}
+#mpRoom .mps small{display:none}
+#mpRoom .mps em{font-size:10.5px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0;font-style:normal;color:var(--dim)}
+#mpRoom .mps.taken em{color:var(--cyan)}#mpRoom .mps.me em{color:var(--amber)}
+#mpRoom .mps.lock .ph{border-style:dashed;box-shadow:none;opacity:.7}#mpRoom .mps.lock b{color:var(--dim)}
+.mpr-row3{display:flex;align-items:center;gap:16px;justify-content:center;flex-wrap:wrap;width:min(1180px,100%)}
 .mpname{display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;color:var(--dim);margin:0 0 14px}
-.mpr-row1 .mpname{margin:0}
-.mpname input{width:180px;font:600 15px "Noto Sans TC",sans-serif;background:rgba(255,255,255,.07);color:var(--ink);border:1px solid var(--faint);border-radius:99px;padding:8px 16px}
+.mpr-row3 .mpname{margin:0}
+.mpname input{width:170px;font:600 15px "Noto Sans TC",sans-serif;background:rgba(6,14,18,.6);color:var(--ink);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:9px 16px}
 .mpname input:focus{outline:2px solid var(--amber);outline-offset:2px}
 .mpsave{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--dim)}.mpsave[hidden]{display:none}
-.mpsave small{font-size:12px;color:var(--cyan);max-width:260px;line-height:1.35}
-#mpRoom .mpvc{margin:0;flex:0 1 330px;padding:7px 12px}
-#mpRoom .mpslots{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;width:min(1120px,100%)}
-#mpRoom .mps{width:82px;padding:0;background:none;border:0;gap:4px;border-radius:0}
-#mpRoom .mps:hover{transform:none}
-#mpRoom .mps .ph{width:70px;height:70px;border:3px solid rgba(255,255,255,.16);box-shadow:0 8px 20px rgba(0,0,0,.45);transition:transform .15s,border-color .15s,box-shadow .15s}
-#mpRoom .mps:not(.lock):not(.taken):hover .ph{transform:translateY(-4px) scale(1.06);border-color:rgba(255,255,255,.6)}
-#mpRoom .mps.me .ph{border-color:var(--amber);box-shadow:0 0 0 4px rgba(244,187,114,.28),0 0 24px rgba(244,187,114,.35),0 8px 20px rgba(0,0,0,.45);transform:translateY(-4px)}
-#mpRoom .mps.taken{opacity:1}#mpRoom .mps.taken .ph{border-color:var(--cyan)}
-#mpRoom .mps b{font-size:13px;margin-top:2px}
-#mpRoom .mps small{display:none}
-#mpRoom .mps em{font-size:11px;max-width:86px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0}
-#mpRoom .mps.lock .ph{border-style:dashed;box-shadow:none}#mpRoom .mps.lock b{color:var(--dim)}
-.mpr-row3{display:flex;align-items:center;gap:18px;justify-content:center;width:min(1120px,100%)}
-.mpmsg{flex:1;text-align:right;min-width:0}
-#mpRoom .mpstatus{margin:0;font-size:14px}
-#mpStart{min-width:200px;font-size:19px;padding:13px 30px;letter-spacing:.2em}
+.mpsave small{font-size:12px;color:var(--cyan);max-width:240px;line-height:1.35}
+.mpmsg{flex:1;min-width:180px;text-align:right}
+#mpRoom .mpstatus{margin:0;font-size:13.5px;color:var(--dim)}
+#mpStart{min-width:200px;font-size:19px;padding:14px 32px;letter-spacing:.24em}
 #mpStart[hidden]{display:none}
+#mpStart:disabled{background:rgba(255,255,255,.08);color:var(--dim);box-shadow:none;letter-spacing:.08em;font-size:15px}
+/* name plates over the lineup */
 .lbtags{position:fixed;inset:0;pointer-events:none}
-.lbtag{position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap;transition:opacity .25s}
-.lbtag b{font:700 13px "Noto Sans TC",sans-serif;padding:4px 11px;border-radius:99px;background:rgba(6,10,14,.72);border:1.5px solid currentColor;box-shadow:0 6px 16px rgba(0,0,0,.35)}
-.lbtag small{font-size:11px;color:var(--dim);text-shadow:0 1px 4px #000}
-.lbtag.me b{background:var(--amber);color:#1b1208;border-color:var(--amber)}
-.lbtag.ai b{color:var(--dim)!important;border-color:var(--faint);font-weight:500}
-@media (max-height:620px){.mpr-top{padding:10px 16px 20px}.mpr-bot{padding:26px 14px 10px;gap:8px}#mpRoom .mps .ph{width:52px;height:52px}#mpRoom .mps{width:64px}#mpRoom .mps em{display:none}#mpStart{min-width:150px;padding:9px 20px;font-size:16px}.mpname span{display:none}#mpRoom .mpvc{display:none}}
+.lbtag{position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:center;gap:3px;white-space:nowrap;transition:opacity .25s}
+.lbtag b{display:flex;align-items:center;gap:6px;font:700 13px "Noto Sans TC",sans-serif;padding:4px 12px 4px 9px;border-radius:99px;background:rgba(6,10,14,.78);color:var(--ink);border:1px solid rgba(255,255,255,.12);box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.lbtag b::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--c,#fff)}
+.lbtag small{font-size:11px;color:var(--dim);text-shadow:0 1px 4px #000;letter-spacing:.06em}
+.lbtag.me b{background:var(--amber);color:#1b1208;border-color:var(--amber)}.lbtag.me b::before{background:#1b1208}
+.lbtag.ai b{color:var(--dim);font-weight:500;background:rgba(6,10,14,.5)}.lbtag.ai b::before{background:rgba(255,255,255,.3)}
+@media (max-width:1100px){.mpinfo{width:240px}#mpRoom .mpvc .vct{display:none}}
+@media (max-height:620px){.mpr-top{padding:8px 14px 0}.mpr-t small{display:none}.mpr-t b{font-size:18px}.mpr-top .mpcode b{font-size:17px}.mpr-bot{padding:0 12px 8px;gap:6px}#mpRoom .mpslots{padding:8px 10px 6px;gap:6px;border-radius:18px}#mpRoom .mps .ph{width:46px;height:46px}#mpRoom .mps{width:54px}#mpRoom .mps em{display:none}#mpRoom .mps b{font-size:11px}#mpStart{min-width:140px;padding:9px 18px;font-size:16px}.mpname span{display:none}.mpname input{width:130px;padding:7px 12px}.mpinfo{display:none}#mpRoom .mpvc .vct,#mpRoom .mpvc .lv{display:none}.mpcount{display:none}.mpmsg{min-width:120px}#mpRoom .mpstatus{font-size:12px}}
 .mpvc{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--dim);margin:12px 0 2px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--faint)}
 .mpvc .vcmic em{display:none}.mpvc .vct{flex:1;text-align:left}
 .mpvc .lv{flex:0 0 64px;height:4px;border-radius:99px;background:var(--faint);overflow:hidden}.mpvc .lv i{display:block;height:100%;width:0;background:var(--cyan);transition:width .08s}
@@ -190,6 +216,11 @@ html.touch .bat .pk{display:none}
 .xclose:hover{background:rgba(255,255,255,.16)}
 #pause.covered .pcard{visibility:hidden}
 html.touch .ov .panel,html.touch .pcard{background:rgba(10,13,18,.94)}
+.netbar{position:absolute;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);z-index:9;display:flex;align-items:center;gap:10px;padding:7px 12px 7px 14px;border-radius:99px;background:rgba(30,18,12,.86);border:1px solid rgba(244,187,114,.55);color:var(--ink);font-size:13px;pointer-events:auto;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.netbar[hidden]{display:none}
+.netbar i{width:8px;height:8px;border-radius:50%;background:var(--amber);animation:nb 1s ease-in-out infinite}
+@keyframes nb{50%{opacity:.25}}
+.netbar button{padding:5px 12px;min-height:0;font-size:12px}
 .unstk{position:absolute;left:50%;bottom:238px;transform:translateX(-50%);pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:6px;font:500 13px "Noto Sans TC",sans-serif;color:var(--ink);background:rgba(10,13,18,.74);border:1px solid rgba(244,187,114,.55);border-radius:99px;padding:7px 16px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.3)}
 .unstk[hidden]{display:none}
 .unstk kbd{font:600 11px "Fredoka";background:rgba(255,255,255,.08);border:1px solid var(--faint);border-bottom-width:2px;border-radius:6px;padding:1px 6px;margin:0 2px}
@@ -534,6 +565,7 @@ html.touch .mpchip{bottom:auto;top:62px}
 <div id="pflash" class="pflash" aria-hidden="true"></div>
 <div id="hud" class="hud off">
   <div id="mpChip" class="mpchip" hidden></div>
+  <div id="netbar" class="netbar" hidden></div>
   <div class="unl" id="unl" aria-live="polite"></div>
   <div id="watch"><i></i><span></span></div>
   <div class="bars"></div>
@@ -644,17 +676,18 @@ html.touch .mpchip{bottom:auto;top:62px}
   <div id="mpRoom" class="mproom" hidden>
     <div class="lbtags" id="lbTags" aria-hidden="true"></div>
     <header class="mpr-top">
-      <div class="mpr-l"><b class="mpr-t">揀角色</b><div class="mpcode"><span>房號</span><b id="mpRoomCode">----</b></div><button id="mpCopy" class="ghost small">複製邀請連結</button></div>
-      <div class="mpr-r"><span id="mpCount2"></span><button id="mpLeave" class="ghost small">離開房間</button></div>
+      <div class="mpr-l"><div class="mpr-t"><small>多人連線</small><b>揀角色</b></div><div class="mpcode"><span>房號</span><b id="mpRoomCode">----</b></div><button id="mpCopy" class="ghost small">複製邀請連結</button></div>
+      <div class="mpr-r"><span class="mpcount" id="mpCount2"></span><div class="mpvc vconly" id="mpVc"><span class="vcmic"></span><span class="vct"></span><span class="lv"><i></i></span><button id="mpVcBtn" class="ghost small">咪</button></div><button id="mpLeave" class="ghost small">離開房間</button></div>
     </header>
+    <aside class="mpinfo" id="mpInfo" aria-live="polite"></aside>
     <footer class="mpr-bot">
-      <div class="mpr-row1">
+      <div class="mpslots" id="mpSlots"></div>
+      <div class="mpr-row3">
         <label class="mpname"><span>你的名字</span><input id="mpName2" maxlength="10" placeholder="輸入名字" autocomplete="nickname" spellcheck="false"></label>
         <div class="mpsave" id="mpSave" hidden><span>起點</span><div class="sel" id="mpSaveSel" role="group" aria-label="起點"><button data-s="new">由頭開始</button><button data-s="cont" class="on">繼續上次進度</button></div><small id="mpSaveTxt"></small></div>
-        <div class="mpvc vconly" id="mpVc"><span class="vcmic"></span><span class="vct"></span><span class="lv"><i></i></span><button id="mpVcBtn" class="ghost small">咪 開／關</button></div>
+        <div class="mpmsg"><div id="mpStatus" class="mpstatus">連線中…</div><div id="mpErr" class="mperr"></div></div>
+        <button id="mpStart" disabled>開始</button>
       </div>
-      <div class="mpslots" id="mpSlots"></div>
-      <div class="mpr-row3"><div class="mpmsg"><div id="mpStatus" class="mpstatus">連線中…</div><div id="mpErr" class="mperr"></div></div><button id="mpStart" disabled>開始</button></div>
     </footer>
   </div>
 </div>

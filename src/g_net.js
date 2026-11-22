@@ -14,6 +14,13 @@
 // =====================================================================
 const NET = { on: false, host: false, client: false, me: '', hostId: '', code: '', tx: null, slots: { dad: null, sq: null, bear: null, cham: null }, peers: [], my: null, sendT: 0, worldT: 0, started: false, pend: {}, seenT: 0, npc: null, joinTimer: 0, order: [] };
 const APP_ID = 'pschanwkca/beneath-notice/coop-v1';
+// Relay (TURN) servers let two players connect when their networks won't let them talk directly (common on
+// mobile data). A free Open Relay / Metered key can be dropped in here; the public STUN servers help most
+// home networks find a direct route.
+const TURN_SERVERS = [
+  { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turn:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' }
+];
+const STUN_SERVERS = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }];
 NET.tokOf = {}; NET.reserved = {};
 // a token that survives a reload, so a dropped player gets their own character back
 NET.tok = (() => { const k = 'bn-player'; let t = ''; try { const st = /[?&]net=local/.test(location.search) ? sessionStorage : localStorage; t = st.getItem(k); if (!t) { t = Math.random().toString(36).slice(2, 12); st.setItem(k, t); } } catch (e) { t = Math.random().toString(36).slice(2, 12); } return t; })();
@@ -29,7 +36,7 @@ function playerLabel(id) { const p = NET.slots[id]; if (!p) return '電腦'; if 
 // ---------- transports ----------
 function trysteroTransport(code) {
   if (!window.Trystero) throw new Error('連線模組載入失敗');
-  const room = window.Trystero.joinRoom({ appId: APP_ID, identity: 'none', maxUsers: 10 }, 'room-' + code);
+  const room = window.Trystero.joinRoom({ appId: APP_ID, identity: 'none', maxUsers: 10, relayRedundancy: 5, turnConfig: TURN_SERVERS, rtcConfig: { iceServers: STUN_SERVERS } }, 'room-' + code);
   const act = room.makeAction('m');
   const T = { send: (d, to) => act.send(d, to ? { target: to } : undefined), leave: () => room.leave() };
   act.onMessage((d, ctx) => T.onMsg && T.onMsg(d, ctx.peerId));
@@ -66,9 +73,9 @@ function mpConnect(code, host) {
   mpStatus(host ? '房間已開好。把房號或連結傳給朋友，然後各自揀角色。' : '正在尋找房間……');
   let T; try { T = NET.tx = LOCALNET ? localTransport(code) : trysteroTransport(code); } catch (e) { mpStatus('連線失敗：' + e.message); return; }
   T.onSelf = id => { NET.me = id; if (host) { NET.hostId = id; NET.order = [id]; NET.names[id] = myName(); } mpRender(); vcSelf(); };
-  T.onJoin = id => { if (!NET.peers.includes(id)) NET.peers.push(id); vcJoined(id); if (NET.host) { if (!NET.order.includes(id)) NET.order.push(id); mpBroadcastLobby(); } else nsend({ t: 'hi', tok: NET.tok, n: myName() }, id); mpRender(); };
+  T.onJoin = id => { if (id === NET.hostId && NET.hostGone) { NET.hostGone = 0; NET.heard = performance.now(); if (NET.started) { nsend({ t: 'hi', tok: NET.tok, n: myName() }, id); toast('重新連上房主了', 2.4); } } if (!NET.peers.includes(id)) NET.peers.push(id); vcJoined(id); if (NET.host) { if (!NET.order.includes(id)) NET.order.push(id); mpBroadcastLobby(); } else nsend({ t: 'hi', tok: NET.tok, n: myName() }, id); mpRender(); };
   T.onLeave = id => mpPeerLeft(id);
-  T.onMsg = (d, from) => { try { netMsg(d, from); } catch (e) { console.warn('net msg', d && d.t, e); } };
+  T.onMsg = (d, from) => { if (from === NET.hostId) NET.heard = performance.now(); try { netMsg(d, from); } catch (e) { console.warn('net msg', d && d.t, e); } };
   T.onErr = e => { if (e && e.code === 'room-full') mpStatus('房間暫時滿了。如果你剛斷線，等半分鐘再試。'); else if (e && e.code === 'peer-connect-failed') $('mpErr').textContent = '有隊友連唔上（網絡限制）。可以試下用另一個網絡。'; };
   vcMicStart(); vcUI();
   if (!host) { clearTimeout(NET.joinTimer); NET.joinTimer = setTimeout(() => { if (!NET.hostId) mpStatus('找不到這個房間。確認房號，或者等房主開好房間再試。'); }, 15000); }
@@ -89,12 +96,13 @@ function hostPick(peer, id) {
 function mpRender() {
   const box = $('mpSlots'); if (!box) return;
   box.innerHTML = IDS.map(id => {
-    const p = NET.slots[id]; const S = SP[id]; const nm = nameOf(p); const who = p ? (p === NET.me ? (nm ? nm + '（你）' : '你') : nm || (p === NET.hostId ? '房主' : '玩家 ' + (NET.order.indexOf(p) + 1))) : CORE.includes(id) ? '電腦控制' : '空位';
+    const p = NET.slots[id]; const S = SP[id]; const nm = nameOf(p); const who = p ? (p === NET.me ? (nm || '你') : nm || (p === NET.hostId ? '房主' : '玩家 ' + (NET.order.indexOf(p) + 1))) : CORE.includes(id) ? '電腦' : '可以揀';
     // not unlocked on this device yet: a silhouette and how to get it
     if (!p && !isUnlocked(id)) { const r = ROSTER.find(q => q.id === id); return `<button class="mps lock" disabled title="${r.how}"><span class="ph">${PORTRAITS[id] ? `<img class="sil" alt="" src="${PORTRAITS[id]}">` : SIL_SVG}<i>?</i></span><b>？？？</b><small>${r.how}</small><em>未解鎖</em></button>`; }
     return `<button class="mps${p === NET.me ? ' me' : p ? ' taken' : ''}" data-id="${id}" ${p && p !== NET.me ? 'disabled' : ''}><span class="ph">${PORTRAITS[id] ? `<img alt="" src="${PORTRAITS[id]}">` : ''}</span><b>${S.name}</b><small>${S.abil}</small><em>${who}</em></button>`;
   }).join('');
-  box.querySelectorAll('.mps').forEach(b => { b.addEventListener('click', () => mpPick(b.dataset.id)); b.addEventListener('pointerenter', () => { LOBBY.hover = b.dataset.id; }); b.addEventListener('pointerleave', () => { LOBBY.hover = null; }); });
+  box.querySelectorAll('.mps').forEach(b => { b.addEventListener('click', () => mpPick(b.dataset.id)); b.addEventListener('pointerenter', () => { LOBBY.hover = b.dataset.id; mpInfoRender(); }); b.addEventListener('pointerleave', () => { LOBBY.hover = null; mpInfoRender(); }); });
+  mpInfoRender();
   const n = (NET.me ? 1 : 0) + NET.peers.length; $('mpCount').textContent = $('mpCount2').textContent = `${n} / 8 人在房間`;
   if (NET.host) { const everyone = [NET.me, ...NET.peers]; const ok = everyone.every(p => IDS.some(k => NET.slots[k] === p)); $('mpStart').disabled = !ok; $('mpStart').textContent = ok ? '開始' : '等大家揀好角色'; }
   else if (NET.hostId && NET.remoteStarted && !NET.on) mpStatus(IDS.some(k => !NET.slots[k]) ? '遊戲進行中：揀一隻「電腦控制」的角色加入。之前斷了線的話，會自動拿回原本的角色。' : '房間已滿，八隻角色都有人玩。');
@@ -104,7 +112,7 @@ function mpPeerLeft(id) {
   vcClose(id);
   NET.peers = NET.peers.filter(p => p !== id);
   if (!NET.started) { if (NET.host) { for (const k of IDS) if (NET.slots[k] === id) NET.slots[k] = null; mpBroadcastLobby(); } else if (id === NET.hostId) mpStatus('房主離開了房間。'); mpRender(); return; }
-  if (id === NET.hostId && !NET.host) { mpHostLost(); return; }
+  if (id === NET.hostId && !NET.host) { NET.hostGone = performance.now(); return; }
   for (const k of IDS) {
     const C = chars[k]; if (C.owner === id) C.owner = C.baseOwner;
     if (NET.slots[k] === id) { if (NET.host) NET.reserved[k] = NET.tokOf[id]; NET.slots[k] = null; C.baseOwner = NET.hostId; C.owner = NET.hostId; C.queue = []; if (C.disp) C.disp.copy(C.pos); toast(`${C.S.name}的玩家斷線了，暫時由電腦控制。用同一個房號重新加入就能拿回這隻角色`, 4.2); }
@@ -181,10 +189,20 @@ function applyUnlease(u) {
 function netUpdate(dt) {
   if (!NET.on || !NET.tx) return;
   if (STATE === 'play' || STATE === 'fail' || STATE === 'end') {
-    NET.sendT -= dt; if (NET.sendT <= 0) { NET.sendT = 1 / 15; netSendChars(); }
+    NET.sendT -= dt; if (NET.sendT <= 0) { NET.sendT = 1 / 20; netSendChars(); }
     if (NET.host) { NET.worldT -= dt; if (NET.worldT <= 0) { NET.worldT = .1; netSendWorld(); } }
   }
-  netInterp(dt); netTags();
+  netInterp(dt); netTags(); netWatch();
+}
+// how the line to the host is doing: a quiet note when it's shaky, a way back in if it's gone
+function netWatch() {
+  const el = $('netbar'); if (!el) return;
+  if (!NET.on || NET.host || !NET.started) { if (!el.hidden) el.hidden = true; return; }
+  const now = performance.now(), quiet = NET.heard ? (now - NET.heard) / 1000 : 0, gone = NET.hostGone ? (now - NET.hostGone) / 1000 : 0;
+  let mode = '';
+  if (gone > 45) { mpHostLost(); NET.hostGone = 0; return; }
+  if (gone > 0 || quiet > 12) mode = 'lost'; else if (quiet > 3) mode = 'weak';
+  if (el.dataset.m !== mode) { el.dataset.m = mode; el.hidden = !mode; el.innerHTML = mode === 'lost' ? '<i></i><span>和房主的連線中斷了，正在等待重新連接…</span><button id="netRe">重新加入</button>' : '<i></i><span>網絡不穩定…</span>'; const b = $('netRe'); if (b) b.addEventListener('click', () => { location.reload(); }); }
 }
 function netSendChars() {
   const c = [];
@@ -192,14 +210,18 @@ function netSendChars() {
   if (c.length) nsend({ t: 'p', lv: LEVEL, c });
 }
 function netRecvChars(d, from) {
-  for (const a of d.c) { const C = chars[a[0]]; if (!C || C.owner !== from) continue; C.net = { x: a[1], y: a[2], z: a[3], yaw: a[4], st: a[5], spd: a[6], fl: a[7] }; C.stamina = a[8]; C.stamMax = a[9]; C.camo = a[10]; C.on = a[11] || null; }
+  const now = performance.now();
+  for (const a of d.c) { const C = chars[a[0]]; if (!C || C.owner !== from) continue; const o = C.net, gap = o ? (now - o.t) / 1000 : 0; const v = o && gap > .02 && gap < .5 ? [(a[1] - o.x) / gap, (a[2] - o.y) / gap, (a[3] - o.z) / gap] : [0, 0, 0];
+    if (Math.hypot(v[0], v[2]) > 160) v[0] = v[1] = v[2] = 0;
+    C.net = { x: a[1], y: a[2], z: a[3], yaw: a[4], st: a[5], spd: a[6], fl: a[7], t: now, vx: v[0], vy: v[1], vz: v[2] }; C.stamina = a[8]; C.stamMax = a[9]; C.camo = a[10]; C.on = a[11] || null; }
 }
 function netInterp(dt) {
-  const k = 1 - Math.exp(-14 * dt);
+  const k = 1 - Math.exp(-12 * dt), now = performance.now();
   for (const C of party) {
-    if (mine(C) || !C.net) continue; const n = C.net;
-    const dx = n.x - C.pos.x, dy = n.y - C.pos.y, dz = n.z - C.pos.z;
-    if (dx * dx + dy * dy + dz * dz > 900) C.pos.set(n.x, n.y, n.z); else { C.pos.x += dx * k; C.pos.y += dy * k; C.pos.z += dz * k; }
+    if (mine(C) || !C.net) continue; const n = C.net, age = Math.min(.2, (now - (n.t || now)) / 1000), still = C.frozen || C.on;
+    const tx = n.x + (still ? 0 : (n.vx || 0) * age), ty = n.y + (still ? 0 : (n.vy || 0) * age * .5), tz = n.z + (still ? 0 : (n.vz || 0) * age);
+    const dx = tx - C.pos.x, dy = ty - C.pos.y, dz = tz - C.pos.z;
+    if (dx * dx + dy * dy + dz * dz > 900) C.pos.set(tx, ty, tz); else { C.pos.x += dx * k; C.pos.y += dy * k; C.pos.z += dz * k; }
     C.yaw = angDamp(C.yaw, n.yaw, 14, dt); if (!C.frozen) C.state = n.st; C.spd = n.spd;
     C.crouch = !!(n.fl & 1); C.gliding = !!(n.fl & 4); if ((n.fl & 8) && !(C.shoveT > 0)) C.shoveT = .38; C.pushing = !!(n.fl & 16);
     if (C.disp) C.disp.copy(C.pos);

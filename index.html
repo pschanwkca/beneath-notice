@@ -74,50 +74,76 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:non
 .pbub{position:absolute;transform:translate(-50%,-100%);max-width:220px;font:500 13px/1.4 "Noto Sans TC",sans-serif;color:#1a1612;background:#f5f0e6;border-radius:12px;padding:5px 11px;box-shadow:0 6px 18px rgba(0,0,0,.35);pointer-events:none;opacity:0;transition:opacity .25s;overflow-wrap:anywhere;text-align:center}
 .pbub::after{content:'';position:absolute;left:50%;bottom:-5px;margin-left:-6px;border:6px solid transparent;border-top-color:#f5f0e6;border-bottom:0}
 .pbub.on{opacity:1}
-/* ---- the character select page (online room) ---- */
+/* ---- the character select page (online room): a stage in the machine's prep area ---- */
 #mp.inroom:not([hidden]){background:none;padding:0;display:block}
 #mp.inroom .mpbox{display:none}
-.mproom{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
+.mproom{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none;
+  background:radial-gradient(120% 70% at 50% 108%,rgba(3,8,10,.92) 18%,rgba(3,8,10,0) 58%),radial-gradient(90% 60% at 50% -14%,rgba(3,8,10,.8),rgba(3,8,10,0) 60%)}
 .mproom[hidden]{display:none}
-.mpr-top,.mpr-bot{pointer-events:auto}
-.mpr-top{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:18px clamp(16px,3vw,34px) 34px;background:linear-gradient(180deg,rgba(5,9,12,.82),rgba(5,9,12,0))}
-.mpr-l{display:flex;align-items:center;gap:18px;flex-wrap:wrap}
-.mpr-t{font:700 22px "Noto Sans TC",sans-serif;letter-spacing:.14em;color:var(--ink)}
-.mpr-top .mpcode{margin:0;gap:10px;padding:4px 14px;border-radius:99px;background:rgba(255,255,255,.05);border:1px solid var(--faint)}
-.mpr-top .mpcode b{font-size:24px}
-.mpr-r{display:flex;align-items:center;gap:14px;color:var(--dim);font-size:13px}
-.mpr-bot{display:flex;flex-direction:column;align-items:center;gap:14px;padding:46px clamp(14px,3vw,34px) 20px;background:linear-gradient(0deg,rgba(5,9,12,.94) 0,rgba(5,9,12,.84) 62%,rgba(5,9,12,0))}
-.mpr-row1{display:flex;gap:12px 18px;align-items:center;justify-content:center;flex-wrap:wrap;width:min(1120px,100%)}
+.mpr-top,.mpr-bot,.mpinfo{pointer-events:auto}
+.mpr-top{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:16px clamp(16px,3vw,36px) 0}
+.mpr-l,.mpr-r{display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+.mpr-t{display:flex;flex-direction:column;line-height:1.05;margin-right:6px}
+.mpr-t small{font:600 11px "Fredoka","Noto Sans TC";letter-spacing:.24em;color:var(--cyan);text-transform:uppercase}
+.mpr-t b{font:700 26px "Noto Sans TC",sans-serif;letter-spacing:.12em;color:var(--ink)}
+.mpr-top .mpcode{margin:0;gap:10px;padding:5px 16px;border-radius:99px;background:rgba(6,14,18,.6);border:1px solid rgba(111,246,238,.28)}
+.mpr-top .mpcode b{font-size:22px}
+.mpcount{font-size:13px;color:var(--dim);padding:6px 12px;border-radius:99px;background:rgba(6,14,18,.5);border:1px solid var(--faint)}
+#mpRoom .mpvc{margin:0;padding:4px 6px 4px 12px;gap:8px;border-radius:99px;background:rgba(6,14,18,.5)}
+#mpRoom .mpvc .vct{font-size:12px;max-width:170px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#mpRoom .mpvc .lv{width:46px}
+/* who you are: a card on the left */
+.mpinfo{position:absolute;left:clamp(16px,3vw,36px);top:50%;transform:translateY(-58%);width:min(300px,26vw);padding:18px 18px 16px;border-radius:20px;background:linear-gradient(160deg,rgba(14,22,27,.86),rgba(8,12,15,.78));border:1px solid rgba(255,255,255,.09);box-shadow:0 24px 60px rgba(0,0,0,.45);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:opacity .25s}
+.mpinfo:empty{opacity:0;pointer-events:none}
+.mpinfo .ih{display:flex;align-items:center;gap:14px}
+.mpinfo .ip{width:64px;height:64px;border-radius:50%;overflow:hidden;flex:none;background:#0d1418;border:3px solid var(--c,#fff);box-shadow:0 0 22px color-mix(in srgb,var(--c,#fff) 35%,transparent)}
+.mpinfo .ip img{width:100%;height:100%;object-fit:cover}
+.mpinfo .in b{display:block;font:700 22px "Noto Sans TC";color:var(--c,#fff)}
+.mpinfo .in small{font-size:12px;color:var(--dim);letter-spacing:.1em}
+.mpinfo .ia{margin-top:14px;padding:10px 12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--faint)}
+.mpinfo .ia em{font:700 12px "Noto Sans TC";font-style:normal;color:var(--amber);letter-spacing:.06em}
+.mpinfo .ia p{margin:4px 0 0;font-size:13px;line-height:1.5;color:var(--ink)}
+.mpinfo .is{margin-top:12px;display:grid;grid-template-columns:auto 1fr;gap:7px 12px;align-items:center;font-size:12px;color:var(--dim)}
+.mpinfo .is i{display:block;height:6px;border-radius:6px;background:rgba(255,255,255,.08);overflow:hidden}
+.mpinfo .is i::after{content:'';display:block;height:100%;width:var(--v);background:linear-gradient(90deg,var(--c,#fff),color-mix(in srgb,var(--c,#fff) 60%,#fff));border-radius:6px}
+.mpinfo .iw{margin-top:12px;font-size:12px;color:var(--dim)}.mpinfo .iw b{color:var(--ink)}
+/* the dock along the bottom */
+.mpr-bot{display:flex;flex-direction:column;align-items:center;gap:12px;padding:0 clamp(14px,3vw,36px) 18px}
+#mpRoom .mpslots{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;padding:12px 16px 10px;border-radius:24px;background:rgba(8,13,16,.62);border:1px solid rgba(255,255,255,.07);box-shadow:0 18px 48px rgba(0,0,0,.4)}
+#mpRoom .mps{width:74px;padding:0;background:none;border:0;gap:4px;border-radius:0;position:relative}
+#mpRoom .mps:hover{transform:none}
+#mpRoom .mps .ph{width:62px;height:62px;border:3px solid rgba(255,255,255,.14);box-shadow:0 8px 18px rgba(0,0,0,.45);transition:transform .16s,border-color .16s,box-shadow .16s;background:#0d1418}
+#mpRoom .mps:not(.lock):not(.taken):hover .ph{transform:translateY(-5px) scale(1.07);border-color:rgba(255,255,255,.65)}
+#mpRoom .mps.me .ph{border-color:var(--amber);box-shadow:0 0 0 4px rgba(244,187,114,.22),0 0 26px rgba(244,187,114,.4),0 8px 18px rgba(0,0,0,.45);transform:translateY(-5px)}
+#mpRoom .mps.me::before{content:'你';position:absolute;top:-8px;left:50%;transform:translateX(-50%);z-index:1;font:700 10px "Noto Sans TC";color:#1b1208;background:var(--amber);padding:1px 7px;border-radius:99px}
+#mpRoom .mps.taken{opacity:1}#mpRoom .mps.taken .ph{border-color:var(--cyan)}
+#mpRoom .mps b{font-size:12.5px;margin-top:3px;color:var(--ink)}
+#mpRoom .mps small{display:none}
+#mpRoom .mps em{font-size:10.5px;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0;font-style:normal;color:var(--dim)}
+#mpRoom .mps.taken em{color:var(--cyan)}#mpRoom .mps.me em{color:var(--amber)}
+#mpRoom .mps.lock .ph{border-style:dashed;box-shadow:none;opacity:.7}#mpRoom .mps.lock b{color:var(--dim)}
+.mpr-row3{display:flex;align-items:center;gap:16px;justify-content:center;flex-wrap:wrap;width:min(1180px,100%)}
 .mpname{display:flex;align-items:center;justify-content:center;gap:10px;font-size:13px;color:var(--dim);margin:0 0 14px}
-.mpr-row1 .mpname{margin:0}
-.mpname input{width:180px;font:600 15px "Noto Sans TC",sans-serif;background:rgba(255,255,255,.07);color:var(--ink);border:1px solid var(--faint);border-radius:99px;padding:8px 16px}
+.mpr-row3 .mpname{margin:0}
+.mpname input{width:170px;font:600 15px "Noto Sans TC",sans-serif;background:rgba(6,14,18,.6);color:var(--ink);border:1px solid rgba(255,255,255,.14);border-radius:99px;padding:9px 16px}
 .mpname input:focus{outline:2px solid var(--amber);outline-offset:2px}
 .mpsave{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--dim)}.mpsave[hidden]{display:none}
-.mpsave small{font-size:12px;color:var(--cyan);max-width:260px;line-height:1.35}
-#mpRoom .mpvc{margin:0;flex:0 1 330px;padding:7px 12px}
-#mpRoom .mpslots{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;width:min(1120px,100%)}
-#mpRoom .mps{width:82px;padding:0;background:none;border:0;gap:4px;border-radius:0}
-#mpRoom .mps:hover{transform:none}
-#mpRoom .mps .ph{width:70px;height:70px;border:3px solid rgba(255,255,255,.16);box-shadow:0 8px 20px rgba(0,0,0,.45);transition:transform .15s,border-color .15s,box-shadow .15s}
-#mpRoom .mps:not(.lock):not(.taken):hover .ph{transform:translateY(-4px) scale(1.06);border-color:rgba(255,255,255,.6)}
-#mpRoom .mps.me .ph{border-color:var(--amber);box-shadow:0 0 0 4px rgba(244,187,114,.28),0 0 24px rgba(244,187,114,.35),0 8px 20px rgba(0,0,0,.45);transform:translateY(-4px)}
-#mpRoom .mps.taken{opacity:1}#mpRoom .mps.taken .ph{border-color:var(--cyan)}
-#mpRoom .mps b{font-size:13px;margin-top:2px}
-#mpRoom .mps small{display:none}
-#mpRoom .mps em{font-size:11px;max-width:86px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin:0}
-#mpRoom .mps.lock .ph{border-style:dashed;box-shadow:none}#mpRoom .mps.lock b{color:var(--dim)}
-.mpr-row3{display:flex;align-items:center;gap:18px;justify-content:center;width:min(1120px,100%)}
-.mpmsg{flex:1;text-align:right;min-width:0}
-#mpRoom .mpstatus{margin:0;font-size:14px}
-#mpStart{min-width:200px;font-size:19px;padding:13px 30px;letter-spacing:.2em}
+.mpsave small{font-size:12px;color:var(--cyan);max-width:240px;line-height:1.35}
+.mpmsg{flex:1;min-width:180px;text-align:right}
+#mpRoom .mpstatus{margin:0;font-size:13.5px;color:var(--dim)}
+#mpStart{min-width:200px;font-size:19px;padding:14px 32px;letter-spacing:.24em}
 #mpStart[hidden]{display:none}
+#mpStart:disabled{background:rgba(255,255,255,.08);color:var(--dim);box-shadow:none;letter-spacing:.08em;font-size:15px}
+/* name plates over the lineup */
 .lbtags{position:fixed;inset:0;pointer-events:none}
-.lbtag{position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:center;gap:2px;white-space:nowrap;transition:opacity .25s}
-.lbtag b{font:700 13px "Noto Sans TC",sans-serif;padding:4px 11px;border-radius:99px;background:rgba(6,10,14,.72);border:1.5px solid currentColor;box-shadow:0 6px 16px rgba(0,0,0,.35)}
-.lbtag small{font-size:11px;color:var(--dim);text-shadow:0 1px 4px #000}
-.lbtag.me b{background:var(--amber);color:#1b1208;border-color:var(--amber)}
-.lbtag.ai b{color:var(--dim)!important;border-color:var(--faint);font-weight:500}
-@media (max-height:620px){.mpr-top{padding:10px 16px 20px}.mpr-bot{padding:26px 14px 10px;gap:8px}#mpRoom .mps .ph{width:52px;height:52px}#mpRoom .mps{width:64px}#mpRoom .mps em{display:none}#mpStart{min-width:150px;padding:9px 20px;font-size:16px}.mpname span{display:none}#mpRoom .mpvc{display:none}}
+.lbtag{position:absolute;left:0;top:0;display:flex;flex-direction:column;align-items:center;gap:3px;white-space:nowrap;transition:opacity .25s}
+.lbtag b{display:flex;align-items:center;gap:6px;font:700 13px "Noto Sans TC",sans-serif;padding:4px 12px 4px 9px;border-radius:99px;background:rgba(6,10,14,.78);color:var(--ink);border:1px solid rgba(255,255,255,.12);box-shadow:0 6px 16px rgba(0,0,0,.35)}
+.lbtag b::before{content:'';width:8px;height:8px;border-radius:50%;background:var(--c,#fff)}
+.lbtag small{font-size:11px;color:var(--dim);text-shadow:0 1px 4px #000;letter-spacing:.06em}
+.lbtag.me b{background:var(--amber);color:#1b1208;border-color:var(--amber)}.lbtag.me b::before{background:#1b1208}
+.lbtag.ai b{color:var(--dim);font-weight:500;background:rgba(6,10,14,.5)}.lbtag.ai b::before{background:rgba(255,255,255,.3)}
+@media (max-width:1100px){.mpinfo{width:240px}#mpRoom .mpvc .vct{display:none}}
+@media (max-height:620px){.mpr-top{padding:8px 14px 0}.mpr-t small{display:none}.mpr-t b{font-size:18px}.mpr-top .mpcode b{font-size:17px}.mpr-bot{padding:0 12px 8px;gap:6px}#mpRoom .mpslots{padding:8px 10px 6px;gap:6px;border-radius:18px}#mpRoom .mps .ph{width:46px;height:46px}#mpRoom .mps{width:54px}#mpRoom .mps em{display:none}#mpRoom .mps b{font-size:11px}#mpStart{min-width:140px;padding:9px 18px;font-size:16px}.mpname span{display:none}.mpname input{width:130px;padding:7px 12px}.mpinfo{display:none}#mpRoom .mpvc .vct,#mpRoom .mpvc .lv{display:none}.mpcount{display:none}.mpmsg{min-width:120px}#mpRoom .mpstatus{font-size:12px}}
 .mpvc{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--dim);margin:12px 0 2px;padding:9px 12px;border-radius:12px;background:rgba(255,255,255,.04);border:1px solid var(--faint)}
 .mpvc .vcmic em{display:none}.mpvc .vct{flex:1;text-align:left}
 .mpvc .lv{flex:0 0 64px;height:4px;border-radius:99px;background:var(--faint);overflow:hidden}.mpvc .lv i{display:block;height:100%;width:0;background:var(--cyan);transition:width .08s}
@@ -190,6 +216,11 @@ html.touch .bat .pk{display:none}
 .xclose:hover{background:rgba(255,255,255,.16)}
 #pause.covered .pcard{visibility:hidden}
 html.touch .ov .panel,html.touch .pcard{background:rgba(10,13,18,.94)}
+.netbar{position:absolute;left:50%;top:calc(12px + env(safe-area-inset-top));transform:translateX(-50%);z-index:9;display:flex;align-items:center;gap:10px;padding:7px 12px 7px 14px;border-radius:99px;background:rgba(30,18,12,.86);border:1px solid rgba(244,187,114,.55);color:var(--ink);font-size:13px;pointer-events:auto;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+.netbar[hidden]{display:none}
+.netbar i{width:8px;height:8px;border-radius:50%;background:var(--amber);animation:nb 1s ease-in-out infinite}
+@keyframes nb{50%{opacity:.25}}
+.netbar button{padding:5px 12px;min-height:0;font-size:12px}
 .unstk{position:absolute;left:50%;bottom:238px;transform:translateX(-50%);pointer-events:auto;display:flex;flex-direction:column;align-items:center;gap:6px;font:500 13px "Noto Sans TC",sans-serif;color:var(--ink);background:rgba(10,13,18,.74);border:1px solid rgba(244,187,114,.55);border-radius:99px;padding:7px 16px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.3)}
 .unstk[hidden]{display:none}
 .unstk kbd{font:600 11px "Fredoka";background:rgba(255,255,255,.08);border:1px solid var(--faint);border-bottom-width:2px;border-radius:6px;padding:1px 6px;margin:0 2px}
@@ -534,6 +565,7 @@ html.touch .mpchip{bottom:auto;top:62px}
 <div id="pflash" class="pflash" aria-hidden="true"></div>
 <div id="hud" class="hud off">
   <div id="mpChip" class="mpchip" hidden></div>
+  <div id="netbar" class="netbar" hidden></div>
   <div class="unl" id="unl" aria-live="polite"></div>
   <div id="watch"><i></i><span></span></div>
   <div class="bars"></div>
@@ -644,17 +676,18 @@ html.touch .mpchip{bottom:auto;top:62px}
   <div id="mpRoom" class="mproom" hidden>
     <div class="lbtags" id="lbTags" aria-hidden="true"></div>
     <header class="mpr-top">
-      <div class="mpr-l"><b class="mpr-t">揀角色</b><div class="mpcode"><span>房號</span><b id="mpRoomCode">----</b></div><button id="mpCopy" class="ghost small">複製邀請連結</button></div>
-      <div class="mpr-r"><span id="mpCount2"></span><button id="mpLeave" class="ghost small">離開房間</button></div>
+      <div class="mpr-l"><div class="mpr-t"><small>多人連線</small><b>揀角色</b></div><div class="mpcode"><span>房號</span><b id="mpRoomCode">----</b></div><button id="mpCopy" class="ghost small">複製邀請連結</button></div>
+      <div class="mpr-r"><span class="mpcount" id="mpCount2"></span><div class="mpvc vconly" id="mpVc"><span class="vcmic"></span><span class="vct"></span><span class="lv"><i></i></span><button id="mpVcBtn" class="ghost small">咪</button></div><button id="mpLeave" class="ghost small">離開房間</button></div>
     </header>
+    <aside class="mpinfo" id="mpInfo" aria-live="polite"></aside>
     <footer class="mpr-bot">
-      <div class="mpr-row1">
+      <div class="mpslots" id="mpSlots"></div>
+      <div class="mpr-row3">
         <label class="mpname"><span>你的名字</span><input id="mpName2" maxlength="10" placeholder="輸入名字" autocomplete="nickname" spellcheck="false"></label>
         <div class="mpsave" id="mpSave" hidden><span>起點</span><div class="sel" id="mpSaveSel" role="group" aria-label="起點"><button data-s="new">由頭開始</button><button data-s="cont" class="on">繼續上次進度</button></div><small id="mpSaveTxt"></small></div>
-        <div class="mpvc vconly" id="mpVc"><span class="vcmic"></span><span class="vct"></span><span class="lv"><i></i></span><button id="mpVcBtn" class="ghost small">咪 開／關</button></div>
+        <div class="mpmsg"><div id="mpStatus" class="mpstatus">連線中…</div><div id="mpErr" class="mperr"></div></div>
+        <button id="mpStart" disabled>開始</button>
       </div>
-      <div class="mpslots" id="mpSlots"></div>
-      <div class="mpr-row3"><div class="mpmsg"><div id="mpStatus" class="mpstatus">連線中…</div><div id="mpErr" class="mperr"></div></div><button id="mpStart" disabled>開始</button></div>
     </footer>
   </div>
 </div>
@@ -8419,6 +8452,13 @@ function upIncident(id, o, on, M, K, mr, kr, look) {
 // =====================================================================
 const NET = { on: false, host: false, client: false, me: '', hostId: '', code: '', tx: null, slots: { dad: null, sq: null, bear: null, cham: null }, peers: [], my: null, sendT: 0, worldT: 0, started: false, pend: {}, seenT: 0, npc: null, joinTimer: 0, order: [] };
 const APP_ID = 'pschanwkca/beneath-notice/coop-v1';
+// Relay (TURN) servers let two players connect when their networks won't let them talk directly (common on
+// mobile data). A free Open Relay / Metered key can be dropped in here; the public STUN servers help most
+// home networks find a direct route.
+const TURN_SERVERS = [
+  { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turn:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' }
+];
+const STUN_SERVERS = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }];
 NET.tokOf = {}; NET.reserved = {};
 // a token that survives a reload, so a dropped player gets their own character back
 NET.tok = (() => { const k = 'bn-player'; let t = ''; try { const st = /[?&]net=local/.test(location.search) ? sessionStorage : localStorage; t = st.getItem(k); if (!t) { t = Math.random().toString(36).slice(2, 12); st.setItem(k, t); } } catch (e) { t = Math.random().toString(36).slice(2, 12); } return t; })();
@@ -8434,7 +8474,7 @@ function playerLabel(id) { const p = NET.slots[id]; if (!p) return '電腦'; if 
 // ---------- transports ----------
 function trysteroTransport(code) {
   if (!window.Trystero) throw new Error('連線模組載入失敗');
-  const room = window.Trystero.joinRoom({ appId: APP_ID, identity: 'none', maxUsers: 10 }, 'room-' + code);
+  const room = window.Trystero.joinRoom({ appId: APP_ID, identity: 'none', maxUsers: 10, relayRedundancy: 5, turnConfig: TURN_SERVERS, rtcConfig: { iceServers: STUN_SERVERS } }, 'room-' + code);
   const act = room.makeAction('m');
   const T = { send: (d, to) => act.send(d, to ? { target: to } : undefined), leave: () => room.leave() };
   act.onMessage((d, ctx) => T.onMsg && T.onMsg(d, ctx.peerId));
@@ -8471,9 +8511,9 @@ function mpConnect(code, host) {
   mpStatus(host ? '房間已開好。把房號或連結傳給朋友，然後各自揀角色。' : '正在尋找房間……');
   let T; try { T = NET.tx = LOCALNET ? localTransport(code) : trysteroTransport(code); } catch (e) { mpStatus('連線失敗：' + e.message); return; }
   T.onSelf = id => { NET.me = id; if (host) { NET.hostId = id; NET.order = [id]; NET.names[id] = myName(); } mpRender(); vcSelf(); };
-  T.onJoin = id => { if (!NET.peers.includes(id)) NET.peers.push(id); vcJoined(id); if (NET.host) { if (!NET.order.includes(id)) NET.order.push(id); mpBroadcastLobby(); } else nsend({ t: 'hi', tok: NET.tok, n: myName() }, id); mpRender(); };
+  T.onJoin = id => { if (id === NET.hostId && NET.hostGone) { NET.hostGone = 0; NET.heard = performance.now(); if (NET.started) { nsend({ t: 'hi', tok: NET.tok, n: myName() }, id); toast('重新連上房主了', 2.4); } } if (!NET.peers.includes(id)) NET.peers.push(id); vcJoined(id); if (NET.host) { if (!NET.order.includes(id)) NET.order.push(id); mpBroadcastLobby(); } else nsend({ t: 'hi', tok: NET.tok, n: myName() }, id); mpRender(); };
   T.onLeave = id => mpPeerLeft(id);
-  T.onMsg = (d, from) => { try { netMsg(d, from); } catch (e) { console.warn('net msg', d && d.t, e); } };
+  T.onMsg = (d, from) => { if (from === NET.hostId) NET.heard = performance.now(); try { netMsg(d, from); } catch (e) { console.warn('net msg', d && d.t, e); } };
   T.onErr = e => { if (e && e.code === 'room-full') mpStatus('房間暫時滿了。如果你剛斷線，等半分鐘再試。'); else if (e && e.code === 'peer-connect-failed') $('mpErr').textContent = '有隊友連唔上（網絡限制）。可以試下用另一個網絡。'; };
   vcMicStart(); vcUI();
   if (!host) { clearTimeout(NET.joinTimer); NET.joinTimer = setTimeout(() => { if (!NET.hostId) mpStatus('找不到這個房間。確認房號，或者等房主開好房間再試。'); }, 15000); }
@@ -8494,12 +8534,13 @@ function hostPick(peer, id) {
 function mpRender() {
   const box = $('mpSlots'); if (!box) return;
   box.innerHTML = IDS.map(id => {
-    const p = NET.slots[id]; const S = SP[id]; const nm = nameOf(p); const who = p ? (p === NET.me ? (nm ? nm + '（你）' : '你') : nm || (p === NET.hostId ? '房主' : '玩家 ' + (NET.order.indexOf(p) + 1))) : CORE.includes(id) ? '電腦控制' : '空位';
+    const p = NET.slots[id]; const S = SP[id]; const nm = nameOf(p); const who = p ? (p === NET.me ? (nm || '你') : nm || (p === NET.hostId ? '房主' : '玩家 ' + (NET.order.indexOf(p) + 1))) : CORE.includes(id) ? '電腦' : '可以揀';
     // not unlocked on this device yet: a silhouette and how to get it
     if (!p && !isUnlocked(id)) { const r = ROSTER.find(q => q.id === id); return `<button class="mps lock" disabled title="${r.how}"><span class="ph">${PORTRAITS[id] ? `<img class="sil" alt="" src="${PORTRAITS[id]}">` : SIL_SVG}<i>?</i></span><b>？？？</b><small>${r.how}</small><em>未解鎖</em></button>`; }
     return `<button class="mps${p === NET.me ? ' me' : p ? ' taken' : ''}" data-id="${id}" ${p && p !== NET.me ? 'disabled' : ''}><span class="ph">${PORTRAITS[id] ? `<img alt="" src="${PORTRAITS[id]}">` : ''}</span><b>${S.name}</b><small>${S.abil}</small><em>${who}</em></button>`;
   }).join('');
-  box.querySelectorAll('.mps').forEach(b => { b.addEventListener('click', () => mpPick(b.dataset.id)); b.addEventListener('pointerenter', () => { LOBBY.hover = b.dataset.id; }); b.addEventListener('pointerleave', () => { LOBBY.hover = null; }); });
+  box.querySelectorAll('.mps').forEach(b => { b.addEventListener('click', () => mpPick(b.dataset.id)); b.addEventListener('pointerenter', () => { LOBBY.hover = b.dataset.id; mpInfoRender(); }); b.addEventListener('pointerleave', () => { LOBBY.hover = null; mpInfoRender(); }); });
+  mpInfoRender();
   const n = (NET.me ? 1 : 0) + NET.peers.length; $('mpCount').textContent = $('mpCount2').textContent = `${n} / 8 人在房間`;
   if (NET.host) { const everyone = [NET.me, ...NET.peers]; const ok = everyone.every(p => IDS.some(k => NET.slots[k] === p)); $('mpStart').disabled = !ok; $('mpStart').textContent = ok ? '開始' : '等大家揀好角色'; }
   else if (NET.hostId && NET.remoteStarted && !NET.on) mpStatus(IDS.some(k => !NET.slots[k]) ? '遊戲進行中：揀一隻「電腦控制」的角色加入。之前斷了線的話，會自動拿回原本的角色。' : '房間已滿，八隻角色都有人玩。');
@@ -8509,7 +8550,7 @@ function mpPeerLeft(id) {
   vcClose(id);
   NET.peers = NET.peers.filter(p => p !== id);
   if (!NET.started) { if (NET.host) { for (const k of IDS) if (NET.slots[k] === id) NET.slots[k] = null; mpBroadcastLobby(); } else if (id === NET.hostId) mpStatus('房主離開了房間。'); mpRender(); return; }
-  if (id === NET.hostId && !NET.host) { mpHostLost(); return; }
+  if (id === NET.hostId && !NET.host) { NET.hostGone = performance.now(); return; }
   for (const k of IDS) {
     const C = chars[k]; if (C.owner === id) C.owner = C.baseOwner;
     if (NET.slots[k] === id) { if (NET.host) NET.reserved[k] = NET.tokOf[id]; NET.slots[k] = null; C.baseOwner = NET.hostId; C.owner = NET.hostId; C.queue = []; if (C.disp) C.disp.copy(C.pos); toast(`${C.S.name}的玩家斷線了，暫時由電腦控制。用同一個房號重新加入就能拿回這隻角色`, 4.2); }
@@ -8586,10 +8627,20 @@ function applyUnlease(u) {
 function netUpdate(dt) {
   if (!NET.on || !NET.tx) return;
   if (STATE === 'play' || STATE === 'fail' || STATE === 'end') {
-    NET.sendT -= dt; if (NET.sendT <= 0) { NET.sendT = 1 / 15; netSendChars(); }
+    NET.sendT -= dt; if (NET.sendT <= 0) { NET.sendT = 1 / 20; netSendChars(); }
     if (NET.host) { NET.worldT -= dt; if (NET.worldT <= 0) { NET.worldT = .1; netSendWorld(); } }
   }
-  netInterp(dt); netTags();
+  netInterp(dt); netTags(); netWatch();
+}
+// how the line to the host is doing: a quiet note when it's shaky, a way back in if it's gone
+function netWatch() {
+  const el = $('netbar'); if (!el) return;
+  if (!NET.on || NET.host || !NET.started) { if (!el.hidden) el.hidden = true; return; }
+  const now = performance.now(), quiet = NET.heard ? (now - NET.heard) / 1000 : 0, gone = NET.hostGone ? (now - NET.hostGone) / 1000 : 0;
+  let mode = '';
+  if (gone > 45) { mpHostLost(); NET.hostGone = 0; return; }
+  if (gone > 0 || quiet > 12) mode = 'lost'; else if (quiet > 3) mode = 'weak';
+  if (el.dataset.m !== mode) { el.dataset.m = mode; el.hidden = !mode; el.innerHTML = mode === 'lost' ? '<i></i><span>和房主的連線中斷了，正在等待重新連接…</span><button id="netRe">重新加入</button>' : '<i></i><span>網絡不穩定…</span>'; const b = $('netRe'); if (b) b.addEventListener('click', () => { location.reload(); }); }
 }
 function netSendChars() {
   const c = [];
@@ -8597,14 +8648,18 @@ function netSendChars() {
   if (c.length) nsend({ t: 'p', lv: LEVEL, c });
 }
 function netRecvChars(d, from) {
-  for (const a of d.c) { const C = chars[a[0]]; if (!C || C.owner !== from) continue; C.net = { x: a[1], y: a[2], z: a[3], yaw: a[4], st: a[5], spd: a[6], fl: a[7] }; C.stamina = a[8]; C.stamMax = a[9]; C.camo = a[10]; C.on = a[11] || null; }
+  const now = performance.now();
+  for (const a of d.c) { const C = chars[a[0]]; if (!C || C.owner !== from) continue; const o = C.net, gap = o ? (now - o.t) / 1000 : 0; const v = o && gap > .02 && gap < .5 ? [(a[1] - o.x) / gap, (a[2] - o.y) / gap, (a[3] - o.z) / gap] : [0, 0, 0];
+    if (Math.hypot(v[0], v[2]) > 160) v[0] = v[1] = v[2] = 0;
+    C.net = { x: a[1], y: a[2], z: a[3], yaw: a[4], st: a[5], spd: a[6], fl: a[7], t: now, vx: v[0], vy: v[1], vz: v[2] }; C.stamina = a[8]; C.stamMax = a[9]; C.camo = a[10]; C.on = a[11] || null; }
 }
 function netInterp(dt) {
-  const k = 1 - Math.exp(-14 * dt);
+  const k = 1 - Math.exp(-12 * dt), now = performance.now();
   for (const C of party) {
-    if (mine(C) || !C.net) continue; const n = C.net;
-    const dx = n.x - C.pos.x, dy = n.y - C.pos.y, dz = n.z - C.pos.z;
-    if (dx * dx + dy * dy + dz * dz > 900) C.pos.set(n.x, n.y, n.z); else { C.pos.x += dx * k; C.pos.y += dy * k; C.pos.z += dz * k; }
+    if (mine(C) || !C.net) continue; const n = C.net, age = Math.min(.2, (now - (n.t || now)) / 1000), still = C.frozen || C.on;
+    const tx = n.x + (still ? 0 : (n.vx || 0) * age), ty = n.y + (still ? 0 : (n.vy || 0) * age * .5), tz = n.z + (still ? 0 : (n.vz || 0) * age);
+    const dx = tx - C.pos.x, dy = ty - C.pos.y, dz = tz - C.pos.z;
+    if (dx * dx + dy * dy + dz * dz > 900) C.pos.set(tx, ty, tz); else { C.pos.x += dx * k; C.pos.y += dy * k; C.pos.z += dz * k; }
     C.yaw = angDamp(C.yaw, n.yaw, 14, dt); if (!C.frozen) C.state = n.st; C.spd = n.spd;
     C.crouch = !!(n.fl & 1); C.gliding = !!(n.fl & 4); if ((n.fl & 8) && !(C.shoveT > 0)) C.shoveT = .38; C.pushing = !!(n.fl & 16);
     if (C.disp) C.disp.copy(C.pos);
@@ -9445,7 +9500,7 @@ function buildPortal() {
   dm(new THREE.CylinderGeometry(11, 11, 3.2, 48), M.steel, -62, 62, -96, .35).rotation.set(.4, 0, .8);
   // lights
   spotL(0xd8fbff, 68000, V3(26, 140, -36), V3(0, 0, 4), .5, .6, 2048, 60, 320);
-  pointL(0x7ff8f0, 2400, 0, 20, 33); pointL(0xffcf9a, 1500, 0, 30, -26); pointL(0x4fe8e0, 1800, 0, -26, 0); pointL(0x9ff0ff, 800, -40, 18, 10);
+  pointL(0x7ff8f0, 2400, 0, 20, 33); pointL(0xffcf9a, 1500, 0, 30, -26); pointL(0x4fe8e0, 1800, 0, -26, 0); pointL(0x9ff0ff, 800, -40, 18, 10); pointL(0xffd6a8, 1300, 0, 11, -6);   // a warm light on the faces of whoever stands in line (the online room)
 }
 
 // ---------- starting here ----------
@@ -9748,7 +9803,7 @@ $('pauseStkC').addEventListener('click', () => {
 //  · the host's game saves itself (quest, checkpoint, what's been collected and opened); next time the
 //    room can carry on from there — the exit of the prep area then leads straight back to that spot
 // =====================================================================
-const LOBBY = { on: false, ids: [], pos: {}, hop: {}, tags: {}, hover: null, seen: null };
+const LOBBY = { on: false, ids: [], pos: {}, hop: {}, tags: {}, hover: null, seen: null, flash: {}, stage: null };
 const NAME_KEY = 'bn_name', MPS_KEY = 'bn_mpsave1';
 function cleanName(n) { return String(n || '').replace(/[<>&"'`\\]/g, '').replace(/\s+/g, ' ').trim().slice(0, 10); }
 function myName() { try { return cleanName(localStorage.getItem(NAME_KEY)); } catch (e) { return ''; } }
@@ -9778,7 +9833,7 @@ function updLobby(dt) {
   const ids = lobbyIds(), n = ids.length, t = TTL.t;
   // who just picked or dropped a character: they hop, wave, show a sticker
   const prev = LOBBY.seen; LOBBY.seen = {}; for (const id of ids) LOBBY.seen[id] = NET.slots[id] || '';
-  if (prev) for (const id of ids) if (NET.slots[id] && prev[id] !== NET.slots[id]) { LOBBY.hop[id] = 0; emoShow(chars[id], NET.slots[id] === NET.me ? 'wave' : pick(['good', 'laugh', 'wave'])); }
+  if (prev) for (const id of ids) if (NET.slots[id] && prev[id] !== NET.slots[id]) { LOBBY.hop[id] = 0; LOBBY.flash[id] = 1; SND.land(.3); }
   for (const id of IDS) if (!ids.includes(id) && chars[id]) { chars[id].root.visible = false; delete LOBBY.pos[id]; }
   chars.gecko.root.visible = false;
   ids.forEach((id, i) => {
@@ -9791,11 +9846,16 @@ function updLobby(dt) {
     if (h !== undefined) { LOBBY.hop[id] = h + dt; const k = h / .55; if (k < 1) { y = Math.sin(k * Math.PI) * 4; C.state = 'air'; } else { delete LOBBY.hop[id]; C.squash = .5; } }
     C.pos.set(p.x, PO.y + y, p.z); if (C.disp) C.disp.copy(C.pos);
     C.wave = LOBBY.hover === id || (NET.slots[id] === NET.me && (t % 6) < 1.6);
+    lobbyPad(i, p, id, dt);
   });
+  for (let i = ids.length; i < 10; i++) if (LOBBY.stage) LOBBY.stage.children[i].visible = false;
   // camera: low, in front of them, the glowing exit behind
   const wide = innerWidth / innerHeight, dist = clamp(16 + n * 2.9, 25, 44) * (wide < 1.5 ? 1.25 : 1);
-  camera.position.set(PO.x + Math.sin(t * .15) * 1.5, PO.y + 6.8, PO.z + 15 - dist);
-  camera.lookAt(PO.x, PO.y + 1.6, PO.z + 15);
+  // with the info card on the left (wide screens), the line sits a little right of centre
+  const card = $('mpInfo'), shift = card && card.offsetParent && card.innerHTML ? clamp((card.getBoundingClientRect().right / innerWidth - .15) * dist * .9, 0, 14) : 0;
+  LOBBY.sx = damp(LOBBY.sx || 0, shift, 3, dt);
+  camera.position.set(PO.x + LOBBY.sx + Math.sin(t * .15) * 1.5, PO.y + 6.8, PO.z + 15 - dist);
+  camera.lookAt(PO.x + LOBBY.sx, PO.y + 1.6, PO.z + 15);
   bokeh.uniforms.focus.value = dist;
   lobbyTags(ids);
 }
@@ -9810,13 +9870,55 @@ function lobbyTags(ids) {
     el.style.transform = `translate(${((p.x * .5 + .5) * innerWidth).toFixed(1)}px, ${((-p.y * .5 + .5) * innerHeight).toFixed(1)}px) translate(-50%, -100%)`;
     const peer = NET.slots[id], me = peer && peer === NET.me, label = peer ? (nameOf(peer) || (me ? '你' : '玩家 ' + (NET.order.indexOf(peer) + 1))) : '電腦';
     const sig = label + '|' + me + '|' + !!peer;
-    if (el.dataset.sig !== sig) { el.dataset.sig = sig; el.className = 'lbtag' + (me ? ' me' : '') + (peer ? '' : ' ai'); el.innerHTML = `<b style="color:${C.S.col}">${label.replace(/</g, '')}</b><small>${C.S.name}${me ? ' · 你' : ''}</small>`; }
+    if (el.dataset.sig !== sig) { el.dataset.sig = sig; el.className = 'lbtag' + (me ? ' me' : '') + (peer ? '' : ' ai'); el.style.setProperty('--c', me ? '#f4bb72' : peer ? '#6ff6ee' : '#fff'); el.innerHTML = `<b>${label.replace(/</g, '')}</b><small>${C.S.name}</small>`; }
   }
 }
 function lobbyEnd() {
-  if (!LOBBY.on) return; LOBBY.on = false;
+  if (!LOBBY.on) return; LOBBY.on = false; if (LOBBY.stage) LOBBY.stage.visible = false;
   for (const id in LOBBY.tags) LOBBY.tags[id].remove(); LOBBY.tags = {}; LOBBY.pos = {}; LOBBY.hop = {};
   for (const id of IDS) if (chars[id]) { chars[id].root.visible = true; chars[id].wave = false; } LP.snap = true;
+}
+
+// the stage: a glowing ring on the floor and a soft cone of light over each place in the line
+// (warm for you, cyan for the other players, a faint white for the computer-run ones)
+function lobbyStage() {
+  if (LOBBY.stage) return LOBBY.stage;
+  const g = new THREE.Group(); scene.add(g); LOBBY.stage = g;
+  const ringG = new THREE.RingGeometry(3.3, 4.1, 48), discG = new THREE.CircleGeometry(4.1, 48), coneG = new THREE.CylinderGeometry(1.2, 4.4, 26, 32, 1, true);
+  for (let i = 0; i < 10; i++) {
+    const s = new THREE.Group();
+    const rm = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .9, depthWrite: false, blending: THREE.AdditiveBlending });
+    const dm = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .12, depthWrite: false, blending: THREE.AdditiveBlending });
+    const cm = new THREE.ShaderMaterial({ uniforms: { uC: { value: new THREE.Color() }, uA: { value: .2 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      vertexShader: 'varying float vY; varying vec3 vN; varying vec3 vV; void main(){ vY = uv.y; vec4 w = modelViewMatrix*vec4(position,1.0); vN = normalize(normalMatrix*normal); vV = normalize(-w.xyz); gl_Position = projectionMatrix*w; }',
+      fragmentShader: 'uniform vec3 uC; uniform float uA; varying float vY; varying vec3 vN; varying vec3 vV; void main(){ float e = pow(1.0-abs(dot(vN,vV)),1.5); float f = (1.0-vY)*(1.0-vY); gl_FragColor = vec4(uC*uA*f*(0.35+e), 1.0); }' });
+    const ring = new THREE.Mesh(ringG, rm), disc = new THREE.Mesh(discG, dm), cone = new THREE.Mesh(coneG, cm);
+    ring.rotation.x = disc.rotation.x = -Math.PI / 2; ring.position.y = .08; disc.position.y = .06; cone.position.y = 13;
+    s.add(disc, ring, cone); s.userData = { rm, dm, cm }; g.add(s);
+  }
+  return g;
+}
+const _pc = new THREE.Color();
+function lobbyPad(i, p, id, dt) {
+  const g = lobbyStage(); g.visible = true; const s = g.children[i]; if (!s) return; s.visible = true; s.position.set(p.x, PO.y, p.z);
+  const peer = NET.slots[id], me = peer && peer === NET.me, f = LOBBY.flash[id] || 0; if (f > 0) LOBBY.flash[id] = Math.max(0, f - dt * 1.4);
+  _pc.set(me ? 0xf4bb72 : peer ? 0x6ff6ee : 0xbfd8dc);
+  const k = (me ? 1.15 : peer ? .95 : .35) + f * 1.4 + (LOBBY.hover === id ? .35 : 0), U = s.userData;
+  U.rm.color.copy(_pc).multiplyScalar(k * 1.6); U.dm.color.copy(_pc).multiplyScalar(k); U.cm.uniforms.uC.value.copy(_pc); U.cm.uniforms.uA.value = (me ? .32 : peer ? .24 : .07) + f * .3;
+  s.children[1].scale.setScalar(1 + Math.sin(TTL.t * 2.2 + i) * .03 + f * .25);
+}
+// the card on the left: whoever you're pointing at, or the one you've picked
+function mpInfoRender() {
+  const el = $('mpInfo'); if (!el) return;
+  const id = LOBBY.hover && isUnlocked(LOBBY.hover) ? LOBBY.hover : IDS.find(k => NET.slots[k] === NET.me);
+  if (!id) { el.innerHTML = ''; return; }
+  const S = SP[id], peer = NET.slots[id], bar = v => `${Math.round(clamp((v - .65) / .85, .08, 1) * 100)}%`;
+  const who = peer ? (peer === NET.me ? '你' : nameOf(peer) || '另一位玩家') : CORE.includes(id) ? '電腦控制中（揀佢就由你玩）' : '未有人揀';
+  el.style.setProperty('--c', S.col);
+  el.innerHTML = `<div class="ih"><div class="ip">${PORTRAITS[id] ? `<img alt="" src="${PORTRAITS[id]}">` : ''}</div><div class="in"><b>${S.name}</b><small>${S.role}</small></div></div>
+    <div class="ia"><em>${S.abil}</em><p>${S.desc}</p></div>
+    <div class="is"><span>速度</span><i style="--v:${bar(S.spd)}"></i><span>跳躍</span><i style="--v:${bar(S.jmp)}"></i><span>攀爬</span><i style="--v:${bar(S.clb)}"></i></div>
+    <div class="iw">玩家：<b>${who.replace(/</g, '')}</b></div>`;
 }
 
 // ---------- saving online progress (host) ----------

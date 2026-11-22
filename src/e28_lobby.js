@@ -7,7 +7,7 @@
 //  · the host's game saves itself (quest, checkpoint, what's been collected and opened); next time the
 //    room can carry on from there — the exit of the prep area then leads straight back to that spot
 // =====================================================================
-const LOBBY = { on: false, ids: [], pos: {}, hop: {}, tags: {}, hover: null, seen: null };
+const LOBBY = { on: false, ids: [], pos: {}, hop: {}, tags: {}, hover: null, seen: null, flash: {}, stage: null };
 const NAME_KEY = 'bn_name', MPS_KEY = 'bn_mpsave1';
 function cleanName(n) { return String(n || '').replace(/[<>&"'`\\]/g, '').replace(/\s+/g, ' ').trim().slice(0, 10); }
 function myName() { try { return cleanName(localStorage.getItem(NAME_KEY)); } catch (e) { return ''; } }
@@ -37,7 +37,7 @@ function updLobby(dt) {
   const ids = lobbyIds(), n = ids.length, t = TTL.t;
   // who just picked or dropped a character: they hop, wave, show a sticker
   const prev = LOBBY.seen; LOBBY.seen = {}; for (const id of ids) LOBBY.seen[id] = NET.slots[id] || '';
-  if (prev) for (const id of ids) if (NET.slots[id] && prev[id] !== NET.slots[id]) { LOBBY.hop[id] = 0; emoShow(chars[id], NET.slots[id] === NET.me ? 'wave' : pick(['good', 'laugh', 'wave'])); }
+  if (prev) for (const id of ids) if (NET.slots[id] && prev[id] !== NET.slots[id]) { LOBBY.hop[id] = 0; LOBBY.flash[id] = 1; SND.land(.3); }
   for (const id of IDS) if (!ids.includes(id) && chars[id]) { chars[id].root.visible = false; delete LOBBY.pos[id]; }
   chars.gecko.root.visible = false;
   ids.forEach((id, i) => {
@@ -50,11 +50,16 @@ function updLobby(dt) {
     if (h !== undefined) { LOBBY.hop[id] = h + dt; const k = h / .55; if (k < 1) { y = Math.sin(k * Math.PI) * 4; C.state = 'air'; } else { delete LOBBY.hop[id]; C.squash = .5; } }
     C.pos.set(p.x, PO.y + y, p.z); if (C.disp) C.disp.copy(C.pos);
     C.wave = LOBBY.hover === id || (NET.slots[id] === NET.me && (t % 6) < 1.6);
+    lobbyPad(i, p, id, dt);
   });
+  for (let i = ids.length; i < 10; i++) if (LOBBY.stage) LOBBY.stage.children[i].visible = false;
   // camera: low, in front of them, the glowing exit behind
   const wide = innerWidth / innerHeight, dist = clamp(16 + n * 2.9, 25, 44) * (wide < 1.5 ? 1.25 : 1);
-  camera.position.set(PO.x + Math.sin(t * .15) * 1.5, PO.y + 6.8, PO.z + 15 - dist);
-  camera.lookAt(PO.x, PO.y + 1.6, PO.z + 15);
+  // with the info card on the left (wide screens), the line sits a little right of centre
+  const card = $('mpInfo'), shift = card && card.offsetParent && card.innerHTML ? clamp((card.getBoundingClientRect().right / innerWidth - .15) * dist * .9, 0, 14) : 0;
+  LOBBY.sx = damp(LOBBY.sx || 0, shift, 3, dt);
+  camera.position.set(PO.x + LOBBY.sx + Math.sin(t * .15) * 1.5, PO.y + 6.8, PO.z + 15 - dist);
+  camera.lookAt(PO.x + LOBBY.sx, PO.y + 1.6, PO.z + 15);
   bokeh.uniforms.focus.value = dist;
   lobbyTags(ids);
 }
@@ -69,13 +74,55 @@ function lobbyTags(ids) {
     el.style.transform = `translate(${((p.x * .5 + .5) * innerWidth).toFixed(1)}px, ${((-p.y * .5 + .5) * innerHeight).toFixed(1)}px) translate(-50%, -100%)`;
     const peer = NET.slots[id], me = peer && peer === NET.me, label = peer ? (nameOf(peer) || (me ? '你' : '玩家 ' + (NET.order.indexOf(peer) + 1))) : '電腦';
     const sig = label + '|' + me + '|' + !!peer;
-    if (el.dataset.sig !== sig) { el.dataset.sig = sig; el.className = 'lbtag' + (me ? ' me' : '') + (peer ? '' : ' ai'); el.innerHTML = `<b style="color:${C.S.col}">${label.replace(/</g, '')}</b><small>${C.S.name}${me ? ' · 你' : ''}</small>`; }
+    if (el.dataset.sig !== sig) { el.dataset.sig = sig; el.className = 'lbtag' + (me ? ' me' : '') + (peer ? '' : ' ai'); el.style.setProperty('--c', me ? '#f4bb72' : peer ? '#6ff6ee' : '#fff'); el.innerHTML = `<b>${label.replace(/</g, '')}</b><small>${C.S.name}</small>`; }
   }
 }
 function lobbyEnd() {
-  if (!LOBBY.on) return; LOBBY.on = false;
+  if (!LOBBY.on) return; LOBBY.on = false; if (LOBBY.stage) LOBBY.stage.visible = false;
   for (const id in LOBBY.tags) LOBBY.tags[id].remove(); LOBBY.tags = {}; LOBBY.pos = {}; LOBBY.hop = {};
   for (const id of IDS) if (chars[id]) { chars[id].root.visible = true; chars[id].wave = false; } LP.snap = true;
+}
+
+// the stage: a glowing ring on the floor and a soft cone of light over each place in the line
+// (warm for you, cyan for the other players, a faint white for the computer-run ones)
+function lobbyStage() {
+  if (LOBBY.stage) return LOBBY.stage;
+  const g = new THREE.Group(); scene.add(g); LOBBY.stage = g;
+  const ringG = new THREE.RingGeometry(3.3, 4.1, 48), discG = new THREE.CircleGeometry(4.1, 48), coneG = new THREE.CylinderGeometry(1.2, 4.4, 26, 32, 1, true);
+  for (let i = 0; i < 10; i++) {
+    const s = new THREE.Group();
+    const rm = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .9, depthWrite: false, blending: THREE.AdditiveBlending });
+    const dm = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .12, depthWrite: false, blending: THREE.AdditiveBlending });
+    const cm = new THREE.ShaderMaterial({ uniforms: { uC: { value: new THREE.Color() }, uA: { value: .2 } }, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide,
+      vertexShader: 'varying float vY; varying vec3 vN; varying vec3 vV; void main(){ vY = uv.y; vec4 w = modelViewMatrix*vec4(position,1.0); vN = normalize(normalMatrix*normal); vV = normalize(-w.xyz); gl_Position = projectionMatrix*w; }',
+      fragmentShader: 'uniform vec3 uC; uniform float uA; varying float vY; varying vec3 vN; varying vec3 vV; void main(){ float e = pow(1.0-abs(dot(vN,vV)),1.5); float f = (1.0-vY)*(1.0-vY); gl_FragColor = vec4(uC*uA*f*(0.35+e), 1.0); }' });
+    const ring = new THREE.Mesh(ringG, rm), disc = new THREE.Mesh(discG, dm), cone = new THREE.Mesh(coneG, cm);
+    ring.rotation.x = disc.rotation.x = -Math.PI / 2; ring.position.y = .08; disc.position.y = .06; cone.position.y = 13;
+    s.add(disc, ring, cone); s.userData = { rm, dm, cm }; g.add(s);
+  }
+  return g;
+}
+const _pc = new THREE.Color();
+function lobbyPad(i, p, id, dt) {
+  const g = lobbyStage(); g.visible = true; const s = g.children[i]; if (!s) return; s.visible = true; s.position.set(p.x, PO.y, p.z);
+  const peer = NET.slots[id], me = peer && peer === NET.me, f = LOBBY.flash[id] || 0; if (f > 0) LOBBY.flash[id] = Math.max(0, f - dt * 1.4);
+  _pc.set(me ? 0xf4bb72 : peer ? 0x6ff6ee : 0xbfd8dc);
+  const k = (me ? 1.15 : peer ? .95 : .35) + f * 1.4 + (LOBBY.hover === id ? .35 : 0), U = s.userData;
+  U.rm.color.copy(_pc).multiplyScalar(k * 1.6); U.dm.color.copy(_pc).multiplyScalar(k); U.cm.uniforms.uC.value.copy(_pc); U.cm.uniforms.uA.value = (me ? .32 : peer ? .24 : .07) + f * .3;
+  s.children[1].scale.setScalar(1 + Math.sin(TTL.t * 2.2 + i) * .03 + f * .25);
+}
+// the card on the left: whoever you're pointing at, or the one you've picked
+function mpInfoRender() {
+  const el = $('mpInfo'); if (!el) return;
+  const id = LOBBY.hover && isUnlocked(LOBBY.hover) ? LOBBY.hover : IDS.find(k => NET.slots[k] === NET.me);
+  if (!id) { el.innerHTML = ''; return; }
+  const S = SP[id], peer = NET.slots[id], bar = v => `${Math.round(clamp((v - .65) / .85, .08, 1) * 100)}%`;
+  const who = peer ? (peer === NET.me ? '你' : nameOf(peer) || '另一位玩家') : CORE.includes(id) ? '電腦控制中（揀佢就由你玩）' : '未有人揀';
+  el.style.setProperty('--c', S.col);
+  el.innerHTML = `<div class="ih"><div class="ip">${PORTRAITS[id] ? `<img alt="" src="${PORTRAITS[id]}">` : ''}</div><div class="in"><b>${S.name}</b><small>${S.role}</small></div></div>
+    <div class="ia"><em>${S.abil}</em><p>${S.desc}</p></div>
+    <div class="is"><span>速度</span><i style="--v:${bar(S.spd)}"></i><span>跳躍</span><i style="--v:${bar(S.jmp)}"></i><span>攀爬</span><i style="--v:${bar(S.clb)}"></i></div>
+    <div class="iw">玩家：<b>${who.replace(/</g, '')}</b></div>`;
 }
 
 // ---------- saving online progress (host) ----------
