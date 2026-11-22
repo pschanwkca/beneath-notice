@@ -75,7 +75,7 @@ canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;outline:non
 .pbub::after{content:'';position:absolute;left:50%;bottom:-5px;margin-left:-6px;border:6px solid transparent;border-top-color:#f5f0e6;border-bottom:0}
 .pbub.on{opacity:1}
 /* ---- the character select page (online room) ---- */
-#mp.inroom{background:none;padding:0;display:block}
+#mp.inroom:not([hidden]){background:none;padding:0;display:block}
 #mp.inroom .mpbox{display:none}
 .mproom{position:fixed;inset:0;display:flex;flex-direction:column;justify-content:space-between;pointer-events:none}
 .mproom[hidden]{display:none}
@@ -216,6 +216,19 @@ html.touch .bat .pk{display:none}
 #start{z-index:7}#start .card{width:min(540px,44vw);text-align:left}#start .brk{flex-basis:100%;height:0}
 #start .tag{margin-left:0}#start .row{justify-content:flex-start}#start .keys{margin-left:0;font-size:12px;margin-top:20px}
 @media(max-height:700px) and (min-width:901px){#start .keys{display:none}}
+/* phones on their side: a compact title card that fits the height */
+@media (max-height:560px){
+  #start{padding:12px clamp(20px,4vw,48px) 12px max(20px,env(safe-area-inset-left))}
+  #start .card{width:min(460px,50vw)}
+  #start .logo{font-size:clamp(28px,5vw,42px)}
+  #start .zh{font-size:13px;margin-top:4px}
+  #start .tag{font-size:12px;line-height:1.5;margin:8px 0 12px}
+  #start .row{gap:8px}
+  #start .row button{padding:7px 18px;min-height:36px;font-size:14px}
+  #start .row .sel button{min-height:28px;padding:3px 11px;font-size:12px}
+  #start .brk{flex-basis:auto;width:0}
+  #start .keys,html.touch #start .mkeys,#start .note{display:none!important}
+}
 @media(max-width:900px){#start{place-items:end center;background:linear-gradient(0deg,rgba(7,9,12,.94) 0,rgba(7,9,12,.74) 48%,rgba(7,9,12,0) 74%)}#start .card{width:min(620px,94vw);text-align:center}#start .row{justify-content:center}#start .tag{margin-left:auto}#start .keys{display:none}}
 .card{width:min(620px,94vw);text-align:center}
 .logo{font:700 clamp(40px,7vw,76px)/1 "Fredoka";letter-spacing:.01em;margin:0;text-shadow:0 6px 40px rgba(130,236,230,.25)}
@@ -740,7 +753,7 @@ const tick = () => new Promise(r => setTimeout(r, 0));
 const canvas = $('c');
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: false, powerPreference: 'high-performance' });
 renderer.setPixelRatio(Math.min(devicePixelRatio, TOUCH ? 1.25 : 1.5));
-renderer.setSize(innerWidth, innerHeight);
+renderer.setSize(innerWidth, innerHeight, false);   // the canvas is sized by CSS (a pixel size here would stick after a phone is rotated)
 renderer.shadowMap.enabled = true;
 renderer.shadowMap.type = TOUCH ? THREE.PCFShadowMap : THREE.PCFSoftShadowMap;
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
@@ -2746,6 +2759,7 @@ function frame(now) {
 const RS = { w: 0, h: 0 };
 function viewSize() { const w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight; return [Math.max(1, w), Math.max(1, h)]; }
 function onResize() {
+  if (canvas.style.width || canvas.style.height) canvas.style.width = canvas.style.height = '';
   const [w, h] = viewSize(); RS.w = w; RS.h = h; renderer.setSize(w, h, false); composer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
   grade.uniforms.uRes.value.set(w * renderer.getPixelRatio(), h * renderer.getPixelRatio()); fxaa.material.uniforms.resolution.value.set(1 / (w * renderer.getPixelRatio()), 1 / (h * renderer.getPixelRatio()));
   const sc = h * renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2)); onResizeDust(sc); if (parts) parts.material.uniforms.uScale.value = sc;
@@ -9745,7 +9759,7 @@ function lobbyActive() { return STATE === 'title' && !NET.on && !$('mp').hidden 
 function lobbyIds() { return IDS.filter(id => chars[id] && (CORE.includes(id) || (NET.slots && NET.slots[id]))); }
 function lobbySlot(i, n) { const x = -(i - (n - 1) / 2) * 8.8; return V3(x, 0, 15 + Math.abs(x) * .12).add(PO); }   // seen from the front: first on the left
 function updLobby(dt) {
-  if (!LOBBY.on) { LOBBY.on = true; LOBBY.seen = null; if (TTL.cloud) TTL.cloud.visible = false; LP.snap = true; for (const id in chars) { chars[id].root.visible = false; chars[id].emo = null; } LOBBY.pos = {}; }
+  if (!LOBBY.on) { LOBBY.on = true; LOBBY.seen = null; if (TTL.cloud) TTL.cloud.visible = false; LP.snap = true; for (const id in chars) { const C = chars[id]; C.root.visible = false; C.emo = null; C.tumble = 0; C.spin = 0; C.lieK = 0; C.shell = false; C.roost = null; C.squash = 0; C.root.rotation.set(0, C.yaw, 0); } LOBBY.pos = {}; }
   const ids = lobbyIds(), n = ids.length, t = TTL.t;
   // who just picked or dropped a character: they hop, wave, show a sticker
   const prev = LOBBY.seen; LOBBY.seen = {}; for (const id of ids) LOBBY.seen[id] = NET.slots[id] || '';
@@ -9754,11 +9768,11 @@ function updLobby(dt) {
   chars.gecko.root.visible = false;
   ids.forEach((id, i) => {
     const C = chars[id], to = lobbySlot(i, n); let p = LOBBY.pos[id];
-    if (!p) { p = LOBBY.pos[id] = to.clone().add(V3(to.x > PO.x ? 26 : -26, 0, -4)); C.root.visible = true; }
+    if (!p) { p = LOBBY.pos[id] = to.clone().add(V3(to.x > PO.x ? 12 : -12, 0, -3)); C.root.visible = true; }
     const d = Math.hypot(to.x - p.x, to.z - p.z), sp = 30 * dt;
     if (d > .3) { p.x += (to.x - p.x) / d * Math.min(d, sp); p.z += (to.z - p.z) / d * Math.min(d, sp); C.state = 'walk'; C.spd = 18; C.yaw = Math.atan2(to.x - p.x, to.z - p.z); }
     else { C.state = 'idle'; C.spd = 0; C.yaw = angDamp(C.yaw, Math.PI + (to.x - PO.x) * -.012, 6, dt); }
-    let y = 0; const h = LOBBY.hop[id];
+    C.tumble = 0; let y = 0; const h = LOBBY.hop[id];
     if (h !== undefined) { LOBBY.hop[id] = h + dt; const k = h / .55; if (k < 1) { y = Math.sin(k * Math.PI) * 4; C.state = 'air'; } else { delete LOBBY.hop[id]; C.squash = .5; } }
     C.pos.set(p.x, PO.y + y, p.z); if (C.disp) C.disp.copy(C.pos);
     C.wave = LOBBY.hover === id || (NET.slots[id] === NET.me && (t % 6) < 1.6);

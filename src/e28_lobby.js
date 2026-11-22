@@ -33,7 +33,7 @@ function lobbyActive() { return STATE === 'title' && !NET.on && !$('mp').hidden 
 function lobbyIds() { return IDS.filter(id => chars[id] && (CORE.includes(id) || (NET.slots && NET.slots[id]))); }
 function lobbySlot(i, n) { const x = -(i - (n - 1) / 2) * 8.8; return V3(x, 0, 15 + Math.abs(x) * .12).add(PO); }   // seen from the front: first on the left
 function updLobby(dt) {
-  if (!LOBBY.on) { LOBBY.on = true; LOBBY.seen = null; if (TTL.cloud) TTL.cloud.visible = false; LP.snap = true; for (const id in chars) { chars[id].root.visible = false; chars[id].emo = null; } LOBBY.pos = {}; }
+  if (!LOBBY.on) { LOBBY.on = true; LOBBY.seen = null; if (TTL.cloud) TTL.cloud.visible = false; LP.snap = true; for (const id in chars) { const C = chars[id]; C.root.visible = false; C.emo = null; C.tumble = 0; C.spin = 0; C.lieK = 0; C.shell = false; C.roost = null; C.squash = 0; C.root.rotation.set(0, C.yaw, 0); } LOBBY.pos = {}; }
   const ids = lobbyIds(), n = ids.length, t = TTL.t;
   // who just picked or dropped a character: they hop, wave, show a sticker
   const prev = LOBBY.seen; LOBBY.seen = {}; for (const id of ids) LOBBY.seen[id] = NET.slots[id] || '';
@@ -42,11 +42,11 @@ function updLobby(dt) {
   chars.gecko.root.visible = false;
   ids.forEach((id, i) => {
     const C = chars[id], to = lobbySlot(i, n); let p = LOBBY.pos[id];
-    if (!p) { p = LOBBY.pos[id] = to.clone().add(V3(to.x > PO.x ? 26 : -26, 0, -4)); C.root.visible = true; }
+    if (!p) { p = LOBBY.pos[id] = to.clone().add(V3(to.x > PO.x ? 12 : -12, 0, -3)); C.root.visible = true; }
     const d = Math.hypot(to.x - p.x, to.z - p.z), sp = 30 * dt;
     if (d > .3) { p.x += (to.x - p.x) / d * Math.min(d, sp); p.z += (to.z - p.z) / d * Math.min(d, sp); C.state = 'walk'; C.spd = 18; C.yaw = Math.atan2(to.x - p.x, to.z - p.z); }
     else { C.state = 'idle'; C.spd = 0; C.yaw = angDamp(C.yaw, Math.PI + (to.x - PO.x) * -.012, 6, dt); }
-    let y = 0; const h = LOBBY.hop[id];
+    C.tumble = 0; let y = 0; const h = LOBBY.hop[id];
     if (h !== undefined) { LOBBY.hop[id] = h + dt; const k = h / .55; if (k < 1) { y = Math.sin(k * Math.PI) * 4; C.state = 'air'; } else { delete LOBBY.hop[id]; C.squash = .5; } }
     C.pos.set(p.x, PO.y + y, p.z); if (C.disp) C.disp.copy(C.pos);
     C.wave = LOBBY.hover === id || (NET.slots[id] === NET.me && (t % 6) < 1.6);

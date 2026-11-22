@@ -32,6 +32,7 @@ if (!process.env.NOTITLE) await page.screenshot({ path: root + '/test/01_title.p
 // expose hooks via window for scripted tests
 const steps = JSON.parse(fs.readFileSync(root + '/test/steps_' + shots + '.json', 'utf8'));
 for (const s of steps) {
+  if (s.resize) await page.setViewportSize({ width: s.resize[0], height: s.resize[1] });
   if (s.click) await page.click(s.click, { force: true });
   if (s.key) { await page.keyboard.down(s.key); await page.waitForTimeout(s.hold || 100); await page.keyboard.up(s.key); }
   if (s.down) await page.keyboard.down(s.down);

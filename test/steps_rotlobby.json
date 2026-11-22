@@ -1,0 +1,1 @@
+[{"resize": [932, 430], "wait": 2000}, {"eval": "(()=>{document.getElementById('goMP').click(); document.getElementById('mpCreate').click(); return 1})()", "wait": 4000}, {"eval": "(()=>{const b=window.__bn; window.__NR=true; b.step(120); window.__NR=false; return [b.LOBBY.on, document.getElementById('c').clientWidth]})()", "frame": 1, "wait": 600, "shot": "rot_lobby"}]

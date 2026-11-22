@@ -806,6 +806,7 @@ function frame(now) {
 const RS = { w: 0, h: 0 };
 function viewSize() { const w = canvas.clientWidth || innerWidth, h = canvas.clientHeight || innerHeight; return [Math.max(1, w), Math.max(1, h)]; }
 function onResize() {
+  if (canvas.style.width || canvas.style.height) canvas.style.width = canvas.style.height = '';
   const [w, h] = viewSize(); RS.w = w; RS.h = h; renderer.setSize(w, h, false); composer.setSize(w, h); camera.aspect = w / h; camera.updateProjectionMatrix();
   grade.uniforms.uRes.value.set(w * renderer.getPixelRatio(), h * renderer.getPixelRatio()); fxaa.material.uniforms.resolution.value.set(1 / (w * renderer.getPixelRatio()), 1 / (h * renderer.getPixelRatio()));
   const sc = h * renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2)); onResizeDust(sc); if (parts) parts.material.uniforms.uScale.value = sc;

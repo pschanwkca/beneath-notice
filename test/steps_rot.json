@@ -1,0 +1,2 @@
+[{"resize":[932,430],"wait":2500},
+ {"eval":"(()=>{const c=document.getElementById('c'); return [innerWidth, innerHeight, c.clientWidth, c.clientHeight, c.width, c.height]})()","frame":1,"wait":500,"shot":"rot_land"}]
