@@ -80,7 +80,7 @@ function buildWalker() {
   const D = buildDog({ pos: V3(1660, GY, 720), anchor: null, fur: 0xeee6d6, belly: 0xfaf4ea, k: .58, collar: 0x2a6ac8, keep: true });
   D.mode = 'walk'; D.sleepK = 0; D.offs = R(-20, 20); D.sniffT = 0;
   const leash = new THREE.Line(new THREE.BufferGeometry().setFromPoints(Array.from({ length: 12 }, () => V3())), new THREE.LineBasicMaterial({ color: 0x1a1a1a })); leash.frustumCulled = false; LV.add(leash); W.leash = leash;
-  ST.walker = W; ST.wdog = D;
+  ST.walker = W; ST.wdog = D; npcHome(H.root, H.pos, H.yaw, 'road'); npcHome(D.root, D.pos, D.yaw, 'road');
 }
 function updWalker(dt) {
   const W = ST.walker, D = ST.wdog; if (!W) return; const H = W.H, P = H.pos; let moveD = 0;

@@ -1,0 +1,1 @@
+[{"eval":"(()=>{const b=window.__bn; window.__NR=true; b.step(100); const t=b.chars.tort; return [t.pos.toArray().map(v=>+v.toFixed(1)), t.root.position.toArray().map(v=>+v.toFixed(1)), t.state, !!t.on, t.shellK, t.body.position.y]})()"}]

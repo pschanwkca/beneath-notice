@@ -214,7 +214,7 @@ function buildGarage() {
   const H = buildHuman({ pants: coverall, top: coverall, skin: MAT.skin, shoe: new THREE.MeshStandardMaterial({ color: 0x1e1c1a, roughness: .5 }), cap: new THREE.MeshStandardMaterial({ color: 0x1f2a44, roughness: .7 }), badge: crewMats().badge, hair: 0x241a14 });
   const torchM = new THREE.Mesh(new THREE.CylinderGeometry(1.6, 2.2, 16, 14), M.dsteel); torchM.position.set(0, -26, 6); torchM.rotation.x = 1.3; H.arms[1].el.add(torchM);
   const lensM = new THREE.Mesh(new THREE.SphereGeometry(1.5, 12, 10), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xfff2e0).multiplyScalar(10) })); lensM.position.set(0, 8.4, 0); torchM.add(lensM); H.lens = lensM;
-  H.pos.set(1310, GY, 60); H.yaw = Math.PI; H.root.visible = true; GS.agent = H;
+  H.pos.set(1310, GY, 60); H.yaw = Math.PI; H.root.visible = true; GS.agent = H; npcHome(H.root, H.pos, H.yaw, 'garage');
   GS.beam = beamMesh(0xfff0dc, 420, .34, 0); beams.push({ m: GS.beam, o: V3(), d: V3(0, -1, 0), ca: Math.cos(.36), len: 420, c: new THREE.Color(0xfff0dc), k: 0 }); GS.beamRec = beams[beams.length - 1];
 }
 function buildCar(cx, cz) {

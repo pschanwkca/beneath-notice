@@ -33,7 +33,7 @@ function lobbyActive() { return STATE === 'title' && !NET.on && !$('mp').hidden 
 function lobbyIds() { return IDS.filter(id => chars[id] && (CORE.includes(id) || (NET.slots && NET.slots[id]))); }
 function lobbySlot(i, n) { const x = -(i - (n - 1) / 2) * 8.8; return V3(x, 0, 15 + Math.abs(x) * .12).add(PO); }   // seen from the front: first on the left
 function updLobby(dt) {
-  if (!LOBBY.on) { LOBBY.on = true; LOBBY.seen = null; if (TTL.cloud) TTL.cloud.visible = false; LP.snap = true; for (const id in chars) { const C = chars[id]; C.root.visible = false; C.emo = null; C.tumble = 0; C.spin = 0; C.lieK = 0; C.shell = false; C.roost = null; C.squash = 0; C.root.rotation.set(0, C.yaw, 0); } LOBBY.pos = {}; }
+  if (!LOBBY.on) { LOBBY.on = true; LOBBY.seen = null; LP.snap = true; for (const id in chars) { const C = chars[id]; C.root.visible = false; C.emo = null; C.tumble = 0; C.spin = 0; C.lieK = 0; C.shell = false; C.roost = null; C.squash = 0; C.root.rotation.set(0, C.yaw, 0); } LOBBY.pos = {}; }
   const ids = lobbyIds(), n = ids.length, t = TTL.t;
   // who just picked or dropped a character: they hop, wave, show a sticker
   const prev = LOBBY.seen; LOBBY.seen = {}; for (const id of ids) LOBBY.seen[id] = NET.slots[id] || '';

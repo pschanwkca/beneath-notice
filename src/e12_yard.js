@@ -202,7 +202,7 @@ function buildDog(o = {}) {
   const collar = new THREE.Mesh(new THREE.TorusGeometry(9.5, 1.4, 8, 28), o.collar ? new THREE.MeshStandardMaterial({ color: o.collar, roughness: .4 }) : MAT.paintRed); collar.position.set(0, 2, 2); collar.rotation.x = Math.PI / 2 - .4; neck.add(collar);
   D.legs = []; for (const [x, z] of [[-8, 26], [8, 26], [-8, -26], [8, -26]]) { const L = new THREE.Group(); L.position.set(x, -8, z); body.add(L); const lm = furMesh(capG(4.2, 26), fur); lm.position.y = -16; L.add(lm); const paw = furMesh(ell(4.4, 2.6, 5.4, 12, 8), fur); paw.position.set(0, -32, 1.4); L.add(paw); D.legs.push({ g: L, z }); }
   D.tail = new THREE.Group(); D.tail.position.set(0, 8, -36); body.add(D.tail); const tm = furMesh(capG(3, 26), fur); tm.position.set(0, 0, -14); tm.rotation.x = Math.PI / 2 + .5; D.tail.add(tm);
-  if (!o.keep) YS.dog = D; return D;
+  if (!o.keep) { YS.dog = D; npcHome(g, D.pos, D.yaw, 'yard'); } return D;
 }
 function updDog(dt) {
   const D = YS.dog; if (!D) return; if (TAKE.job && TAKE.job.who === 'dog') { dogTake(TAKE.job, D, dt); return; } D.t -= dt; const P = D.pos; let sp = 0;
@@ -240,7 +240,7 @@ function yardSeen(tp, who) { if (who === 'dog') { const D = YS.dog; D.mode = 'ba
 function buildOldMan() {
   const cardig = new THREE.MeshPhysicalMaterial({ color: 0x7a5a3a, roughness: .95, sheen: .6, sheenColor: 0xc8a888 });
   const H = buildHuman({ pants: new THREE.MeshStandardMaterial({ color: 0x3a3a40, roughness: .9 }), top: cardig, skin: MAT.skin, shoe: new THREE.MeshStandardMaterial({ color: 0x4a2a1a, roughness: .7 }), hair: 0xd8d4cc, bald: true, glasses: true });
-  H.pos.set(2662, DECK + 4, 55); H.yaw = -Math.PI / 2; H.root.visible = true;
+  H.pos.set(2662, DECK + 4, 55); H.yaw = -Math.PI / 2; H.root.visible = true; npcHome(H.root, H.pos, H.yaw, 'yard');
   // seated: thighs forward, shins down
   H.pelvis.position.y = 44; for (const L of H.legs) { L.hip.rotation.x = -1.45; L.knee.rotation.x = 1.5; L.ankle.rotation.x = 0; }
   const paper = new THREE.Mesh(new THREE.PlaneGeometry(52, 34), new THREE.MeshStandardMaterial({ map: genNews(), roughness: .9, side: THREE.DoubleSide })); paper.position.set(0, 52, 26); H.chest.add(paper); H.paper = paper;

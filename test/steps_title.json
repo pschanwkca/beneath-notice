@@ -1,2 +1,2 @@
-[{"eval":"(()=>{const b=window.__bn; window.__NR=true; b.step(300); return [b.TTL.inCloud, b.TTL.fly.map(f=>f.id+':'+f.ph)]})()","frame":1,"wait":300,"shot":"title_a"},
- {"eval":"(()=>{const b=window.__bn; b.step(200); return [b.TTL.inCloud, b.TTL.fly.map(f=>f.id+':'+f.ph)]})()","frame":1,"wait":300,"shot":"title_b"}]
+[{"eval":"(()=>{const b=window.__bn; window.__NR=true; b.step(400); return 1})()","frame":1,"wait":300,"shot":"title_a"},
+ {"eval":"(()=>{const b=window.__bn; b.step(420); return 1})()","frame":1,"wait":300,"shot":"title_b"}]
