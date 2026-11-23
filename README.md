@@ -146,7 +146,7 @@
 技術：
 - 點對點 WebRTC（[Trystero](https://github.com/dmotz/trystero)，用公共 Nostr relay 配對），不需要伺服器。
 - 房主負責家人、貓、物件、門、玩具和拾取物；每個玩家負責自己的角色。
-- 配對同時用幾個 Nostr relay；連線用 Google／Cloudflare STUN，加一個公共 TURN 做後備。公共 TURN 唔保證一定得，如果要穩陣，可以喺 Metered 等服務申請免費 TURN key，填入 `src/g_net.js` 嘅 `TURN_SERVERS`。
+- 配對同時用幾個 Nostr relay；之後玩家用自己嘅網絡直接連埋一齊（Google／Cloudflare STUN 幫手搵路），中間冇中轉伺服器。
 - 角色位置每秒 20 次同步，對方會用短預測補返中間，郁得順啲。
 - 少數公司／學校網絡會擋 WebRTC，連不上時試下用另一個網絡（例如手機熱點）。
 - 在同一部電腦測試：網址加 `?net=local`，開兩個分頁就可以互連（用 BroadcastChannel）。

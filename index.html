@@ -8458,12 +8458,8 @@ function upIncident(id, o, on, M, K, mr, kr, look) {
 // =====================================================================
 const NET = { on: false, host: false, client: false, me: '', hostId: '', code: '', tx: null, slots: { dad: null, sq: null, bear: null, cham: null }, peers: [], my: null, sendT: 0, worldT: 0, started: false, pend: {}, seenT: 0, npc: null, joinTimer: 0, order: [] };
 const APP_ID = 'pschanwkca/beneath-notice/coop-v1';
-// Relay (TURN) servers let two players connect when their networks won't let them talk directly (common on
-// mobile data). A free Open Relay / Metered key can be dropped in here; the public STUN servers help most
-// home networks find a direct route.
-const TURN_SERVERS = [
-  { urls: ['turn:openrelay.metered.ca:80', 'turn:openrelay.metered.ca:443', 'turn:openrelay.metered.ca:443?transport=tcp'], username: 'openrelayproject', credential: 'openrelayproject' }
-];
+// Players connect straight to each other over their own internet (no relay server in between).
+// The public STUN servers only help each player find their own address so most home networks can link up.
 const STUN_SERVERS = [{ urls: ['stun:stun.l.google.com:19302', 'stun:stun1.l.google.com:19302', 'stun:stun.cloudflare.com:3478'] }];
 NET.tokOf = {}; NET.reserved = {};
 // a token that survives a reload, so a dropped player gets their own character back
@@ -8480,7 +8476,7 @@ function playerLabel(id) { const p = NET.slots[id]; if (!p) return '電腦'; if 
 // ---------- transports ----------
 function trysteroTransport(code) {
   if (!window.Trystero) throw new Error('連線模組載入失敗');
-  const room = window.Trystero.joinRoom({ appId: APP_ID, identity: 'none', maxUsers: 10, relayRedundancy: 5, turnConfig: TURN_SERVERS, rtcConfig: { iceServers: STUN_SERVERS } }, 'room-' + code);
+  const room = window.Trystero.joinRoom({ appId: APP_ID, identity: 'none', maxUsers: 10, relayRedundancy: 5, rtcConfig: { iceServers: STUN_SERVERS } }, 'room-' + code);
   const act = room.makeAction('m');
   const T = { send: (d, to) => act.send(d, to ? { target: to } : undefined), leave: () => room.leave() };
   act.onMessage((d, ctx) => T.onMsg && T.onMsg(d, ctx.peerId));
