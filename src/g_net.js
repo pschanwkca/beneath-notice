@@ -81,7 +81,7 @@ function mpConnect(code, host) {
 function mpBroadcastLobby(to) { nsend({ t: 'lobby', host: NET.me, slots: NET.slots, started: NET.started, order: NET.order, names: NET.names }, to); }
 function mpPick(id) {
   if (NET.on || !NET.me) return;
-  const cur = NET.slots[id]; if (cur && cur !== NET.me) return; if (!isUnlocked(id)) return;
+  const cur = NET.slots[id]; if (cur && cur !== NET.me) return; if (!canPickMP(id)) return;
   if (NET.host) hostPick(NET.me, id); else nsend({ t: 'pick', id }, NET.hostId || undefined);
 }
 function hostPick(peer, id) {
@@ -95,7 +95,7 @@ function mpRender() {
   box.innerHTML = IDS.map(id => {
     const p = NET.slots[id]; const S = SP[id]; const nm = nameOf(p); const who = p ? (p === NET.me ? (nm || '你') : nm || (p === NET.hostId ? '房主' : '玩家 ' + (NET.order.indexOf(p) + 1))) : CORE.includes(id) ? '電腦' : '可以揀';
     // not unlocked on this device yet: a silhouette and how to get it
-    if (!p && !isUnlocked(id)) { const r = ROSTER.find(q => q.id === id); return `<button class="mps lock" disabled title="${r.how}"><span class="ph">${PORTRAITS[id] ? `<img class="sil" alt="" src="${PORTRAITS[id]}">` : SIL_SVG}<i>?</i></span><b>？？？</b><small>${r.how}</small><em>未解鎖</em></button>`; }
+    if (!p && !canPickMP(id)) { const r = ROSTER.find(q => q.id === id); return `<button class="mps lock" disabled title="${r.how}"><span class="ph">${PORTRAITS[id] ? `<img class="sil" alt="" src="${PORTRAITS[id]}">` : SIL_SVG}<i>?</i></span><b>？？？</b><small>${r.how}</small><em>未解鎖</em></button>`; }
     return `<button class="mps${p === NET.me ? ' me' : p ? ' taken' : ''}" data-id="${id}" ${p && p !== NET.me ? 'disabled' : ''}><span class="ph">${PORTRAITS[id] ? `<img alt="" src="${PORTRAITS[id]}">` : ''}</span><b>${S.name}</b><small>${S.abil}</small><em>${who}</em></button>`;
   }).join('');
   box.querySelectorAll('.mps').forEach(b => { b.addEventListener('click', () => mpPick(b.dataset.id)); b.addEventListener('pointerenter', () => { LOBBY.hover = b.dataset.id; mpInfoRender(); }); b.addEventListener('pointerleave', () => { LOBBY.hover = null; mpInfoRender(); }); });

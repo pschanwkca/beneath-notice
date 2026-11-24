@@ -80,6 +80,7 @@ function buildUpstairs(K) {
   const ph = [['photo', 0, 22, 28], ['photo3', 4, 30, 22], ['photo2', 8, 18, 24], ['photo', 12, 24, 30]];
   for (const [img, i, w, h] of ph) { const z = -262 - i * run, y = i * rise + 140; deco(748, 749.6, y - h / 2, y + h / 2, z - w / 2, z + w / 2, MAT.black); mesh(new THREE.PlaneGeometry(w - 3, h - 3), livingPhoto(img), 749.8, y, z, { cast: false }).rotation.y = Math.PI / 2; }
   // a little round window on the landing (dusk outside)
+  sunWindow(V3(824, Y + 140, -495), 52, 52, V3(0, 0, 1), Y, { fill: 6000, sun: 90000 });
   { const r = mesh(new THREE.CircleGeometry(26, 40), K.dusk, 824, Y + 140, -497.4, { cast: false }); r.rotation.y = 0; const fr = mesh(new THREE.TorusGeometry(27, 2.4, 10, 48), M.paint, 824, Y + 140, -497, { cast: false }); fr.rotation.y = 0; }
   // stairwell light: a pendant at the top, a sconce half-way, the hallway ceiling light
   cyl(790, -380, .4, Yc - 70, Yc, MAT.black, { col: false, seg: 6 }); mesh(new THREE.SphereGeometry(9, 24, 14), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffe2b8, emissiveIntensity: 3 }), 790, Yc - 76, -380, { cast: false });
@@ -113,6 +114,7 @@ function buildUpstairs(K) {
   for (const [x, c] of [[582, 0xffffff], [656, 0xa8d8c8]]) { const pw = mesh(new THREE.SphereGeometry(10, 18, 12), new THREE.MeshPhysicalMaterial({ color: c, roughness: 1, sheen: .8 }), x, Y + 50, 224); pw.scale.set(.9, .9, .45); }
   mesh(new THREE.PlaneGeometry(320, 220), K.dusk, 620, Y + 110, 330, { cast: false }).rotation.y = Math.PI;
   mesh(new THREE.PlaneGeometry(92, 110), MAT.glassThin, 620, Y + 95, 238, { cast: false }).rotation.y = Math.PI;
+  sunWindow(V3(620, Y + 95, 236), 92, 110, V3(0, 0, -1), Y, { fill: 10000 });
   deco(574, 666, Y + 93, Y + 96, 236, 239, M.paint); deco(618.5, 621.5, Y + 42, Y + 150, 236, 239, M.paint);
   cols.push({ t: 'b', x0: 574, x1: 666, y0: Y + 42, y1: Y + 150, z0: 237, z1: 239, noRay: true });
   for (const x of [556, 684]) box(x - 12, x + 12, Y + 2, Y + 176, 222, 228, M.curtain);

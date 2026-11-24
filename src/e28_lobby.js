@@ -114,7 +114,7 @@ function lobbyPad(i, p, id, dt) {
 // the card on the left: whoever you're pointing at, or the one you've picked
 function mpInfoRender() {
   const el = $('mpInfo'); if (!el) return;
-  const id = LOBBY.hover && isUnlocked(LOBBY.hover) ? LOBBY.hover : IDS.find(k => NET.slots[k] === NET.me);
+  const id = LOBBY.hover && canPickMP(LOBBY.hover) ? LOBBY.hover : IDS.find(k => NET.slots[k] === NET.me);
   if (!id) { el.innerHTML = ''; return; }
   const S = SP[id], peer = NET.slots[id], bar = v => `${Math.round(clamp((v - .65) / .85, .08, 1) * 100)}%`;
   const who = peer ? (peer === NET.me ? '你' : nameOf(peer) || '另一位玩家') : CORE.includes(id) ? '電腦控制中（揀佢就由你玩）' : '未有人揀';

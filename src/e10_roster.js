@@ -8,11 +8,12 @@
 // =====================================================================
 const ROSTER = [
   { id: 'dad' }, { id: 'sq' }, { id: 'bear' }, { id: 'cham' },
-  { id: 'hog', key: 'prologue', how: '完成序章（地庫實驗室）' },
-  { id: 'rab', key: 'ch1', how: '完成第一章（把核心帶回牆腳）' },
-  { id: 'coon', key: 'ch2', how: '完成第二章（客廳的電池）' },
+  // mp: free to pick online from the start (online play takes up to 8 players, so 8 characters are always open)
+  { id: 'hog', key: 'prologue', how: '完成序章（地庫實驗室）', mp: true },
+  { id: 'rab', key: 'ch1', how: '完成第一章（把核心帶回牆腳）', mp: true },
+  { id: 'coon', key: 'ch2', how: '完成第二章（客廳的電池）', mp: true },
   { id: 'frog', key: 'bat6', how: '單人模式集齊全部鈕扣電池' },
-  { id: 'bat', key: 'bat', how: '單人第三章：在車房找到阿蝠' },
+  { id: 'bat', key: 'bat', how: '單人第三章：在車房找到阿蝠', mp: true },
   { id: 'tort', key: 'tort', how: '單人第四章：在陳伯的後園找到阿龜' },
   { id: 'mole', key: 'mole', how: '單人第六章：在公園的沙池找到阿鼴' },
   { id: 'f2', future: true, how: '第七章：學校（製作中）' },
@@ -20,6 +21,7 @@ const ROSTER = [
 ];
 const UNL = (() => { try { return JSON.parse(localStorage.getItem('bn_unlock_v1') || '{}') || {}; } catch (e) { return {}; } })();
 function isUnlocked(id) { const r = ROSTER.find(q => q.id === id); return !!r && !r.future && (!r.key || !!UNL[r.key]); }
+function canPickMP(id) { const r = ROSTER.find(q => q.id === id); return isUnlocked(id) || !!(r && r.mp); }
 function unlockedCount() { return ROSTER.filter(r => isUnlocked(r.id)).length; }
 // single player progress unlocks characters for online games
 function unlockKey(key) {

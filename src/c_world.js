@@ -62,7 +62,7 @@ function buildEnv(kind = 'basement') {
   const pm = new THREE.PMREMGenerator(renderer); const es = new THREE.Scene();
   const room = new THREE.Mesh(new THREE.BoxGeometry(10, 5, 10), new THREE.MeshBasicMaterial({ color: 0x10141c, side: THREE.BackSide })); es.add(room);
   const panel = (c, k, w, h, x, y, z, ry = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(k), side: THREE.DoubleSide })); m.position.set(x, y, z); m.rotation.y = ry; es.add(m); };
-  if (kind === 'kitchen') { room.material.color.setHex(0x3a2e24); panel(0xffd2a0, 5, 3, .5, 0, 2.45, 0); panel(0xffc890, 3, 1, 1, -1, 2.2, 2); panel(0x6a86c8, 2.2, 2, 1, -1, 1.6, -4.9); panel(0xfff4e6, 2.5, 1, 2, 3, 1, -4.5); panel(0x4a3a2c, 1, 10, 3, 0, -2.4, 0); }
+  if (kind === 'kitchen') { room.material.color.setHex(DAY ? 0x4a4038 : 0x3a2e24); panel(0xffd2a0, 5, 3, .5, 0, 2.45, 0); panel(0xffc890, 3, 1, 1, -1, 2.2, 2); panel(DAY ? 0xd8e6ff : 0x6a86c8, DAY ? 5 : 2.2, DAY ? 3 : 2, DAY ? 1.6 : 1, -1, 1.6, -4.9); if (DAY) { panel(0xd8e6ff, 4, 3, 1.6, 2, 1.6, 4.9); } panel(0xfff4e6, 2.5, 1, 2, 3, 1, -4.5); panel(0x4a3a2c, 1, 10, 3, 0, -2.4, 0); }
   else if (kind === 'garage') { room.material.color.setHex(0x16191d); panel(0xdfe8ff, 4, 3, .3, 0, 2.45, 0); panel(0xffa860, 2, 4, .2, 0, -.2, 4.9); panel(0x2a2c30, 1, 10, 3, 0, -2.4, 0); }
   else if ((kind === 'yard' || kind === 'road' || kind === 'park') && DAY) {   // daylight outdoors: a blue sky all round, the sun, green-brown ground
     room.material.color.setHex(0x6e90bc); const top = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xa8ccf4).multiplyScalar(1.6), side: THREE.DoubleSide })); top.rotation.x = Math.PI / 2; top.position.y = 2.45; es.add(top);
@@ -228,7 +228,7 @@ function makeMaterials() {
     bookR: new THREE.MeshStandardMaterial({ map: genBook(0x6b2a26, 'BIOLOGY OF SIZE'), roughness: .85 }),
     bookB: new THREE.MeshStandardMaterial({ map: genBook(0x26324f, 'FIELD NOTES'), roughness: .85 }),
     pages: new THREE.MeshStandardMaterial({ color: 0xe9e0cc, roughness: .95 }),
-    night: new THREE.MeshBasicMaterial({ map: genNight(), color: 0x9aa8c8 }),
+    night: new THREE.MeshBasicMaterial({ map: genNight(), color: DAY ? new THREE.Color(0xffffff).multiplyScalar(1.15) : 0x9aa8c8 }),
     crack: new THREE.MeshBasicMaterial({ map: genCrack(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }),
     web: new THREE.MeshBasicMaterial({ map: genWeb(), transparent: true, depthWrite: false, side: THREE.DoubleSide, opacity: .7 }),
     dirt: new THREE.MeshBasicMaterial({ color: 0x000000, alphaMap: genDirt(), transparent: true, opacity: .55, depthWrite: false }),
@@ -465,14 +465,31 @@ function beamMesh(color, len, angle, k) {
   m.frustumCulled = false; LVFX.add(m); return m;
 }
 function aimBeam(m, from, to) { const d = V3().subVectors(to, from).normalize(); m.position.copy(from); m.quaternion.setFromUnitVectors(V3(0, -1, 0), d); }
+// daylight through a window (DAY only): a soft cool fill just inside, and — when the window faces the sun —
+// a shaft of sunlight (a real light plus a dusty beam) and a bright patch where it lands.
+// c: the window's centre, w×h its size, n: which way the room is (unit), floorY: the floor below it.
+let _sunPatchT = null;
+function sunWindow(c, w, h, n, floorY, o = {}) {
+  if (!DAY) return;
+  pointL(0xe4ecff, o.fill || 9000, c.x + n.x * 60, c.y - 20, c.z + n.z * 60);
+  const d = SUN.clone().negate(); if (d.dot(n) < .15) return;   // the sun is on the other side of the house
+  const t = (c.y - floorY) / -d.y, hit = c.clone().addScaledVector(d, t), len = t;
+  const ang = Math.atan(Math.max(w, h) * .55 / len);
+  const l = spotL(0xfff0d8, o.sun || 160000, c.clone().addScaledVector(d, -60), hit, Math.min(.9, ang * 1.6), .7, 0); l.userData.win = 1;
+  const b = beamMesh(0xfff0d8, len, ang, o.beamK || .11); aimBeam(b, c, hit); LV.add(b);
+  if (beams.length < 4) beams.push({ m: b, o: c.clone(), d: d.clone(), ca: Math.cos(ang), len, c: new THREE.Color(0xfff0d8), k: .9 });
+  if (!_sunPatchT) { const [cv, x] = cnv(128, 128); const g = x.createRadialGradient(64, 64, 10, 64, 64, 64); g.addColorStop(0, 'rgba(255,240,210,1)'); g.addColorStop(.6, 'rgba(255,236,200,.55)'); g.addColorStop(1, 'rgba(255,230,190,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); _sunPatchT = tex(cv); }
+  const pm = new THREE.Mesh(new THREE.PlaneGeometry(w * 1.3, h * 1.3 / Math.max(.4, -d.y)), new THREE.MeshBasicMaterial({ map: _sunPatchT, color: new THREE.Color(0xfff0d8).multiplyScalar(.35), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+  pm.rotation.x = -Math.PI / 2; pm.rotation.z = Math.atan2(d.x, d.z); pm.position.set(hit.x, floorY + .3, hit.z); pm.renderOrder = 2; LV.add(pm);
+}
 function buildLights() {
   LV.add(new THREE.HemisphereLight(0x5d6d90, 0x2c241b, 1.05));
   const f1 = new THREE.PointLight(0xffb27a, 7000, 0, 2); f1.position.set(-20, 70, -120); LV.add(f1);
-  const f2 = new THREE.PointLight(0x8ea6ff, 16000, 0, 2); f2.position.set(70, 150, 70); LV.add(f2);
+  const f2 = new THREE.PointLight(DAY ? 0xdfe6ff : 0x8ea6ff, DAY ? 20000 : 16000, 0, 2); f2.position.set(70, 150, 70); LV.add(f2);
   const f3 = new THREE.PointLight(0xa8b8ff, 2600, 0, 2); f3.position.set(84, 18, 70); LV.add(f3);
-  moonLight = new THREE.SpotLight(0xa9c1ff, 1600000, 0, .2, .45, 2); moonLight.position.set(95, 420, -560); moonLight.target.position.set(84, 0, 85); LV.add(moonLight, moonLight.target);
+  moonLight = new THREE.SpotLight(DAY ? 0xfff0d6 : 0xa9c1ff, DAY ? 3400000 : 1600000, 0, .2, .45, 2);   // (DAY: sunlight through the little window) moonLight.position.set(95, 420, -560); moonLight.target.position.set(84, 0, 85); LV.add(moonLight, moonLight.target);
   moonLight.castShadow = true; moonLight.shadow.mapSize.setScalar(TOUCH ? 1024 : 2048); moonLight.shadow.camera.near = 250; moonLight.shadow.camera.far = 1200; moonLight.shadow.bias = -0.0003; moonLight.shadow.normalBias = 0.05;
-  const mb = beamMesh(0x9fb6ff, 420, .12, .13); aimBeam(mb, V3(90, 222, -256), V3(84, 0, 85)); beams.push({ m: mb, o: V3(90, 222, -256), d: V3(84, 0, 85).sub(V3(90, 222, -256)).normalize(), ca: Math.cos(.15), len: 420, c: new THREE.Color(0x9fb6ff), k: 1 });
+  const bc = DAY ? 0xffeccc : 0x9fb6ff; const mb = beamMesh(bc, 420, .12, DAY ? .17 : .13); aimBeam(mb, V3(90, 222, -256), V3(84, 0, 85)); beams.push({ m: mb, o: V3(90, 222, -256), d: V3(84, 0, 85).sub(V3(90, 222, -256)).normalize(), ca: Math.cos(.15), len: 420, c: new THREE.Color(bc), k: 1 });
   const lb = beamMesh(0xffc98a, 50, .62, .05); aimBeam(lb, V3(-58, 126, -196), V3(-30, 92, -192)); beams.push({ m: lb, o: V3(-58, 126, -196), d: V3(-30, 92, -192).sub(V3(-58, 126, -196)).normalize(), ca: Math.cos(.7), len: 50, c: new THREE.Color(0xffc98a), k: .8 });
   upLight = new THREE.SpotLight(0xffbf7a, 0, 0, .55, .6, 2); upLight.position.set(-252, 430, -330); upLight.target.position.set(-252, 0, 80); LV.add(upLight, upLight.target);
   upLight.castShadow = true; upLight.shadow.mapSize.setScalar(TOUCH ? 512 : 1024); upLight.shadow.camera.near = 30; upLight.shadow.camera.far = 900; upLight.shadow.bias = -0.0004; upLight.shadow.normalBias = .05;

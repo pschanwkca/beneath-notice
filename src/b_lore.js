@@ -93,6 +93,16 @@ function genBook(col, title) {
   return tex(c);
 }
 function genNight() {
+  if (DAY) {   // daylight: blue sky, a fence and a sunlit lawn seen from ground level
+    const W = 512, H = 256; const [c, x] = cnv(W, H);
+    const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#5f9ee2'); g.addColorStop(.55, '#a8cdef'); g.addColorStop(.8, '#dceaf2'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    const rg = x.createRadialGradient(W * .3, -30, 10, W * .3, -30, 280); rg.addColorStop(0, 'rgba(255,248,228,.9)'); rg.addColorStop(1, 'rgba(255,248,228,0)'); x.fillStyle = rg; x.fillRect(0, 0, W, H);
+    for (const [cx, cy, s] of [[360, 50, 1], [120, 80, .7]]) for (let i = 0; i < 7; i++) { const r = (16 + i * 3) * s, h = x.createRadialGradient(cx + i * 14 * s, cy - (i % 2) * 6, 2, cx + i * 14 * s, cy, r); h.addColorStop(0, 'rgba(255,255,255,.9)'); h.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = h; x.fillRect(0, 0, W, H); }
+    x.fillStyle = '#e8e2d4'; for (let i = 0; i < W; i += 22) { x.fillRect(i, H * .42, 12, H * .3); x.beginPath(); x.moveTo(i, H * .42); x.lineTo(i + 6, H * .38); x.lineTo(i + 12, H * .42); x.fill(); } x.fillRect(0, H * .5, W, 6);
+    x.fillStyle = '#5a8a3a'; x.fillRect(0, H * .68, W, H * .32);
+    for (let i = 0; i < 320; i++) { const px = R(0, W), h = R(30, 120); x.fillStyle = `rgb(${R(60, 110) | 0},${R(130, 175) | 0},${R(40, 70) | 0})`; x.beginPath(); x.moveTo(px - 3, H); x.quadraticCurveTo(px + R(-10, 10), H - h * .6, px + R(-14, 14), H - h); x.lineTo(px + 2, H); x.fill(); }
+    return tex(c);
+  }
   const W = 512, H = 256; const [c, x] = cnv(W, H);
   const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#2a3f6e'); g.addColorStop(.6, '#162442'); g.addColorStop(1, '#0a1020'); x.fillStyle = g; x.fillRect(0, 0, W, H);
   const rg = x.createRadialGradient(W * .3, -20, 10, W * .3, -20, 260); rg.addColorStop(0, 'rgba(210,225,255,.85)'); rg.addColorStop(1, 'rgba(210,225,255,0)'); x.fillStyle = rg; x.fillRect(0, 0, W, H);

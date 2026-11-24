@@ -25,6 +25,11 @@ const rnd = () => { SEED = (SEED * 16807) % 2147483647; return (SEED - 1) / 2147
 const R = (a, b) => a + (b - a) * rnd();
 function hashI(n) { n = Math.imul(n ^ 61 ^ (n >>> 16), 9); n ^= n >>> 4; n = Math.imul(n, 0x27d4eb2d); n ^= n >>> 15; return (n >>> 0) / 4294967295; }
 const V3 = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
+// the whole world is in daylight (a summer afternoon): the sun high in the sky, windows full of sky and garden.
+// DAY = false brings back the old evening/night version.
+const DAY = true, SUN = V3(.36, .82, -.44).normalize();
+// where the sun lights a spot from: far along the sun's direction from a target on the ground
+const sunFrom = (tgt, d = 2400) => tgt.clone().addScaledVector(SUN, d);
 const UP = V3(0, 1, 0);
 const I4 = new THREE.Matrix4();
 

@@ -1,0 +1,8 @@
+[{"eval":"window.__bn.startChapter('kitchen')","wait":6000},
+ {"eval":"(()=>{const b=window.__bn; b.step(60); window.__CAMO={p:[-40,110,-40],t:[-110,100,-228]}; return b.info().lv})()"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"dayin_kitchen"},
+ {"eval":"window.__CAMO={p:[700,90,40],t:[790,110,238]}"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"dayin_living"},
+ {"eval":"delete window.__CAMO; 1"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"dayin_play"}
+]

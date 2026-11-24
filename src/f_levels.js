@@ -114,6 +114,20 @@ function genKidArt() {
   return tex(c);
 }
 function genDusk() {
+  if (DAY) {
+    const W = 1024, H = 512; const [c, x] = cnv(W, H);
+    const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#4f8fd8'); g.addColorStop(.45, '#94c0ea'); g.addColorStop(.7, '#d8e8f2'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    for (const [cx, cy, s] of [[180, 70, 1.2], [620, 50, 1], [880, 110, .8]]) for (let i = 0; i < 8; i++) { const r = (22 + i * 4) * s, h = x.createRadialGradient(cx + i * 18 * s, cy - (i % 3) * 8 * s, 2, cx + i * 18 * s, cy, r); h.addColorStop(0, 'rgba(255,255,255,.92)'); h.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = h; x.fillRect(0, 0, W, H); }
+    // a tree line behind the houses
+    for (let i = 0; i < 40; i++) { const px = R(0, W), r = R(30, 60); x.fillStyle = `rgb(${R(50, 80) | 0},${R(100, 130) | 0},${R(40, 60) | 0})`; x.beginPath(); x.arc(px, H - 210 - R(0, 30), r, 0, Math.PI * 2); x.fill(); }
+    const house = (hx, w, hh, roof, wall, rf) => { x.fillStyle = wall; x.fillRect(hx, H - hh, w, hh); x.fillStyle = rf; x.beginPath(); x.moveTo(hx - 14, H - hh); x.lineTo(hx + w / 2, H - hh - roof); x.lineTo(hx + w + 14, H - hh); x.fill();
+      x.fillStyle = 'rgba(0,0,0,.08)'; for (let y = H - hh + 8; y < H; y += 10) x.fillRect(hx, y, w, 2); };
+    house(60, 300, 170, 90, '#e8dcc4', '#5a4a44'); house(520, 340, 200, 110, '#c8d4dc', '#4a5058'); house(900, 200, 150, 70, '#e4c8b0', '#6a4a3c');
+    for (const [wx, wy] of [[110, 400], [250, 400], [580, 360], [720, 360], [580, 430], [940, 420]]) { x.fillStyle = '#f6f4ee'; x.fillRect(wx - 4, wy - 4, 52, 44); const wg = x.createLinearGradient(wx, wy, wx + 44, wy + 36); wg.addColorStop(0, '#7aa4c8'); wg.addColorStop(1, '#c4dcec'); x.fillStyle = wg; x.fillRect(wx, wy, 44, 36); }
+    x.fillStyle = '#6a9a44'; x.fillRect(0, H - 40, W, 40);
+    x.fillStyle = '#f2efe6'; for (let i = 0; i < W; i += 18) x.fillRect(i, H - 60, 8, 60); x.fillRect(0, H - 50, W, 8);
+    return tex(c);
+  }
   const W = 1024, H = 512; const [c, x] = cnv(W, H);
   const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1b2a55'); g.addColorStop(.55, '#4a4f86'); g.addColorStop(.78, '#d98a6a'); g.addColorStop(1, '#f2b77a'); x.fillStyle = g; x.fillRect(0, 0, W, H);
   for (let i = 0; i < 30; i++) { x.fillStyle = `rgba(255,255,255,${R(.2, .7)})`; x.fillRect(R(0, W), R(0, H * .35), 2, 2); }
@@ -183,7 +197,7 @@ function kitchenMats() {
     homework: new THREE.MeshStandardMaterial({ map: genHomework(), roughness: .9 }),
     poster: new THREE.MeshStandardMaterial({ map: genPoster(), roughness: .8 }),
     kidArt: new THREE.MeshStandardMaterial({ map: genKidArt(), roughness: .9 }),
-    dusk: new THREE.MeshBasicMaterial({ map: genDusk(), color: 0xbbbbcc }),
+    dusk: new THREE.MeshBasicMaterial({ map: genDusk(), color: DAY ? new THREE.Color(0xffffff).multiplyScalar(1.2) : 0xbbbbcc }),
     hole: new THREE.MeshBasicMaterial({ map: genMouseHole(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }),
     milk: new THREE.MeshStandardMaterial({ map: genCarton('鮮奶', 'FRESH MILK', '#2b5fb0'), roughness: .6 }),
     juice: new THREE.MeshStandardMaterial({ map: genCarton('橙汁', 'ORANGE', '#e07a1a'), roughness: .6 }),
@@ -350,6 +364,7 @@ function buildKitchen() {
   box(-152, -48, 104, 110, -232, -212, MAT.white); box(-152, -148, 110, 190, -232, -224, MAT.white); box(-52, -48, 110, 190, -232, -224, MAT.white); box(-152, -48, 186, 190, -232, -224, MAT.white); box(-101.5, -98.5, 110, 190, -230, -226, MAT.white, { col: false }); box(-150, -50, 148.5, 151.5, -230, -226, MAT.white, { col: false });
   mesh(new THREE.PlaneGeometry(98, 78), MAT.glassThin, -100, 150, -228, { cast: false });
   mesh(new THREE.PlaneGeometry(420, 210), K.dusk, -100, 150, -330, { cast: false });
+  sunWindow(V3(-100, 150, -226), 98, 78, V3(0, 0, 1), 0, { fill: 12000 });
   cols.push({ t: 'b', x0: -150, x1: -50, y0: 110, y1: 190, z0: -229, z1: -227, noRay: true });
   // potted herb on the sill
   // base cabinets + under-sink cupboard (hollow, door open)
@@ -834,6 +849,6 @@ LEVELS.basement = {
   // online, nobody is home in the basement: no wife, no timer, no getting caught
   npc(dt) { if (NET.on) return; if (STATE === 'play' || STATE === 'fail' || STATE === 'end' || STATE === 'frozen') updMom(dt); }, detect(dt) { if (NET.on) { meter = 0; return; } updDetect(dt); }, update(dt) { updTrap(); }, win() { if (!NET.on) winBasement(); },
   marker() { if (NET.on) return proMarker(); return quest === 3 ? V3(70, 6, 15).add(HO) : quest >= 1 ? V3(-300, 7, 150).add(BO) : null; }, reset() { momReset(); },
-  eyeText: () => NET.on ? '地庫今晚沒有人' : meter > .3 ? '她在看這邊！快躲起來' : mom.mode === 'door' ? '樓上的門打開了' : '太太在地庫', hint: () => ''
+  eyeText: () => NET.on ? '地庫今日沒有人' : meter > .3 ? '她在看這邊！快躲起來' : mom.mode === 'door' ? '樓上的門打開了' : '太太在地庫', hint: () => ''
 };
 LVL = LEVELS.basement;

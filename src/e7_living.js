@@ -89,6 +89,7 @@ function buildLivingRoom(K) {
   box(700, 850, 96, 100, 214, 232, M.white); box(700, 850, 206, 210, 228, 240, M.white, { col: false }); box(700, 704, 100, 206, 228, 240, M.white, { col: false }); box(846, 850, 100, 206, 228, 240, M.white, { col: false }); box(773.5, 776.5, 100, 206, 236, 239, M.white, { col: false });
   mesh(new THREE.PlaneGeometry(420, 210), K.dusk, 775, 150, 330, { cast: false }).rotation.y = Math.PI;
   mesh(new THREE.PlaneGeometry(146, 110), MAT.glassThin, 775, 155, 238, { cast: false }).rotation.y = Math.PI;
+  sunWindow(V3(775, 155, 236), 146, 110, V3(0, 0, -1), 0, { fill: 14000 });
   cols.push({ t: 'b', x0: 700, x1: 850, y0: 100, y1: 206, z0: 237, z1: 239, noRay: true });
   const cur = new THREE.MeshPhysicalMaterial({ color: 0x8a7a9a, roughness: .95, sheen: .8, side: THREE.DoubleSide });
   for (const x of [690, 852]) { box(x - 12, x + 12, 2, 230, 214, 220, cur); }

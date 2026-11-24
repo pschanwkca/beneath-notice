@@ -813,6 +813,11 @@ const rnd = () => { SEED = (SEED * 16807) % 2147483647; return (SEED - 1) / 2147
 const R = (a, b) => a + (b - a) * rnd();
 function hashI(n) { n = Math.imul(n ^ 61 ^ (n >>> 16), 9); n ^= n >>> 4; n = Math.imul(n, 0x27d4eb2d); n ^= n >>> 15; return (n >>> 0) / 4294967295; }
 const V3 = (x = 0, y = 0, z = 0) => new THREE.Vector3(x, y, z);
+// the whole world is in daylight (a summer afternoon): the sun high in the sky, windows full of sky and garden.
+// DAY = false brings back the old evening/night version.
+const DAY = true, SUN = V3(.36, .82, -.44).normalize();
+// where the sun lights a spot from: far along the sun's direction from a target on the ground
+const sunFrom = (tgt, d = 2400) => tgt.clone().addScaledVector(SUN, d);
 const UP = V3(0, 1, 0);
 const I4 = new THREE.Matrix4();
 
@@ -1293,6 +1298,16 @@ function genBook(col, title) {
   return tex(c);
 }
 function genNight() {
+  if (DAY) {   // daylight: blue sky, a fence and a sunlit lawn seen from ground level
+    const W = 512, H = 256; const [c, x] = cnv(W, H);
+    const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#5f9ee2'); g.addColorStop(.55, '#a8cdef'); g.addColorStop(.8, '#dceaf2'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    const rg = x.createRadialGradient(W * .3, -30, 10, W * .3, -30, 280); rg.addColorStop(0, 'rgba(255,248,228,.9)'); rg.addColorStop(1, 'rgba(255,248,228,0)'); x.fillStyle = rg; x.fillRect(0, 0, W, H);
+    for (const [cx, cy, s] of [[360, 50, 1], [120, 80, .7]]) for (let i = 0; i < 7; i++) { const r = (16 + i * 3) * s, h = x.createRadialGradient(cx + i * 14 * s, cy - (i % 2) * 6, 2, cx + i * 14 * s, cy, r); h.addColorStop(0, 'rgba(255,255,255,.9)'); h.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = h; x.fillRect(0, 0, W, H); }
+    x.fillStyle = '#e8e2d4'; for (let i = 0; i < W; i += 22) { x.fillRect(i, H * .42, 12, H * .3); x.beginPath(); x.moveTo(i, H * .42); x.lineTo(i + 6, H * .38); x.lineTo(i + 12, H * .42); x.fill(); } x.fillRect(0, H * .5, W, 6);
+    x.fillStyle = '#5a8a3a'; x.fillRect(0, H * .68, W, H * .32);
+    for (let i = 0; i < 320; i++) { const px = R(0, W), h = R(30, 120); x.fillStyle = `rgb(${R(60, 110) | 0},${R(130, 175) | 0},${R(40, 70) | 0})`; x.beginPath(); x.moveTo(px - 3, H); x.quadraticCurveTo(px + R(-10, 10), H - h * .6, px + R(-14, 14), H - h); x.lineTo(px + 2, H); x.fill(); }
+    return tex(c);
+  }
   const W = 512, H = 256; const [c, x] = cnv(W, H);
   const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#2a3f6e'); g.addColorStop(.6, '#162442'); g.addColorStop(1, '#0a1020'); x.fillStyle = g; x.fillRect(0, 0, W, H);
   const rg = x.createRadialGradient(W * .3, -20, 10, W * .3, -20, 260); rg.addColorStop(0, 'rgba(210,225,255,.85)'); rg.addColorStop(1, 'rgba(210,225,255,0)'); x.fillStyle = rg; x.fillRect(0, 0, W, H);
@@ -1387,7 +1402,7 @@ function buildEnv(kind = 'basement') {
   const pm = new THREE.PMREMGenerator(renderer); const es = new THREE.Scene();
   const room = new THREE.Mesh(new THREE.BoxGeometry(10, 5, 10), new THREE.MeshBasicMaterial({ color: 0x10141c, side: THREE.BackSide })); es.add(room);
   const panel = (c, k, w, h, x, y, z, ry = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(k), side: THREE.DoubleSide })); m.position.set(x, y, z); m.rotation.y = ry; es.add(m); };
-  if (kind === 'kitchen') { room.material.color.setHex(0x3a2e24); panel(0xffd2a0, 5, 3, .5, 0, 2.45, 0); panel(0xffc890, 3, 1, 1, -1, 2.2, 2); panel(0x6a86c8, 2.2, 2, 1, -1, 1.6, -4.9); panel(0xfff4e6, 2.5, 1, 2, 3, 1, -4.5); panel(0x4a3a2c, 1, 10, 3, 0, -2.4, 0); }
+  if (kind === 'kitchen') { room.material.color.setHex(DAY ? 0x4a4038 : 0x3a2e24); panel(0xffd2a0, 5, 3, .5, 0, 2.45, 0); panel(0xffc890, 3, 1, 1, -1, 2.2, 2); panel(DAY ? 0xd8e6ff : 0x6a86c8, DAY ? 5 : 2.2, DAY ? 3 : 2, DAY ? 1.6 : 1, -1, 1.6, -4.9); if (DAY) { panel(0xd8e6ff, 4, 3, 1.6, 2, 1.6, 4.9); } panel(0xfff4e6, 2.5, 1, 2, 3, 1, -4.5); panel(0x4a3a2c, 1, 10, 3, 0, -2.4, 0); }
   else if (kind === 'garage') { room.material.color.setHex(0x16191d); panel(0xdfe8ff, 4, 3, .3, 0, 2.45, 0); panel(0xffa860, 2, 4, .2, 0, -.2, 4.9); panel(0x2a2c30, 1, 10, 3, 0, -2.4, 0); }
   else if ((kind === 'yard' || kind === 'road' || kind === 'park') && DAY) {   // daylight outdoors: a blue sky all round, the sun, green-brown ground
     room.material.color.setHex(0x6e90bc); const top = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xa8ccf4).multiplyScalar(1.6), side: THREE.DoubleSide })); top.rotation.x = Math.PI / 2; top.position.y = 2.45; es.add(top);
@@ -1553,7 +1568,7 @@ function makeMaterials() {
     bookR: new THREE.MeshStandardMaterial({ map: genBook(0x6b2a26, 'BIOLOGY OF SIZE'), roughness: .85 }),
     bookB: new THREE.MeshStandardMaterial({ map: genBook(0x26324f, 'FIELD NOTES'), roughness: .85 }),
     pages: new THREE.MeshStandardMaterial({ color: 0xe9e0cc, roughness: .95 }),
-    night: new THREE.MeshBasicMaterial({ map: genNight(), color: 0x9aa8c8 }),
+    night: new THREE.MeshBasicMaterial({ map: genNight(), color: DAY ? new THREE.Color(0xffffff).multiplyScalar(1.15) : 0x9aa8c8 }),
     crack: new THREE.MeshBasicMaterial({ map: genCrack(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }),
     web: new THREE.MeshBasicMaterial({ map: genWeb(), transparent: true, depthWrite: false, side: THREE.DoubleSide, opacity: .7 }),
     dirt: new THREE.MeshBasicMaterial({ color: 0x000000, alphaMap: genDirt(), transparent: true, opacity: .55, depthWrite: false }),
@@ -1790,14 +1805,31 @@ function beamMesh(color, len, angle, k) {
   m.frustumCulled = false; LVFX.add(m); return m;
 }
 function aimBeam(m, from, to) { const d = V3().subVectors(to, from).normalize(); m.position.copy(from); m.quaternion.setFromUnitVectors(V3(0, -1, 0), d); }
+// daylight through a window (DAY only): a soft cool fill just inside, and — when the window faces the sun —
+// a shaft of sunlight (a real light plus a dusty beam) and a bright patch where it lands.
+// c: the window's centre, w×h its size, n: which way the room is (unit), floorY: the floor below it.
+let _sunPatchT = null;
+function sunWindow(c, w, h, n, floorY, o = {}) {
+  if (!DAY) return;
+  pointL(0xe4ecff, o.fill || 9000, c.x + n.x * 60, c.y - 20, c.z + n.z * 60);
+  const d = SUN.clone().negate(); if (d.dot(n) < .15) return;   // the sun is on the other side of the house
+  const t = (c.y - floorY) / -d.y, hit = c.clone().addScaledVector(d, t), len = t;
+  const ang = Math.atan(Math.max(w, h) * .55 / len);
+  const l = spotL(0xfff0d8, o.sun || 160000, c.clone().addScaledVector(d, -60), hit, Math.min(.9, ang * 1.6), .7, 0); l.userData.win = 1;
+  const b = beamMesh(0xfff0d8, len, ang, o.beamK || .11); aimBeam(b, c, hit); LV.add(b);
+  if (beams.length < 4) beams.push({ m: b, o: c.clone(), d: d.clone(), ca: Math.cos(ang), len, c: new THREE.Color(0xfff0d8), k: .9 });
+  if (!_sunPatchT) { const [cv, x] = cnv(128, 128); const g = x.createRadialGradient(64, 64, 10, 64, 64, 64); g.addColorStop(0, 'rgba(255,240,210,1)'); g.addColorStop(.6, 'rgba(255,236,200,.55)'); g.addColorStop(1, 'rgba(255,230,190,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); _sunPatchT = tex(cv); }
+  const pm = new THREE.Mesh(new THREE.PlaneGeometry(w * 1.3, h * 1.3 / Math.max(.4, -d.y)), new THREE.MeshBasicMaterial({ map: _sunPatchT, color: new THREE.Color(0xfff0d8).multiplyScalar(.35), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
+  pm.rotation.x = -Math.PI / 2; pm.rotation.z = Math.atan2(d.x, d.z); pm.position.set(hit.x, floorY + .3, hit.z); pm.renderOrder = 2; LV.add(pm);
+}
 function buildLights() {
   LV.add(new THREE.HemisphereLight(0x5d6d90, 0x2c241b, 1.05));
   const f1 = new THREE.PointLight(0xffb27a, 7000, 0, 2); f1.position.set(-20, 70, -120); LV.add(f1);
-  const f2 = new THREE.PointLight(0x8ea6ff, 16000, 0, 2); f2.position.set(70, 150, 70); LV.add(f2);
+  const f2 = new THREE.PointLight(DAY ? 0xdfe6ff : 0x8ea6ff, DAY ? 20000 : 16000, 0, 2); f2.position.set(70, 150, 70); LV.add(f2);
   const f3 = new THREE.PointLight(0xa8b8ff, 2600, 0, 2); f3.position.set(84, 18, 70); LV.add(f3);
-  moonLight = new THREE.SpotLight(0xa9c1ff, 1600000, 0, .2, .45, 2); moonLight.position.set(95, 420, -560); moonLight.target.position.set(84, 0, 85); LV.add(moonLight, moonLight.target);
+  moonLight = new THREE.SpotLight(DAY ? 0xfff0d6 : 0xa9c1ff, DAY ? 3400000 : 1600000, 0, .2, .45, 2);   // (DAY: sunlight through the little window) moonLight.position.set(95, 420, -560); moonLight.target.position.set(84, 0, 85); LV.add(moonLight, moonLight.target);
   moonLight.castShadow = true; moonLight.shadow.mapSize.setScalar(TOUCH ? 1024 : 2048); moonLight.shadow.camera.near = 250; moonLight.shadow.camera.far = 1200; moonLight.shadow.bias = -0.0003; moonLight.shadow.normalBias = 0.05;
-  const mb = beamMesh(0x9fb6ff, 420, .12, .13); aimBeam(mb, V3(90, 222, -256), V3(84, 0, 85)); beams.push({ m: mb, o: V3(90, 222, -256), d: V3(84, 0, 85).sub(V3(90, 222, -256)).normalize(), ca: Math.cos(.15), len: 420, c: new THREE.Color(0x9fb6ff), k: 1 });
+  const bc = DAY ? 0xffeccc : 0x9fb6ff; const mb = beamMesh(bc, 420, .12, DAY ? .17 : .13); aimBeam(mb, V3(90, 222, -256), V3(84, 0, 85)); beams.push({ m: mb, o: V3(90, 222, -256), d: V3(84, 0, 85).sub(V3(90, 222, -256)).normalize(), ca: Math.cos(.15), len: 420, c: new THREE.Color(bc), k: 1 });
   const lb = beamMesh(0xffc98a, 50, .62, .05); aimBeam(lb, V3(-58, 126, -196), V3(-30, 92, -192)); beams.push({ m: lb, o: V3(-58, 126, -196), d: V3(-30, 92, -192).sub(V3(-58, 126, -196)).normalize(), ca: Math.cos(.7), len: 50, c: new THREE.Color(0xffc98a), k: .8 });
   upLight = new THREE.SpotLight(0xffbf7a, 0, 0, .55, .6, 2); upLight.position.set(-252, 430, -330); upLight.target.position.set(-252, 0, 80); LV.add(upLight, upLight.target);
   upLight.castShadow = true; upLight.shadow.mapSize.setScalar(TOUCH ? 512 : 1024); upLight.shadow.camera.near = 30; upLight.shadow.camera.far = 900; upLight.shadow.bias = -0.0004; upLight.shadow.normalBias = .05;
@@ -3954,11 +3986,12 @@ function crewHint(L) {
 // =====================================================================
 const ROSTER = [
   { id: 'dad' }, { id: 'sq' }, { id: 'bear' }, { id: 'cham' },
-  { id: 'hog', key: 'prologue', how: '完成序章（地庫實驗室）' },
-  { id: 'rab', key: 'ch1', how: '完成第一章（把核心帶回牆腳）' },
-  { id: 'coon', key: 'ch2', how: '完成第二章（客廳的電池）' },
+  // mp: free to pick online from the start (online play takes up to 8 players, so 8 characters are always open)
+  { id: 'hog', key: 'prologue', how: '完成序章（地庫實驗室）', mp: true },
+  { id: 'rab', key: 'ch1', how: '完成第一章（把核心帶回牆腳）', mp: true },
+  { id: 'coon', key: 'ch2', how: '完成第二章（客廳的電池）', mp: true },
   { id: 'frog', key: 'bat6', how: '單人模式集齊全部鈕扣電池' },
-  { id: 'bat', key: 'bat', how: '單人第三章：在車房找到阿蝠' },
+  { id: 'bat', key: 'bat', how: '單人第三章：在車房找到阿蝠', mp: true },
   { id: 'tort', key: 'tort', how: '單人第四章：在陳伯的後園找到阿龜' },
   { id: 'mole', key: 'mole', how: '單人第六章：在公園的沙池找到阿鼴' },
   { id: 'f2', future: true, how: '第七章：學校（製作中）' },
@@ -3966,6 +3999,7 @@ const ROSTER = [
 ];
 const UNL = (() => { try { return JSON.parse(localStorage.getItem('bn_unlock_v1') || '{}') || {}; } catch (e) { return {}; } })();
 function isUnlocked(id) { const r = ROSTER.find(q => q.id === id); return !!r && !r.future && (!r.key || !!UNL[r.key]); }
+function canPickMP(id) { const r = ROSTER.find(q => q.id === id); return isUnlocked(id) || !!(r && r.mp); }
 function unlockedCount() { return ROSTER.filter(r => isUnlocked(r.id)).length; }
 // single player progress unlocks characters for online games
 function unlockKey(key) {
@@ -4267,6 +4301,7 @@ function buildLivingRoom(K) {
   box(700, 850, 96, 100, 214, 232, M.white); box(700, 850, 206, 210, 228, 240, M.white, { col: false }); box(700, 704, 100, 206, 228, 240, M.white, { col: false }); box(846, 850, 100, 206, 228, 240, M.white, { col: false }); box(773.5, 776.5, 100, 206, 236, 239, M.white, { col: false });
   mesh(new THREE.PlaneGeometry(420, 210), K.dusk, 775, 150, 330, { cast: false }).rotation.y = Math.PI;
   mesh(new THREE.PlaneGeometry(146, 110), MAT.glassThin, 775, 155, 238, { cast: false }).rotation.y = Math.PI;
+  sunWindow(V3(775, 155, 236), 146, 110, V3(0, 0, -1), 0, { fill: 14000 });
   cols.push({ t: 'b', x0: 700, x1: 850, y0: 100, y1: 206, z0: 237, z1: 239, noRay: true });
   const cur = new THREE.MeshPhysicalMaterial({ color: 0x8a7a9a, roughness: .95, sheen: .8, side: THREE.DoubleSide });
   for (const x of [690, 852]) { box(x - 12, x + 12, 2, 230, 214, 220, cur); }
@@ -4509,6 +4544,20 @@ function genKidArt() {
   return tex(c);
 }
 function genDusk() {
+  if (DAY) {
+    const W = 1024, H = 512; const [c, x] = cnv(W, H);
+    const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#4f8fd8'); g.addColorStop(.45, '#94c0ea'); g.addColorStop(.7, '#d8e8f2'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+    for (const [cx, cy, s] of [[180, 70, 1.2], [620, 50, 1], [880, 110, .8]]) for (let i = 0; i < 8; i++) { const r = (22 + i * 4) * s, h = x.createRadialGradient(cx + i * 18 * s, cy - (i % 3) * 8 * s, 2, cx + i * 18 * s, cy, r); h.addColorStop(0, 'rgba(255,255,255,.92)'); h.addColorStop(1, 'rgba(255,255,255,0)'); x.fillStyle = h; x.fillRect(0, 0, W, H); }
+    // a tree line behind the houses
+    for (let i = 0; i < 40; i++) { const px = R(0, W), r = R(30, 60); x.fillStyle = `rgb(${R(50, 80) | 0},${R(100, 130) | 0},${R(40, 60) | 0})`; x.beginPath(); x.arc(px, H - 210 - R(0, 30), r, 0, Math.PI * 2); x.fill(); }
+    const house = (hx, w, hh, roof, wall, rf) => { x.fillStyle = wall; x.fillRect(hx, H - hh, w, hh); x.fillStyle = rf; x.beginPath(); x.moveTo(hx - 14, H - hh); x.lineTo(hx + w / 2, H - hh - roof); x.lineTo(hx + w + 14, H - hh); x.fill();
+      x.fillStyle = 'rgba(0,0,0,.08)'; for (let y = H - hh + 8; y < H; y += 10) x.fillRect(hx, y, w, 2); };
+    house(60, 300, 170, 90, '#e8dcc4', '#5a4a44'); house(520, 340, 200, 110, '#c8d4dc', '#4a5058'); house(900, 200, 150, 70, '#e4c8b0', '#6a4a3c');
+    for (const [wx, wy] of [[110, 400], [250, 400], [580, 360], [720, 360], [580, 430], [940, 420]]) { x.fillStyle = '#f6f4ee'; x.fillRect(wx - 4, wy - 4, 52, 44); const wg = x.createLinearGradient(wx, wy, wx + 44, wy + 36); wg.addColorStop(0, '#7aa4c8'); wg.addColorStop(1, '#c4dcec'); x.fillStyle = wg; x.fillRect(wx, wy, 44, 36); }
+    x.fillStyle = '#6a9a44'; x.fillRect(0, H - 40, W, 40);
+    x.fillStyle = '#f2efe6'; for (let i = 0; i < W; i += 18) x.fillRect(i, H - 60, 8, 60); x.fillRect(0, H - 50, W, 8);
+    return tex(c);
+  }
   const W = 1024, H = 512; const [c, x] = cnv(W, H);
   const g = x.createLinearGradient(0, 0, 0, H); g.addColorStop(0, '#1b2a55'); g.addColorStop(.55, '#4a4f86'); g.addColorStop(.78, '#d98a6a'); g.addColorStop(1, '#f2b77a'); x.fillStyle = g; x.fillRect(0, 0, W, H);
   for (let i = 0; i < 30; i++) { x.fillStyle = `rgba(255,255,255,${R(.2, .7)})`; x.fillRect(R(0, W), R(0, H * .35), 2, 2); }
@@ -4578,7 +4627,7 @@ function kitchenMats() {
     homework: new THREE.MeshStandardMaterial({ map: genHomework(), roughness: .9 }),
     poster: new THREE.MeshStandardMaterial({ map: genPoster(), roughness: .8 }),
     kidArt: new THREE.MeshStandardMaterial({ map: genKidArt(), roughness: .9 }),
-    dusk: new THREE.MeshBasicMaterial({ map: genDusk(), color: 0xbbbbcc }),
+    dusk: new THREE.MeshBasicMaterial({ map: genDusk(), color: DAY ? new THREE.Color(0xffffff).multiplyScalar(1.2) : 0xbbbbcc }),
     hole: new THREE.MeshBasicMaterial({ map: genMouseHole(), transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -2 }),
     milk: new THREE.MeshStandardMaterial({ map: genCarton('鮮奶', 'FRESH MILK', '#2b5fb0'), roughness: .6 }),
     juice: new THREE.MeshStandardMaterial({ map: genCarton('橙汁', 'ORANGE', '#e07a1a'), roughness: .6 }),
@@ -4745,6 +4794,7 @@ function buildKitchen() {
   box(-152, -48, 104, 110, -232, -212, MAT.white); box(-152, -148, 110, 190, -232, -224, MAT.white); box(-52, -48, 110, 190, -232, -224, MAT.white); box(-152, -48, 186, 190, -232, -224, MAT.white); box(-101.5, -98.5, 110, 190, -230, -226, MAT.white, { col: false }); box(-150, -50, 148.5, 151.5, -230, -226, MAT.white, { col: false });
   mesh(new THREE.PlaneGeometry(98, 78), MAT.glassThin, -100, 150, -228, { cast: false });
   mesh(new THREE.PlaneGeometry(420, 210), K.dusk, -100, 150, -330, { cast: false });
+  sunWindow(V3(-100, 150, -226), 98, 78, V3(0, 0, 1), 0, { fill: 12000 });
   cols.push({ t: 'b', x0: -150, x1: -50, y0: 110, y1: 190, z0: -229, z1: -227, noRay: true });
   // potted herb on the sill
   // base cabinets + under-sink cupboard (hollow, door open)
@@ -5229,7 +5279,7 @@ LEVELS.basement = {
   // online, nobody is home in the basement: no wife, no timer, no getting caught
   npc(dt) { if (NET.on) return; if (STATE === 'play' || STATE === 'fail' || STATE === 'end' || STATE === 'frozen') updMom(dt); }, detect(dt) { if (NET.on) { meter = 0; return; } updDetect(dt); }, update(dt) { updTrap(); }, win() { if (!NET.on) winBasement(); },
   marker() { if (NET.on) return proMarker(); return quest === 3 ? V3(70, 6, 15).add(HO) : quest >= 1 ? V3(-300, 7, 150).add(BO) : null; }, reset() { momReset(); },
-  eyeText: () => NET.on ? '地庫今晚沒有人' : meter > .3 ? '她在看這邊！快躲起來' : mom.mode === 'door' ? '樓上的門打開了' : '太太在地庫', hint: () => ''
+  eyeText: () => NET.on ? '地庫今日沒有人' : meter > .3 ? '她在看這邊！快躲起來' : mom.mode === 'door' ? '樓上的門打開了' : '太太在地庫', hint: () => ''
 };
 LVL = LEVELS.basement;
 
@@ -5242,10 +5292,6 @@ LVL = LEVELS.basement;
 //  Online: knock the camera off the shelf → open the dog-flap latch → everyone out to the yard.
 // =====================================================================
 const GY = -20; // garage floor
-// outdoors (the yards, the street, the park) is in daylight; the sun hangs high in the south-west of the sky dome
-const DAY = true, SUN = V3(.36, .82, -.44).normalize();
-// where the sun lights a spot from: far along the sun's direction from a target on the ground
-const sunFrom = (tgt, d = 2400) => tgt.clone().addScaledVector(SUN, d);
 const GS = { agent: null, cam: null, camBroken: false, latch: false, flapA: 0, coil: false, dock: false, lights: [], said: {}, mode: 'patrol', node: 0, wait: 0, trackT: 0 };
 function slick() { cols[cols.length - 1].slick = true; }
 function noRay() { cols[cols.length - 1].noRay = true; }
@@ -8310,6 +8356,7 @@ function buildUpstairs(K) {
   const ph = [['photo', 0, 22, 28], ['photo3', 4, 30, 22], ['photo2', 8, 18, 24], ['photo', 12, 24, 30]];
   for (const [img, i, w, h] of ph) { const z = -262 - i * run, y = i * rise + 140; deco(748, 749.6, y - h / 2, y + h / 2, z - w / 2, z + w / 2, MAT.black); mesh(new THREE.PlaneGeometry(w - 3, h - 3), livingPhoto(img), 749.8, y, z, { cast: false }).rotation.y = Math.PI / 2; }
   // a little round window on the landing (dusk outside)
+  sunWindow(V3(824, Y + 140, -495), 52, 52, V3(0, 0, 1), Y, { fill: 6000, sun: 90000 });
   { const r = mesh(new THREE.CircleGeometry(26, 40), K.dusk, 824, Y + 140, -497.4, { cast: false }); r.rotation.y = 0; const fr = mesh(new THREE.TorusGeometry(27, 2.4, 10, 48), M.paint, 824, Y + 140, -497, { cast: false }); fr.rotation.y = 0; }
   // stairwell light: a pendant at the top, a sconce half-way, the hallway ceiling light
   cyl(790, -380, .4, Yc - 70, Yc, MAT.black, { col: false, seg: 6 }); mesh(new THREE.SphereGeometry(9, 24, 14), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffe2b8, emissiveIntensity: 3 }), 790, Yc - 76, -380, { cast: false });
@@ -8343,6 +8390,7 @@ function buildUpstairs(K) {
   for (const [x, c] of [[582, 0xffffff], [656, 0xa8d8c8]]) { const pw = mesh(new THREE.SphereGeometry(10, 18, 12), new THREE.MeshPhysicalMaterial({ color: c, roughness: 1, sheen: .8 }), x, Y + 50, 224); pw.scale.set(.9, .9, .45); }
   mesh(new THREE.PlaneGeometry(320, 220), K.dusk, 620, Y + 110, 330, { cast: false }).rotation.y = Math.PI;
   mesh(new THREE.PlaneGeometry(92, 110), MAT.glassThin, 620, Y + 95, 238, { cast: false }).rotation.y = Math.PI;
+  sunWindow(V3(620, Y + 95, 236), 92, 110, V3(0, 0, -1), Y, { fill: 10000 });
   deco(574, 666, Y + 93, Y + 96, 236, 239, M.paint); deco(618.5, 621.5, Y + 42, Y + 150, 236, 239, M.paint);
   cols.push({ t: 'b', x0: 574, x1: 666, y0: Y + 42, y1: Y + 150, z0: 237, z1: 239, noRay: true });
   for (const x of [556, 684]) box(x - 12, x + 12, Y + 2, Y + 176, 222, 228, M.curtain);
@@ -8589,7 +8637,7 @@ function mpConnect(code, host) {
 function mpBroadcastLobby(to) { nsend({ t: 'lobby', host: NET.me, slots: NET.slots, started: NET.started, order: NET.order, names: NET.names }, to); }
 function mpPick(id) {
   if (NET.on || !NET.me) return;
-  const cur = NET.slots[id]; if (cur && cur !== NET.me) return; if (!isUnlocked(id)) return;
+  const cur = NET.slots[id]; if (cur && cur !== NET.me) return; if (!canPickMP(id)) return;
   if (NET.host) hostPick(NET.me, id); else nsend({ t: 'pick', id }, NET.hostId || undefined);
 }
 function hostPick(peer, id) {
@@ -8603,7 +8651,7 @@ function mpRender() {
   box.innerHTML = IDS.map(id => {
     const p = NET.slots[id]; const S = SP[id]; const nm = nameOf(p); const who = p ? (p === NET.me ? (nm || '你') : nm || (p === NET.hostId ? '房主' : '玩家 ' + (NET.order.indexOf(p) + 1))) : CORE.includes(id) ? '電腦' : '可以揀';
     // not unlocked on this device yet: a silhouette and how to get it
-    if (!p && !isUnlocked(id)) { const r = ROSTER.find(q => q.id === id); return `<button class="mps lock" disabled title="${r.how}"><span class="ph">${PORTRAITS[id] ? `<img class="sil" alt="" src="${PORTRAITS[id]}">` : SIL_SVG}<i>?</i></span><b>？？？</b><small>${r.how}</small><em>未解鎖</em></button>`; }
+    if (!p && !canPickMP(id)) { const r = ROSTER.find(q => q.id === id); return `<button class="mps lock" disabled title="${r.how}"><span class="ph">${PORTRAITS[id] ? `<img class="sil" alt="" src="${PORTRAITS[id]}">` : SIL_SVG}<i>?</i></span><b>？？？</b><small>${r.how}</small><em>未解鎖</em></button>`; }
     return `<button class="mps${p === NET.me ? ' me' : p ? ' taken' : ''}" data-id="${id}" ${p && p !== NET.me ? 'disabled' : ''}><span class="ph">${PORTRAITS[id] ? `<img alt="" src="${PORTRAITS[id]}">` : ''}</span><b>${S.name}</b><small>${S.abil}</small><em>${who}</em></button>`;
   }).join('');
   box.querySelectorAll('.mps').forEach(b => { b.addEventListener('click', () => mpPick(b.dataset.id)); b.addEventListener('pointerenter', () => { LOBBY.hover = b.dataset.id; mpInfoRender(); }); b.addEventListener('pointerleave', () => { LOBBY.hover = null; mpInfoRender(); }); });
@@ -9449,7 +9497,7 @@ const PR_TIP = TOUCH ? '按「表情」掣' : '按住 T';
 const PORTAL_Q = [{ t: '走出縮小機', s: `這裡是縮小機的場域裡面。可以先試試走、跳、爬上箱子和用表情（${PR_TIP}）——準備好就站上出口前面的光圈` }];
 const MP_PRO = [
   { t: '準備區', s: `可以先試試走、跳、攀爬和用表情（${PR_TIP}）。全部玩家站上出口前面的光圈，就會一齊出發` },
-  { t: '離開工作枱', s: '找路下到地面。地庫今晚沒有人，可以放心探索' },
+  { t: '離開工作枱', s: '找路下到地面。地庫今日沒有人，可以放心探索' },
   { t: '去牆腳的裂縫', s: '前拍檔在地庫另一邊的牆腳等你們——擋路的紙箱已經被推開了' },
   { t: '跟前拍檔進入牆裡面', s: '沿牆腳的洞走進去' },
   { t: '沿牆身爬上廚房', s: '沿水泥牆中間往上爬，累了就橫移到兩邊的木架上休息；最頂的缺口就是廚房的老鼠洞' }
@@ -9982,7 +10030,7 @@ function lobbyPad(i, p, id, dt) {
 // the card on the left: whoever you're pointing at, or the one you've picked
 function mpInfoRender() {
   const el = $('mpInfo'); if (!el) return;
-  const id = LOBBY.hover && isUnlocked(LOBBY.hover) ? LOBBY.hover : IDS.find(k => NET.slots[k] === NET.me);
+  const id = LOBBY.hover && canPickMP(LOBBY.hover) ? LOBBY.hover : IDS.find(k => NET.slots[k] === NET.me);
   if (!id) { el.innerHTML = ''; return; }
   const S = SP[id], peer = NET.slots[id], bar = v => `${Math.round(clamp((v - .65) / .85, .08, 1) * 100)}%`;
   const who = peer ? (peer === NET.me ? '你' : nameOf(peer) || '另一位玩家') : CORE.includes(id) ? '電腦控制中（揀佢就由你玩）' : '未有人揀';
@@ -10045,7 +10093,7 @@ function portalResumeLand(S) {
 // who joined or dropped, how good each link is, frame rate, rescues and errors. One tap copies it as
 // plain text that a player can paste into a chat and send in.
 const NLOG = { t0: performance.now(), lines: [], fps: 0, sumT: 0, mode: '', lv: '', peer: {} };
-const NLOG_BUILD = '20261124-0554';
+const NLOG_BUILD = '20261124-1350';
 function nlog(s) {
   const d = new Date(), p2 = n => String(n).padStart(2, '0');   // the clock time, so "it broke around 9:30" can be matched
   NLOG.lines.push(`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}  ${s}`); if (NLOG.lines.length > 500) NLOG.lines.splice(0, NLOG.lines.length - 500);
