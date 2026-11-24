@@ -6698,9 +6698,9 @@ function buildRoad() {
   box(-330, 3400, RY, RY + .15, 1146, 1149, lineY, { col: false, cast: false }); box(-330, 3400, RY, RY + .15, 1151, 1154, lineY, { col: false, cast: false });
   for (let z = 812; z < 1490; z += 58) if (z < 1128 || z > 1172) box(XW0 + 4, XW1 - 4, RY, RY + .18, z, z + 30, lineW, { col: false, cast: false });
   box(STOPX[0] - 6, STOPX[0], RY, RY + .18, 806, 1144, lineW, { col: false, cast: false }); box(STOPX[1], STOPX[1] + 6, RY, RY + .18, 1156, 1494, lineW, { col: false, cast: false });
-  // puddles
-  const pud = new THREE.MeshPhysicalMaterial({ color: 0x07090c, roughness: .03, metalness: .4, clearcoat: 1, transparent: true, opacity: .85 });
-  for (const [x, z, r] of [[1840, 860, 40], [2230, 1240, 56], [2520, 1440, 46], [1650, 1060, 34]]) { const m = mesh(new THREE.CircleGeometry(r, 28), pud, x, RY + .2, z, { cast: false }); m.rotation.x = -Math.PI / 2; m.scale.set(1.5, 1, 1); }
+  // puddles (night only: a dry summer afternoon has none, and by day they read as dark-blue blots)
+  if (!DAY) { const pud = new THREE.MeshPhysicalMaterial({ color: 0x07090c, roughness: .03, metalness: .4, clearcoat: 1, transparent: true, opacity: .85 });
+  for (const [x, z, r] of [[1840, 860, 40], [2230, 1240, 56], [2520, 1440, 46], [1650, 1060, 34]]) { const m = mesh(new THREE.CircleGeometry(r, 28), pud, x, RY + .2, z, { cast: false }); m.rotation.x = -Math.PI / 2; m.scale.set(1.5, 1, 1); } }
   // refuge island halfway across
   box(1960, 2160, RY, GY, 1128, 1172, kerbM, { uv: 60 });
   cyl(1950, 1150, 10, GY, GY + 70, new THREE.MeshStandardMaterial({ color: 0xf0f0ea, roughness: .5 }), { seg: 20 });
@@ -10112,7 +10112,7 @@ function portalResumeLand(S) {
 // who joined or dropped, how good each link is, frame rate, rescues and errors. One tap copies it as
 // plain text that a player can paste into a chat and send in.
 const NLOG = { t0: performance.now(), lines: [], fps: 0, sumT: 0, mode: '', lv: '', peer: {} };
-const NLOG_BUILD = '20261124-1441';
+const NLOG_BUILD = '20261124-1455';
 function nlog(s) {
   const d = new Date(), p2 = n => String(n).padStart(2, '0');   // the clock time, so "it broke around 9:30" can be matched
   NLOG.lines.push(`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}  ${s}`); if (NLOG.lines.length > 500) NLOG.lines.splice(0, NLOG.lines.length - 500);
