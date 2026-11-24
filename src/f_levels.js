@@ -489,6 +489,7 @@ function buildKitchen() {
   pointL(0xff8a3a, 700, 38, 30, -148); KS.lights.push({ p: V3(38, 30, -150), range: 55 });
   pointL(0xff4a1a, 220, 57, 92, -205);
   KS.fridgeL = { p: V3(191, 160, -160), range: 150, on: false }; KS.lights.push(KS.fridgeL);
+  if (DAY) KS.lights.push({ p: V3(-100, 150, -222), dir: SUN.clone().negate(), cos: Math.cos(.42), range: 320 });   // the sunshine through the kitchen window
   HX.pend[0].beam = addBeam(0xffc68e, V3(-130, 190, 85), V3(-130, 0, 85), .55, .05); HX.pend[0].rec = beams[beams.length - 1]; HX.pend[0].k = .05;
   HX.pend[1].beam = addBeam(0xffc68e, V3(-40, 200, -110), V3(-40, 0, -150), .55, .05); HX.pend[1].rec = beams[beams.length - 1]; HX.pend[1].k = .05;
   KS.fridgeBeam = addBeam(0xeaf4ff, V3(191, 120, -175), V3(191, 0, -60), .45, 0); KS.fridgeBeamRec = beams[beams.length - 1]; KS.fridgeBeamRec.k = 0;

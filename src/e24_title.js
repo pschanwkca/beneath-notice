@@ -9,7 +9,7 @@ const TC = () => V3(-12, 92, -206).add(BO);   // the middle of the group (open b
 // stand on whatever is there (the notebook is a step up)
 const ttlY = (x, z) => { const lx = x - BO.x, lz = z - BO.z; return BO.y + (lx > -2 && lx < 28 && lz > -198 && lz < -176 ? 93 : 92); };
 // where everyone is (offsets from the middle) and which way they face (toward a point, as an offset too)
-const TTL_SPOTS = { dad: [-2, -3, -40, -6], bear: [-9, 3, 4, 40], cham: [-13, -6, 6, 40], sq: [8, 8, -4, 40], frog: [11, 2, -6, 40], bat: [1, -10, 2, 40], tort: [-5, 10, 3, 0], coon: [6, -6, -2, 40] };   // most of them face the viewer
+const TTL_SPOTS = { dad: [-2, -3, -40, -6], bear: [-9, 3, 4, 40], cham: [-13, -6, 6, 40], sq: [8, 8, -4, 40], frog: [11, 2, -6, 40], bat: [1, -10, 2, 40], tort: [-5, 10, 3, 0], coon: [6, -6, -2, 40], mole: [2.5, 4.5, 6, 40] };   // most of them face the viewer
 function titleSetup() {
   TTL.on = true; TTL.t = 0;
   TTL.saved = {}; for (const id in chars) { const C = chars[id]; TTL.saved[id] = { vis: C.root.visible, pos: C.pos.clone(), yaw: C.yaw, state: C.state, shell: C.shell, roost: C.roost, wave: C.wave, lie: C.lieK }; }
@@ -30,7 +30,7 @@ function updTitle(dt) {
   const put = (C, x, z, y = 0) => { C.pos.set(x, ttlY(x, z) + y, z); if (C.disp) C.disp.copy(C.pos); };
   const faceTo = (C, x, z, k = 3) => { C.yaw = angDamp(C.yaw, Math.atan2(x - C.pos.x, z - C.pos.z), k, dt); };
   // the ones standing about: each in their spot, turning their head now and then to look at someone
-  for (const id of ['dad', 'bear', 'cham', 'frog', 'bat', 'coon', 'sq']) {
+  for (const id of ['dad', 'bear', 'cham', 'frog', 'bat', 'coon', 'sq', 'mole']) {
     const C = chars[id], S = TTL_SPOTS[id]; if (!C) continue; put(C, c.x + S[0], c.z + S[1]); C.state = 'idle'; C.spd = 0;
     faceTo(C, c.x + S[2], c.z + S[3], 2); const ph = (id.charCodeAt(0) * 1.7) % 6;
     C.look = Math.sin(t * .35 + ph) > .6 ? Math.sin(ph * 3) * .7 : 0;

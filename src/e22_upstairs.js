@@ -114,7 +114,12 @@ function buildUpstairs(K) {
   for (const [x, c] of [[582, 0xffffff], [656, 0xa8d8c8]]) { const pw = mesh(new THREE.SphereGeometry(10, 18, 12), new THREE.MeshPhysicalMaterial({ color: c, roughness: 1, sheen: .8 }), x, Y + 50, 224); pw.scale.set(.9, .9, .45); }
   mesh(new THREE.PlaneGeometry(320, 220), K.dusk, 620, Y + 110, 330, { cast: false }).rotation.y = Math.PI;
   mesh(new THREE.PlaneGeometry(92, 110), MAT.glassThin, 620, Y + 95, 238, { cast: false }).rotation.y = Math.PI;
-  sunWindow(V3(620, Y + 95, 236), 92, 110, V3(0, 0, -1), Y, { fill: 10000 });
+  UPS.win = sunWindow(V3(620, Y + 95, 236), 92, 110, V3(0, 0, -1), Y, { fill: 10000 });
+  // curtains: open in the daytime; she draws them to watch the star projector
+  { const cm = new THREE.MeshPhysicalMaterial({ color: 0xf6dfe4, roughness: .95, sheen: .8, sheenColor: 0xffffff, side: THREE.DoubleSide });
+    const mk = () => { const g = new THREE.PlaneGeometry(64, 122, 28, 1); const p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, Math.sin(p.getX(i) * .42) * 2.2); g.computeVertexNormals(); const m = new THREE.Mesh(g, cm); m.castShadow = true; m.rotation.y = Math.PI; LV.add(m); return m; };
+    UPS.curt = [mk(), mk()]; UPS.curtK = 0;
+    const rod = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 150, 10), K.brass); rod.rotation.z = Math.PI / 2; rod.position.set(620, Y + 158, 228); LV.add(rod); }
   deco(574, 666, Y + 93, Y + 96, 236, 239, M.paint); deco(618.5, 621.5, Y + 42, Y + 150, 236, 239, M.paint);
   cols.push({ t: 'b', x0: 574, x1: 666, y0: Y + 42, y1: Y + 150, z0: 237, z1: 239, noRay: true });
   for (const x of [556, 684]) box(x - 12, x + 12, Y + 2, Y + 176, 222, 228, M.curtain);
@@ -187,10 +192,11 @@ function buildUpstairs(K) {
   mesh(new THREE.SphereGeometry(24, 32, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), UPS.lampMat, 620, Yc, 0, { cast: false });
   UPS.ceilL = spotL(0xffe6c8, 0, V3(620, Yc - 14, 0), V3(620, Y, 0), 1.3, .85, 1024, 10, 500); UPS.fillL = pointL(0xffe8cc, 0, 620, Yc - 40, 0);
   UPS.deskL = pointL(0xffd890, 0, 532, Y + 104, -200); UPS.starL = pointL(0x6a8aff, 0, 442, Y + 70, 211);
-  UPS.moon = spotL(0xa8bcff, 90000, V3(640, Y + 250, 560), V3(600, Y, 60), .42, .6, 1024, 60, 900);
-  addBeam(0xbcd0ff, V3(620, Y + 130, 228), V3(600, Y, 90), .32, .028);
+  UPS.moon = spotL(DAY ? 0xf2f6ff : 0xa8bcff, DAY ? 130000 : 90000, V3(640, Y + 250, 560), V3(600, Y, 60), .42, .6, 1024, 60, 900); UPS.moonI = UPS.moon.intensity;   // (DAY: bright sky light through her window)
+  addBeam(DAY ? 0xfff4e6 : 0xbcd0ff, V3(620, Y + 130, 228), V3(600, Y, 90), .32, .028); UPS.winBeam = beams[beams.length - 1];
   UPS.specs = { ceil: { p: V3(620, Yc - 14, 0), dir: V3(0, -1, 0), cos: Math.cos(1.3), range: 380, on: false }, desk: { p: V3(532, Y + 104, -200), range: 110, on: false }, star: { p: V3(442, Y + 70, 211), range: 150, on: false } };
-  KS.lights.push(UPS.specs.ceil, UPS.specs.desk, UPS.specs.star, { p: V3(620, Y + 112, 226), dir: V3(-.1, -.55, -.83).normalize(), cos: Math.cos(.5), range: 320 });
+  UPS.specs.win = { p: V3(620, Y + 112, 226), dir: V3(-.1, -.55, -.83).normalize(), cos: Math.cos(.5), range: 320 };
+  KS.lights.push(UPS.specs.ceil, UPS.specs.desk, UPS.specs.star, UPS.specs.win);
   // the star field the projector throws on the ceiling
   { const n = 160, g = new THREE.BufferGeometry(), p = new Float32Array(n * 3); for (let i = 0; i < n; i++) { p[i * 3] = R(320, 890); p[i * 3 + 1] = Yc - .6; p[i * 3 + 2] = R(-226, 226); } g.setAttribute('position', new THREE.BufferAttribute(p, 3));
     UPS.stars = new THREE.Points(g, new THREE.PointsMaterial({ color: new THREE.Color(0xc8d6ff).multiplyScalar(2.2), size: 3.4, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending })); UPS.stars.frustumCulled = false; LV.add(UPS.stars); }
@@ -211,6 +217,11 @@ function upLights() {
   const cl = on('ulight'); UPS.ceilL.intensity = cl ? 46000 : 0; UPS.fillL.intensity = cl ? 2600 : 0; UPS.lampMat.emissiveIntensity = cl ? 3.2 : .05; UPS.specs.ceil.on = cl; UPS.regL.intensity = cl ? 160 : 40;
   const dk = on('udesk'); UPS.deskL.intensity = dk ? 2400 : 0; UPS.deskM.emissiveIntensity = dk ? 2.4 : 0; UPS.specs.desk.on = dk;
   const st = on('ustar'); UPS.starL.intensity = st ? 1400 : 0; UPS.specs.star.on = st; UPS.projM.emissiveIntensity = st ? 2.4 : .3;
+  // daytime: the curtains are drawn while the stars are on (the room goes dim; the window stops lighting you up)
+  if (DAY && UPS.curt) { UPS.curtK = damp(UPS.curtK, st ? 1 : 0, 2.2, 1 / 60); const k = UPS.curtK, Y = UPS.y;
+    UPS.curt.forEach((m, i) => { const s = i ? 1 : -1; m.scale.x = .34 + .66 * k; m.position.set(620 + s * lerp(74, 31, k), Y + 96, 229); });
+    const open = 1 - k; UPS.moon.intensity = UPS.moonI * (.12 + .88 * open); if (UPS.win.fill) UPS.win.fill.intensity = 10000 * (.15 + .85 * open); UPS.specs.win.on = open > .5;
+    if (UPS.winBeam) UPS.winBeam.m.visible = open > .2; }
   if (UPS.stars) { const k = UPS.stars.material; k.opacity = damp(k.opacity, st ? .9 + Math.sin(T * 1.7) * .08 : 0, 3, 1 / 60); UPS.stars.visible = k.opacity > .01; UPS.stars.rotation.y = 0; }
   if (UPS.dancer) UPS.dancer.rotation.y += on('umusic') ? .045 : 0;
 }

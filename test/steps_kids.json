@@ -1,0 +1,15 @@
+[{"eval":"window.__bn.startChapter('park')","wait":6000},
+ {"eval":"(()=>{const b=window.__bn; window.__NODET=true; b.step(300); const P=b.PK; return JSON.stringify({k:P.kids.map(k=>[k.mode,k.H.pos.x|0,k.H.pos.z|0]),p:P.par.mode})})()"},
+ {"eval":"window.__CAMO={p:[1700,170,2760],t:[2050,40,3020]}"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"kids_over"},
+ {"eval":"window.__CAMO={p:[1925,90,3080],t:[1925,70,2900]}"},
+ {"frame":1},{"wait":700},{"frame":1,"shot":"kids_swing"},
+ {"eval":"(()=>{const b=window.__bn, P=b.PK, g=P.kids[0]; g.mode='duck'; g.t=99; b.step(30); window.__CAMO={p:[2250,90,3320],t:[2320,60,3160]}; return g.H.pos.y})()"},
+ {"frame":1},{"wait":700},{"frame":1,"shot":"kids_duck"},
+ {"eval":"(()=>{const b=window.__bn, P=b.PK, k=P.kids[1]; k.mode='dig'; k.t=99; k.H.pos.set(2055,P.par.H.pos.y-10,3150); b.step(40); window.__CAMO={p:[2140,70,3230],t:[2040,30,3150]}; return 1})()"},
+ {"frame":1},{"wait":700},{"frame":1,"shot":"kids_dig"},
+ {"eval":"(()=>{const b=window.__bn, P=b.PK; P.par.mode='phone'; P.par.t=99; b.step(60); window.__CAMO={p:[1900,110,3120],t:[1786,50,3040]}; return 1})()"},
+ {"frame":1},{"wait":700},{"frame":1,"shot":"kids_mum"},
+ {"eval":"(()=>{const b=window.__bn, P=b.PK, k=P.kids[1]; k.mode='run'; k.wp=0; k.H.pos.set(2120,P.par.H.pos.y-10,2870); b.step(90); window.__CAMO={p:[k.H.pos.x+120,60,k.H.pos.z+60],t:[k.H.pos.x,40,k.H.pos.z]}; return JSON.stringify([k.mode,k.H.pos.x|0,k.H.pos.z|0])})()"},
+ {"frame":1},{"wait":700},{"frame":1,"shot":"kids_run"}
+]

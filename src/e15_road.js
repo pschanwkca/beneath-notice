@@ -383,7 +383,7 @@ const RQ_SP = [
 ];
 const YQ_SP2 = [{ t: '從前園的閘底鑽出去', s: '陳伯的前閘下面有條縫，鑽過去就是馬路。小心他的狗' }];
 LEVELS.road = {
-  chapter: '第五章', title: '馬路', mpChapter: '第四章（多人）', env: 'road', envI: DAY ? 1 : .55, fog: DAY ? [0xbcd0e2, .00014] : [0x0d1420, .00036], expo: DAY ? .95 : 1.35,
+  chapter: '第五章', title: '馬路', mpChapter: '第四章（多人）', env: 'road', envI: DAY ? 1 : .55, fog: DAY ? [0xbcd0e2, .00014] : [0x0d1420, .00036], expo: DAY ? .95 : 1.35, bloom: DAY ? [.3, 2.4] : null,
   dust: { N: 900, box: [1400, 2900, GY, 400, 660, 1640], beamFrac: .0, door: false },
   toys: true, npcNear: true, build: buildRoad,
   cps: [[2620, GY, 690], [1940, GY, 740], [2060, GY, 1150], [2060, GY, 1580]],

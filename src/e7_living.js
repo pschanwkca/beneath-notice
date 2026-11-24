@@ -110,6 +110,7 @@ function buildLivingRoom(K) {
   const pb = new THREE.MeshPhysicalMaterial({ color: 0x4ab0e0, roughness: .3, clearcoat: .8 }); resGroup(cmGroup(14, 14, 14, ({ part }) => { part(new THREE.SphereGeometry(7, 28, 20), pb, 0, 0, 0); }, [pb]), 640, 120, 0, 14, 14, 14, .3, 5, '皮球', true);
   addBattery(420, 164, 212); addVial(670, 143, -200); addCrumb(480, 76.4, -110); addCrumb(740, 12, 150);
   // where the living room's lamps actually light you up (used by 'can they see me')
+  if (DAY) KS.lights.push({ p: V3(775, 160, 226), dir: V3(0, -.4, -.92).normalize(), cos: Math.cos(.55), range: 300 });   // daylight from the window
   KS.lights.push({ p: V3(575, 150, 8), range: 170 }, { p: V3(490, 186, -130), dir: V3(0, -1, 0), cos: Math.cos(.95), range: 300 }, { p: V3(850, 95, 120), range: 150 }, { p: V3(700, 235, 20), range: 200 });
   buildSwitches(); updDoorSegs();
 }

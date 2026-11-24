@@ -157,7 +157,9 @@ function buildYard() {
   for (const [x, z] of [[2420, 30], [2520, 30]]) { box(x - 18, x + 18, DECK + 42, DECK + 45, z - 18, z + 18, M.white); for (const [dx, dz] of [[-16, -16], [16, -16], [-16, 16], [16, 16]]) box(x + dx - 1.2, x + dx + 1.2, DECK, DECK + 42, z + dz - 1.2, z + dz + 1.2, M.white); }
   for (const [x, z] of [[2412, -40], [2412, 200]]) { cyl(x, z, 16, DECK, DECK + 30, potM, { seg: 24, rt: 19 }); const f = furMesh(new THREE.SphereGeometry(20, 20, 14), leafM); f.position.set(x, DECK + 46, z); LV.add(f); }
   // --- the sunroom (glass: you can see in, he can see out) ---
-  const glass = new THREE.MeshPhysicalMaterial({ color: 0xcfe6f0, roughness: .04, transmission: .85, thickness: .3, transparent: true, opacity: .22, depthWrite: false });
+  // (by day: plain see-through glass — the transmission pass washed the sunlit room out to white when you looked in through it, and it is costly on phones)
+  const glass = DAY ? new THREE.MeshPhysicalMaterial({ color: 0xdcecf2, roughness: .05, metalness: 0, transparent: true, opacity: .14, envMapIntensity: .5, depthWrite: false })
+    : new THREE.MeshPhysicalMaterial({ color: 0xcfe6f0, roughness: .04, transmission: .85, thickness: .3, transparent: true, opacity: .22, depthWrite: false });
   const frameM = new THREE.MeshStandardMaterial({ color: 0xf2f0ea, roughness: .5 });
   box(2556, 2752, GY, DECK, -60, 220, deckM, { uv: 60 }); box(2556, 2752, 230, 234, -64, 224, glass, { cast: false }); noRay();
   // west glass wall with the sliding door (closed) and the cat flap
@@ -330,7 +332,7 @@ const YQ_SP = [
   { t: '找出控制晶片', s: '晶片在陳伯的書枱上。他在看報紙，但不時會抬頭' }
 ];
 LEVELS.yard = {
-  chapter: '第四章', title: '後園與鄰居家', mpChapter: '第三章（多人）', env: 'yard', envI: DAY ? 1 : .5, fog: DAY ? [0xbcd0e2, .00016] : [0x0e1626, .0004], expo: DAY ? .95 : 1.35,
+  chapter: '第四章', title: '後園與鄰居家', mpChapter: '第三章（多人）', env: 'yard', envI: DAY ? 1 : .5, fog: DAY ? [0xbcd0e2, .00016] : [0x0e1626, .0004], expo: DAY ? .95 : 1.35, bloom: DAY ? [.3, 2.4] : null,
   dust: { N: 1400, box: [1500, 2740, GY, 220, -420, 620], beamFrac: .0, door: false },
   toys: true, npcNear: true, build: buildYard,
   cps: [[1480, GY, 105], [1900, GY, 112], [2130, GY, 109], [2420, DECK, 100], [2600, DECK, 140]],

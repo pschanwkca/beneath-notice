@@ -470,9 +470,9 @@ function aimBeam(m, from, to) { const d = V3().subVectors(to, from).normalize();
 // c: the window's centre, w×h its size, n: which way the room is (unit), floorY: the floor below it.
 let _sunPatchT = null;
 function sunWindow(c, w, h, n, floorY, o = {}) {
-  if (!DAY) return;
-  pointL(0xe4ecff, o.fill || 9000, c.x + n.x * 60, c.y - 20, c.z + n.z * 60);
-  const d = SUN.clone().negate(); if (d.dot(n) < .15) return;   // the sun is on the other side of the house
+  if (!DAY) return {};
+  const fill = pointL(0xe4ecff, o.fill || 9000, c.x + n.x * 60, c.y - 20, c.z + n.z * 60);
+  const d = SUN.clone().negate(); if (d.dot(n) < .15) return { fill };   // the sun is on the other side of the house
   const t = (c.y - floorY) / -d.y, hit = c.clone().addScaledVector(d, t), len = t;
   const ang = Math.atan(Math.max(w, h) * .55 / len);
   const l = spotL(0xfff0d8, o.sun || 160000, c.clone().addScaledVector(d, -60), hit, Math.min(.9, ang * 1.6), .7, 0); l.userData.win = 1;
@@ -481,6 +481,7 @@ function sunWindow(c, w, h, n, floorY, o = {}) {
   if (!_sunPatchT) { const [cv, x] = cnv(128, 128); const g = x.createRadialGradient(64, 64, 10, 64, 64, 64); g.addColorStop(0, 'rgba(255,240,210,1)'); g.addColorStop(.6, 'rgba(255,236,200,.55)'); g.addColorStop(1, 'rgba(255,230,190,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); _sunPatchT = tex(cv); }
   const pm = new THREE.Mesh(new THREE.PlaneGeometry(w * 1.3, h * 1.3 / Math.max(.4, -d.y)), new THREE.MeshBasicMaterial({ map: _sunPatchT, color: new THREE.Color(0xfff0d8).multiplyScalar(.35), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
   pm.rotation.x = -Math.PI / 2; pm.rotation.z = Math.atan2(d.x, d.z); pm.position.set(hit.x, floorY + .3, hit.z); pm.renderOrder = 2; LV.add(pm);
+  return { fill, sun: l, beam: b, patch: pm };
 }
 function buildLights() {
   LV.add(new THREE.HemisphereLight(0x5d6d90, 0x2c241b, 1.05));

@@ -1149,6 +1149,7 @@ function lightTick(dt) {
 }
 
 // ---------- per-frame: what to draw, which place's rules run, atmosphere ----------
+const BLOOM_IN = [.42, .95];
 const WC = { cz: null, envK: 1, envWant: null, fogC: new THREE.Color(), banner: 0 };
 function zoneTick(dt) {
   if (!WORLD) return;
@@ -1158,6 +1159,8 @@ function zoneTick(dt) {
   const cz = zoneAt(cp) || (leader && zoneAt(leader.pos)) || WC.cz || ZONES[LEVEL]; if (cz) WC.cz = cz;
   const D = LEVELS[WC.cz.id]; const k = LP.snap ? 1 : 1 - Math.exp(-2.5 * dt);
   WC.fogC.setHex(D.fog[0]); scene.fog.color.lerp(WC.fogC, k); scene.fog.density += (D.fog[1] - scene.fog.density) * k; renderer.toneMappingExposure += (D.expo - renderer.toneMappingExposure) * k;
+  // bloom per place: in the sun almost everything is brighter than the indoor threshold, so outdoors by day only the really bright things (the sun, glints) glow
+  const BL = D.bloom || BLOOM_IN; bloom.strength += (BL[0] - bloom.strength) * k; bloom.threshold += (BL[1] - bloom.threshold) * k;
   if (scene.environment !== WC.cz.envTex) { WC.envK = LP.snap ? 0 : WC.envK - dt * 5; if (WC.envK <= 0) { scene.environment = WC.cz.envTex; WC.envK = 0; } }
   else WC.envK = Math.min(1, WC.envK + dt * 3);
   scene.environmentIntensity = D.envI * WC.envK;
@@ -1810,9 +1813,9 @@ function aimBeam(m, from, to) { const d = V3().subVectors(to, from).normalize();
 // c: the window's centre, w×h its size, n: which way the room is (unit), floorY: the floor below it.
 let _sunPatchT = null;
 function sunWindow(c, w, h, n, floorY, o = {}) {
-  if (!DAY) return;
-  pointL(0xe4ecff, o.fill || 9000, c.x + n.x * 60, c.y - 20, c.z + n.z * 60);
-  const d = SUN.clone().negate(); if (d.dot(n) < .15) return;   // the sun is on the other side of the house
+  if (!DAY) return {};
+  const fill = pointL(0xe4ecff, o.fill || 9000, c.x + n.x * 60, c.y - 20, c.z + n.z * 60);
+  const d = SUN.clone().negate(); if (d.dot(n) < .15) return { fill };   // the sun is on the other side of the house
   const t = (c.y - floorY) / -d.y, hit = c.clone().addScaledVector(d, t), len = t;
   const ang = Math.atan(Math.max(w, h) * .55 / len);
   const l = spotL(0xfff0d8, o.sun || 160000, c.clone().addScaledVector(d, -60), hit, Math.min(.9, ang * 1.6), .7, 0); l.userData.win = 1;
@@ -1821,6 +1824,7 @@ function sunWindow(c, w, h, n, floorY, o = {}) {
   if (!_sunPatchT) { const [cv, x] = cnv(128, 128); const g = x.createRadialGradient(64, 64, 10, 64, 64, 64); g.addColorStop(0, 'rgba(255,240,210,1)'); g.addColorStop(.6, 'rgba(255,236,200,.55)'); g.addColorStop(1, 'rgba(255,230,190,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128); _sunPatchT = tex(cv); }
   const pm = new THREE.Mesh(new THREE.PlaneGeometry(w * 1.3, h * 1.3 / Math.max(.4, -d.y)), new THREE.MeshBasicMaterial({ map: _sunPatchT, color: new THREE.Color(0xfff0d8).multiplyScalar(.35), transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, fog: false }));
   pm.rotation.x = -Math.PI / 2; pm.rotation.z = Math.atan2(d.x, d.z); pm.position.set(hit.x, floorY + .3, hit.z); pm.renderOrder = 2; LV.add(pm);
+  return { fill, sun: l, beam: b, patch: pm };
 }
 function buildLights() {
   LV.add(new THREE.HemisphereLight(0x5d6d90, 0x2c241b, 1.05));
@@ -4322,6 +4326,7 @@ function buildLivingRoom(K) {
   const pb = new THREE.MeshPhysicalMaterial({ color: 0x4ab0e0, roughness: .3, clearcoat: .8 }); resGroup(cmGroup(14, 14, 14, ({ part }) => { part(new THREE.SphereGeometry(7, 28, 20), pb, 0, 0, 0); }, [pb]), 640, 120, 0, 14, 14, 14, .3, 5, '皮球', true);
   addBattery(420, 164, 212); addVial(670, 143, -200); addCrumb(480, 76.4, -110); addCrumb(740, 12, 150);
   // where the living room's lamps actually light you up (used by 'can they see me')
+  if (DAY) KS.lights.push({ p: V3(775, 160, 226), dir: V3(0, -.4, -.92).normalize(), cos: Math.cos(.55), range: 300 });   // daylight from the window
   KS.lights.push({ p: V3(575, 150, 8), range: 170 }, { p: V3(490, 186, -130), dir: V3(0, -1, 0), cos: Math.cos(.95), range: 300 }, { p: V3(850, 95, 120), range: 150 }, { p: V3(700, 235, 20), range: 200 });
   buildSwitches(); updDoorSegs();
 }
@@ -4919,6 +4924,7 @@ function buildKitchen() {
   pointL(0xff8a3a, 700, 38, 30, -148); KS.lights.push({ p: V3(38, 30, -150), range: 55 });
   pointL(0xff4a1a, 220, 57, 92, -205);
   KS.fridgeL = { p: V3(191, 160, -160), range: 150, on: false }; KS.lights.push(KS.fridgeL);
+  if (DAY) KS.lights.push({ p: V3(-100, 150, -222), dir: SUN.clone().negate(), cos: Math.cos(.42), range: 320 });   // the sunshine through the kitchen window
   HX.pend[0].beam = addBeam(0xffc68e, V3(-130, 190, 85), V3(-130, 0, 85), .55, .05); HX.pend[0].rec = beams[beams.length - 1]; HX.pend[0].k = .05;
   HX.pend[1].beam = addBeam(0xffc68e, V3(-40, 200, -110), V3(-40, 0, -150), .55, .05); HX.pend[1].rec = beams[beams.length - 1]; HX.pend[1].k = .05;
   KS.fridgeBeam = addBeam(0xeaf4ff, V3(191, 120, -175), V3(191, 0, -60), .45, 0); KS.fridgeBeamRec = beams[beams.length - 1]; KS.fridgeBeamRec.k = 0;
@@ -5863,7 +5869,9 @@ function buildYard() {
   for (const [x, z] of [[2420, 30], [2520, 30]]) { box(x - 18, x + 18, DECK + 42, DECK + 45, z - 18, z + 18, M.white); for (const [dx, dz] of [[-16, -16], [16, -16], [-16, 16], [16, 16]]) box(x + dx - 1.2, x + dx + 1.2, DECK, DECK + 42, z + dz - 1.2, z + dz + 1.2, M.white); }
   for (const [x, z] of [[2412, -40], [2412, 200]]) { cyl(x, z, 16, DECK, DECK + 30, potM, { seg: 24, rt: 19 }); const f = furMesh(new THREE.SphereGeometry(20, 20, 14), leafM); f.position.set(x, DECK + 46, z); LV.add(f); }
   // --- the sunroom (glass: you can see in, he can see out) ---
-  const glass = new THREE.MeshPhysicalMaterial({ color: 0xcfe6f0, roughness: .04, transmission: .85, thickness: .3, transparent: true, opacity: .22, depthWrite: false });
+  // (by day: plain see-through glass — the transmission pass washed the sunlit room out to white when you looked in through it, and it is costly on phones)
+  const glass = DAY ? new THREE.MeshPhysicalMaterial({ color: 0xdcecf2, roughness: .05, metalness: 0, transparent: true, opacity: .14, envMapIntensity: .5, depthWrite: false })
+    : new THREE.MeshPhysicalMaterial({ color: 0xcfe6f0, roughness: .04, transmission: .85, thickness: .3, transparent: true, opacity: .22, depthWrite: false });
   const frameM = new THREE.MeshStandardMaterial({ color: 0xf2f0ea, roughness: .5 });
   box(2556, 2752, GY, DECK, -60, 220, deckM, { uv: 60 }); box(2556, 2752, 230, 234, -64, 224, glass, { cast: false }); noRay();
   // west glass wall with the sliding door (closed) and the cat flap
@@ -6036,7 +6044,7 @@ const YQ_SP = [
   { t: '找出控制晶片', s: '晶片在陳伯的書枱上。他在看報紙，但不時會抬頭' }
 ];
 LEVELS.yard = {
-  chapter: '第四章', title: '後園與鄰居家', mpChapter: '第三章（多人）', env: 'yard', envI: DAY ? 1 : .5, fog: DAY ? [0xbcd0e2, .00016] : [0x0e1626, .0004], expo: DAY ? .95 : 1.35,
+  chapter: '第四章', title: '後園與鄰居家', mpChapter: '第三章（多人）', env: 'yard', envI: DAY ? 1 : .5, fog: DAY ? [0xbcd0e2, .00016] : [0x0e1626, .0004], expo: DAY ? .95 : 1.35, bloom: DAY ? [.3, 2.4] : null,
   dust: { N: 1400, box: [1500, 2740, GY, 220, -420, 620], beamFrac: .0, door: false },
   toys: true, npcNear: true, build: buildYard,
   cps: [[1480, GY, 105], [1900, GY, 112], [2130, GY, 109], [2420, DECK, 100], [2600, DECK, 140]],
@@ -6879,7 +6887,7 @@ const RQ_SP = [
 ];
 const YQ_SP2 = [{ t: '從前園的閘底鑽出去', s: '陳伯的前閘下面有條縫，鑽過去就是馬路。小心他的狗' }];
 LEVELS.road = {
-  chapter: '第五章', title: '馬路', mpChapter: '第四章（多人）', env: 'road', envI: DAY ? 1 : .55, fog: DAY ? [0xbcd0e2, .00014] : [0x0d1420, .00036], expo: DAY ? .95 : 1.35,
+  chapter: '第五章', title: '馬路', mpChapter: '第四章（多人）', env: 'road', envI: DAY ? 1 : .55, fog: DAY ? [0xbcd0e2, .00014] : [0x0d1420, .00036], expo: DAY ? .95 : 1.35, bloom: DAY ? [.3, 2.4] : null,
   dust: { N: 900, box: [1400, 2900, GY, 400, 660, 1640], beamFrac: .0, door: false },
   toys: true, npcNear: true, build: buildRoad,
   cps: [[2620, GY, 690], [1940, GY, 740], [2060, GY, 1150], [2060, GY, 1580]],
@@ -8390,7 +8398,12 @@ function buildUpstairs(K) {
   for (const [x, c] of [[582, 0xffffff], [656, 0xa8d8c8]]) { const pw = mesh(new THREE.SphereGeometry(10, 18, 12), new THREE.MeshPhysicalMaterial({ color: c, roughness: 1, sheen: .8 }), x, Y + 50, 224); pw.scale.set(.9, .9, .45); }
   mesh(new THREE.PlaneGeometry(320, 220), K.dusk, 620, Y + 110, 330, { cast: false }).rotation.y = Math.PI;
   mesh(new THREE.PlaneGeometry(92, 110), MAT.glassThin, 620, Y + 95, 238, { cast: false }).rotation.y = Math.PI;
-  sunWindow(V3(620, Y + 95, 236), 92, 110, V3(0, 0, -1), Y, { fill: 10000 });
+  UPS.win = sunWindow(V3(620, Y + 95, 236), 92, 110, V3(0, 0, -1), Y, { fill: 10000 });
+  // curtains: open in the daytime; she draws them to watch the star projector
+  { const cm = new THREE.MeshPhysicalMaterial({ color: 0xf6dfe4, roughness: .95, sheen: .8, sheenColor: 0xffffff, side: THREE.DoubleSide });
+    const mk = () => { const g = new THREE.PlaneGeometry(64, 122, 28, 1); const p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setZ(i, Math.sin(p.getX(i) * .42) * 2.2); g.computeVertexNormals(); const m = new THREE.Mesh(g, cm); m.castShadow = true; m.rotation.y = Math.PI; LV.add(m); return m; };
+    UPS.curt = [mk(), mk()]; UPS.curtK = 0;
+    const rod = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 150, 10), K.brass); rod.rotation.z = Math.PI / 2; rod.position.set(620, Y + 158, 228); LV.add(rod); }
   deco(574, 666, Y + 93, Y + 96, 236, 239, M.paint); deco(618.5, 621.5, Y + 42, Y + 150, 236, 239, M.paint);
   cols.push({ t: 'b', x0: 574, x1: 666, y0: Y + 42, y1: Y + 150, z0: 237, z1: 239, noRay: true });
   for (const x of [556, 684]) box(x - 12, x + 12, Y + 2, Y + 176, 222, 228, M.curtain);
@@ -8463,10 +8476,11 @@ function buildUpstairs(K) {
   mesh(new THREE.SphereGeometry(24, 32, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2), UPS.lampMat, 620, Yc, 0, { cast: false });
   UPS.ceilL = spotL(0xffe6c8, 0, V3(620, Yc - 14, 0), V3(620, Y, 0), 1.3, .85, 1024, 10, 500); UPS.fillL = pointL(0xffe8cc, 0, 620, Yc - 40, 0);
   UPS.deskL = pointL(0xffd890, 0, 532, Y + 104, -200); UPS.starL = pointL(0x6a8aff, 0, 442, Y + 70, 211);
-  UPS.moon = spotL(0xa8bcff, 90000, V3(640, Y + 250, 560), V3(600, Y, 60), .42, .6, 1024, 60, 900);
-  addBeam(0xbcd0ff, V3(620, Y + 130, 228), V3(600, Y, 90), .32, .028);
+  UPS.moon = spotL(DAY ? 0xf2f6ff : 0xa8bcff, DAY ? 130000 : 90000, V3(640, Y + 250, 560), V3(600, Y, 60), .42, .6, 1024, 60, 900); UPS.moonI = UPS.moon.intensity;   // (DAY: bright sky light through her window)
+  addBeam(DAY ? 0xfff4e6 : 0xbcd0ff, V3(620, Y + 130, 228), V3(600, Y, 90), .32, .028); UPS.winBeam = beams[beams.length - 1];
   UPS.specs = { ceil: { p: V3(620, Yc - 14, 0), dir: V3(0, -1, 0), cos: Math.cos(1.3), range: 380, on: false }, desk: { p: V3(532, Y + 104, -200), range: 110, on: false }, star: { p: V3(442, Y + 70, 211), range: 150, on: false } };
-  KS.lights.push(UPS.specs.ceil, UPS.specs.desk, UPS.specs.star, { p: V3(620, Y + 112, 226), dir: V3(-.1, -.55, -.83).normalize(), cos: Math.cos(.5), range: 320 });
+  UPS.specs.win = { p: V3(620, Y + 112, 226), dir: V3(-.1, -.55, -.83).normalize(), cos: Math.cos(.5), range: 320 };
+  KS.lights.push(UPS.specs.ceil, UPS.specs.desk, UPS.specs.star, UPS.specs.win);
   // the star field the projector throws on the ceiling
   { const n = 160, g = new THREE.BufferGeometry(), p = new Float32Array(n * 3); for (let i = 0; i < n; i++) { p[i * 3] = R(320, 890); p[i * 3 + 1] = Yc - .6; p[i * 3 + 2] = R(-226, 226); } g.setAttribute('position', new THREE.BufferAttribute(p, 3));
     UPS.stars = new THREE.Points(g, new THREE.PointsMaterial({ color: new THREE.Color(0xc8d6ff).multiplyScalar(2.2), size: 3.4, transparent: true, opacity: 0, depthWrite: false, blending: THREE.AdditiveBlending })); UPS.stars.frustumCulled = false; LV.add(UPS.stars); }
@@ -8487,6 +8501,11 @@ function upLights() {
   const cl = on('ulight'); UPS.ceilL.intensity = cl ? 46000 : 0; UPS.fillL.intensity = cl ? 2600 : 0; UPS.lampMat.emissiveIntensity = cl ? 3.2 : .05; UPS.specs.ceil.on = cl; UPS.regL.intensity = cl ? 160 : 40;
   const dk = on('udesk'); UPS.deskL.intensity = dk ? 2400 : 0; UPS.deskM.emissiveIntensity = dk ? 2.4 : 0; UPS.specs.desk.on = dk;
   const st = on('ustar'); UPS.starL.intensity = st ? 1400 : 0; UPS.specs.star.on = st; UPS.projM.emissiveIntensity = st ? 2.4 : .3;
+  // daytime: the curtains are drawn while the stars are on (the room goes dim; the window stops lighting you up)
+  if (DAY && UPS.curt) { UPS.curtK = damp(UPS.curtK, st ? 1 : 0, 2.2, 1 / 60); const k = UPS.curtK, Y = UPS.y;
+    UPS.curt.forEach((m, i) => { const s = i ? 1 : -1; m.scale.x = .34 + .66 * k; m.position.set(620 + s * lerp(74, 31, k), Y + 96, 229); });
+    const open = 1 - k; UPS.moon.intensity = UPS.moonI * (.12 + .88 * open); if (UPS.win.fill) UPS.win.fill.intensity = 10000 * (.15 + .85 * open); UPS.specs.win.on = open > .5;
+    if (UPS.winBeam) UPS.winBeam.m.visible = open > .2; }
   if (UPS.stars) { const k = UPS.stars.material; k.opacity = damp(k.opacity, st ? .9 + Math.sin(T * 1.7) * .08 : 0, 3, 1 / 60); UPS.stars.visible = k.opacity > .01; UPS.stars.rotation.y = 0; }
   if (UPS.dancer) UPS.dancer.rotation.y += on('umusic') ? .045 : 0;
 }
@@ -9425,7 +9444,7 @@ const TC = () => V3(-12, 92, -206).add(BO);   // the middle of the group (open b
 // stand on whatever is there (the notebook is a step up)
 const ttlY = (x, z) => { const lx = x - BO.x, lz = z - BO.z; return BO.y + (lx > -2 && lx < 28 && lz > -198 && lz < -176 ? 93 : 92); };
 // where everyone is (offsets from the middle) and which way they face (toward a point, as an offset too)
-const TTL_SPOTS = { dad: [-2, -3, -40, -6], bear: [-9, 3, 4, 40], cham: [-13, -6, 6, 40], sq: [8, 8, -4, 40], frog: [11, 2, -6, 40], bat: [1, -10, 2, 40], tort: [-5, 10, 3, 0], coon: [6, -6, -2, 40] };   // most of them face the viewer
+const TTL_SPOTS = { dad: [-2, -3, -40, -6], bear: [-9, 3, 4, 40], cham: [-13, -6, 6, 40], sq: [8, 8, -4, 40], frog: [11, 2, -6, 40], bat: [1, -10, 2, 40], tort: [-5, 10, 3, 0], coon: [6, -6, -2, 40], mole: [2.5, 4.5, 6, 40] };   // most of them face the viewer
 function titleSetup() {
   TTL.on = true; TTL.t = 0;
   TTL.saved = {}; for (const id in chars) { const C = chars[id]; TTL.saved[id] = { vis: C.root.visible, pos: C.pos.clone(), yaw: C.yaw, state: C.state, shell: C.shell, roost: C.roost, wave: C.wave, lie: C.lieK }; }
@@ -9446,7 +9465,7 @@ function updTitle(dt) {
   const put = (C, x, z, y = 0) => { C.pos.set(x, ttlY(x, z) + y, z); if (C.disp) C.disp.copy(C.pos); };
   const faceTo = (C, x, z, k = 3) => { C.yaw = angDamp(C.yaw, Math.atan2(x - C.pos.x, z - C.pos.z), k, dt); };
   // the ones standing about: each in their spot, turning their head now and then to look at someone
-  for (const id of ['dad', 'bear', 'cham', 'frog', 'bat', 'coon', 'sq']) {
+  for (const id of ['dad', 'bear', 'cham', 'frog', 'bat', 'coon', 'sq', 'mole']) {
     const C = chars[id], S = TTL_SPOTS[id]; if (!C) continue; put(C, c.x + S[0], c.z + S[1]); C.state = 'idle'; C.spd = 0;
     faceTo(C, c.x + S[2], c.z + S[3], 2); const ph = (id.charCodeAt(0) * 1.7) % 6;
     C.look = Math.sin(t * .35 + ph) > .6 ? Math.sin(ph * 3) * .7 : 0;
@@ -10093,7 +10112,7 @@ function portalResumeLand(S) {
 // who joined or dropped, how good each link is, frame rate, rescues and errors. One tap copies it as
 // plain text that a player can paste into a chat and send in.
 const NLOG = { t0: performance.now(), lines: [], fps: 0, sumT: 0, mode: '', lv: '', peer: {} };
-const NLOG_BUILD = '20261124-1350';
+const NLOG_BUILD = '20261124-1441';
 function nlog(s) {
   const d = new Date(), p2 = n => String(n).padStart(2, '0');   // the clock time, so "it broke around 9:30" can be matched
   NLOG.lines.push(`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}  ${s}`); if (NLOG.lines.length > 500) NLOG.lines.splice(0, NLOG.lines.length - 500);
@@ -10527,13 +10546,14 @@ function buildParkPeople() {
     const L = PK.loop; H.pos.set(L.cx, GY, L.cz - L.rz); npcHome(H.root, H.pos, 0, 'park'); PK.jog = J; }
   // a teenager on the skate ramps
   { const hood = new THREE.MeshPhysicalMaterial({ color: 0x3a3048, roughness: .9, sheen: .6, sheenColor: 0x8a78a8 });
-    const H = buildHuman({ pants: pants(0x5a5848), top: hood, skin: MAT.skin, shoe: shoe(0xe8e4dc), hair: 0x1a120c, cap: new THREE.MeshStandardMaterial({ color: 0xc83a3a, roughness: .95 }) });
+    const H = buildHuman({ pants: pants(0x5a5848), top: hood, skin: MAT.skin, shoe: shoe(0xe8e4dc), hair: 0x1a120c, bald: true, cap: new THREE.MeshStandardMaterial({ color: 0xc83a3a, roughness: .95 }) });
     H.root.visible = true; const bd = new THREE.Group(); LV.add(bd);
     const deck = new THREE.Mesh(new THREE.BoxGeometry(20, 1.4, 80), new THREE.MeshStandardMaterial({ color: 0x2a2a2e, roughness: .6 })); deck.position.y = 7; deck.castShadow = true; bd.add(deck);
     const under = new THREE.Mesh(new THREE.BoxGeometry(19, .4, 79), new THREE.MeshStandardMaterial({ color: 0xe85ab0, roughness: .6 })); under.position.y = 6.2; bd.add(under);
     const wm = new THREE.MeshStandardMaterial({ color: 0xf0e8c8, roughness: .5 }), wheels = []; for (const z of [-28, 28]) { const tr = new THREE.Mesh(new THREE.BoxGeometry(16, 2, 4), MAT.steel); tr.position.set(0, 4.6, z); bd.add(tr); for (const s of [-1, 1]) { const w = new THREE.Mesh(new THREE.CylinderGeometry(2.8, 2.8, 3, 14), wm); w.rotation.z = Math.PI / 2; w.position.set(s * 8.5, 2.8, z); bd.add(w); wheels.push(w); } }
     const S = PK.skate, K = { H, bd, wheels, x: S.x0 + 140, dir: 1, v: 240, y: GY, mode: 'ride', t: R(30, 45), turnT: 0, z: 2560, said: 0 };
     H.pos.set(K.x, GY + 8, K.z); npcHome(H.root, H.pos, 0, 'park'); npcHome(bd, V3(K.x, GY, K.z), 0, 'park'); PK.sk = K; }
+  if (DAY) buildParkKids();
 }
 
 // ---------- the owners ----------
@@ -10731,6 +10751,7 @@ function detectPark(dt) {
   PK.dogs.forEach((D, i) => { if (D.mode !== 'sit' || D.t < 1) look(D.head, .5, 300, 1.15, 'dog' + i); });
   const J = PK.jog; if (J) look(J.H.head, J.mode === 'alert' ? .5 : .74, J.mode === 'alert' ? 420 : 320, 1, 'jog');
   const K = PK.sk; if (K) look(K.H.head, K.mode === 'ride' ? .8 : .55, K.mode === 'ride' ? 200 : 300, K.mode === 'ride' ? .6 : 1, 'sk');
+  if (PK.kids) { PK.kids.forEach((k, i) => look(k.H.head, k.mode === 'alert' ? .5 : .62, k.mode === 'alert' ? 320 : 240, k.mode === 'swing' || k.mode === 'duck' ? .7 : 1, 'kid' + i)); if (PK.par.mode !== 'phone') look(PK.par.H.head, PK.par.mode === 'alert' ? .5 : .6, PK.par.mode === 'alert' ? 460 : 380, 1, 'par'); }
   KS.watch = seen > 0 ? { p: wp, s: seen, who } : null;
   if (seen > 0) {
     const p = V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z); let lit = parkLit(p) * (inDark(L.pos) ? .6 : 1); if (inGrass(L.pos)) lit *= .3;
@@ -10752,12 +10773,14 @@ function parkHear(p, loud) {
   if (Math.hypot(p.x - PK.bench.x, p.z - PK.bench.z) < 420 && loud > .35) ownerLook(p, 3);
   if (PK.jog && Math.hypot(p.x - PK.jog.H.pos.x, p.z - PK.jog.H.pos.z) < 300) jogLook(p, 2.2);
   if (PK.sk && Math.hypot(p.x - PK.sk.x, p.z - PK.sk.z) < 320) skLook(p, 2.5);
+  if (PK.kids) kidsLook(p, 2.4);
 }
 function parkSeen(tp, who) {
   if (!who) return;
   if (who.startsWith('owner')) ownerLook(tp, 3.5, PK.owners[+who.slice(5)]);
   else if (who.startsWith('dog')) dogBarkAt(PK.dogs[+who.slice(3)], tp, 2.5);
   else if (who === 'jog') jogLook(tp, 2.6); else if (who === 'sk') skLook(tp, 3);
+  else if (who.startsWith('kid') || who === 'par') kidsLook(tp, 3, who);
 }
 
 // the slide: follow its curve and pick up speed
@@ -10810,7 +10833,7 @@ function updParkWorld(dt) {
   if (ST.sky && ST.sky.visible) ST.sky.position.set(camera.position.x - 2100, 0, camera.position.z - 800);   // the sky dome (sun, clouds) stays round the camera
   if (!PK.near && !NET.on) return;
   cloudTick(dt); chipTick(dt); slideTick(dt);
-  if (PK.swings) for (const S of PK.swings) S.piv.rotation.z = Math.sin(T * 1.3 + S.ph) * S.amp;
+  if (PK.swings) PK.swings.forEach((S, i) => { const on = i === 0 && PK.kids && PK.kids[0].mode === 'swing'; S.cur = damp(S.cur ?? S.amp, on ? .42 : S.amp, on ? .5 : .4, dt); S.piv.rotation.x = Math.sin(T * 1.6 + S.ph) * S.cur; });
   if (PK.flag) { const p = PK.flag.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i) + 18; p.setZ(i, Math.sin(T * 4 + x * .25) * x * .06); } p.needsUpdate = true; }
   if (PK.duck) PK.duck.rotation.z = Math.sin(T * .9) * .03;
   if (!NET.client && STATE === 'play') {
@@ -10823,11 +10846,11 @@ function updParkWorld(dt) {
 }
 function parkNPC(dt) {
   if (NET.client) return;
-  updOwners(dt); updParkDogs(dt); updBall(dt); updJogger(dt); updSkater(dt); parkSmell();
+  updOwners(dt); updParkDogs(dt); updBall(dt); updJogger(dt); updSkater(dt); updKids(dt); parkSmell();
 }
 
 LEVELS.park = {
-  chapter: '第六章', title: '公園', mpChapter: '第五章（多人）', env: 'park', envI: DAY ? 1 : .5, fog: DAY ? [0xbcd0e2, .00014] : [0x0c1420, .00032], expo: DAY ? .95 : 1.35,
+  chapter: '第六章', title: '公園', mpChapter: '第五章（多人）', env: 'park', envI: DAY ? 1 : .5, fog: DAY ? [0xbcd0e2, .00014] : [0x0c1420, .00032], expo: DAY ? .95 : 1.35, bloom: DAY ? [.3, 2.4] : null,
   dust: { N: 700, box: [1700, 2500, GY, 300, 2700, 3300], beamFrac: .0, door: false },
   toys: true, npcNear: true, build: buildPark,
   cps: [[2060, GY, 1760], [1880, GY, 2300], [2060, GY, 2760], [2120, GY + 121, 2990], [2060, GY, 3560]],
@@ -10850,7 +10873,7 @@ LEVELS.park = {
     if (quest === 0) return V3(2060, GY + 4, 2830); if (quest === 1) return V3((PK.sand.x0 + PK.sand.x1) / 2, GY + 14, (PK.sand.z0 + PK.sand.z1) / 2);
     if (quest === 2) return onDeck(L) ? null : V3(PK.tower.x, PK.plat + 4, PK.tower.z); if (quest === 3) return null; if (quest === 4) return PK.chipP.clone().add(V3(0, 4, 0)); return V3(2060, GY + 4, 3740); },
   reset() { parkPrep(true); },
-  eyeText: () => meter > .3 ? '被看見了！' : PK.cloud > .45 ? '雲遮住了太陽' : '狗主、跑步的人、滑板少年',
+  eyeText: () => meter > .3 ? '被看見了！' : PK.cloud > .45 ? '雲遮住了太陽' : inPlay(leader.pos) ? (PK.par && PK.par.mode === 'phone' ? '媽媽在看手機——小朋友仍然會看到你' : '小朋友和媽媽都看得到這裡') : '狗主、跑步的人、滑板少年',
   hint(L) {
     if (PK.chipOn && !PK.charged) return PK.cloud >= .45 ? `晶片 ${Math.floor(PK.chip * 100)}%——雲遮住了太陽，等一等` : `晶片充電中 ${Math.floor(PK.chip * 100)}%`;
     if (L.sliding) return '';
@@ -10895,7 +10918,7 @@ function parkNetOut(w) {
     ...PK.dogs.flatMap(D => [+D.pos.x.toFixed(1), +D.pos.z.toFixed(1), +D.yaw.toFixed(2), Math.max(0, PK_DM.indexOf(D.mode)), Math.round(D.sp || 0), Math.round(D.look.x), Math.round(D.look.z)]),
     +B.p.x.toFixed(1), +B.p.y.toFixed(1), +B.p.z.toFixed(1), B.held,
     +J.a.toFixed(4), J.mode === 'run' ? 0 : J.mode === 'stretch' ? 1 : 2, Math.round((J.look || J.H.aimT).x), Math.round((J.look || J.H.aimT).z),
-    +K.x.toFixed(1), K.dir, K.mode === 'ride' ? 0 : K.mode === 'sit' ? 1 : 2, Math.round(K.v || 0)];
+    +K.x.toFixed(1), K.dir, K.mode === 'ride' ? 0 : K.mode === 'sit' ? 1 : 2, Math.round(K.v || 0), ...kidsNetOut()];
 }
 function parkNetIn(w) {
   const k = w.pk; if (!k || !PK.ball) return;
@@ -10916,6 +10939,7 @@ function parkNetNPC(dt) {
   updJogger(dt);
   const K = PK.sk; K.x += (k[i] - K.x) * e; K.dir = k[i + 1]; K.mode = ['ride', 'sit', 'alert'][k[i + 2]]; K.v = k[i + 3]; K.t = 99; K.y = GY + skateH(K.x); i += 4;
   updSkater(dt);
+  kidsNetIn(k, i, dt);
 }
 
 // ---------- fewer draw calls: bake the park's static meshes into one mesh per material ----------
@@ -10937,6 +10961,104 @@ function mergeZoneStatic(root, keep) {
   for (const o of dead) o.parent.remove(o);
   let n = 0; for (const { m, cast, gs } of B.values()) { const mg = mergeGeometries(gs); gs.forEach(g => g.dispose()); if (!mg) continue; const me = new THREE.Mesh(mg, m); me.castShadow = cast; me.receiveShadow = true; root.add(me); n++; }
   return [dead.length, n];
+}
+
+// =====================================================================
+//  daytime at the playground: two children and a parent watching from a bench
+//  · 小女孩 swings (and now and then rides the spring duck);
+//  · 小男孩 runs round the playground with his arms out like a plane, stopping to dig at the sandbox edge;
+//  · their mum sits on the bench on the west side, watching them — or her phone.
+//  All three can see you; the boy's feet knock you over like the jogger's.
+// =====================================================================
+const KID_PATH = [[2120, 2870], [2300, 2880], [2460, 3005], [2380, 3120], [2250, 3230], [2080, 3200], [2055, 3150], [2000, 3065], [1850, 3040], [1840, 2850], [1960, 2795], [2100, 2810]], KID_DIG = 6;
+const GIRL_DUCK = [[1960, 3065], [2200, 3075], [2306, 3170]], GIRL_SWING = [[2200, 3075], [1960, 3065], [1925, 2936]];
+const PK_KM = ['swing', 'toduck', 'duck', 'toswing', 'run', 'dig', 'alert'], PK_PM = ['watch', 'phone', 'alert'];
+function buildParkKids() {
+  const pants = c => new THREE.MeshStandardMaterial({ color: c, roughness: .85 }), shoe = c => new THREE.MeshStandardMaterial({ color: c, roughness: .6 });
+  const top = c => new THREE.MeshPhysicalMaterial({ color: c, roughness: .7, sheen: .5, sheenColor: 0xffffff });
+  const kid = (o, name, col) => { const H = buildHuman(o); H.root.visible = true; H.root.scale.setScalar(.6); H.head.scale.setScalar(1.32); return { H, name, col, mode: 'run', t: R(4, 8), wp: 0, ri: 0, look: V3(), said: 0, prev: null }; };
+  const g = kid({ pants: pants(0xe86a8a), top: top(0xf6e04a), skin: MAT.skin, shoe: shoe(0xe84a6a), hair: 0x2a1a10 }, '小女孩', '#f6e04a');
+  const b = kid({ pants: pants(0x2a4a8a), top: top(0x4ac0a0), skin: MAT.skin, shoe: shoe(0xf0f0f0), hair: 0x1a120c, bald: true, cap: new THREE.MeshStandardMaterial({ color: 0xe8483a, roughness: .7 }) }, '小男孩', '#4ac0a0');
+  g.mode = 'swing'; g.t = R(18, 30); b.mode = 'run'; b.wp = 0;
+  { const hm = new THREE.MeshStandardMaterial({ color: 0x2a1a10, roughness: .8 }); const tie = new THREE.MeshStandardMaterial({ color: 0xe84a6a, roughness: .5 }); for (const s of [-1, 1]) { const p = new THREE.Mesh(ell(3, 5.4, 3, 14, 10), hm); p.position.set(s * 9.6, -2.5, -6); p.rotation.z = s * .3; p.castShadow = true; g.H.head.add(p); const t = new THREE.Mesh(new THREE.TorusGeometry(1.8, .7, 6, 14), tie); t.position.set(s * 8.6, 2.4, -5.4); t.rotation.y = Math.PI / 2; g.H.head.add(t); } }   // pigtails with hair ties
+  g.H.pos.set(1925, GY, 2900); b.H.pos.set(KID_PATH[0][0], GY, KID_PATH[0][1]);
+  for (const k of [g, b]) npcHome(k.H.root, k.H.pos, 0, 'park');
+  PK.kids = [g, b];
+  // their mum on a bench just west of the playground, facing it
+  { const x = 1786, z = 3040, w = new THREE.MeshStandardMaterial({ ...genWood([132, 92, 58], [70, 46, 28], 834, 0), roughness: .75 });
+    const gB = new THREE.Group(); gB.position.set(x, GY, z); gB.rotation.y = Math.PI / 2; LV.add(gB);
+    for (const dy of [0, 7]) mesh(new THREE.BoxGeometry(120, 3, 7), w, 0, 40, -8 + dy * 1.5, { parent: gB }); for (const dy of [0, 1, 2]) mesh(new THREE.BoxGeometry(120, 7, 2.5), w, 0, 56 + dy * 9, -16, { parent: gB }).rotation.x = -.12;
+    for (const s of [-50, 50]) { mesh(new THREE.BoxGeometry(4, 40, 4), MAT.dsteel, s, 20, -2, { parent: gB }); mesh(new THREE.BoxGeometry(4, 40, 4), MAT.dsteel, s, 20, -14, { parent: gB }); mesh(new THREE.BoxGeometry(4, 34, 3), MAT.dsteel, s, 60, -17, { parent: gB }); }
+    cols.push({ t: 'b', x0: x - 12, x1: x + 12, y0: GY + 37, y1: GY + 43, z0: z - 60, z1: z + 60 });
+    const H = buildHuman({ pants: pants(0x3a3a48), top: top(0xe8e2d8), skin: MAT.skin, shoe: shoe(0xb88a5a), hair: 0x4a2a18, glasses: true });
+    H.root.visible = true; H.pos.set(x - 1, GY + 10, z); H.yaw = Math.PI / 2; H.pelvis.position.y = 44; for (const L of H.legs) { L.hip.rotation.x = -1.45; L.knee.rotation.x = 1.5; L.ankle.rotation.x = -.05; }
+    H.root.position.copy(H.pos); H.root.rotation.y = H.yaw; npcHome(H.root, H.pos, H.yaw, 'park');
+    const ph = new THREE.Mesh(new THREE.BoxGeometry(7, 14, 1), new THREE.MeshStandardMaterial({ color: 0x222226, roughness: .3 })); ph.position.set(0, -3, 3); H.arms[1].hand.add(ph);
+    PK.par = { H, mode: 'watch', t: R(5, 9), look: V3(2120, GY + 30, 3000), name: '媽媽', col: '#e8e2d8', phone: ph }; }
+}
+function kidSay(k, x, d = 2.2) { if (T - (k.said || 0) < 6) return; k.said = T; sayW(k.name, x, k.col, d); }
+// walk/run H towards (x, z) at speed v; returns the distance moved this frame (0 when there)
+function kidStep(H, x, z, v, dt) { const d = V3(x - H.pos.x, 0, z - H.pos.z), L = d.length(); if (L < 5) return 0; const st = Math.min(L, v * dt); H.pos.addScaledVector(d.normalize(), st); H.yaw = angDamp(H.yaw, Math.atan2(d.x, d.z), 8, dt); return st; }
+function updKids(dt) {
+  if (!PK.kids) return; const [g, b] = PK.kids, host = !NET.client;
+  // --- the girl: swing ⇄ spring duck ---
+  { const H = g.H; if (host) g.t -= dt; let moveD = 0;
+    if (g.mode === 'swing') { const S = PK.swings[0], th = S.piv.rotation.x; S.piv.updateMatrixWorld(true);
+      const seat = V3(0, -188, 0).applyMatrix4(S.piv.matrixWorld); H.pos.set(seat.x, seat.y - 18, seat.z); H.yaw = 0; H.root.position.copy(H.pos); H.root.rotation.set(th, 0, 0);
+      H.pelvis.position.y = 44; for (const L of H.legs) { L.hip.rotation.x = -1.4 - th * .7; L.knee.rotation.x = 1.25 + th * .9; L.ankle.rotation.x = 0; } for (const A of H.arms) { A.sh.rotation.set(-2.7, 0, A.s * .26); A.el.rotation.x = -.4; }
+      H.aimT.set(H.pos.x, GY + 60, H.pos.z + 200); if (host && g.t <= 0) { g.mode = 'toduck'; g.ri = 0; g.t = 30; H.root.rotation.set(0, 0, 0); H.pos.set(1925, GY, 2936); } }
+    else if (g.mode === 'toduck' || g.mode === 'toswing') { const R0 = g.mode === 'toduck' ? GIRL_DUCK : GIRL_SWING, w = R0[Math.min(g.ri, R0.length - 1)]; H.root.rotation.set(0, 0, 0); H.pelvis.position.y = 90;
+      const st = kidStep(H, w[0], w[1], 130, dt); moveD = st / .6; H.aimT.set(w[0], GY + 30, w[1]);
+      if (!st && host) { if (g.ri < R0.length - 1) g.ri++; else { g.mode = g.mode === 'toduck' ? 'duck' : 'swing'; g.t = g.mode === 'duck' ? R(8, 12) : R(20, 32); } }
+      humanAnim(H, moveD, dt); for (const A of H.arms) { A.sh.rotation.set(Math.sin(H.phase) * A.s * .6, 0, A.s * .12); A.el.rotation.x = -.5; } }
+    else if (g.mode === 'duck') { const D = PK.duck; H.pos.set(D.position.x, D.position.y + 3, D.position.z - 3); H.yaw = 0; H.root.position.copy(H.pos); const r = Math.sin(T * 5) * .12; D.rotation.x = r; H.root.rotation.set(r * .8, 0, 0);
+      H.pelvis.position.y = 44; for (const L of H.legs) { L.hip.rotation.set(-1.25, 0, L.s * .38); L.knee.rotation.x = 1.45; } for (const A of H.arms) { A.sh.rotation.set(-.75, 0, A.s * .05); A.el.rotation.x = -.5; }
+      H.aimT.set(H.pos.x + Math.sin(T * .5) * 120, GY + 40, H.pos.z + 200); if (host && g.t <= 0) { g.mode = 'toswing'; g.ri = 0; D.rotation.x = 0; H.root.rotation.set(0, 0, 0); H.pos.set(2306, GY, 3170); } }
+    else if (g.mode === 'alert') { humanAnim(H, 0, dt); H.aimT.copy(g.look); for (const A of H.arms) { A.sh.rotation.set(-.15, 0, A.s * .1); A.el.rotation.x = -.3; } if (host && g.t <= 0) g.mode = g.prev || 'toswing'; }
+    H.aim.lerp(H.aimT, 1 - Math.exp(-4 * dt)); humanAimArm(H, 0, dt);
+  }
+  // --- the boy: a plane round the playground, now and then digging at the sandbox edge ---
+  { const H = b.H; if (host) b.t -= dt; let moveD = 0; H.root.rotation.set(0, 0, 0);
+    if (b.mode === 'run') { const w = KID_PATH[b.wp % KID_PATH.length]; H.pelvis.position.y = 90; H.chest.rotation.x = .12;
+      const st = kidStep(H, w[0], w[1], 175, dt); moveD = st / .6; H.aimT.set(w[0], GY + 30, w[1]);
+      if (!st && host) { const at = b.wp % KID_PATH.length; b.wp = (b.wp + 1) % KID_PATH.length; if (at === KID_DIG && rnd() < .7) { b.mode = 'dig'; b.t = R(5, 8); } }
+      humanAnim(H, moveD, dt); for (const A of H.arms) { A.sh.rotation.set(0, 0, A.s * (1.3 + Math.sin(T * 3) * .12)); A.el.rotation.x = 0; } H.chest.rotation.z = Math.sin(T * 1.8) * .2;   // arms out: a plane, banking
+      if (host && STATE === 'play') for (const C of party) if (mine(C) && !C.frozen && C.pos.y < GY + 10 && C.state !== 'dig' && Math.hypot(C.pos.x - H.pos.x, C.pos.z - H.pos.z) < 12) knock(C, V3(H.pos.x - Math.sin(H.yaw) * 20, GY, H.pos.z - Math.cos(H.yaw) * 20), C === leader ? '差點被小朋友踩到！' : null); }
+    else if (b.mode === 'dig') { H.yaw = angDamp(H.yaw, -Math.PI / 2, 5, dt); humanAnim(H, 0, dt); H.pelvis.position.y = 52; for (const L of H.legs) { L.hip.rotation.x = -1.95; L.knee.rotation.x = 2.35; L.ankle.rotation.x = -.4; }
+      for (const A of H.arms) { A.sh.rotation.set(-1.15 + (A.s > 0 ? Math.sin(T * 8) * .35 : 0), 0, 0); A.el.rotation.x = -.35; } H.chest.rotation.set(.45, 0, 0); H.aimT.set(H.pos.x - 40, GY, H.pos.z);
+      if (host && b.t <= 0) b.mode = 'run'; }
+    else if (b.mode === 'alert') { H.pelvis.position.y = 90; humanAnim(H, 0, dt); for (const A of H.arms) { A.sh.rotation.set(-.2, 0, A.s * .1); A.el.rotation.x = -.3; } H.aimT.copy(b.look); if (host && b.t <= 0) b.mode = b.prev === 'dig' ? 'run' : (b.prev || 'run'); }
+    if (b.mode !== 'run') H.chest.rotation.z = 0; if (b.mode === 'alert') H.chest.rotation.x = 0;
+    H.aim.lerp(H.aimT, 1 - Math.exp(-4 * dt)); humanAimArm(H, 0, dt);
+  }
+  // --- mum on the bench: watching one child, then the other, then her phone ---
+  { const P = PK.par, H = P.H; if (host) P.t -= dt;
+    if (P.mode === 'watch') { const k = PK.kids[Math.floor(T / 4) % 2].H; P.look.set(k.pos.x, GY + 40, k.pos.z); if (host && P.t <= 0) { P.mode = 'phone'; P.t = R(5, 9); } }
+    else if (P.mode === 'phone') { P.look.set(H.pos.x + 60, GY + 20, H.pos.z); if (host && P.t <= 0) { P.mode = 'watch'; P.t = R(7, 12); } }
+    else if (P.mode === 'alert' && host && P.t <= 0) { P.mode = 'watch'; P.t = R(4, 7); }
+    H.aimT.copy(P.look); H.aim.lerp(H.aimT, 1 - Math.exp(-3 * dt)); humanAimArm(H, 0, dt);
+    const ph = P.mode === 'phone'; H.chest.rotation.x = damp(H.chest.rotation.x, ph ? .22 : 0, 3, dt); P.phone.visible = true;
+    const R1 = H.arms[1]; R1.sh.rotation.set(ph ? -.95 : -.42, ph ? -.35 : -.2, 0); R1.el.rotation.x = ph ? -1.25 : -.75; H.arms[0].sh.rotation.set(-.42, .2, 0); H.arms[0].el.rotation.x = -.75;
+    H.root.position.copy(H.pos); H.root.rotation.y = H.yaw; }
+}
+function kidsLook(p, t, who) {
+  if (!PK.kids) return; const P = PK.par;
+  for (const k of PK.kids) if (Math.hypot(p.x - k.H.pos.x, p.z - k.H.pos.z) < 320 && k.mode !== 'swing' && k.mode !== 'duck') { if (k.mode !== 'alert') k.prev = k.mode; k.mode = 'alert'; k.t = t; k.look.set(p.x, GY + 4, p.z); }
+  if (P && Math.hypot(p.x - P.H.pos.x, p.z - P.H.pos.z) < 520) { P.mode = 'alert'; P.t = t + 1; P.look.set(p.x, GY + 4, p.z); }
+  if (who === 'kid0' || who === 'kid1') kidSay(PK.kids[who === 'kid0' ? 0 : 1], rnd() < .5 ? '媽媽！嗰度有個公仔識郁！' : '咦？公仔走咗去邊？', 2.6);
+  else if (who === 'par') { if (!PK.said.par || T - PK.said.par > 10) { PK.said.par = T; sayW('媽媽', '……乜嘢嚟㗎？', P.col, 2); } }
+}
+function kidsNetOut() {
+  if (!PK.kids) return []; const [g, b] = PK.kids, P = PK.par;
+  return [PK_KM.indexOf(g.mode), +g.H.pos.x.toFixed(1), +g.H.pos.z.toFixed(1), g.ri, PK_KM.indexOf(b.mode), +b.H.pos.x.toFixed(1), +b.H.pos.z.toFixed(1), b.wp, PK_PM.indexOf(P.mode), Math.round(P.look.x), Math.round(P.look.z)];
+}
+function kidsNetIn(k, i, dt) {
+  if (!PK.kids || k.length < i + 11) return; const [g, b] = PK.kids, P = PK.par, e = 1 - Math.exp(-8 * dt);
+  const gm = PK_KM[k[i]] || 'swing'; if (gm !== g.mode && (gm === 'toduck' || gm === 'toswing')) g.H.pos.set(k[i + 1], GY, k[i + 2]); g.mode = gm; g.ri = k[i + 3];
+  if (g.mode !== 'swing' && g.mode !== 'duck') { g.H.pos.x += (k[i + 1] - g.H.pos.x) * e; g.H.pos.z += (k[i + 2] - g.H.pos.z) * e; }
+  b.mode = PK_KM[k[i + 4]] || 'run'; b.H.pos.x += (k[i + 5] - b.H.pos.x) * e; b.H.pos.z += (k[i + 6] - b.H.pos.z) * e; b.wp = k[i + 7];
+  P.mode = PK_PM[k[i + 8]] || 'watch'; if (P.mode !== 'watch') P.look.set(k[i + 9], GY + 30, k[i + 10]);
+  updKids(dt);
 }
 // =====================================================================
 //  阿鼴（鼴鼠，地質研究員）— found hiding under the park's sandbox (chapter 6)

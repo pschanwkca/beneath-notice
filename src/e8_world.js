@@ -156,6 +156,7 @@ function lightTick(dt) {
 }
 
 // ---------- per-frame: what to draw, which place's rules run, atmosphere ----------
+const BLOOM_IN = [.42, .95];
 const WC = { cz: null, envK: 1, envWant: null, fogC: new THREE.Color(), banner: 0 };
 function zoneTick(dt) {
   if (!WORLD) return;
@@ -165,6 +166,8 @@ function zoneTick(dt) {
   const cz = zoneAt(cp) || (leader && zoneAt(leader.pos)) || WC.cz || ZONES[LEVEL]; if (cz) WC.cz = cz;
   const D = LEVELS[WC.cz.id]; const k = LP.snap ? 1 : 1 - Math.exp(-2.5 * dt);
   WC.fogC.setHex(D.fog[0]); scene.fog.color.lerp(WC.fogC, k); scene.fog.density += (D.fog[1] - scene.fog.density) * k; renderer.toneMappingExposure += (D.expo - renderer.toneMappingExposure) * k;
+  // bloom per place: in the sun almost everything is brighter than the indoor threshold, so outdoors by day only the really bright things (the sun, glints) glow
+  const BL = D.bloom || BLOOM_IN; bloom.strength += (BL[0] - bloom.strength) * k; bloom.threshold += (BL[1] - bloom.threshold) * k;
   if (scene.environment !== WC.cz.envTex) { WC.envK = LP.snap ? 0 : WC.envK - dt * 5; if (WC.envK <= 0) { scene.environment = WC.cz.envTex; WC.envK = 0; } }
   else WC.envK = Math.min(1, WC.envK + dt * 3);
   scene.environmentIntensity = D.envI * WC.envK;
