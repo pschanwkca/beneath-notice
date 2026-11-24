@@ -1052,7 +1052,7 @@ async function buildWorld(prog) {
   MP_CPS = [...LEVELS.kitchen.cps, ...LEVELS.garage.cps, ...LEVELS.yard.cps, ...LEVELS.road.cps, ...LEVELS.park.cps];
   ncPlace();
   for (let i = furMeshes.length - 1; i >= 0; i--) if (!inScene(furMeshes[i])) furMeshes.splice(i, 1);
-  partitionCols(); setupLightPool(); WORLD = true;
+  buildHouseShell(); partitionCols(); setupLightPool(); WORLD = true;
 }
 
 // ---------- colliders: each place keeps its own list (plus anything within 60 cm of it) ----------
@@ -1155,6 +1155,7 @@ function zoneTick(dt) {
   if (!WORLD) return;
   const cp = camera.position, lp = leader ? leader.pos : cp;
   for (const Z of ZL) { Z.near = inZone(Z, cp.x, cp.y, cp.z, 45) || inZone(Z, lp.x, lp.y, lp.z, 45) || (!!Z.peek && Z.peek.some(b => cp.x > b[0] && cp.x < b[1] && cp.y > b[2] && cp.y < b[3] && cp.z > b[4] && cp.z < b[5])); Z.lv.visible = Z.fx.visible = Z.near; if (Z.npcs) for (const o of Z.npcs) o.visible = Z.near; }
+  houseShellTick();
   // atmosphere of the place the camera is in
   const cz = zoneAt(cp) || (leader && zoneAt(leader.pos)) || WC.cz || ZONES[LEVEL]; if (cz) WC.cz = cz;
   const D = LEVELS[WC.cz.id]; const k = LP.snap ? 1 : 1 - Math.exp(-2.5 * dt);
@@ -1831,6 +1832,7 @@ function buildLights() {
   const f1 = new THREE.PointLight(0xffb27a, 7000, 0, 2); f1.position.set(-20, 70, -120); LV.add(f1);
   const f2 = new THREE.PointLight(DAY ? 0xdfe6ff : 0x8ea6ff, DAY ? 20000 : 16000, 0, 2); f2.position.set(70, 150, 70); LV.add(f2);
   const f3 = new THREE.PointLight(0xa8b8ff, 2600, 0, 2); f3.position.set(84, 18, 70); LV.add(f3);
+  if (DAY) { const f4 = new THREE.PointLight(0xd8e0f0, 11000, 0, 2); f4.position.set(-190, 120, 150); LV.add(f4); }   // daylight bounce over the mouse-hole corner
   moonLight = new THREE.SpotLight(DAY ? 0xfff0d6 : 0xa9c1ff, DAY ? 3400000 : 1600000, 0, .2, .45, 2);   // (DAY: sunlight through the little window) moonLight.position.set(95, 420, -560); moonLight.target.position.set(84, 0, 85); LV.add(moonLight, moonLight.target);
   moonLight.castShadow = true; moonLight.shadow.mapSize.setScalar(TOUCH ? 1024 : 2048); moonLight.shadow.camera.near = 250; moonLight.shadow.camera.far = 1200; moonLight.shadow.bias = -0.0003; moonLight.shadow.normalBias = 0.05;
   const bc = DAY ? 0xffeccc : 0x9fb6ff; const mb = beamMesh(bc, 420, .12, DAY ? .17 : .13); aimBeam(mb, V3(90, 222, -256), V3(84, 0, 85)); beams.push({ m: mb, o: V3(90, 222, -256), d: V3(84, 0, 85).sub(V3(90, 222, -256)).normalize(), ca: Math.cos(.15), len: 420, c: new THREE.Color(bc), k: 1 });
@@ -4287,7 +4289,7 @@ function buildLivingRoom(K) {
   const mugM = new THREE.MeshPhysicalMaterial({ color: 0x3a6ea8, roughness: .25, clearcoat: .8 }); resGroup(cmGroup(9, 10, 9, ({ part }) => { part(new THREE.CylinderGeometry(4, 4, 10, 24), mugM, 0, 0, 0); }, [mugM]), 705, 90, 42, 9, 10, 9, .3, 5, '咖啡杯', true);
   // TV on a low cabinet against the far wall (facing the sofa)
   const tvc = new THREE.MeshStandardMaterial({ color: 0x2b2420, roughness: .55 }); box(860, 900, 0, 46, 30, 210, tvc);
-  box(888, 892, 52, 140, 40, 200, M.black); mesh(new THREE.PlaneGeometry(156, 84), LIV.tvMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(0x4a7ab0).multiplyScalar(1.4) }), 887.8, 96, 120, { cast: false }).rotation.y = -Math.PI / 2;
+  box(888, 892, 52, 140, 40, 200, M.black); mesh(new THREE.PlaneGeometry(156, 84), LIV.tvMat = new THREE.MeshBasicMaterial({ map: tvShowTex(), color: new THREE.Color(0x4a7ab0).multiplyScalar(1.4) }), 887.8, 96, 120, { cast: false }).rotation.y = -Math.PI / 2;
   box(884, 896, 46, 52, 110, 130, M.black);
   LIV.tvLight = new THREE.PointLight(0x7aa8ff, 2600, 0, 2); LIV.tvLight.position.set(850, 95, 120); LV.add(LIV.tvLight);
   box(866, 884, 46, 52, 60, 84, new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: .3 })); // console
@@ -4306,6 +4308,7 @@ function buildLivingRoom(K) {
   mesh(new THREE.PlaneGeometry(420, 210), K.dusk, 775, 150, 330, { cast: false }).rotation.y = Math.PI;
   mesh(new THREE.PlaneGeometry(146, 110), MAT.glassThin, 775, 155, 238, { cast: false }).rotation.y = Math.PI;
   sunWindow(V3(775, 155, 236), 146, 110, V3(0, 0, -1), 0, { fill: 14000 });
+  if (DAY) { pointL(0xf2eee6, 10000, 640, 240, 40); pointL(0xe2eaff, 8000, 470, 220, 170); }   // daylight bouncing round the room (the window faces away from the sun)
   cols.push({ t: 'b', x0: 700, x1: 850, y0: 100, y1: 206, z0: 237, z1: 239, noRay: true });
   const cur = new THREE.MeshPhysicalMaterial({ color: 0x8a7a9a, roughness: .95, sheen: .8, side: THREE.DoubleSide });
   for (const x of [690, 852]) { box(x - 12, x + 12, 2, 230, 214, 220, cur); }
@@ -4355,7 +4358,7 @@ function updLiving(dt) {
   LIV.gapLight.intensity = 300 + LIV.a * 4000;
   if (LIV.grille) LIV.grille.rotation.z = damp(LIV.grille.rotation.z, LIV.ventOpen ? 1.45 : 0, 3, dt);
   for (const f of LIV.fish) { f.ph += dt * .5; f.m.position.set(670 + Math.cos(f.ph) * f.r * 1.6, f.y + Math.sin(f.ph * 2.3) * 2, -207 + Math.sin(f.ph) * 10); f.m.rotation.y = -f.ph + Math.PI; }
-  if (LIV.tvMat) { if (LIV.tvOff) { LIV.tvMat.color.setRGB(.015, .016, .02); LIV.tvLight.intensity = 0; } else { const fl = .8 + Math.sin(T * 7) * .1 + (rnd() < .05 ? .3 : 0); LIV.tvMat.color.setRGB(.35 * fl, .5 * fl, .75 * fl); LIV.tvLight.intensity = 2200 * fl; } }
+  if (LIV.tvMat) { if (LIV.tvOff) { LIV.tvMat.color.setRGB(.015, .016, .02); LIV.tvLight.intensity = 0; } else { const fl = .9 + Math.sin(T * 7) * .05 + (rnd() < .04 ? .12 : 0); LIV.tvMat.color.setRGB(1.05 * fl, 1.05 * fl, 1.12 * fl); LIV.tvLight.intensity = 2200 * fl; if (LIV.tvMat.map) LIV.tvMat.map.offset.x = (T * .012) % 1; } }
   // pickups for the objectives
   const L = leader; if (LEVEL !== 'kitchen' || !L) return;
   for (const p of LIV.parts) { if (p.got || !KS.mp) continue; p.g.rotation.y += dt * 1.4; p.g.position.y = p.y + 2 + Math.sin(T * 2 + p.x) * .4; p.halo.position.set(p.x, p.g.position.y, p.z); p.halo.lookAt(camera.position);
@@ -4433,6 +4436,18 @@ const MP_QUESTS = [
 const SP_Q2B = [{ t: '爬過通風口去車房', s: '爸爸：車房的工作枱有我以前的工具，可以修好縮小機' }];
 function ventOpen() { if (LIV.ventOpen) return; LIV.ventOpen = true; LIV.ventCol.y0 = -999; LIV.ventCol.y1 = -998; SND.creak(); toastW('通風口的蓋打開了！', 2.6); }
 function livingHost() { }
+
+// what's on the TV: a cartoon landscape that slowly pans (the screen's colour sets brightness / off)
+function tvShowTex() {
+  const [c, x] = cnv(512, 160); const g = x.createLinearGradient(0, 0, 0, 160); g.addColorStop(0, '#7cc4f4'); g.addColorStop(1, '#d6f0ff'); x.fillStyle = g; x.fillRect(0, 0, 512, 160);
+  x.fillStyle = '#fff6c8'; x.beginPath(); x.arc(400, 36, 16, 0, 7); x.fill();
+  x.fillStyle = 'rgba(255,255,255,.9)'; for (const [cx, cy] of [[70, 30], [230, 22], [470, 48]]) { for (const [dx, dy, r] of [[0, 0, 12], [14, -5, 14], [28, 0, 11]]) { x.beginPath(); x.arc(cx + dx, cy + dy, r, 0, 7); x.fill(); } }
+  const hill = (col, y0, a, f, ph) => { x.fillStyle = col; x.beginPath(); x.moveTo(0, 160); for (let i = 0; i <= 512; i += 8) x.lineTo(i, y0 - a * Math.sin(i / 512 * Math.PI * 2 * f + ph)); x.lineTo(512, 160); x.fill(); };
+  hill('#8fd06a', 100, 14, 2, .5); hill('#5fb04a', 120, 10, 3, 2); hill('#3f8f3a', 142, 6, 4, 1);
+  for (const [tx, ty] of [[60, 112], [150, 118], [300, 110], [440, 116]]) { x.fillStyle = '#6a4a2a'; x.fillRect(tx - 2, ty, 4, 14); x.fillStyle = '#2f7a34'; x.beginPath(); x.arc(tx, ty, 11, 0, 7); x.fill(); }
+  x.fillStyle = '#f4f0e8'; x.fillRect(200, 104, 40, 26); x.fillStyle = '#d0503a'; x.beginPath(); x.moveTo(194, 106); x.lineTo(220, 86); x.lineTo(246, 106); x.fill(); x.fillStyle = '#5a7aa8'; x.fillRect(210, 112, 9, 9); x.fillRect(224, 112, 9, 9);
+  const t = tex(c); t.repeat.set(.5, 1); return t;
+}
 
 // =====================================================================
 //  LEVEL SYSTEM  (序章 basement → 第一章 wall hub → kitchen)
@@ -4907,7 +4922,7 @@ function buildKitchen() {
   // batteries: top of the fridge, inside the cupboard
   addBattery(200, 184.5, -200); addBattery(-74, 13, -210);
   // ---------- lights ----------
-  LV.add(new THREE.HemisphereLight(0x8a7c6c, 0x3a2c22, .95));
+  LV.add(DAY ? new THREE.HemisphereLight(0xa8a49c, 0x4a3c30, 1.2) : new THREE.HemisphereLight(0x8a7c6c, 0x3a2c22, .95));
   const pend = (x, z, y, tx, tz, I, sh) => {
     cyl(x, z, .25, y + 8, 260, MAT.black, { col: false, seg: 6 });
     const sd = mesh(new THREE.SphereGeometry(13, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2), K.shade, x, y, z); sd.scale.y = .8;
@@ -5196,7 +5211,7 @@ const KLINES_SP = [[1.2, '女兒', '媽，爸爸今晚會回來吃飯嗎？', '#
 const KLINES_MP = [[1.2, '女兒', '媽，爸爸今晚會回來吃飯嗎？', '#e8a0c0', 3], [4.6, '太太', '……先吃吧，湯快好了。', '#f4bb72', 2.8], [8, '爸爸', '聽好：縮小機少了三個零件——彈簧、鏡片、電容，全部都掉在這個廚房裡。', '#f5f0e6', 4.2], [12.6, '小彩', '找齊之後去客廳，從通風口出去。別讓她們看見！', '#9fd86b', 3.4]];
 let END_TXT = null;
 LEVELS.kitchen = {
-  chapter: '第一章', title: '晚飯時間的廚房', env: 'kitchen', envI: .75, fog: [0x1a1510, .0007], expo: 1.18,
+  chapter: '第一章', title: '晚飯時間的廚房', env: 'kitchen', envI: .75, fog: DAY ? [0xbfb6a8, .00034] : [0x1a1510, .0007], expo: DAY ? 1.22 : 1.18,
   dust: { N: 2600, box: [-300, 900, 0, 250, -220, 220], beamFrac: .45, door: false },
   toys: true, npcNear: true,
   build() {
@@ -5278,7 +5293,7 @@ function kitchenMode() {
   if (KS.mp && QUESTS !== MP_QUESTS && !PRO.on) { QUESTS = MP_QUESTS; LEVELS.kitchen.quests = MP_QUESTS; setQuest(0); }
 }
 LEVELS.basement = {
-  chapter: '序章', title: '地庫實驗室', env: 'basement', envI: .85, fog: [0x0a0d12, .00135], expo: 1.3, dust: {},
+  chapter: '序章', title: '地庫實驗室', env: 'basement', envI: .85, fog: DAY ? [0x1e2026, .00105] : [0x0a0d12, .00135], expo: 1.3, dust: {},
   build() { buildRoom(); buildLights(); },
   afterShift(o) { machine.x += o.x; machine.y += o.y; machine.z += o.z; },
   cps: CPS_B, quests: BASE_Q, spawn() { placeStart(); },
@@ -5398,6 +5413,7 @@ function buildGarage() {
   box(1453, 1457, 18, 190, 60, 150, doorM); slick(); box(1453, 1457, GY, 18, 60, 90, doorM); slick(); box(1453, 1457, GY, 18, 120, 150, doorM); slick();
   box(1451.5, 1453, 186, 190, 58, 152, M.white, { col: false }); box(1451.5, 1453, GY, 190, 56, 60, M.white, { col: false }); box(1451.5, 1453, GY, 190, 150, 154, M.white, { col: false });
   const knob = mesh(new THREE.SphereGeometry(3, 16, 12), K.brass, 1450, 80, 140); knob.scale.set(.7, 1, 1);
+  garageBlindWindow();   // (the window in this wall has its blinds drawn — the outside is in e32_shell.js)
   // dog flap: a hinged plastic flap, held shut by a latch above it
   const fg = new THREE.Group(); fg.position.set(1455, 18, 105); LV.add(fg); GS.flap = fg;
   const fm = new THREE.MeshPhysicalMaterial({ color: 0x3a3a40, roughness: .3, transparent: true, opacity: .82 });
@@ -6554,6 +6570,30 @@ function carGeos() {
     wheel: new THREE.CylinderGeometry(32, 32, 22, 28).rotateZ(Math.PI / 2), hub: new THREE.CylinderGeometry(17, 17, 23, 20).rotateZ(Math.PI / 2),
     lamp: new THREE.BoxGeometry(34, 12, 4), beam: new THREE.ConeGeometry(160, 700, 24, 1, true).translate(0, -350, 0).rotateX(-Math.PI / 2), pool: new THREE.PlaneGeometry(360, 640).rotateX(-Math.PI / 2).translate(0, 0, 360)
   };
+  // round the shapes off: the sides curve in towards the sills and the shoulders, the glasshouse leans in towards the roof
+  const taper = (g, f) => { const p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) * f(p.getY(i))); g.computeVertexNormals(); };
+  const ss = (a, b, v) => { const t = Math.min(1, Math.max(0, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
+  taper(_carGeo.body, y => 1 - .055 * ss(72, 100, y) - .05 * (1 - ss(22, 46, y)));
+  taper(_carGeo.glass, y => .99 - .17 * ss(96, 143, y)); taper(_carGeo.roof, y => .855);
+  // the dark trim, merged into one mesh per car: bumpers, grille, sills, wheel arches, mirrors, window surrounds, door shut lines
+  const B = (w, h, d, x, y, z) => new THREE.BoxGeometry(w, h, d).translate(x, y, z), tr = [];
+  tr.push(B(184, 17, 12, 0, 34, 223), B(184, 17, 12, 0, 34, -223), B(96, 15, 3, 0, 57, 222), B(150, 5, 3, 0, 46, 222));
+  for (const s of [-1, 1]) {
+    tr.push(B(5, 9, 196, s * 91, 30, 0));
+    for (const z of [-130, 130]) tr.push(new THREE.TorusGeometry(37, 4.2, 8, 24, Math.PI).rotateY(Math.PI / 2).translate(s * 90, 32, z));
+    tr.push(B(15, 10, 6, s * 99, 103, 78), B(10, 3, 4, s * 92, 100, 80));                                // mirror + its arm
+    { const g = B(2.4, 44, 9, s * 82.8, 119, -24); taper(g, y => .99 - .17 * ss(96, 143, y)); tr.push(g); }   // B-pillar, leaning in with the glass
+    tr.push(B(2.6, 3, 254, s * 81, 97.5, -30));                                                           // belt line along the bottom of the windows
+    for (const z of [14, -104]) tr.push(B(1, 54, 1.2, s * 94.2, 64, z));                                  // door shut lines
+    tr.push(B(1, 1.2, 230, s * 93.2, 44, -30));
+  }
+  _carGeo.trim = mergeGeometries(tr); tr.forEach(g => g.dispose());
+  const ch = []; for (const s of [-1, 1]) for (const z of [36, -84]) ch.push(B(2, 3.2, 13, s * 95, 82, z)); _carGeo.handles = mergeGeometries(ch); ch.forEach(g => g.dispose());
+  // a five-spoke rim (axle along x), spun with the tyre
+  { const r = [new THREE.TorusGeometry(19, 2.4, 6, 28).rotateY(Math.PI / 2), new THREE.CylinderGeometry(5.5, 5.5, 3, 16).rotateZ(Math.PI / 2)];
+    for (let i = 0; i < 5; i++) r.push(new THREE.BoxGeometry(2.4, 17, 5).translate(0, 9, 0).rotateX(i / 5 * Math.PI * 2));
+    const disc = new THREE.CylinderGeometry(19, 19, 1, 28).rotateZ(Math.PI / 2).translate(-1.2, 0, 0); _carGeo.rimDisc = disc;
+    _carGeo.rim = mergeGeometries(r); r.forEach(g => g.dispose()); }
   return _carGeo;
 }
 const CAR_PAINTS = [0x8a1c22, 0xd8d8d4, 0x1f3a5c, 0x2a2c30, 0x5c6a3a, 0xb8862c];
@@ -6562,9 +6602,11 @@ function buildRoadCar(i) {
   const paint = new THREE.MeshPhysicalMaterial({ color: CAR_PAINTS[i % CAR_PAINTS.length], roughness: .28, metalness: .5, clearcoat: 1, clearcoatRoughness: .08 });
   const add = (geo, mat, x, y, z, cast = true) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = cast; m.receiveShadow = true; g.add(m); return m; };
   add(G.body, paint, 0, 0, 0); add(G.glass, ST.mats.glass, 0, 0, 0); add(G.roof, paint, 0, 0, 0);
-  const wheels = []; for (const z of [-130, 130]) for (const s of [-1, 1]) { const w = add(G.wheel, ST.mats.tire, s * 82, 32, z); add(G.hub, ST.mats.chrome, s * 82, 32, z); wheels.push(w); }
-  for (const s of [-1, 1]) { add(G.lamp, ST.mats.head, s * 60, 72, 214, false); add(G.lamp, ST.mats.tail, s * 64, 78, -216, false); }
-  const plate = add(new THREE.BoxGeometry(40, 11, 1), ST.mats.plate, 0, 44, 216, false);
+  add(G.trim, ST.mats.trim, 0, 0, 0); add(G.handles, ST.mats.chrome, 0, 0, 0, false);
+  const wheels = []; for (const z of [-130, 130]) for (const s of [-1, 1]) { const w = add(G.wheel, ST.mats.tire, s * 82, 32, z); wheels.push(w);
+    const rim = new THREE.Mesh(G.rim, ST.mats.chrome); rim.position.x = s * 11.6; w.add(rim); const dk = new THREE.Mesh(G.rimDisc, ST.mats.rimDark); dk.position.x = s * 11.6; dk.scale.x = s; w.add(dk); }
+  for (const s of [-1, 1]) { add(G.lamp, ST.mats.head, s * 60, 72, 214, false); add(G.lamp, ST.mats.tail, s * 64, 78, -219.4, false); }
+  const plate = add(new THREE.BoxGeometry(40, 11, 1), ST.mats.plate, 0, 34, 229.4, false); add(plate.geometry, ST.mats.plate, 0, 54, -221.8, false);
   // fake headlight beams + the bright patch they throw on the road (no real lights: there can be several cars)
   const beams = []; for (const s of [-1, 1]) { const b = new THREE.Mesh(G.beam, ST.mats.beam); b.position.set(s * 60, 70, 216); b.rotation.x = .04; b.visible = !DAY; g.add(b); beams.push(b); }
   const pool = new THREE.Mesh(G.pool, ST.mats.pool); pool.position.set(0, .5, 200); pool.visible = !DAY; g.add(pool);   // (daylight: no beams)
@@ -6649,7 +6691,7 @@ function buildRoad() {
   const K = kitchenMats(), M = MAT;
   ST.mats = {
     glass: new THREE.MeshPhysicalMaterial({ color: 0x0b1016, roughness: .04, metalness: .3, clearcoat: 1 }),
-    tire: new THREE.MeshStandardMaterial({ color: 0x18181a, roughness: .92 }), chrome: new THREE.MeshStandardMaterial({ color: 0xc8ccd2, metalness: 1, roughness: .2 }),
+    tire: new THREE.MeshStandardMaterial({ color: 0x18181a, roughness: .92 }), trim: new THREE.MeshStandardMaterial({ color: 0x1c1e21, roughness: .55, metalness: .1 }), rimDark: new THREE.MeshStandardMaterial({ color: 0x2a2c30, roughness: .6, metalness: .5 }), chrome: new THREE.MeshStandardMaterial({ color: 0xc8ccd2, metalness: 1, roughness: .2 }),
     head: new THREE.MeshBasicMaterial({ color: new THREE.Color(0xfff2d8).multiplyScalar(DAY ? 1.3 : 3) }), tail: new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff2a1a).multiplyScalar(DAY ? .9 : 2) }),
     plate: new THREE.MeshStandardMaterial({ color: 0xf2efe6, roughness: .5, emissive: 0x403c30 }),
     beam: new THREE.MeshBasicMaterial({ map: beamTex(), transparent: true, opacity: .16, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: true }),
@@ -10112,7 +10154,7 @@ function portalResumeLand(S) {
 // who joined or dropped, how good each link is, frame rate, rescues and errors. One tap copies it as
 // plain text that a player can paste into a chat and send in.
 const NLOG = { t0: performance.now(), lines: [], fps: 0, sumT: 0, mode: '', lv: '', peer: {} };
-const NLOG_BUILD = '20261124-1455';
+const NLOG_BUILD = '20261124-1527';
 function nlog(s) {
   const d = new Date(), p2 = n => String(n).padStart(2, '0');   // the clock time, so "it broke around 9:30" can be matched
   NLOG.lines.push(`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}  ${s}`); if (NLOG.lines.length > 500) NLOG.lines.splice(0, NLOG.lines.length - 500);
@@ -11181,6 +11223,120 @@ function molePlace() {
   const C = chars.mole; if (!C || NET.on || party.includes(C)) return;
   if (!MOLE.met) { C.pos.copy(MOLE.home); C.state = 'dig'; C.root.visible = false; }
 }
+// =====================================================================
+//  The outside of our house, as the street and the back yard see it:
+//  a hipped roof with a brick chimney over the house, a gabled roof over
+//  the garage (its gable end faces the yard, with an attic vent), fascia
+//  boards and gutters, a downpipe, the exposed upper east wall of the house
+//  with two windows, and a window with drawn blinds in the garage's yard wall.
+//  It lives in its own group, shown while the yard or the street is near,
+//  so it never floats about on its own and never shows from indoors.
+// =====================================================================
+const SHELL = { g: null };
+function genBrick() {
+  const W = 256, n = noiseField(W, W, 3, 8, 77), h = new Float32Array(W * W);
+  const c = fromFn(W, W, (x, y, i, o) => { const r = (y / 16) | 0, v = y % 16, off = (r & 1) * 16, u = (x + off) % 32, b = ((x + off) / 32) | 0, mort = v < 2 || u < 2;
+    const k = .8 + hashI(r * 31 + b * 7) * .35, s = mort ? 1 : k * (.9 + n[i] * .2); o[0] = mort ? 168 : 128 * s; o[1] = mort ? 160 : 62 * s; o[2] = mort ? 150 : 46 * s; h[i] = mort ? 0 : 1; });
+  return { map: tex(c), normalMap: normalTex(h, W, W, 1.5) };
+}
+function genShingles(sd) {
+  const W = 512, n = noiseField(W, W, 3, 16, sd), h = new Float32Array(W * W);
+  const c = fromFn(W, W, (x, y, i, o) => {
+    const r = y >> 5, v = y & 31, off = (r & 1) * 24, tab = ((x + off) / 48) | 0, u = (x + off) % 48;
+    const k = .82 + hashI(r * 97 + tab * 13 + sd) * .3, gap = u < 2, lip = v > 27;
+    let s = k * (gap ? .45 : lip ? .62 : .9 + v / 32 * .12) * (.92 + n[i] * .16);
+    o[0] = 78 * s; o[1] = 74 * s; o[2] = 70 * s; h[i] = gap ? 0 : v / 32;
+  });
+  return { map: tex(c), normalMap: normalTex(h, W, W, 2.4) };
+}
+// a flat convex polygon with world-scaled UVs: u along U, v along V (cm / s)
+function polyMesh(pts, mat, U, V, s, parent) {
+  const pos = [], uv = [], idx = [];
+  for (const p of pts) { pos.push(p.x, p.y, p.z); uv.push(p.dot(U) / s, p.dot(V) / s); }
+  const n = V3().subVectors(pts[1], pts[0]).cross(V3().subVectors(pts[2], pts[0]));
+  for (let i = 1; i < pts.length - 1; i++) n.y >= 0 ? idx.push(0, i, i + 1) : idx.push(0, i + 1, i);
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, mat); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m;
+}
+function buildHouseShell() {
+  if (SHELL.g) return; const P = new THREE.Group(); P.name = 'houseShell'; scene.add(P); SHELL.g = P;
+  const pitch = Math.tan(26 * Math.PI / 180);
+  const shM = new THREE.MeshStandardMaterial({ ...genShingles(941), roughness: .92, side: THREE.DoubleSide, normalScale: new THREE.Vector2(.9, .9) });
+  const sidingU = new THREE.MeshStandardMaterial({ ...genSiding(0xb7c4c8, 532), roughness: .85 });
+  const trim = new THREE.MeshStandardMaterial({ color: 0xf2f0ea, roughness: .6 }), soffit = new THREE.MeshStandardMaterial({ color: 0xe4e2dc, roughness: .8 });
+  const gutM = new THREE.MeshStandardMaterial({ color: 0xe8e8e4, roughness: .45, metalness: .1 });
+  const brick = new THREE.MeshStandardMaterial({ ...genBrick(), roughness: .9 });
+  const o = { parent: P, col: false };
+  // ---------- the house: hipped roof (walls x -330…912, z -262…262, top 552) ----------
+  { const a0 = -358, a1 = 940, b0 = -290, b1 = 290, W = 552, E = W - 28 * pitch, R = W + 262 * pitch, r0 = -330 + 262, r1 = 912 - 262;
+    const A = (x, y, z) => V3(x, y, z);
+    polyMesh([A(a0, E, b1), A(a1, E, b1), A(r1, R, 0), A(r0, R, 0)], shM, V3(1, 0, 0), V3(0, .438, -.899), 230, P);
+    polyMesh([A(a1, E, b0), A(a0, E, b0), A(r0, R, 0), A(r1, R, 0)], shM, V3(1, 0, 0), V3(0, .438, .899), 230, P);
+    polyMesh([A(a1, E, b1), A(a1, E, b0), A(r1, R, 0)], shM, V3(0, 0, 1), V3(-.899, .438, 0), 230, P);
+    polyMesh([A(a0, E, b0), A(a0, E, b1), A(r0, R, 0)], shM, V3(0, 0, 1), V3(.899, .438, 0), 230, P);
+    // ridge and hip caps
+    const cap = (p, q) => { const d = V3().subVectors(q, p), m = new THREE.Mesh(new THREE.BoxGeometry(9, 4, d.length()), shM); m.position.copy(p).add(q).multiplyScalar(.5); m.lookAt(q); m.castShadow = true; P.add(m); };
+    cap(A(r0, R + 1.5, 0), A(r1, R + 1.5, 0)); for (const [x, z, rx] of [[a0, b0, r0], [a0, b1, r0], [a1, b0, r1], [a1, b1, r1]]) cap(A(x, E + 1, z), A(rx, R + 1, 0));
+    // fascia round the eaves, soffit underneath
+    box(a0, a1, E - 14, E, b1, b1 + 3, trim, o); box(a0, a1, E - 14, E, b0 - 3, b0, trim, o); box(a0 - 3, a0, E - 14, E, b0, b1, trim, o); box(a1, a1 + 3, E - 14, E, b0, b1, trim, o);
+    box(a0, a1, E - 14, E - 12, 262, b1, soffit, o); box(a0, a1, E - 14, E - 12, b0, -262, soffit, o); box(912, a1, E - 14, E - 12, -262, 262, soffit, o);
+    // gutter along the front
+    box(a0, a1, E - 16, E - 6, b1 + 3, b1 + 11, gutM, o);
+    // the upper east wall that stands clear of the garage roof, with two windows (blinds half down)
+    box(913, 921, 260, W, -262, 262, sidingU, { ...o, uv: 120 });
+    const glass = new THREE.MeshPhysicalMaterial({ color: 0x5a6e84, roughness: .06, metalness: .2, clearcoat: 1 }), blind = new THREE.MeshStandardMaterial({ color: 0xece4d2, roughness: .8 });
+    for (const z of [-120, 120]) { box(921, 922, 430, 520, z - 42, z + 42, glass, o); box(920.5, 921.5, 482, 520, z - 40, z + 40, blind, o);
+      for (let y = 484; y < 520; y += 5) box(921.4, 922, y, y + 1, z - 40, z + 40, blind, o);
+      box(921, 924, 426, 430, z - 48, z + 48, trim, o); box(921, 924, 520, 524, z - 46, z + 46, trim, o); box(921, 924, 430, 520, z - 46, z - 42, trim, o); box(921, 924, 430, 520, z + 42, z + 46, trim, o); box(921, 923, 430, 520, z - 1.5, z + 1.5, trim, o); }
+    // a brick chimney on the west side
+    box(-210, -150, 560, R + 80, -70, -20, brick, { ...o, uv: 60 }); box(-216, -144, R + 80, R + 88, -76, -14, new THREE.MeshStandardMaterial({ color: 0x6a6a68, roughness: .8 }), o);
+    for (const x of [-196, -166]) cyl(x, -45, 6, R + 88, R + 100, new THREE.MeshStandardMaterial({ color: 0x5a4030, roughness: .7 }), { ...o, seg: 12 });
+  }
+  // ---------- the garage: gabled, ridge running east–west, gable end facing the yard ----------
+  { const x0 = 914, x1 = 1478, z0 = -290, z1 = 332, zm = 21, W = 270, E = W - 20 * pitch, R = W + 291 * pitch, A = (x, y, z) => V3(x, y, z);
+    polyMesh([A(x0, E, z1), A(x1, E, z1), A(x1, R, zm), A(x0, R, zm)], shM, V3(1, 0, 0), V3(0, .438, -.899), 230, P);
+    polyMesh([A(x1, E, z0), A(x0, E, z0), A(x0, R, zm), A(x1, R, zm)], shM, V3(1, 0, 0), V3(0, .438, .899), 230, P);
+    { const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, 4, 9), shM); m.position.set((x0 + x1) / 2, R + 1.5, zm); P.add(m); }
+    // the gable: siding triangle on the yard wall, with a round louvred attic vent
+    { const pts = [A(1460, W, -270), A(1460, W, 312), A(1460, R - 6, zm)], pos = [], uv = [];
+      for (const p of pts) { pos.push(p.x, p.y, p.z); uv.push(p.z / 120, p.y / 120); }
+      const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex([0, 2, 1]); g.computeVertexNormals();
+      const m = new THREE.Mesh(g, sidingU); m.receiveShadow = true; m.castShadow = true; P.add(m); }
+    box(1452, 1460, W - 2, W + 2, -270, 312, trim, o);   // a band where the wall meets the gable
+    { const vg = new THREE.Group(); vg.position.set(1461, W + 82, zm); vg.rotation.y = Math.PI / 2; P.add(vg);
+      const ring = new THREE.Mesh(new THREE.TorusGeometry(22, 3, 10, 40), trim); vg.add(ring);
+      const back = new THREE.Mesh(new THREE.CircleGeometry(21, 32), new THREE.MeshStandardMaterial({ color: 0x2a2e32, roughness: .7 })); back.position.z = -.5; vg.add(back);
+      for (let i = -3; i <= 3; i++) { const y = i * 5.6, w = 2 * Math.sqrt(Math.max(0, 21 * 21 - y * y)); const s = new THREE.Mesh(new THREE.BoxGeometry(w, 2.6, 1.4), trim); s.position.set(0, y, .4); s.rotation.x = -.5; vg.add(s); } }
+    // barge boards up the two rakes, fascia along the eaves, soffit underneath
+    for (const [za, zb] of [[z0, zm], [z1, zm]]) { const p = A(1470, E, za), q = A(1470, R, zb), d = V3().subVectors(q, p), m = new THREE.Mesh(new THREE.BoxGeometry(4, 16, d.length() + 6), trim); m.position.copy(p).add(q).multiplyScalar(.5).add(V3(0, -6, 0)); m.lookAt(q.clone().add(V3(0, -6, 0))); m.castShadow = true; P.add(m); }
+    box(x0, x1, E - 14, E, z1, z1 + 3, trim, o); box(x0, x1, E - 14, E, z0 - 3, z0, trim, o);
+    box(x0, x1, E - 14, E - 12, 312, z1, soffit, o); box(x0, x1, E - 14, E - 12, z0, -270, soffit, o);
+    // gutters front and back, and a downpipe down the yard-side front corner
+    box(x0, x1, E - 16, E - 6, z1 + 3, z1 + 11, gutM, o); box(x0, x1, E - 16, E - 6, z0 - 11, z0 - 3, gutM, o);
+    cyl(1470, 337, 3.4, GY + 10, E - 10, gutM, { ...o, seg: 12 }); box(1462, 1478, GY, GY + 6, 330, 352, gutM, o);
+    for (const y of [60, 160]) box(1466, 1474, y, y + 3, 331, 339, gutM, o);
+  }
+  // ---------- the garage's yard wall: a window with the blinds drawn (they're drawn inside too) ----------
+  { const z0 = -170, z1 = -50, y0 = 110, y1 = 215, glass = new THREE.MeshPhysicalMaterial({ color: 0x7a8a9a, roughness: .05, metalness: .1, clearcoat: 1, transparent: true, opacity: .38, depthWrite: false });
+    const blind = new THREE.MeshStandardMaterial({ color: 0xeae4d6, roughness: .85 });
+    box(1460, 1460.4, y0, y1, z0, z1, new THREE.MeshStandardMaterial({ color: 0xd6cfbf, roughness: .9 }), o);
+    for (let y = y0 + 2; y < y1; y += 4.2) box(1460.3, 1461, y, y + 3, z0, z1, blind, { ...o, cast: false });
+    box(1461.6, 1462, y0, y1, z0, z1, glass, { ...o, cast: false });
+    box(1460, 1464, y0 - 6, y0, z0 - 8, z1 + 8, trim, o); box(1460, 1465, y0 - 8, y0 - 5, z0 - 10, z1 + 10, trim, o);   // sill
+    box(1460, 1464, y1, y1 + 6, z0 - 8, z1 + 8, trim, o); box(1460, 1464, y0, y1, z0 - 8, z0, trim, o); box(1460, 1464, y0, y1, z1, z1 + 8, trim, o); box(1460, 1463, y0, y1, (z0 + z1) / 2 - 1.5, (z0 + z1) / 2 + 1.5, trim, o);
+  }
+}
+// the inside of that window, built with the garage: frame, blinds lit a little by the day behind them
+function garageBlindWindow() {
+  const z0 = -170, z1 = -50, y0 = 110, y1 = 215, trim = MAT.white;
+  const blind = new THREE.MeshStandardMaterial({ color: 0xeae4d6, roughness: .85, emissive: DAY ? 0xfff2dc : 0x000000, emissiveIntensity: DAY ? .22 : 0 });
+  for (let y = y0 + 2; y < y1; y += 4.2) box(1451, 1452, y, y + 3, z0, z1, blind, { col: false, cast: false });
+  box(1452, 1452.4, y0, y1, z0, z1, new THREE.MeshStandardMaterial({ color: 0xcfc8b8, roughness: .9, emissive: DAY ? 0xfff0d8 : 0, emissiveIntensity: DAY ? .12 : 0 }), { col: false, cast: false });
+  box(1448, 1452, y0 - 6, y0, z0 - 8, z1 + 8, trim, { col: false }); box(1447, 1452, y0 - 8, y0 - 5, z0 - 10, z1 + 10, trim, { col: false });
+  box(1448, 1452, y1, y1 + 6, z0 - 8, z1 + 8, trim, { col: false }); box(1448, 1452, y0, y1, z0 - 8, z0, trim, { col: false }); box(1448, 1452, y0, y1, z1, z1 + 8, trim, { col: false });
+  box(1449, 1451, y1 + 6, y1 + 10, z0 - 4, z1 + 4, new THREE.MeshStandardMaterial({ color: 0xd8d4cc, roughness: .5 }), { col: false });   // the blind's head rail
+}
+function houseShellTick() { if (SHELL.g) SHELL.g.visible = !!(ZONES.yard.near || ZONES.road.near); }
 requestAnimationFrame(frame);
 init().catch(e => { console.error(e); $('err').textContent = '載入失敗：' + (e && e.stack || e); });
 if (location.hash === '#dev') window.__VC = () => VC; if (location.hash === '#dev') window.__bn = { get party() { return party; }, dayCloudTex, camera, MOLE, moleDig, softAt, switchTo, LP, WARPS, PK, SLIDE, parkLit, moonShade, NLOG, netLogText, nlog, LOBBY, mpSaveLoad, mpApplySave, setMyName, hostFreeze, toyUnfreezeAll, UNSTK, unstuck, unInside, PORT, PRO, PO, portalOut, proSkip, prC, prPad, MP_PRO, WATCH, watchCycle, watchTarget, STICK, EMO, EMOTES, renderSticker, emoKit, emoKitDone, emoBuildAll, TTL, titleSetup, titleEnd, emoDo, emoShow, emoOpen, emoClose, UPS, humanFloor, roomOf, navNearest, ACTS, roomSteps, brainIncident, react, agentRoom, OLDB, YS, AGB, GS, camPowered, doorOpen, mpChecklist, HB, HX, hxSet, hxNear, navPath, NAVN, KM, KID, LIV, scene, THREE, MUS, ARR, BANK, AU, SET, toyFreeze, useProto, TAKE, protoTarget, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, ST, pressButton, LANES, pause, garageHear, TEST, testWarp, WARPS, testAll, startChapter2, NC, batPing, tortShell, crewJoin, hideK, startGame, startChapter, openChapters, step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT, GS, YS, DECK, GY, WC, ventOpen, latchOpen, mpMarker, zoneFloor, KS }; }, info: () => ({ fps: $('fps').textContent, state: STATE, lv: LEVEL, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };

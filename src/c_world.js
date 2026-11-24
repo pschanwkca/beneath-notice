@@ -488,6 +488,7 @@ function buildLights() {
   const f1 = new THREE.PointLight(0xffb27a, 7000, 0, 2); f1.position.set(-20, 70, -120); LV.add(f1);
   const f2 = new THREE.PointLight(DAY ? 0xdfe6ff : 0x8ea6ff, DAY ? 20000 : 16000, 0, 2); f2.position.set(70, 150, 70); LV.add(f2);
   const f3 = new THREE.PointLight(0xa8b8ff, 2600, 0, 2); f3.position.set(84, 18, 70); LV.add(f3);
+  if (DAY) { const f4 = new THREE.PointLight(0xd8e0f0, 11000, 0, 2); f4.position.set(-190, 120, 150); LV.add(f4); }   // daylight bounce over the mouse-hole corner
   moonLight = new THREE.SpotLight(DAY ? 0xfff0d6 : 0xa9c1ff, DAY ? 3400000 : 1600000, 0, .2, .45, 2);   // (DAY: sunlight through the little window) moonLight.position.set(95, 420, -560); moonLight.target.position.set(84, 0, 85); LV.add(moonLight, moonLight.target);
   moonLight.castShadow = true; moonLight.shadow.mapSize.setScalar(TOUCH ? 1024 : 2048); moonLight.shadow.camera.near = 250; moonLight.shadow.camera.far = 1200; moonLight.shadow.bias = -0.0003; moonLight.shadow.normalBias = 0.05;
   const bc = DAY ? 0xffeccc : 0x9fb6ff; const mb = beamMesh(bc, 420, .12, DAY ? .17 : .13); aimBeam(mb, V3(90, 222, -256), V3(84, 0, 85)); beams.push({ m: mb, o: V3(90, 222, -256), d: V3(84, 0, 85).sub(V3(90, 222, -256)).normalize(), ca: Math.cos(.15), len: 420, c: new THREE.Color(bc), k: 1 });

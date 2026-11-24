@@ -50,6 +50,30 @@ function carGeos() {
     wheel: new THREE.CylinderGeometry(32, 32, 22, 28).rotateZ(Math.PI / 2), hub: new THREE.CylinderGeometry(17, 17, 23, 20).rotateZ(Math.PI / 2),
     lamp: new THREE.BoxGeometry(34, 12, 4), beam: new THREE.ConeGeometry(160, 700, 24, 1, true).translate(0, -350, 0).rotateX(-Math.PI / 2), pool: new THREE.PlaneGeometry(360, 640).rotateX(-Math.PI / 2).translate(0, 0, 360)
   };
+  // round the shapes off: the sides curve in towards the sills and the shoulders, the glasshouse leans in towards the roof
+  const taper = (g, f) => { const p = g.attributes.position; for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) * f(p.getY(i))); g.computeVertexNormals(); };
+  const ss = (a, b, v) => { const t = Math.min(1, Math.max(0, (v - a) / (b - a))); return t * t * (3 - 2 * t); };
+  taper(_carGeo.body, y => 1 - .055 * ss(72, 100, y) - .05 * (1 - ss(22, 46, y)));
+  taper(_carGeo.glass, y => .99 - .17 * ss(96, 143, y)); taper(_carGeo.roof, y => .855);
+  // the dark trim, merged into one mesh per car: bumpers, grille, sills, wheel arches, mirrors, window surrounds, door shut lines
+  const B = (w, h, d, x, y, z) => new THREE.BoxGeometry(w, h, d).translate(x, y, z), tr = [];
+  tr.push(B(184, 17, 12, 0, 34, 223), B(184, 17, 12, 0, 34, -223), B(96, 15, 3, 0, 57, 222), B(150, 5, 3, 0, 46, 222));
+  for (const s of [-1, 1]) {
+    tr.push(B(5, 9, 196, s * 91, 30, 0));
+    for (const z of [-130, 130]) tr.push(new THREE.TorusGeometry(37, 4.2, 8, 24, Math.PI).rotateY(Math.PI / 2).translate(s * 90, 32, z));
+    tr.push(B(15, 10, 6, s * 99, 103, 78), B(10, 3, 4, s * 92, 100, 80));                                // mirror + its arm
+    { const g = B(2.4, 44, 9, s * 82.8, 119, -24); taper(g, y => .99 - .17 * ss(96, 143, y)); tr.push(g); }   // B-pillar, leaning in with the glass
+    tr.push(B(2.6, 3, 254, s * 81, 97.5, -30));                                                           // belt line along the bottom of the windows
+    for (const z of [14, -104]) tr.push(B(1, 54, 1.2, s * 94.2, 64, z));                                  // door shut lines
+    tr.push(B(1, 1.2, 230, s * 93.2, 44, -30));
+  }
+  _carGeo.trim = mergeGeometries(tr); tr.forEach(g => g.dispose());
+  const ch = []; for (const s of [-1, 1]) for (const z of [36, -84]) ch.push(B(2, 3.2, 13, s * 95, 82, z)); _carGeo.handles = mergeGeometries(ch); ch.forEach(g => g.dispose());
+  // a five-spoke rim (axle along x), spun with the tyre
+  { const r = [new THREE.TorusGeometry(19, 2.4, 6, 28).rotateY(Math.PI / 2), new THREE.CylinderGeometry(5.5, 5.5, 3, 16).rotateZ(Math.PI / 2)];
+    for (let i = 0; i < 5; i++) r.push(new THREE.BoxGeometry(2.4, 17, 5).translate(0, 9, 0).rotateX(i / 5 * Math.PI * 2));
+    const disc = new THREE.CylinderGeometry(19, 19, 1, 28).rotateZ(Math.PI / 2).translate(-1.2, 0, 0); _carGeo.rimDisc = disc;
+    _carGeo.rim = mergeGeometries(r); r.forEach(g => g.dispose()); }
   return _carGeo;
 }
 const CAR_PAINTS = [0x8a1c22, 0xd8d8d4, 0x1f3a5c, 0x2a2c30, 0x5c6a3a, 0xb8862c];
@@ -58,9 +82,11 @@ function buildRoadCar(i) {
   const paint = new THREE.MeshPhysicalMaterial({ color: CAR_PAINTS[i % CAR_PAINTS.length], roughness: .28, metalness: .5, clearcoat: 1, clearcoatRoughness: .08 });
   const add = (geo, mat, x, y, z, cast = true) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = cast; m.receiveShadow = true; g.add(m); return m; };
   add(G.body, paint, 0, 0, 0); add(G.glass, ST.mats.glass, 0, 0, 0); add(G.roof, paint, 0, 0, 0);
-  const wheels = []; for (const z of [-130, 130]) for (const s of [-1, 1]) { const w = add(G.wheel, ST.mats.tire, s * 82, 32, z); add(G.hub, ST.mats.chrome, s * 82, 32, z); wheels.push(w); }
-  for (const s of [-1, 1]) { add(G.lamp, ST.mats.head, s * 60, 72, 214, false); add(G.lamp, ST.mats.tail, s * 64, 78, -216, false); }
-  const plate = add(new THREE.BoxGeometry(40, 11, 1), ST.mats.plate, 0, 44, 216, false);
+  add(G.trim, ST.mats.trim, 0, 0, 0); add(G.handles, ST.mats.chrome, 0, 0, 0, false);
+  const wheels = []; for (const z of [-130, 130]) for (const s of [-1, 1]) { const w = add(G.wheel, ST.mats.tire, s * 82, 32, z); wheels.push(w);
+    const rim = new THREE.Mesh(G.rim, ST.mats.chrome); rim.position.x = s * 11.6; w.add(rim); const dk = new THREE.Mesh(G.rimDisc, ST.mats.rimDark); dk.position.x = s * 11.6; dk.scale.x = s; w.add(dk); }
+  for (const s of [-1, 1]) { add(G.lamp, ST.mats.head, s * 60, 72, 214, false); add(G.lamp, ST.mats.tail, s * 64, 78, -219.4, false); }
+  const plate = add(new THREE.BoxGeometry(40, 11, 1), ST.mats.plate, 0, 34, 229.4, false); add(plate.geometry, ST.mats.plate, 0, 54, -221.8, false);
   // fake headlight beams + the bright patch they throw on the road (no real lights: there can be several cars)
   const beams = []; for (const s of [-1, 1]) { const b = new THREE.Mesh(G.beam, ST.mats.beam); b.position.set(s * 60, 70, 216); b.rotation.x = .04; b.visible = !DAY; g.add(b); beams.push(b); }
   const pool = new THREE.Mesh(G.pool, ST.mats.pool); pool.position.set(0, .5, 200); pool.visible = !DAY; g.add(pool);   // (daylight: no beams)
@@ -145,7 +171,7 @@ function buildRoad() {
   const K = kitchenMats(), M = MAT;
   ST.mats = {
     glass: new THREE.MeshPhysicalMaterial({ color: 0x0b1016, roughness: .04, metalness: .3, clearcoat: 1 }),
-    tire: new THREE.MeshStandardMaterial({ color: 0x18181a, roughness: .92 }), chrome: new THREE.MeshStandardMaterial({ color: 0xc8ccd2, metalness: 1, roughness: .2 }),
+    tire: new THREE.MeshStandardMaterial({ color: 0x18181a, roughness: .92 }), trim: new THREE.MeshStandardMaterial({ color: 0x1c1e21, roughness: .55, metalness: .1 }), rimDark: new THREE.MeshStandardMaterial({ color: 0x2a2c30, roughness: .6, metalness: .5 }), chrome: new THREE.MeshStandardMaterial({ color: 0xc8ccd2, metalness: 1, roughness: .2 }),
     head: new THREE.MeshBasicMaterial({ color: new THREE.Color(0xfff2d8).multiplyScalar(DAY ? 1.3 : 3) }), tail: new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff2a1a).multiplyScalar(DAY ? .9 : 2) }),
     plate: new THREE.MeshStandardMaterial({ color: 0xf2efe6, roughness: .5, emissive: 0x403c30 }),
     beam: new THREE.MeshBasicMaterial({ map: beamTex(), transparent: true, opacity: .16, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: true }),

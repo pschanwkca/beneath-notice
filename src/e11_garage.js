@@ -108,6 +108,7 @@ function buildGarage() {
   box(1453, 1457, 18, 190, 60, 150, doorM); slick(); box(1453, 1457, GY, 18, 60, 90, doorM); slick(); box(1453, 1457, GY, 18, 120, 150, doorM); slick();
   box(1451.5, 1453, 186, 190, 58, 152, M.white, { col: false }); box(1451.5, 1453, GY, 190, 56, 60, M.white, { col: false }); box(1451.5, 1453, GY, 190, 150, 154, M.white, { col: false });
   const knob = mesh(new THREE.SphereGeometry(3, 16, 12), K.brass, 1450, 80, 140); knob.scale.set(.7, 1, 1);
+  garageBlindWindow();   // (the window in this wall has its blinds drawn — the outside is in e32_shell.js)
   // dog flap: a hinged plastic flap, held shut by a latch above it
   const fg = new THREE.Group(); fg.position.set(1455, 18, 105); LV.add(fg); GS.flap = fg;
   const fm = new THREE.MeshPhysicalMaterial({ color: 0x3a3a40, roughness: .3, transparent: true, opacity: .82 });

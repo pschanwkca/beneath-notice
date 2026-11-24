@@ -472,7 +472,7 @@ function buildKitchen() {
   // batteries: top of the fridge, inside the cupboard
   addBattery(200, 184.5, -200); addBattery(-74, 13, -210);
   // ---------- lights ----------
-  LV.add(new THREE.HemisphereLight(0x8a7c6c, 0x3a2c22, .95));
+  LV.add(DAY ? new THREE.HemisphereLight(0xa8a49c, 0x4a3c30, 1.2) : new THREE.HemisphereLight(0x8a7c6c, 0x3a2c22, .95));
   const pend = (x, z, y, tx, tz, I, sh) => {
     cyl(x, z, .25, y + 8, 260, MAT.black, { col: false, seg: 6 });
     const sd = mesh(new THREE.SphereGeometry(13, 32, 12, 0, Math.PI * 2, 0, Math.PI / 2), K.shade, x, y, z); sd.scale.y = .8;
@@ -761,7 +761,7 @@ const KLINES_SP = [[1.2, '女兒', '媽，爸爸今晚會回來吃飯嗎？', '#
 const KLINES_MP = [[1.2, '女兒', '媽，爸爸今晚會回來吃飯嗎？', '#e8a0c0', 3], [4.6, '太太', '……先吃吧，湯快好了。', '#f4bb72', 2.8], [8, '爸爸', '聽好：縮小機少了三個零件——彈簧、鏡片、電容，全部都掉在這個廚房裡。', '#f5f0e6', 4.2], [12.6, '小彩', '找齊之後去客廳，從通風口出去。別讓她們看見！', '#9fd86b', 3.4]];
 let END_TXT = null;
 LEVELS.kitchen = {
-  chapter: '第一章', title: '晚飯時間的廚房', env: 'kitchen', envI: .75, fog: [0x1a1510, .0007], expo: 1.18,
+  chapter: '第一章', title: '晚飯時間的廚房', env: 'kitchen', envI: .75, fog: DAY ? [0xbfb6a8, .00034] : [0x1a1510, .0007], expo: DAY ? 1.22 : 1.18,
   dust: { N: 2600, box: [-300, 900, 0, 250, -220, 220], beamFrac: .45, door: false },
   toys: true, npcNear: true,
   build() {
@@ -843,7 +843,7 @@ function kitchenMode() {
   if (KS.mp && QUESTS !== MP_QUESTS && !PRO.on) { QUESTS = MP_QUESTS; LEVELS.kitchen.quests = MP_QUESTS; setQuest(0); }
 }
 LEVELS.basement = {
-  chapter: '序章', title: '地庫實驗室', env: 'basement', envI: .85, fog: [0x0a0d12, .00135], expo: 1.3, dust: {},
+  chapter: '序章', title: '地庫實驗室', env: 'basement', envI: .85, fog: DAY ? [0x1e2026, .00105] : [0x0a0d12, .00135], expo: 1.3, dust: {},
   build() { buildRoom(); buildLights(); },
   afterShift(o) { machine.x += o.x; machine.y += o.y; machine.z += o.z; },
   cps: CPS_B, quests: BASE_Q, spawn() { placeStart(); },

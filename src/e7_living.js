@@ -71,7 +71,7 @@ function buildLivingRoom(K) {
   const mugM = new THREE.MeshPhysicalMaterial({ color: 0x3a6ea8, roughness: .25, clearcoat: .8 }); resGroup(cmGroup(9, 10, 9, ({ part }) => { part(new THREE.CylinderGeometry(4, 4, 10, 24), mugM, 0, 0, 0); }, [mugM]), 705, 90, 42, 9, 10, 9, .3, 5, '咖啡杯', true);
   // TV on a low cabinet against the far wall (facing the sofa)
   const tvc = new THREE.MeshStandardMaterial({ color: 0x2b2420, roughness: .55 }); box(860, 900, 0, 46, 30, 210, tvc);
-  box(888, 892, 52, 140, 40, 200, M.black); mesh(new THREE.PlaneGeometry(156, 84), LIV.tvMat = new THREE.MeshBasicMaterial({ color: new THREE.Color(0x4a7ab0).multiplyScalar(1.4) }), 887.8, 96, 120, { cast: false }).rotation.y = -Math.PI / 2;
+  box(888, 892, 52, 140, 40, 200, M.black); mesh(new THREE.PlaneGeometry(156, 84), LIV.tvMat = new THREE.MeshBasicMaterial({ map: tvShowTex(), color: new THREE.Color(0x4a7ab0).multiplyScalar(1.4) }), 887.8, 96, 120, { cast: false }).rotation.y = -Math.PI / 2;
   box(884, 896, 46, 52, 110, 130, M.black);
   LIV.tvLight = new THREE.PointLight(0x7aa8ff, 2600, 0, 2); LIV.tvLight.position.set(850, 95, 120); LV.add(LIV.tvLight);
   box(866, 884, 46, 52, 60, 84, new THREE.MeshStandardMaterial({ color: 0xf2f2f2, roughness: .3 })); // console
@@ -90,6 +90,7 @@ function buildLivingRoom(K) {
   mesh(new THREE.PlaneGeometry(420, 210), K.dusk, 775, 150, 330, { cast: false }).rotation.y = Math.PI;
   mesh(new THREE.PlaneGeometry(146, 110), MAT.glassThin, 775, 155, 238, { cast: false }).rotation.y = Math.PI;
   sunWindow(V3(775, 155, 236), 146, 110, V3(0, 0, -1), 0, { fill: 14000 });
+  if (DAY) { pointL(0xf2eee6, 10000, 640, 240, 40); pointL(0xe2eaff, 8000, 470, 220, 170); }   // daylight bouncing round the room (the window faces away from the sun)
   cols.push({ t: 'b', x0: 700, x1: 850, y0: 100, y1: 206, z0: 237, z1: 239, noRay: true });
   const cur = new THREE.MeshPhysicalMaterial({ color: 0x8a7a9a, roughness: .95, sheen: .8, side: THREE.DoubleSide });
   for (const x of [690, 852]) { box(x - 12, x + 12, 2, 230, 214, 220, cur); }
@@ -139,7 +140,7 @@ function updLiving(dt) {
   LIV.gapLight.intensity = 300 + LIV.a * 4000;
   if (LIV.grille) LIV.grille.rotation.z = damp(LIV.grille.rotation.z, LIV.ventOpen ? 1.45 : 0, 3, dt);
   for (const f of LIV.fish) { f.ph += dt * .5; f.m.position.set(670 + Math.cos(f.ph) * f.r * 1.6, f.y + Math.sin(f.ph * 2.3) * 2, -207 + Math.sin(f.ph) * 10); f.m.rotation.y = -f.ph + Math.PI; }
-  if (LIV.tvMat) { if (LIV.tvOff) { LIV.tvMat.color.setRGB(.015, .016, .02); LIV.tvLight.intensity = 0; } else { const fl = .8 + Math.sin(T * 7) * .1 + (rnd() < .05 ? .3 : 0); LIV.tvMat.color.setRGB(.35 * fl, .5 * fl, .75 * fl); LIV.tvLight.intensity = 2200 * fl; } }
+  if (LIV.tvMat) { if (LIV.tvOff) { LIV.tvMat.color.setRGB(.015, .016, .02); LIV.tvLight.intensity = 0; } else { const fl = .9 + Math.sin(T * 7) * .05 + (rnd() < .04 ? .12 : 0); LIV.tvMat.color.setRGB(1.05 * fl, 1.05 * fl, 1.12 * fl); LIV.tvLight.intensity = 2200 * fl; if (LIV.tvMat.map) LIV.tvMat.map.offset.x = (T * .012) % 1; } }
   // pickups for the objectives
   const L = leader; if (LEVEL !== 'kitchen' || !L) return;
   for (const p of LIV.parts) { if (p.got || !KS.mp) continue; p.g.rotation.y += dt * 1.4; p.g.position.y = p.y + 2 + Math.sin(T * 2 + p.x) * .4; p.halo.position.set(p.x, p.g.position.y, p.z); p.halo.lookAt(camera.position);
@@ -217,3 +218,15 @@ const MP_QUESTS = [
 const SP_Q2B = [{ t: '爬過通風口去車房', s: '爸爸：車房的工作枱有我以前的工具，可以修好縮小機' }];
 function ventOpen() { if (LIV.ventOpen) return; LIV.ventOpen = true; LIV.ventCol.y0 = -999; LIV.ventCol.y1 = -998; SND.creak(); toastW('通風口的蓋打開了！', 2.6); }
 function livingHost() { }
+
+// what's on the TV: a cartoon landscape that slowly pans (the screen's colour sets brightness / off)
+function tvShowTex() {
+  const [c, x] = cnv(512, 160); const g = x.createLinearGradient(0, 0, 0, 160); g.addColorStop(0, '#7cc4f4'); g.addColorStop(1, '#d6f0ff'); x.fillStyle = g; x.fillRect(0, 0, 512, 160);
+  x.fillStyle = '#fff6c8'; x.beginPath(); x.arc(400, 36, 16, 0, 7); x.fill();
+  x.fillStyle = 'rgba(255,255,255,.9)'; for (const [cx, cy] of [[70, 30], [230, 22], [470, 48]]) { for (const [dx, dy, r] of [[0, 0, 12], [14, -5, 14], [28, 0, 11]]) { x.beginPath(); x.arc(cx + dx, cy + dy, r, 0, 7); x.fill(); } }
+  const hill = (col, y0, a, f, ph) => { x.fillStyle = col; x.beginPath(); x.moveTo(0, 160); for (let i = 0; i <= 512; i += 8) x.lineTo(i, y0 - a * Math.sin(i / 512 * Math.PI * 2 * f + ph)); x.lineTo(512, 160); x.fill(); };
+  hill('#8fd06a', 100, 14, 2, .5); hill('#5fb04a', 120, 10, 3, 2); hill('#3f8f3a', 142, 6, 4, 1);
+  for (const [tx, ty] of [[60, 112], [150, 118], [300, 110], [440, 116]]) { x.fillStyle = '#6a4a2a'; x.fillRect(tx - 2, ty, 4, 14); x.fillStyle = '#2f7a34'; x.beginPath(); x.arc(tx, ty, 11, 0, 7); x.fill(); }
+  x.fillStyle = '#f4f0e8'; x.fillRect(200, 104, 40, 26); x.fillStyle = '#d0503a'; x.beginPath(); x.moveTo(194, 106); x.lineTo(220, 86); x.lineTo(246, 106); x.fill(); x.fillStyle = '#5a7aa8'; x.fillRect(210, 112, 9, 9); x.fillRect(224, 112, 9, 9);
+  const t = tex(c); t.repeat.set(.5, 1); return t;
+}
