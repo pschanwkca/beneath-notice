@@ -32,7 +32,7 @@ function unPlace(C, p) {
 function unPoof(p) { for (let i = 0; i < 14; i++) emit(V3(p.x, p.y + 2, p.z), V3(R(-14, 14), R(6, 22), R(-14, 14)), new THREE.Color(.55, .95, .92), R(.3, .7), R(.35, .7), 200, 1); tone(520, 880, .12, .04, 'sine'); }
 function unNote(C, why) {
   const p = C.pos; UNSTK.last = `${LEVEL} · ${C.id} · ${p.x.toFixed(1)}, ${p.y.toFixed(1)}, ${p.z.toFixed(1)} · ${why}`;
-  console.info('[unstuck]', UNSTK.last);
+  console.info('[unstuck]', UNSTK.last); nlog('卡住：' + UNSTK.last);
 }
 // back to safety: how = 'key' (asked for), 'wedged', 'fell', 'mate'
 function unstuck(how) {

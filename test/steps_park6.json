@@ -1,0 +1,6 @@
+[{"eval":"window.__bn.startChapter('park')","wait":6000},
+ {"eval":"(()=>{const b=window.__bn; b.step(30); const L=b.leader; L.pos.set(2150, b.PK.plat+.2, 3006); L.vel.set(0,0,0); L.grounded=true; const tr=[]; for(let i=0;i<150;i++){ window.__bn.keys && 0; L.vel.x = Math.max(L.vel.x, i<20?30:L.vel.x); b.step(1); if(i%10==0) tr.push([L.pos.x.toFixed(0), L.pos.y.toFixed(1), L.vel.x.toFixed(0), L.state, !!L.sliding, L.climbing]); } return tr})()"},
+ {"eval":"(()=>{const b=window.__bn; const w=b.WARPS.find(w=>w[1]==='沙池'); b.testWarp(w); b.step(20); const q1=b.quest; const w2=b.WARPS.find(w=>w[1]==='滑梯塔頂'); b.testWarp(w2); b.step(5); window.__NODET=true; const tr=[]; for(let s=0;s<80;s++){ b.step(60); tr.push(Math.round(b.PK.chip*100)+(b.PK.cloud>.45?'c':'')); } window.__NODET=false; return [q1, b.quest, b.PK.charged, tr.join(' ')]})()"},
+ {"eval":"(()=>{const b=window.__bn; const L=b.leader; L.pos.copy(b.PK.chipP); b.step(10); return [b.quest, b.PK.chipGot]})()"},
+ {"eval":"(()=>{const b=window.__bn; const L=b.leader; L.pos.set(2060, -20, 3745); b.step(10); return [b.quest, b.info().state]})()"}
+]

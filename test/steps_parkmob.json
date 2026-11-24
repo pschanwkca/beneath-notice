@@ -1,0 +1,6 @@
+[{"eval":"window.__bn.startChapter('park')","wait":7000},
+ {"eval":"(()=>{const b=window.__bn; b.step(60); const w=b.WARPS.find(w=>w[1]==='狗場閘口'); b.testWarp(w); b.step(30); return [b.info().lv, b.info().state]})()"},
+ {"frame":1},{"wait":800},{"frame":1,"shot":"pk_mob1"},
+ {"eval":"(()=>{const b=window.__bn; const w=b.WARPS.find(w=>w[1]==='沙池'); b.testWarp(w); b.step(60*17); b.switchTo(b.chars.mole); b.step(10); return [b.quest, b.leader.id]})()"},
+ {"frame":1},{"wait":800},{"frame":1,"shot":"pk_mob2"}
+]

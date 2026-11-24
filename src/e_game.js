@@ -74,7 +74,7 @@ canvas.addEventListener('mousedown', e => {
   mbtn = e.button; dragDist = 0;
 });
 addEventListener('mouseup', e => { if (e.button === 0) keys.Mouse0 = false; if (e.button === 2) keys.Mouse2 = false; if (dragMode && mbtn >= 0 && dragDist < 6 && STATE === 'play') { primaryDown(mbtn); keys.Mouse0 = false; } mbtn = -1; });
-function primaryDown(btn) { const L = leader; if (!L) return; if (L.id === 'bear') { if (btn === 0) { keys.Mouse0 = true; bearShove(); } else if (btn === 2) keys.Mouse2 = true; return; } if (L.id === 'cham') { if (btn === 0) chamTongue(); return; } if (L.id === 'sq') { if (btn === 0) sqCarry(); else if (btn === 2) sqScout(); return; } if (L.id === 'hog') { if (btn === 0) hogRoll(); return; } if (L.id === 'coon') { if (btn === 0) coonThrow(); return; } if (L.id === 'rab' || L.id === 'frog') { if (btn === 0) keys.Mouse0 = true; else if (btn === 2 && L.id === 'frog') frogSwitch(); return; } if (L.id === 'bat') { if (btn === 0) batPing(); return; } if (L.id === 'tort') { if (btn === 0) tortShell(); return; } fireGun(btn === 0); }
+function primaryDown(btn) { const L = leader; if (!L) return; if (L.id === 'bear') { if (btn === 0) { keys.Mouse0 = true; bearShove(); } else if (btn === 2) keys.Mouse2 = true; return; } if (L.id === 'cham') { if (btn === 0) chamTongue(); return; } if (L.id === 'sq') { if (btn === 0) sqCarry(); else if (btn === 2) sqScout(); return; } if (L.id === 'hog') { if (btn === 0) hogRoll(); return; } if (L.id === 'coon') { if (btn === 0) coonThrow(); return; } if (L.id === 'rab' || L.id === 'frog') { if (btn === 0) keys.Mouse0 = true; else if (btn === 2 && L.id === 'frog') frogSwitch(); return; } if (L.id === 'bat') { if (btn === 0) batPing(); return; } if (L.id === 'tort') { if (btn === 0) tortShell(); return; } if (L.id === 'mole') { if (btn === 0) moleDig(); return; } fireGun(btn === 0); }
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 addEventListener('wheel', e => { cam.dist = clamp(cam.dist + e.deltaY * .012, 8, 42); }, { passive: true });
 
@@ -196,6 +196,7 @@ function updLeader(C, dt) {
   if (C.zip) { updZip(C, dt); return; }
   if (C.climbing) { updClimb(C, dt, inX, inY, ctl, mv.run); return; }
   if (C.roost) { updRoost(C, dt, wx, wz, wl, ctl); return; }
+  if (C.dig) { moleDigUpd(C, dt, wx, wz, ctl); return; }
   if (C.shell) { C.state = 'shell'; C.vel.set(0, 0, 0); C.spd = 0; C.stamina = Math.min(C.stamMax || 100, C.stamina + 30 * dt); if (ctl && pressed.Space) { C.shell = false; C.state = 'idle'; } return; }
   if (C.leapT > 0) C.leapT -= dt;
   const sp = speedOf(C, mv.run) * (joy.on ? clamp(mv.m / .85, .35, 1) : 1); const tx = wx * sp, tz = wz * sp; const acc = (C.grounded ? 150 : C.leapT > 0 ? 9 : 50) * dt;
@@ -226,8 +227,8 @@ function updLeader(C, dt) {
   const hs = Math.hypot(C.vel.x, C.vel.z); C.spd = hs;
   C.state = base && C.grounded ? (hs > .8 ? 'stackwalk' : 'stack') : C.dashT > 0 ? 'roll' : C.tumble > 0 ? 'tumble' : C.gliding ? 'glide' : !C.grounded ? 'air' : hs > .8 ? (C.crouch ? 'sneak' : 'walk') : (C.crouch ? 'crouch' : 'idle');
   // a broken number (NaN) is put back where this character last stood, not sent to the checkpoint
-  if (!Number.isFinite(C.pos.x + C.pos.y + C.pos.z)) { if (C.okPos) C.pos.copy(C.okPos); else C.pos.set(...CPS[cp]); C.vel.set(0, 0, 0); }
-  else if (C.pos.y < -400 || (WORLD && C.pos.y < -5 && !zoneAt(C.pos, 30))) { C.pos.set(...CPS[cp]); C.vel.set(0, 0, 0); }
+  if (!Number.isFinite(C.pos.x + C.pos.y + C.pos.z)) { nlog('救返：' + C.S.name + ' 位置壞咗（NaN），放返上一個位置'); if (C.okPos) C.pos.copy(C.okPos); else C.pos.set(...CPS[cp]); C.vel.set(0, 0, 0); }
+  else if (C.pos.y < -400 || (WORLD && C.pos.y < -5 && !zoneAt(C.pos, 30))) { nlog('救返：' + C.S.name + ' 跌出地圖 ' + C.pos.toArray().map(v => v.toFixed(0)).join(',') + ' → 存檔點 ' + cp); C.pos.set(...CPS[cp]); C.vel.set(0, 0, 0); }
   else (C.okPos || (C.okPos = V3())).copy(C.pos);
 }
 function resolveClimb(C) {
@@ -292,6 +293,7 @@ function pushTrail(L) {
 }
 function pathLen(F, L) { let s = 0, px = F.pos.x, py = F.pos.y, pz = F.pos.z; for (const q of F.queue) { s += Math.hypot(q.x - px, q.y - py, q.z - pz); px = q.x; py = q.y; pz = q.z; } return s + Math.hypot(L.pos.x - px, L.pos.y - py, L.pos.z - pz); }
 function updFollower(F, L, dt) {
+  if (F.dig) molePop(F, true);
   if (F.shell || F.roost) { F.spd = 0; F.state = F.shell ? 'shell' : 'roost'; F.disp && F.disp.copy(F.pos); return; }
   let Lp = pathLen(F, L);
   if (Lp > 150 && F.queue.length > 30) { while (F.queue.length > 2 && Lp > 70) { const q = F.queue.shift(); Lp -= Math.hypot(q.x - F.pos.x, q.y - F.pos.y, q.z - F.pos.z); F.pos.set(q.x, q.y, q.z); } }
@@ -546,7 +548,7 @@ function say(name, text, color, dur = 3) { $('subn').textContent = name; $('subn
 function toast(t, dur = 2.6) { $('toast').textContent = t; $('toast').classList.add('on'); toastT = dur; }
 function refreshPartyHUD() {
   for (const id of IDS) { const el = $('pm-' + id); if (!el) continue; const C = chars[id]; el.classList.toggle('on', leader && leader.id === id); el.classList.toggle('toy', !!C.frozen); const sm = el.querySelector('small'); if (sm && party.includes(C)) sm.textContent = C.frozen ? (C.toyAt === 'box' ? '在玩具箱' : C.toyAt === 'hand' ? '被拿走了' : '變成玩具') : NET.on ? playerLabel(id) + ((C.stamMax || 100) < 100 ? ` · ${C.stamMax}%` : '') : (C.stamMax || 100) < 100 ? `體力 ${C.stamMax}%` : SP[id].role; }
-  if (!leader) return; for (const id of IDS) $('touch').classList.toggle(id, leader.id === id); $('tbAct').textContent = ({ cham: '舌', sq: '抱', hog: '滾', coon: '彈', rab: '跳', frog: '跳', bat: '聲', tort: '殼' })[leader.id] || '抱'; $('tbScout').textContent = leader.id === 'frog' ? '電' : '偵察'; $('tbCrouch').classList.toggle('dn', !!leader.crouch); $('an').textContent = leader.S.abil; $('ad').textContent = leader.S.desc; $('cells').style.display = leader.id === 'dad' ? 'flex' : 'none';
+  if (!leader) return; for (const id of IDS) $('touch').classList.toggle(id, leader.id === id); $('tbAct').textContent = ({ cham: '舌', sq: '抱', hog: '滾', coon: '彈', rab: '跳', frog: '跳', bat: '聲', tort: '殼', mole: '鑽' })[leader.id] || '抱'; $('tbScout').textContent = leader.id === 'frog' ? '電' : '偵察'; $('tbCrouch').classList.toggle('dn', !!leader.crouch); $('an').textContent = leader.S.abil; $('ad').textContent = leader.S.desc; $('cells').style.display = leader.id === 'dad' ? 'flex' : 'none';
 }
 function buildPartyHUD() {
   const has = id => party.includes(chars[id]); const order = IDS.filter(has).map((id, i) => [id, i + 1]);
@@ -793,14 +795,15 @@ let last = performance.now();
 function frame(now) {
   requestAnimationFrame(frame); musicFrame();
   // a frame time that goes backwards (it happens: tab switches, some phones) must never reach the physics — a negative step turned into NaN positions
-  const raw = (now - last) / 1000; last = now; const dt = raw > 0 ? Math.min(.05, raw) : 1 / 240; vcFrame(dt); emoTick(dt); watchTick();
+  const raw = (now - last) / 1000; last = now; const dt = raw > 0 ? Math.min(.05, raw) : 1 / 240; vcFrame(dt); netLogTick(dt); emoTick(dt); watchTick();
   { const [w, h] = viewSize(); if (w !== RS.w || h !== RS.h) onResize(); }
   if (STATE === 'load') return;
   if (!PAUSED || NET.on) update(dt);
+  if (window.__CAMO) { camera.position.set(...window.__CAMO.p); camera.lookAt(...window.__CAMO.t); }   // dev: a fixed camera for screenshots
   if (!window.__NR) composer.render();
   fpsAcc += dt; fpsN++;
   if (fpsAcc > 2) {
-    const fps = fpsN / fpsAcc; $('fps').textContent = Math.round(fps) + ' fps · ' + ({ high: '高', med: '中', low: '低' })[QUAL]; fpsAcc = 0; fpsN = 0;
+    const fps = fpsN / fpsAcc; NLOG.fps = fps; $('fps').textContent = Math.round(fps) + ' fps · ' + ({ high: '高', med: '中', low: '低' })[QUAL]; fpsAcc = 0; fpsN = 0;
     if ((STATE === 'play' || STATE === 'title') && !PAUSED && TOUCH && QUAL === 'low') { const k0 = DYN.k; if (fps < 27) DYN.k = Math.max(.7, DYN.k - .1); else if (fps > 50) DYN.k = Math.min(1, DYN.k + .1); if (DYN.k !== k0) applyQ('low'); }
     if (STATE === 'play' && !PAUSED) { if ((QUAL === 'high' && fps < 30) || (QUAL === 'med' && fps < 22)) { if (++fpsLow >= 2) { applyQ(QUAL === 'high' ? 'med' : 'low'); toast('畫質已自動調低，保持流暢'); fpsLow = 0; } } else fpsLow = 0; }
   }
@@ -863,7 +866,7 @@ function setupTouch() {
   hold('tbStack', () => { pressed.KeyF = true; });
   hold('tbProto', () => { pressed.KeyR = true; });
   hold('tbUse', () => { pressed.KeyE = true; });
-  hold('tbAct', () => { const id = leader.id; if (id === 'cham') chamTongue(); else if (id === 'sq') sqCarry(); else if (id === 'hog') hogRoll(); else if (id === 'coon') coonThrow(); else if (id === 'rab' || id === 'frog') keys.Mouse0 = true; else if (id === 'bat') batPing(); else if (id === 'tort') tortShell(); }, () => { keys.Mouse0 = false; });
+  hold('tbAct', () => { const id = leader.id; if (id === 'cham') chamTongue(); else if (id === 'sq') sqCarry(); else if (id === 'hog') hogRoll(); else if (id === 'coon') coonThrow(); else if (id === 'rab' || id === 'frog') keys.Mouse0 = true; else if (id === 'bat') batPing(); else if (id === 'tort') tortShell(); else if (id === 'mole') moleDig(); }, () => { keys.Mouse0 = false; });
   hold('tbScout', () => { if (leader.id === 'frog') frogSwitch(); else sqScout(); });
   hold('tbPush', () => { keys.TPush = true; bearShove(); }, () => { keys.TPush = false; });
   hold('tbPull', () => { keys.TPull = !keys.TPull; $('tbPull').classList.toggle('on', keys.TPull); }, () => { });
@@ -892,11 +895,11 @@ async function init() {
   try { await Promise.race([Promise.all(['500 20px "LXGW WenKai TC"', '700 20px "Noto Sans TC"', '600 20px Fredoka', '600 20px Caveat'].map(f => document.fonts.load(f, '爸爸最棒第測試縮小態被觀測ABC'))), new Promise(r => setTimeout(r, 3500))]); } catch (e) { }
   setLoad(.15, '生成材質…'); await tick(); makeMaterials();
   setLoad(.3, '喚醒角色…'); await tick();
-  for (const id of ['dad', 'sq', 'bear', 'gecko', 'cham', 'hog', 'rab', 'coon', 'frog', 'bat', 'tort']) chars[id] = makeChar(id);
-  for (const id of ['hog', 'rab', 'coon', 'frog', 'bat', 'tort']) { chars[id].root.visible = false; chars[id].pos.set(0, -900, 0); }
+  for (const id of ['dad', 'sq', 'bear', 'gecko', 'cham', 'hog', 'rab', 'coon', 'frog', 'bat', 'tort', 'mole']) chars[id] = makeChar(id);
+  for (const id of ['hog', 'rab', 'coon', 'frog', 'bat', 'tort', 'mole']) { chars[id].root.visible = false; chars[id].pos.set(0, -900, 0); }
   party.push(chars.dad, chars.sq, chars.bear); buildMom();
   // the whole house is built now, once: walking from room to room never loads anything
-  const WL = { basement: [.42, '搭建地庫…'], wall: [.52, '搭建牆內…'], kitchen: [.58, '搭建廚房和客廳…'], garage: [.64, '搭建車房…'], yard: [.7, '搭建後園和陽光房…'] , road: [.74, '搭建馬路和公園門口…'], portal: [.78, '打開縮小機的場域…'] };
+  const WL = { basement: [.42, '搭建地庫…'], wall: [.52, '搭建牆內…'], kitchen: [.58, '搭建廚房和客廳…'], garage: [.64, '搭建車房…'], yard: [.7, '搭建後園和陽光房…'] , road: [.72, '搭建馬路…'], park: [.76, '搭建公園…'], portal: [.78, '打開縮小機的場域…'] };
   await buildWorld(async id => { setLoad(...WL[id]); await tick(); });
   buildParticles(); enterZone('basement', true); scene.environment = ZONES.basement.envTex; placeStart();
   for (const id in chars) animChar(chars[id], .016);

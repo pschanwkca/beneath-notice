@@ -52,7 +52,7 @@ function updLobby(dt) {
     C.wave = LOBBY.hover === id || (NET.slots[id] === NET.me && (t % 6) < 1.6);
     lobbyPad(i, p, id, dt);
   });
-  for (let i = ids.length; i < 10; i++) if (LOBBY.stage) LOBBY.stage.children[i].visible = false;
+  for (let i = ids.length; i < 12; i++) if (LOBBY.stage) LOBBY.stage.children[i].visible = false;
   // camera: low, in front of them, the glowing exit behind
   const wide = innerWidth / innerHeight, dist = clamp(16 + n * 2.9, 25, 44) * (wide < 1.5 ? 1.25 : 1);
   // with the info card on the left (wide screens), the line sits a little right of centre
@@ -89,7 +89,7 @@ function lobbyStage() {
   if (LOBBY.stage) return LOBBY.stage;
   const g = new THREE.Group(); scene.add(g); LOBBY.stage = g;
   const ringG = new THREE.RingGeometry(3.3, 4.1, 48), discG = new THREE.CircleGeometry(4.1, 48), coneG = new THREE.CylinderGeometry(1.2, 4.4, 26, 32, 1, true);
-  for (let i = 0; i < 10; i++) {
+  for (let i = 0; i < 12; i++) {
     const s = new THREE.Group();
     const rm = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .9, depthWrite: false, blending: THREE.AdditiveBlending });
     const dm = new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, opacity: .12, depthWrite: false, blending: THREE.AdditiveBlending });
@@ -129,7 +129,7 @@ function mpInfoRender() {
 function mpSaveLoad() { try { const S = JSON.parse(localStorage.getItem(MPS_KEY) || 'null'); return S && S.v === 1 ? S : null; } catch (e) { return null; } }
 function mpSaveWhere(S) {
   const Q = S.pro ? MP_PRO : MP_QUESTS, q = Q[S.q] || Q[0];
-  const z = { portal: '準備區', basement: '序章 · 地庫', wall: '序章 · 牆內', kitchen: '第一章 · 廚房', garage: '第二章 · 車房', yard: '第三章 · 後園', road: '第四章 · 馬路' }[S.zone] || '';
+  const z = { portal: '準備區', basement: '序章 · 地庫', wall: '序章 · 牆內', kitchen: '第一章 · 廚房', garage: '第二章 · 車房', yard: '第三章 · 後園', road: '第四章 · 馬路', park: '第五章 · 公園' }[S.zone] || '';
   const ago = Math.max(1, Math.round((Date.now() - S.at) / 60000)), when = ago < 60 ? `${ago} 分鐘前` : ago < 1440 ? `${Math.round(ago / 60)} 小時前` : `${Math.round(ago / 1440)} 日前`;
   return `${z}${z ? '：' : ''}${q.t}（${when}）`;
 }
@@ -137,10 +137,11 @@ let _svSig = '';
 function mpSaveTick() {
   if (!NET.on || !NET.host || STATE !== 'play' || !WORLD) return;
   if (PRO.on && quest === 0) return;   // still in the prep area: nothing to carry on from yet
-  const f = [LIV.open, LIV.remoteGot, LIV.ventOpen, GS.camBroken, GS.latch, YS.chip].map(v => v ? 1 : 0).join('');
+  const f = [LIV.open, LIV.remoteGot, LIV.ventOpen, GS.camBroken, GS.latch, YS.chip, PK.chipOn, PK.charged, PK.chipGot].map(v => v ? 1 : 0).join('');
   const parts = LIV.parts.map(p => p.got ? 1 : 0).join('');
-  const sig = [PRO.on ? 1 : 0, quest, cp, gotBat, PROTO, parts, f].join('|'); if (sig === _svSig) return; _svSig = sig;
-  const S = { v: 1, at: Date.now(), pro: PRO.on ? 1 : 0, q: quest, cp, zone: LEVEL, gb: gotBat, cm: cellMax, pr: PROTO, parts, f,
+  const pkc = PK.chipOn && !PK.charged ? Math.floor(PK.chip * 10) : 0;
+  const sig = [PRO.on ? 1 : 0, quest, cp, gotBat, PROTO, parts, f, pkc].join('|'); if (sig === _svSig) return; _svSig = sig;
+  const S = { v: 1, at: Date.now(), pro: PRO.on ? 1 : 0, q: quest, cp, zone: LEVEL, gb: gotBat, cm: cellMax, pr: PROTO, parts, f, pk: pkc,
     bat: batteries.map(b => b.got ? 1 : 0).join(''), vi: VIALS.map(v => v.got ? 1 : 0).join(''), cr: CRUMBS.map(c => c.got ? 1 : 0).join('') };
   try { localStorage.setItem(MPS_KEY, JSON.stringify(S)); } catch (e) { }
 }
@@ -160,6 +161,7 @@ function mpApplySave(S) {
   if (f[3] === '1' && GS.cam && !GS.camBroken) { GS.cam.y0 = Math.min(GS.cam.y0, 150); applyResize(GS.cam); }
   if (f[4] === '1') GS.latch = true;
   if (f[5] === '1' && !YS.chip) { YS.chip = true; YS.chipM.visible = false; YS.chipHalo.visible = false; }
+  if (f[6] === '1') { PK.chipOn = true; PK.chip = f[7] === '1' ? 1 : (S.pk || 0) / 10; } if (f[7] === '1') PK.charged = true; if (f[8] === '1') PK.chipGot = true;
 }
 function saveCps(S) { return S.pro ? (PRO.cps || MP_CPS) : MP_CPS; }
 // the exit of the prep area takes everyone back to the saved checkpoint

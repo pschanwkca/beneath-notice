@@ -13,11 +13,12 @@ cat <<'X'
 </script>
 <script type="module">
 X
-cat src/a_core.js src/e8_world.js src/b_lore.js src/c_world.js src/d_chars.js src/e_game.js src/e2_team.js src/e3_toy.js src/e4_size.js src/e5_chars.js src/e9_crew.js src/e10_roster.js src/e6_kitchen2.js src/e7_living.js src/f_levels.js src/e11_garage.js src/e12_yard.js src/e13_newcrew.js src/e14_test.js src/e15_road.js src/e16_takers.js src/e17_music.js src/e19_house.js src/e20_brain.js src/e21_garage2.js src/e22_upstairs.js src/g_net.js src/e18_voice.js src/e23_emotes.js src/e24_title.js src/e25_portal.js src/e26_watch.js src/e27_unstuck.js src/e28_lobby.js src/z_boot.js
+cat src/a_core.js src/e8_world.js src/b_lore.js src/c_world.js src/d_chars.js src/e_game.js src/e2_team.js src/e3_toy.js src/e4_size.js src/e5_chars.js src/e9_crew.js src/e10_roster.js src/e6_kitchen2.js src/e7_living.js src/f_levels.js src/e11_garage.js src/e12_yard.js src/e13_newcrew.js src/e14_test.js src/e15_road.js src/e16_takers.js src/e17_music.js src/e19_house.js src/e20_brain.js src/e21_garage2.js src/e22_upstairs.js src/g_net.js src/e18_voice.js src/e23_emotes.js src/e24_title.js src/e25_portal.js src/e26_watch.js src/e27_unstuck.js src/e28_lobby.js src/e29_netlog.js src/e30_park.js src/e31_mole.js src/z_boot.js
 cat <<'X'
 </script>
 </body>
 </html>
 X
 } > index.html
+sed -i "s/__BUILD__/$(date -u +%Y%m%d-%H%M)/" index.html
 wc -c index.html

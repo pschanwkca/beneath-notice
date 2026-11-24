@@ -1,0 +1,3 @@
+[{"eval":"window.__bn.startChapter('road')","wait":6000},
+ {"eval":"(()=>{const b=window.__bn; b.step(30); window.__NODET=true; const L=b.leader; L.pos.set(2060,-20,1600); L.vel.set(0,0,0); b.step(20); L.pos.set(2060,-20,1650); b.step(10); const a=[b.info().lv, b.quest, b.info().state, document.getElementById('qt').textContent]; L.pos.set(2060,-20,1760); b.step(20); return a.concat([b.info().lv, b.quest, b.info().state, document.getElementById('qt').textContent, document.getElementById('chapA').textContent])})()"}
+]

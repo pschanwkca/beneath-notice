@@ -201,7 +201,6 @@ function buildRoad() {
   // far pavement, then the park railings and gate
   box(-330, 3400, RY - 10, GY, 1500, 1664, pave, { uv: 128, cast: false });
   box(-330, 3400, GY, GY + .2, 1500, 1509, kerbM, { col: false, cast: false });
-  box(-330, 3400, GY - 10, GY, 1664, 2400, grassM, { uv: 90, cast: false });
   const bars = new THREE.InstancedMesh(new THREE.BoxGeometry(2.2, 120, 2.2), new THREE.MeshStandardMaterial({ color: 0x1c2420, metalness: .6, roughness: .45 }), 300); let bi = 0; const m4 = new THREE.Matrix4();
   for (let x = -320; x < 3400 && bi < 300; x += 14) { if (x > 1990 && x < 2130) continue; m4.makeTranslation(x, GY + 60, 1660); bars.setMatrixAt(bi++, m4); } bars.count = bi; bars.castShadow = true; LV.add(bars);
   for (const [a, b] of [[-330, 1990], [2130, 3400]]) { box(a, b, GY + 112, GY + 116, 1658, 1662, metal, { col: false }); box(a, b, GY + 8, GY + 11, 1658, 1662, metal, { col: false }); cols.push({ t: 'b', x0: a, x1: b, y0: GY, y1: GY + 120, z0: 1657, z1: 1663, slick: true }); }
@@ -209,11 +208,8 @@ function buildRoad() {
   const sign = mesh(new THREE.PlaneGeometry(150, 47), new THREE.MeshStandardMaterial({ map: signTex(), roughness: .6 }), 2060, GY + 236, 1660, { cast: false }); sign.rotation.y = Math.PI; box(1996, 2004, GY + 196, GY + 260, 1658, 1662, metal, { col: false }); box(2116, 2124, GY + 196, GY + 260, 1658, 1662, metal, { col: false });
   const gateL = new THREE.Group(); gateL.position.set(2010, GY, 1660); gateL.rotation.y = -1.25; LV.add(gateL); const gateR = new THREE.Group(); gateR.position.set(2110, GY, 1660); gateR.rotation.y = 1.25; LV.add(gateR);
   for (const [gg, s] of [[gateL, 1], [gateR, -1]]) { for (let i = 0; i < 7; i++) mesh(new THREE.BoxGeometry(2, 110, 2), metal, s * (5 + i * 7), 58, 0, { parent: gg }); mesh(new THREE.BoxGeometry(50, 3, 3), metal, s * 26, 108, 0, { parent: gg }); mesh(new THREE.BoxGeometry(50, 3, 3), metal, s * 26, 12, 0, { parent: gg }); }
-  box(2030, 2090, GY, GY + .4, 1664, 2300, new THREE.MeshStandardMaterial({ color: 0x7a6a56, roughness: 1 }), { col: false, cast: false });
-  // park trees and a bench, just through the gate
+  // (the park itself — its paths, trees and benches — is its own place: e30_park)
   const trunk = new THREE.MeshStandardMaterial({ color: 0x3a2c22, roughness: .95 }), leafM = new THREE.MeshStandardMaterial({ color: 0x2c4a24, roughness: .9, flatShading: true });
-  for (const [x, z, s] of [[1760, 1820, 1.1], [2280, 1780, 1], [2520, 1960, 1.3], [1560, 2050, 1.2], [2150, 2150, 1]]) { cyl(x, z, 16 * s, GY, GY + 300 * s, trunk, { seg: 12 }); for (let i = 0; i < 4; i++) mesh(new THREE.IcosahedronGeometry(90 * s * R(.8, 1.15), 1), leafM, x + R(-60, 60) * s, GY + (280 + R(0, 120)) * s, z + R(-60, 60) * s); }
-  box(2160, 2280, GY + 40, GY + 46, 1730, 1760, new THREE.MeshStandardMaterial({ color: 0x6a4a2a, roughness: .8 })); for (const x of [2166, 2272]) box(x, x + 4, GY, GY + 40, 1734, 1756, metal);
   // ---- street furniture on our side ----
   // tree in a pit with a grate
   box(2350, 2410, GY - 2, GY - .5, 712, 772, new THREE.MeshStandardMaterial({ map: genSoil(), roughness: 1 }), { col: false, cast: false });
@@ -364,7 +360,7 @@ function roadSounds(dt) {
 }
 function updRoadWorld(dt) {
   ST.near = !!(ZONES.road && ZONES.road.near);
-  if (ST.sky) ST.sky.visible = ST.near || !!(ZONES.yard && ZONES.yard.near);
+  if (ST.sky) ST.sky.visible = ST.near || !!(ZONES.yard && ZONES.yard.near) || !!(ZONES.park && ZONES.park.near);
   if (!ST.near && !NET.on) return;
   if (!NET.client) updSignals(dt);
   updCars(dt); signalLooks(); carHits(dt); roadSounds(dt);
@@ -411,11 +407,11 @@ LEVELS.road = {
   },
   onSwitch() { }
 };
+// across: the park carries straight on (no end screen — the world is one place)
 function roadWin() {
-  if (STATE !== 'play') return; unlockKey('ch5');
+  if (STATE !== 'play' || ST.won) return; ST.won = true; unlockKey('ch5');
   say('爸爸', '到了……公園。晶片要在月光底下才會充電——', '#f5f0e6', 3.6);
-  END_TXT = ['第五章 · 完', '馬路', '終於過了馬路。公園裡面……好像有很多狗。（第六章：公園，製作中）'];
-  STATE = 'end'; endT = 0;
+  QUESTS = [{ t: '走進公園', s: '楓林公園的鐵閘開着' }]; setQuest(0);
 }
 
 // ---- printed things for recycling day ----

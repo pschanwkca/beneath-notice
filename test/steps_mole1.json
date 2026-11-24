@@ -1,0 +1,12 @@
+[{"eval":"window.__bn.startChapter('park')","wait":6000},
+ {"eval":"(()=>{const b=window.__bn; b.step(30); const w=b.WARPS.find(w=>w[1]==='沙池'); b.testWarp(w); b.step(30); return [b.quest, b.MOLE.met, b.MOLE.sceneT, b.chars.mole.root.visible, b.chars.mole.state]})()"},
+ {"eval":"window.__CAMO={p:[1985,22,3115],t:[1955,-14,3150]}"},
+ {"wait":1500},{"frame":1,"shot":"mole_pop"},
+ {"eval":"(()=>{const b=window.__bn; b.step(60*16); return [b.quest, b.party.map(c=>c.id).join(','), b.MOLE.sceneT, b.chars.mole.state, b.chars.mole.pos.toArray().map(v=>+v.toFixed(1))]})()"},
+ {"eval":"window.__CAMO={p:[1975,-6,3128],t:[1955,-14,3150]}"},
+ {"frame":1,"shot":"mole_close"},
+ {"eval":"(()=>{const b=window.__bn; b.switchTo(b.chars.mole); b.step(5); const L=b.leader; L.pos.set(1700,-20,2000); L.vel.set(0,0,0); L.grounded=true; b.step(5); b.moleDig(); b.step(10); const r=[L.id, L.state, !!L.dig, b.softAt(L.pos)]; for(let i=0;i<60;i++){ L.vel.x=Math.max(L.vel.x,0); b.step(1);} return r.concat([L.pos.toArray().map(v=>+v.toFixed(1))])})()"},
+ {"eval":"delete window.__CAMO"},
+ {"frame":1,"shot":"mole_dig"},
+ {"eval":"(()=>{const b=window.__bn; b.moleDig(); b.step(30); const L=b.leader; return [L.state, !!L.dig, L.body.visible]})()"}
+]

@@ -233,6 +233,7 @@ function shellTick() {
 }
 // how much less a watcher notices someone (chameleon colour, tortoise shell)
 function hideK(L) {
+  if (L.state === 'dig') return 0;
   if (L.state === 'shell') return .04;
   return L.id === 'cham' ? 1 - .82 * L.camo : 1;
 }
@@ -253,6 +254,7 @@ function ncPlace() {
   const B = chars.bat, Tt = chars.tort;
   if (!party.includes(B)) { const top = (GS.benchY || 70) - 8; B.pos.set(NC.batHome.x, top - B.h, NC.batHome.z); B.yaw = .4; B.state = 'roost'; B.roost = null; B.root.visible = true; }
   if (!party.includes(Tt)) { Tt.pos.set(NC.tortHome.x, GY, NC.tortHome.z); Tt.yaw = -1.2; Tt.state = 'shell'; Tt.root.visible = true; }
+  molePlace();
 }
 const BAT_LINES = [[0, '阿蝠', '（倒吊在工作枱底）……噓！你們也縮小了？'], [2.7, '爸爸', '阿蝠？夜更的阿蝠！那晚試機你也在實驗室？'], [5.6, '阿蝠', '一醒來就吊在這裡了。拿電筒那個是公司派來找你的——我在黑暗裡也「看」得到他，帶上我。']];
 const TORT_LINES = [[0, '阿龜', '（從「石頭」裡伸出頭來）……慢慢來，別吵醒那隻狗。'], [2.9, '爸爸', '阿龜！第一次試機就失蹤的是你！'], [5.6, '阿龜', '三個月了，我一直住在陳伯的花槽。晶片在陽光房的書枱上——跟我走長草那邊，被看見就縮入殼。']];
@@ -287,7 +289,7 @@ function ncStory(dt) {
     }
   }
 }
-function ncTick(dt) { updPing(dt); shellTick(); ncStory(dt); }
+function ncTick(dt) { updPing(dt); shellTick(); ncStory(dt); moleTick(dt); moleStory(dt); }
 // hints for the two of them
 function ncHint(L) {
   if (L.id === 'bat') { if (L.roost) return '倒吊中（休息回體力）· 移動沿底面爬 · <kbd>Space</kbd> 放手'; if (!L.grounded && !L.climbing) return `空中再按 ${TOUCH ? '「跳」' : '<kbd>Space</kbd>'} 拍翼（${3 - (L.flaps || 0)}）· 按住慢慢飄落 · 撞到天花或枱底按住就倒吊`; }

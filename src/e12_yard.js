@@ -337,7 +337,8 @@ function mpObjectives() {
   if (quest === 11 && P.every(C => C.pos.z > 650)) { setQuest(12); toastW('全隊到了行人路！', 2.4); }
   if (quest === 12 && ST.pressed) setQuest(13);
   if ((quest === 12 || quest === 13) && P.every(C => C.pos.z > 1505 && C.pos.y > GY - 2)) { setQuest(14); toastW('全隊過了馬路！', 2.4); }
-  if (quest === 14 && P.every(C => C.pos.z > 1640 && C.pos.x > 1995 && C.pos.x < 2125) && STATE === 'play') { STATE = 'end'; endT = 0; END_TXT = ['第四章（多人）· 完', '馬路', '全隊安全過了馬路。公園裡面……好像有很多狗。（下一章：公園，製作中）']; nsend({ t: 'end', e: END_TXT }); }
+  if (quest === 14 && P.every(C => C.pos.z > 1640) && STATE === 'play') { setQuest(MPQ_PARK); chapterBanner('第四章（多人）· 完', '馬路'); nsend({ t: 'ban', a: '第四章（多人）· 完', b: '馬路' }); }
+  if (quest >= MPQ_PARK) mpParkObjectives(P);
 }
 function mpMarker() {
   const L = leader;
@@ -346,10 +347,11 @@ function mpMarker() {
   if (quest === 4) return L.pos.x > 924 ? null : V3(896, 6, -200); if (quest === 5) return V3(GS.cam.cx, GS.cam.y0 + 14, GS.cam.cz); if (quest === 6) return GS.latchP; if (quest === 7) return L.pos.x > 1462 ? null : V3(1455, GY + 2, 105);
   if (quest === 8) return L.pos.x > 2108 ? null : YS.gap; if (quest === 9) return L.pos.x > 2562 ? null : YS.flap; if (quest === 10) return YS.chip ? null : YS.chipP;
   if (quest === 11) return L.pos.z > 650 ? null : ST.gate; if (quest === 12) return V3(1960, GY + 118, 770);
-  if (quest === 13) return L.pos.z < 1130 ? V3(2060, GY + 4, 1150) : V3(2060, GY + 4, 1560); return ST.parkP;
+  if (quest === 13) return L.pos.z < 1130 ? V3(2060, GY + 4, 1150) : V3(2060, GY + 4, 1560); if (quest >= MPQ_PARK) return mpParkMarker(); return ST.parkP;
 }
 // what the host tells everyone about the garage and the yard
 function netWorldExtra(w) {
+  parkNetOut(w);
   const A = GS.agent, D = YS.dog, O = YS.old;
   w.ga = [+A.pos.x.toFixed(1), +A.pos.z.toFixed(1), +A.yaw.toFixed(3), +A.aimT.x.toFixed(1), +A.aimT.y.toFixed(1), +A.aimT.z.toFixed(1), GS.camBroken ? 1 : 0, GS.latch ? 1 : 0];
   w.rd = [['go', 'wait', 'amber', 'red', 'walk', 'flash', 'clear'].indexOf(ST.phase), +ST.pt.toFixed(2), ST.req ? 1 : 0, ...ST.cars.flatMap(c => [c.alive ? 1 : 0, c.lane, Math.round(c.x), Math.round(c.v)])];
@@ -357,12 +359,13 @@ function netWorldExtra(w) {
   w.ya = [+D.pos.x.toFixed(1), +D.pos.z.toFixed(1), +D.yaw.toFixed(3), D.mode, +D.sleepK.toFixed(2), O.mode, +O.look.x.toFixed(0), +O.look.y.toFixed(0), +O.look.z.toFixed(0), YS.chip ? 1 : 0, LIV.ventOpen ? 1 : 0];
 }
 function netRecvExtra(w) {
+  parkNetIn(w);
   if (w.rd) { ST.phase = ['go', 'wait', 'amber', 'red', 'walk', 'flash', 'clear'][w.rd[0]] || 'go'; ST.pt = w.rd[1]; ST.req = !!w.rd[2]; for (let i = 0; i < ST.cars.length; i++) { const c = ST.cars[i], b = 3 + i * 4; if (w.rd[b] == null) break; const was = c.alive; c.alive = !!w.rd[b]; c.lane = w.rd[b + 1]; if (!was || Math.abs(c.x - w.rd[b + 2]) > 160) c.x = w.rd[b + 2]; c.tx = w.rd[b + 2]; c.v = w.rd[b + 3]; if (!was && c.alive) c.gust.clear(); } }
   if (w.ga) { if (w.ga[6] && !GS.camBroken) { GS.cam.y0 = Math.min(GS.cam.y0, 150); } if (w.ga[7] && !GS.latch) latchOpen(null); }
   if (w.ya) { if (w.ya[9] && !YS.chip) { YS.chip = true; YS.chipM.visible = false; YS.chipHalo.visible = false; } if (w.ya[10] && !LIV.ventOpen) ventOpen(); }
 }
 function netNPCExtra(dt) {
-  const w = NET.npc; if (!w) return;
+  const w = NET.npc; if (!w) return; parkNetNPC(dt);
   for (const c of ST.cars) if (c.alive && c.tx != null) { c.x += LANES[c.lane].dir * c.v * dt; c.x += (c.tx - c.x) * (1 - Math.exp(-4 * dt)); }
   if (w.wk && ST.walker) { const W = ST.walker, H = W.H, D = ST.wdog, k = w.wk; H.pos.x += (k[0] - H.pos.x) * (1 - Math.exp(-8 * dt)); H.yaw = angDamp(H.yaw, k[1], 8, dt); W.mode = k[2]; W.look.set(k[3], GY + 4, k[4]); D.pos.x += (k[5] - D.pos.x) * (1 - Math.exp(-8 * dt)); D.pos.z += (k[6] - D.pos.z) * (1 - Math.exp(-8 * dt)); D.yaw = angDamp(D.yaw, k[7], 8, dt); D.mode = k[8]; W.t = 99; }
   if (w.ga && GS.agent) { const A = GS.agent, g = w.ga, ox = A.pos.x, oz = A.pos.z; const k = 1 - Math.exp(-8 * dt); if (Math.hypot(g[0] - ox, g[1] - oz) > 80) { A.pos.x = g[0]; A.pos.z = g[1]; } else { A.pos.x += (g[0] - ox) * k; A.pos.z += (g[1] - oz) * k; } A.pos.y = GY; A.yaw = angDamp(A.yaw, g[2], 8, dt); A.aimT.set(g[3], g[4], g[5]); A.aim.lerp(A.aimT, 1 - Math.exp(-3 * dt)); agentPose(A, Math.hypot(A.pos.x - ox, A.pos.z - oz), dt); }

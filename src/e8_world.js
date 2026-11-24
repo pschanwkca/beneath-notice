@@ -20,8 +20,9 @@ zoneDef('kitchen', { floor: 0, core: [[-312, 912, -12, 300, -250, 250], [-432, -
 // peek: spots in other places from which you can see in (through a mouse hole) — draw this place too
 zoneDef('wall', { floor: HO.y + 4, off: HO, core: [[-530, -312, -360, -2, -140, -52]], peek: [[-282, -140, -345, -250, -160, 10], [-312, -160, -12, 90, -200, 0]], env: 'hub' });
 zoneDef('garage', { floor: -20, core: [[912, 1460, -40, 300, -270, 312]], peek: [[820, 912, -10, 70, -240, -150], [1460, 1640, -40, 120, 20, 200]], env: 'garage' });
-zoneDef('yard', { floor: -20, core: [[1460, 2770, -40, 1000, -460, 660]], peek: [[-400, 3500, -80, 1000, 660, 2400]], env: 'yard' });
-zoneDef('road', { floor: -35, core: [[-340, 3500, -80, 1000, 660, 2400], [-340, 1460, -80, 1000, 262, 660]], peek: [[1460, 2770, -40, 1000, 260, 660]], env: 'road' });
+zoneDef('yard', { floor: -20, core: [[1460, 2770, -40, 1000, -460, 660]], peek: [[-400, 3500, -80, 1000, 660, 1700]], env: 'yard' });
+zoneDef('road', { floor: -35, core: [[-340, 3500, -80, 1000, 660, 1700], [-340, 1460, -80, 1000, 262, 660]], peek: [[1460, 2770, -40, 1000, 260, 660], [-340, 3500, -80, 1000, 1700, 2500]], env: 'road' });
+zoneDef('park', { floor: -20, core: [[-340, 3500, -80, 1000, 1700, 3760]], peek: [[-340, 3500, -80, 1000, 1180, 1700]], env: 'park' });
 zoneDef('basement', { floor: BO.y, off: BO, core: [[-312, 338, -360, -60, -549, 33], [-282, -160, -60, 150, -549, -245]], peek: [[-390, -312, -345, -295, -130, -50]], env: 'basement' });
 function inZone(Z, x, y, z, m = 0) { for (const b of Z.core) if (x > b[0] - m && x < b[1] + m && y > b[2] - m && y < b[3] + m && z > b[4] - m && z < b[5] + m) return true; return false; }
 // floor height of the place a point is in (the kitchen sits at 0, the basement and the wall far below)
@@ -53,9 +54,9 @@ function buildZone(Z) {
 }
 async function buildWorld(prog) {
   if (WORLD) return;
-  for (const id of ['basement', 'wall', 'kitchen', 'garage', 'yard', 'road', 'portal']) { if (prog) await prog(id); buildZone(ZONES[id]); }
-  ZONES.garage.prepped = ZONES.yard.prepped = ZONES.road.prepped = true;
-  MP_CPS = [...LEVELS.kitchen.cps, ...LEVELS.garage.cps, ...LEVELS.yard.cps, ...LEVELS.road.cps];
+  for (const id of ['basement', 'wall', 'kitchen', 'garage', 'yard', 'road', 'park', 'portal']) { if (prog) await prog(id); buildZone(ZONES[id]); }
+  ZONES.garage.prepped = ZONES.yard.prepped = ZONES.road.prepped = ZONES.park.prepped = true;
+  MP_CPS = [...LEVELS.kitchen.cps, ...LEVELS.garage.cps, ...LEVELS.yard.cps, ...LEVELS.road.cps, ...LEVELS.park.cps];
   ncPlace();
   for (let i = furMeshes.length - 1; i >= 0; i--) if (!inScene(furMeshes[i])) furMeshes.splice(i, 1);
   partitionCols(); setupLightPool(); WORLD = true;
@@ -90,7 +91,7 @@ function setupLightPool() {
   LP.hemi = new THREE.HemisphereLight(0x606070, 0x302820, 0); LP.grp.add(LP.hemi);
 }
 const _lw = V3(), _lt = V3();
-function lightScore(l, cp, lp) { l.getWorldPosition(_lw); const d2 = Math.min(_lw.distanceToSquared(cp), _lw.distanceToSquared(lp)); const c = l.color; return l.intensity * (c.r * .3 + c.g * .55 + c.b * .15) / (d2 + 900); }
+function lightScore(l, cp, lp) { if (l.userData.prio) return 1e6; l.getWorldPosition(_lw); const d2 = Math.min(_lw.distanceToSquared(cp), _lw.distanceToSquared(lp)); const c = l.color; return l.intensity * (c.r * .3 + c.g * .55 + c.b * .15) / (d2 + 900); }
 function poolAssign(slots, want, dt, copy) {
   const N = slots.length, sc = new Map(want.map(e => [e.l, e.sc])), top = want.slice(0, N);
   for (const s of slots) if (s.cur && !s.out && !sc.has(s.cur)) s.out = true;   // gone dark or out of reach
@@ -173,7 +174,7 @@ function zoneTick(dt) {
   if (leader && mine(leader) && (STATE === 'play' || STATE === 'frozen')) {
     const cur = ZONES[LEVEL]; if (!cur || !inZone(cur, lp.x, lp.y, lp.z, 2)) { const nz = zoneAt(lp); if (nz && nz.id !== LEVEL) enterZone(nz.id); }
   }
-  updNpcWalk(dt); updBanner(dt); updSecCam(dt); updGarageWorld(dt); updYardWorld(dt); updRoadWorld(dt); ncTick(dt); testTick();
+  updNpcWalk(dt); updBanner(dt); updSecCam(dt); updGarageWorld(dt); updYardWorld(dt); updRoadWorld(dt); updParkWorld(dt); ncTick(dt); testTick();
 }
 // a place's rules take over (no loading, nothing moves)
 function enterZone(id, quiet) {

@@ -71,7 +71,7 @@ function crewTail(C, S, tailRoot, k, part, fm) {
 // faces, spines, outfits
 function crewExtras(C, S, head, body, k, part, plain) {
   const M = crewMats();
-  if (S.bat) batExtras(C, S, head, body, k, plain); if (S.tort) tortExtras(C, S, head, body, k, plain);
+  if (S.bat) batExtras(C, S, head, body, k, plain); if (S.tort) tortExtras(C, S, head, body, k, plain); if (S.mole) moleExtras(C, S, head, body, k, plain);
   const badge = (y = 1.16, z = .98) => { const b = plain(new THREE.CircleGeometry(.17 * k, 24), M.badge, body, -.42 * k, y * k, z * k); b.rotation.y = -.38; b.castShadow = false; };
   const lathe = (pts, mat, sz = .95) => { const m = plain(new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0] * k, p[1] * k)), 48), mat, body, 0, 0, 0); m.scale.z = sz; return m; };
   if (S.spines) {

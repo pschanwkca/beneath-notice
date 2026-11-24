@@ -50,7 +50,7 @@ log('marker', await ev(B, () => { const m = window.__bn.W.mpMarker(); return m &
 await ev(A, () => { const G = window.__bn.W.GS; G.cam.y0 = 150; });
 log('camera', [await until(A, () => window.__bn.quest === 6, 6000), await until(B, () => window.__bn.W.GS.camBroken && window.__bn.quest === 6, 6000)]);
 // the client's head reaches the latch: host opens it
-await ev(B, () => { const b = window.__bn, G = b.W.GS; const L = b.leader; L.pos.set(G.latchP.x, G.latchP.y - 4, G.latchP.z); L.vel.set(0, 0, 0); });
+for (let i = 0; i < 12; i++) { await ev(B, () => { const b = window.__bn, G = b.W.GS; const L = b.leader; L.pos.set(G.latchP.x, G.latchP.y - 4, G.latchP.z); L.vel.set(0, 0, 0); }); await wait(120); }
 log('latch', [await until(A, () => window.__bn.W.GS.latch && window.__bn.quest === 7, 6000), await until(B, () => window.__bn.W.GS.latch, 6000)]);
 await tp(A, 1480, -20, 105); await tp(B, 1486, -20, 112);
 log('yard', [await until(A, () => window.__bn.quest === 8 && window.__bn.LEVEL === 'yard', 8000), await until(B, () => window.__bn.LEVEL === 'yard', 8000)]);
@@ -70,7 +70,20 @@ await wait(1500);
 log('car sync', await Promise.all([A, B].map(p => ev(p, () => window.__bn.ST.cars.filter(c => c.alive).map(c => [c.lane, Math.round(c.x / 50) * 50])))));
 await tp(A, 2060, -20, 1560); await tp(B, 2066, -20, 1564);
 log('crossed', await until(A, () => window.__bn.quest === 14, 8000));
-await tp(A, 2060, -20, 1680); await tp(B, 2066, -20, 1684);
+await tp(A, 2060, -20, 1730); await tp(B, 2066, -20, 1734);
+log('park in', [await until(A, () => window.__bn.quest === 15 && window.__bn.LEVEL === 'park', 8000), await until(B, () => window.__bn.LEVEL === 'park' && window.__bn.quest === 15, 8000)]);
+await wait(2000);
+log('park sync', await Promise.all([A, B].map(p => ev(p, () => { const K = window.__bn.PK; return [K.dogs.map(d => d.pos.toArray().map(v => Math.round(v / 20) * 20).join(',')), K.jog.H.pos.toArray().map(v => Math.round(v / 50) * 50).join(','), Math.round(K.sk.x / 50) * 50, K.ball.p.toArray().map(v => Math.round(v / 20) * 20).join(',')]; }))));
+await tp(A, 2100, -20, 2900); await tp(B, 2106, -20, 2904);
+log('playground', await until(A, () => window.__bn.quest === 16, 8000));
+await ev(B, () => { const b = window.__bn; const L = b.leader; L.pos.set(b.PK.tower.x, b.PK.plat + .5, b.PK.tower.z - 20); L.vel.set(0, 0, 0); });
+log('chip on', [await until(A, () => window.__bn.PK.chipOn && window.__bn.quest === 17, 8000), await until(B, () => window.__bn.PK.chipOn, 8000)]);
+await ev(A, () => { const K = window.__bn.PK; K.cloudOn = false; K.cloudT = 99; K.chip = .995; });
+log('charged', [await until(A, () => window.__bn.quest === 18, 12000), await until(B, () => window.__bn.PK.charged, 8000)]);
+await ev(B, () => { const b = window.__bn; const L = b.leader; L.pos.copy(b.PK.chipP); L.vel.set(0, 0, 0); });
+log('chip got', [await until(A, () => window.__bn.quest === 19, 8000), await until(B, () => window.__bn.PK.chipGot, 8000)]);
+log('save', await ev(A, () => { const s = JSON.parse(localStorage.getItem('bn_mpsave1') || '{}'); return [s.zone, s.q, s.f]; }));
+await tp(A, 2060, -20, 3745); await tp(B, 2066, -20, 3748);
 log('park/end', [await until(A, () => window.__bn.state === 'end', 8000), await until(B, () => window.__bn.state === 'end', 8000)]);
 await wait(4000);
 log('end card', await ev(B, () => [document.getElementById('endA').textContent, document.getElementById('end').hidden]));

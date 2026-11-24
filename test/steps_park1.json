@@ -1,0 +1,15 @@
+[{"eval":"window.__bn.startChapter('park')","wait":6000},
+ {"eval":"(()=>{const b=window.__bn; return [b.info().state, b.info().lv, b.leader.pos.toArray().map(v=>+v.toFixed(0)), b.PK.dogs.length, b.PK.owners.length]})()"},
+ {"eval":"(()=>{const b=window.__bn; b.step(120); return [b.info().state, b.info().lv, b.quest, b.leader.pos.toArray().map(v=>+v.toFixed(0)), b.PK.dogs.map(d=>d.mode+':'+d.pos.x.toFixed(0)+','+d.pos.z.toFixed(0)), b.PK.jog.H.pos.toArray().map(v=>+v.toFixed(0)), b.PK.sk.x.toFixed(0)]})()"},
+ {"frame":1,"shot":"park_gate"},
+ {"eval":"(()=>{const b=window.__bn; const w=b.WARPS.find(w=>w[1]==='公園廣場'); b.testWarp(w); b.step(30); return [b.info().lv, b.quest, b.leader.pos.toArray().map(v=>+v.toFixed(0))]})()"},
+ {"frame":1,"shot":"park_plaza"},
+ {"eval":"(()=>{const b=window.__bn; const w=b.WARPS.find(w=>w[1]==='沙池'); b.testWarp(w); b.step(30); return [b.info().lv, b.quest, b.leader.pos.toArray().map(v=>+v.toFixed(0))]})()"},
+ {"frame":1,"shot":"park_sand"},
+ {"eval":"(()=>{const b=window.__bn; const w=b.WARPS.find(w=>w[1]==='滑梯塔頂'); b.testWarp(w); b.step(30); return [b.info().lv, b.quest, b.leader.pos.toArray().map(v=>+v.toFixed(1)), b.PK.chipOn]})()"},
+ {"frame":1,"shot":"park_deck"},
+ {"eval":"(()=>{const b=window.__bn; const w=b.WARPS.find(w=>w[1]==='滑板場'); b.testWarp(w); b.step(30); return [b.info().lv, b.leader.pos.toArray().map(v=>+v.toFixed(0)), b.PK.sk.mode, b.PK.sk.x.toFixed(0)]})()"},
+ {"frame":1,"shot":"park_skate"},
+ {"eval":"(()=>{const b=window.__bn; const w=b.WARPS.find(w=>w[1]==='狗場閘口'); b.testWarp(w); b.step(30); return [b.info().lv, b.leader.pos.toArray().map(v=>+v.toFixed(0))]})()"},
+ {"frame":1,"shot":"park_dogs"}
+]

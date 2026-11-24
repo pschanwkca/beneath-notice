@@ -10,7 +10,7 @@
 //  facing it.
 // =====================================================================
 const TAKE = { job: null, q: [] };
-const PLACES = ['', '玩具箱', '證物箱', '狗屋', '書枱', '回收桶'];
+const PLACES = ['', '玩具箱', '證物箱', '狗屋', '書枱', '回收桶', '狗玩具桶'];
 function takeEligible(C) {
   const p = C.pos, Z = zoneAt(p, 4), id = Z && Z.id;
   if (id === 'garage' && GS.agent) {
@@ -23,6 +23,8 @@ function takeEligible(C) {
     return null;
   }
   if (id === 'road' && ST.walker && p.z > 640 && p.z < 796 && p.y < GY + 30 && p.x > 1400 && p.x < 3000) return { who: 'walker', place: '回收桶' };
+  // park: the retriever thinks it's a new toy and brings it to the owners' toy bucket (it can't reach the tower deck or the swing bar)
+  if (id === 'park' && PK.dogs[0] && p.y < GY + 24 && p.z < 3700) return { who: 'pdog', place: '狗玩具桶', dog: 0 };
   return null;
 }
 function takeQueue(C) { if (NET.client) return; if (takeEligible(C)) TAKE.q.push(C); }

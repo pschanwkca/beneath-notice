@@ -1,0 +1,13 @@
+[{"eval":"window.__bn.startChapter('park')","wait":6000},
+ {"eval":"(()=>{const b=window.__bn; b.step(240); return b.info().lv})()"},
+ {"eval":"window.__CAMO={p:[1930,160,3440],t:[2150,50,3000]}"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"park_final_play"},
+ {"eval":"window.__CAMO={p:[1760,90,2860],t:[1600,30,2480]}"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"park_final_dogs"},
+ {"eval":"window.__CAMO={p:[2060,70,2330],t:[2060,40,2060]}"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"park_final_plaza"},
+ {"eval":"window.__CAMO={p:[2140,40,2880],t:[2120,60,2960]}"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"park_final_ladder"},
+ {"eval":"(()=>{const b=window.__bn; const w=b.WARPS.find(w=>w[1]==='沙池'); b.testWarp(w); b.step(60*17); const M=b.chars.mole; M.pos.set(1960,-10,3140); M.yaw=Math.PI; M.state='idle'; b.step(5); window.__CAMO={p:[1960,-3.5,3126],t:[1960,-7.5,3140]}; return b.quest})()"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"park_final_mole"}
+]

@@ -296,6 +296,8 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--fain
 .chap i{display:block;width:72px;height:1px;margin:14px auto 0;background:linear-gradient(90deg,transparent,var(--amber),transparent)}
 .pmp{margin-top:22px;padding-top:18px;border-top:1px solid var(--faint);display:grid;gap:12px;justify-items:center}
 .pmp[hidden]{display:none}
+.pmp .row{flex-wrap:wrap;justify-content:center;gap:8px}
+.plog{margin:0;font-size:12px;line-height:1.5;color:var(--dim);text-align:center;max-width:420px}
 #roster,#help,#chaps{z-index:30}
 .cbox{width:min(760px,94vw)}
 .clist{display:grid;grid-template-columns:repeat(auto-fill,minmax(168px,1fr));gap:10px;margin-bottom:6px}
@@ -453,7 +455,7 @@ html.touch .desk{display:none}
 #tbAct,#tbScout{display:none;border-color:rgba(159,216,107,.7);color:#bfe89a}
 #tbAct{right:84px;bottom:84px}
 #tbScout{right:150px;bottom:150px;width:52px;height:52px;font-size:12px}
-.touchui.sq #tbAct,.touchui.cham #tbAct,.touchui.sq #tbScout,.touchui.hog #tbAct,.touchui.rab #tbAct,.touchui.coon #tbAct,.touchui.frog #tbAct,.touchui.frog #tbScout,.touchui.bat #tbAct,.touchui.tort #tbAct{display:block}
+.touchui.sq #tbAct,.touchui.cham #tbAct,.touchui.sq #tbScout,.touchui.hog #tbAct,.touchui.rab #tbAct,.touchui.coon #tbAct,.touchui.frog #tbAct,.touchui.frog #tbScout,.touchui.bat #tbAct,.touchui.tort #tbAct,.touchui.mole #tbAct{display:block}
 #watch{position:fixed;z-index:6;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;transition:opacity .2s;pointer-events:none}
 #watch.on{opacity:1}
 #watch i{display:block;width:0;height:0;border-left:16px solid #ff8f9f;border-top:11px solid transparent;border-bottom:11px solid transparent;filter:drop-shadow(0 0 6px rgba(255,143,159,.8))}
@@ -485,6 +487,7 @@ html.touch .eye{top:6px}
 html.touch .eye svg{width:42px;height:42px}
 html.touch .toast{right:auto;left:50%;top:76px;transform:translate(-50%,-6px);text-align:center}
 html.touch .toast.on{transform:translate(-50%,0)}
+html.touch .unl.on~.toast{top:calc(15% + 86px)}   /* a new-character card and a message at the same time: stack them */
 html.touch .sub{bottom:96px;font-size:15px;max-width:min(560px,60vw)}
 html.touch .hint{left:42%;bottom:60px;font-size:12px;white-space:normal;max-width:40vw;text-align:center}
 html.touch .logo{font-size:clamp(30px,7vw,52px)}
@@ -748,7 +751,8 @@ html.touch .mpchip{bottom:auto;top:62px}
     </div>
     <div class="pmp" id="pauseMP" hidden>
       <div class="code">房號<b id="pauseCode">----</b></div>
-      <div class="row"><button class="ghost small" id="pauseCopy">複製邀請連結</button><button class="ghost small" id="pauseLeave">離開房間，返回主畫面</button></div>
+      <div class="row"><button class="ghost small" id="pauseCopy">複製邀請連結</button><button class="ghost small" id="pauseLog">複製連線紀錄</button><button class="ghost small" id="pauseLeave">離開房間，返回主畫面</button></div>
+      <p class="plog">玩得唔順、斷線或者卡住？撳「複製連線紀錄」，貼畀開發者睇。</p>
     </div>
   </div>
 </div>
