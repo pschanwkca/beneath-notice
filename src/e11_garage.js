@@ -8,6 +8,10 @@
 //  Online: knock the camera off the shelf → open the dog-flap latch → everyone out to the yard.
 // =====================================================================
 const GY = -20; // garage floor
+// outdoors (the yards, the street, the park) is in daylight; the sun hangs high in the south-west of the sky dome
+const DAY = true, SUN = V3(.36, .82, -.44).normalize();
+// where the sun lights a spot from: far along the sun's direction from a target on the ground
+const sunFrom = (tgt, d = 2400) => tgt.clone().addScaledVector(SUN, d);
 const GS = { agent: null, cam: null, camBroken: false, latch: false, flapA: 0, coil: false, dock: false, lights: [], said: {}, mode: 'patrol', node: 0, wait: 0, trackT: 0 };
 function slick() { cols[cols.length - 1].slick = true; }
 function noRay() { cols[cols.length - 1].noRay = true; }

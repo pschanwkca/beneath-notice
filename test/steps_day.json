@@ -1,0 +1,11 @@
+[{"eval":"window.__bn.startChapter('park')","wait":6000},
+ {"eval":"(()=>{const b=window.__bn; b.step(60); return b.info().lv})()"},
+ {"eval":"window.__CAMO={p:[1930,160,3440],t:[2150,50,3000]}"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"day_park_play"},
+ {"eval":"window.__CAMO={p:[1760,90,2860],t:[1600,30,2480]}"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"day_park_dogs"},
+ {"eval":"window.__CAMO={p:[2060,500,1500],t:[2060,0,2600]}"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"day_park_over"},
+ {"eval":"delete window.__CAMO; const b=window.__bn; const w=b.WARPS.find(w=>w[1]==='公園廣場'); b.testWarp(w); b.step(30); 1"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"day_park_play2"}
+]

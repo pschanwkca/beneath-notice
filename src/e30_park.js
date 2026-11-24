@@ -1,12 +1,12 @@
 // =====================================================================
 //  第六章 · 公園（楓林公園） — through the park gate, on the far side of the road
-//  A moonlit park at night. The control chip only charges in moonlight, and the most open spot
+//  A park in the afternoon sun. The control chip only charges in sunlight, and the most open spot
 //  is the top of the playground's slide tower. Between the gate and the tower:
 //   · the dog run, where two dog owners sit chatting while their dogs chase a ball;
 //   · a jogger with a head torch running laps of the loop path;
 //   · a teenager riding the skate ramps (his wheels are as bad as a car's).
-//  Tall grass is the safe way round; under the trees the moonlight can't find you.
-//  Clouds drift over the moon now and then — the chip only charges while the moon is out.
+//  Tall grass is the safe way round; in the trees' shade you're harder to make out.
+//  Clouds drift over the sun now and then — the chip only charges while the sun is out.
 //  On the far side of the park, beyond its back gate, is the school (the next chapter).
 // =====================================================================
 const PK = {
@@ -70,7 +70,7 @@ function parkSoft(p) {
 function buildPark() {
   const K = kitchenMats(), M = MAT;
   if (!ST.sky) buildNightSky();
-  const gr = genGrass(); const grassM = new THREE.MeshStandardMaterial({ ...gr, color: 0xb8c4b0, roughness: .95, normalScale: new THREE.Vector2(.8, .8) });
+  const gr = genGrass(); const grassM = new THREE.MeshStandardMaterial({ ...gr, color: DAY ? 0xd4dcc4 : 0xb8c4b0, roughness: .95, normalScale: new THREE.Vector2(.8, .8) });
   const gv = genGravel(); const gravelM = new THREE.MeshStandardMaterial({ ...gv, roughness: .92 });
   const rb = genRubber(); const rubberM = new THREE.MeshStandardMaterial({ ...rb, roughness: .85, normalScale: new THREE.Vector2(.6, .6) });
   const sd = genSand(); const sandM = new THREE.MeshStandardMaterial({ ...sd, roughness: 1, normalScale: new THREE.Vector2(1.2, 1.2) });
@@ -80,10 +80,11 @@ function buildPark() {
   const metal = new THREE.MeshStandardMaterial({ color: 0x2c3430, metalness: .65, roughness: .45 }), dark = new THREE.MeshStandardMaterial({ color: 0x15171a, metalness: .4, roughness: .5 });
   const red = new THREE.MeshPhysicalMaterial({ color: 0xb8402e, roughness: .38, clearcoat: .6, clearcoatRoughness: .3 }), yellow = new THREE.MeshPhysicalMaterial({ color: 0xe0a83a, roughness: .4, clearcoat: .5 });
   const teal = new THREE.MeshPhysicalMaterial({ color: 0x2f7c86, roughness: .4, clearcoat: .5 }), slideM = new THREE.MeshPhysicalMaterial({ color: 0xd0543a, roughness: .18, clearcoat: 1, clearcoatRoughness: .08 });
-  const trunk = new THREE.MeshStandardMaterial({ color: 0x3a2c22, roughness: .95 }), leafA = new THREE.MeshStandardMaterial({ color: 0x2c4a24, roughness: .9, flatShading: true }), leafB = new THREE.MeshStandardMaterial({ color: 0x3a5224, roughness: .9, flatShading: true });
-  const hedgeM = new THREE.MeshStandardMaterial({ color: 0x22381c, roughness: 1, flatShading: true });
-  const lampHead = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffc887).multiplyScalar(2.3) });
-  LV.add(new THREE.HemisphereLight(0x50608c, 0x161a12, .85));
+  const trunk = new THREE.MeshStandardMaterial({ color: 0x3a2c22, roughness: .95 }), leafA = new THREE.MeshStandardMaterial({ color: DAY ? 0x4f7f3a : 0x2c4a24, roughness: .9, flatShading: true, emissive: DAY ? 0x2a4a1c : 0 }), leafB = new THREE.MeshStandardMaterial({ color: DAY ? 0x6a8a36 : 0x3a5224, roughness: .9, flatShading: true, emissive: DAY ? 0x34481a : 0 });   // (daylight glows through leaves: their shady side is never black)
+  const hedgeM = new THREE.MeshStandardMaterial({ color: DAY ? 0x3a5a2c : 0x22381c, roughness: 1, flatShading: true });
+  const lampHead = DAY ? new THREE.MeshStandardMaterial({ color: 0xe0dcd0, roughness: .25 }) : new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffc887).multiplyScalar(2.3) });
+  LV.add(DAY ? new THREE.HemisphereLight(0xc4dcff, 0x8a9a64, 1.6) : new THREE.HemisphereLight(0x50608c, 0x161a12, .85));
+  const LI = (v) => DAY ? 0 : v;   // the park's lamps are off in daylight
   PK.hard = [];
 
   // ---- the ground ----
@@ -115,20 +116,20 @@ function buildPark() {
   for (const x of [-336, 3496]) cols.push({ t: 'b', x0: x - 3, x1: x + 3, y0: GY, y1: GY + 120, z0: 1664, z1: 3740, slick: true });
   const brick = new THREE.MeshStandardMaterial({ color: 0x7a3e2c, roughness: .9 });
   for (const x of [1990, 2110]) { box(x, x + 20, GY, GY + 190, 3718, 3738, brick, { uv: 40 }); box(x - 3, x + 23, GY + 190, GY + 196, 3715, 3741, conc); mesh(new THREE.SphereGeometry(9, 18, 12), K.bulb, x + 10, GY + 206, 3728, { cast: false }); }
-  const backL = [pointL(0xffd8a0, 9000, 2000, GY + 206, 3728), pointL(0xffd8a0, 9000, 2120, GY + 206, 3728)]; for (const l of backL) PK.lights.push({ p: l.position.clone(), range: 120, I: () => l.intensity });
+  const backL = [pointL(0xffd8a0, LI(9000), 2000, GY + 206, 3728), pointL(0xffd8a0, LI(9000), 2120, GY + 206, 3728)]; for (const l of backL) PK.lights.push({ p: l.position.clone(), range: 120, I: () => l.intensity });
   { const gL = new THREE.Group(); gL.position.set(2010, GY, 3728); gL.rotation.y = 1.3; LV.add(gL); const gR = new THREE.Group(); gR.position.set(2110, GY, 3728); gR.rotation.y = -1.3; LV.add(gR);
     for (const [gg, s] of [[gL, 1], [gR, -1]]) { for (let i = 0; i < 7; i++) mesh(new THREE.BoxGeometry(2, 110, 2), metal, s * (5 + i * 7), 58, 0, { parent: gg }); mesh(new THREE.BoxGeometry(50, 3, 3), metal, s * 26, 108, 0, { parent: gg }); mesh(new THREE.BoxGeometry(50, 3, 3), metal, s * 26, 12, 0, { parent: gg }); } }
 
   // ---- beyond the back gate: a quiet street and the school (next chapter) ----
   box(-340, 3500, GY - 10, GY, 3740, 3900, new THREE.MeshStandardMaterial({ map: MAT.floor.map, color: 0xa8a49c, roughness: .9 }), { uv: 128, cast: false });
   box(-340, 3500, GY - 22, GY - 10, 3900, 4200, new THREE.MeshStandardMaterial({ color: 0x24272b, roughness: .85 }), { col: false, cast: false });
-  { const sx = new THREE.MeshStandardMaterial({ color: 0x8a4a34, roughness: .9 }), win = new THREE.MeshStandardMaterial({ color: 0x241a10, emissive: 0xffc070, emissiveIntensity: .7, roughness: .3 }), wo = new THREE.MeshStandardMaterial({ color: 0x0c1016, roughness: .1, metalness: .3 });
+  { const sx = new THREE.MeshStandardMaterial({ color: 0x8a4a34, roughness: .9 }), win = DAY ? new THREE.MeshPhysicalMaterial({ color: 0x6a7c90, roughness: .05, metalness: .2, clearcoat: 1 }) : new THREE.MeshStandardMaterial({ color: 0x241a10, emissive: 0xffc070, emissiveIntensity: .7, roughness: .3 }), wo = DAY ? new THREE.MeshPhysicalMaterial({ color: 0x4e6074, roughness: .05, metalness: .2, clearcoat: 1 }) : new THREE.MeshStandardMaterial({ color: 0x0c1016, roughness: .1, metalness: .3 });
     box(900, 3300, GY - 10, GY + 760, 4260, 4400, sx, { col: false, uv: 120 }); box(890, 3310, GY + 760, GY + 784, 4250, 4410, conc, { col: false });
     for (let row = 0; row < 3; row++) for (let x = 980; x < 3240; x += 170) { const lit = hashI(row * 31 + x) > .82; box(x, x + 110, GY + 90 + row * 230, GY + 230 + row * 230, 4258, 4260, lit ? win : wo, { col: false, cast: false }); box(x - 4, x + 114, GY + 86 + row * 230, GY + 90 + row * 230, 4256, 4260, conc, { col: false }); }
     const sg = mesh(new THREE.PlaneGeometry(420, 105), new THREE.MeshStandardMaterial({ map: schoolSignTex(), roughness: .6, emissive: 0x444038, emissiveMap: null }), 2100, GY + 700, 4257, { cast: false }); sg.rotation.y = Math.PI;
-    PK.schoolL = pointL(0xffe0b0, 60000, 2100, GY + 560, 4120); }
+    PK.schoolL = pointL(0xffe0b0, LI(60000), 2100, GY + 560, 4120); }
 
-  // ---- big trees: their crowns throw moon-shade ----
+  // ---- big trees: their crowns throw shade ----
   const tree = (x, z, s, leaf) => { cyl(x, z, 18 * s, GY, GY + 330 * s, trunk, { seg: 14 }); for (const [dx, dz] of [[1, .2], [-.8, .6], [.2, -1]]) cyl(x + dx * 50 * s, z + dz * 50 * s, 6 * s, GY + 240 * s, GY + 300 * s, trunk, { seg: 8, col: false });
     for (let i = 0; i < 6; i++) { const m = mesh(new THREE.IcosahedronGeometry(R(90, 130) * s, 1), leaf, x + R(-80, 80) * s, GY + R(330, 470) * s, z + R(-80, 80) * s); m.rotation.set(R(0, 3), R(0, 3), 0); }
     PK.shade.push({ x: x + 25 * s, z: z - 40 * s, r: 150 * s }); };
@@ -159,7 +160,7 @@ function buildPark() {
 
   // ---- lamps along the loop ----
   const lamp = (x, z) => { cyl(x, z, 5, GY, GY + 420, metal, { seg: 14 }); cyl(x, z, 9, GY, GY + 12, metal, { seg: 14 }); mesh(new THREE.CylinderGeometry(14, 9, 22, 6), dark, x, GY + 428, z, { cast: false }); mesh(new THREE.CylinderGeometry(11, 7, 18, 6), lampHead, x, GY + 426, z, { cast: false }); mesh(new THREE.ConeGeometry(18, 12, 6), dark, x, GY + 445, z, { cast: false });
-    const l = pointL(0xffb873, 120000, x, GY + 420, z); PK.lights.push({ p: V3(x, GY + 420, z), range: 380, I: () => l.intensity }); return l; };
+    const l = pointL(0xffb873, LI(120000), x, GY + 420, z); PK.lights.push({ p: V3(x, GY + 420, z), range: 380, I: () => l.intensity }); return l; };
   { const L = PK.loop; for (const a of [.35, 1.2, 2.05, 2.9, 3.6, 4.4, 5.2, 5.95]) lamp(L.cx + Math.sin(a) * (L.rx + 46), L.cz - Math.cos(a) * (L.rz + 46)); lamp(2110, 1760); lamp(2005, 3560); }
 
   // ---- benches along the loop ----
@@ -175,10 +176,11 @@ function buildPark() {
   buildSkate(conc, metal, red);
   buildPlayground({ cedar, red, yellow, teal, slideM, metal, rubberM, sandM, benchW });
 
-  // ---- the moon: one big, soft, shadow-casting light from where the moon hangs in the sky ----
-  { const tgt = V3(2120, GY, 2900), from = tgt.clone().addScaledVector(PK.moon, 2300); PK.moonL = spotL(0x9fb4ff, 16000000, from, tgt, .46, .8, 2048, 1200, 3600); PK.moonL.userData.prio = 1; PK.moonL.shadow.bias = -.0008; PK.moonI = PK.moonL.intensity; }
-  // a cloud that drifts across the moon now and then (part of the sky, so it follows the camera)
-  { const keep = LV; LV = ST.sky; const cm = new THREE.MeshBasicMaterial({ map: cloudTex(), transparent: true, depthWrite: false, fog: false, opacity: 0 }); PK.cloudM = cm; PK.cloudMesh = mesh(new THREE.PlaneGeometry(560, 240), cm, 2100 + 700 * .96, 1150 * .96, 800 - 1250 * .96, { cast: false }); PK.cloudMesh.lookAt(2100, 0, 800); PK.cloudMesh.visible = false; LV = keep; }
+  // ---- the sun (or the moon, at night): one big, soft, shadow-casting light from where it hangs in the sky ----
+  { const tgt = V3(2120, GY, 2900), from = DAY ? sunFrom(tgt) : tgt.clone().addScaledVector(PK.moon, 2300); PK.moonL = DAY ? spotL(0xfff0dc, 26000000, from, tgt, .5, .55, 2048, 1200, 3800) : spotL(0x9fb4ff, 16000000, from, tgt, .46, .8, 2048, 1200, 3600); PK.moonL.userData.prio = 1; PK.moonL.shadow.bias = -.0008; PK.moonI = PK.moonL.intensity; }
+  // a cloud that drifts across the sun now and then (part of the sky, so it follows the camera)
+  { const keep = LV; LV = ST.sky; const cm = new THREE.MeshBasicMaterial({ map: DAY ? dayCloudTex(7) : cloudTex(), transparent: true, depthWrite: false, fog: false, opacity: 0 }); PK.cloudM = cm; PK.cloudC = PK.cloudC || V3(2100, 0, 800).addScaledVector(DAY ? SUN : V3(700, 1150, -1250).normalize(), 1730);
+    PK.cloudMesh = mesh(new THREE.PlaneGeometry(DAY ? 640 : 560, DAY ? 300 : 240), cm, PK.cloudC.x, PK.cloudC.y, PK.cloudC.z, { cast: false }); PK.cloudMesh.lookAt(2100, 0, 800); PK.cloudMesh.visible = false; LV = keep; }
 
   // pickups
   addCrumb(1640, GY, 2050); addCrumb(2460, GY, 3120); addCrumb(2060, GY + 44, 2148); addVial(1210, GY, 3460);
@@ -219,7 +221,7 @@ function buildDogRun(benchW, metal, conc) {
     PK.bucket = V3(bx, GY + 15, bz); }
   // lamp on a pole in the corner of the run
   { cyl(Rn.x0 + 20, Rn.z0 + 20, 5, GY, GY + 380, metal, { seg: 12 }); mesh(new THREE.BoxGeometry(30, 10, 18), new THREE.MeshStandardMaterial({ color: 0x2a2e32, roughness: .5 }), Rn.x0 + 34, GY + 382, Rn.z0 + 26, { cast: false });
-    const l = spotL(0xffd2a0, 260000, V3(Rn.x0 + 34, GY + 376, Rn.z0 + 28), V3(1620, GY, 2620), .78, .7, 1024, 20, 900); PK.lights.push({ p: l.position.clone(), dir: V3().subVectors(V3(1620, GY, 2620), l.position).normalize(), cos: Math.cos(.78), range: 800, I: () => l.intensity }); }
+    const l = spotL(0xffd2a0, DAY ? 0 : 260000, V3(Rn.x0 + 34, GY + 376, Rn.z0 + 28), V3(1620, GY, 2620), .78, .7, 1024, 20, 900); PK.lights.push({ p: l.position.clone(), dir: V3().subVectors(V3(1620, GY, 2620), l.position).normalize(), cos: Math.cos(.78), range: 800, I: () => l.intensity }); }
   PK.hard.push(p => p.x > Rn.x0 - 4 && p.x < Rn.x1 + 4 && p.z > Rn.z0 - 4 && p.z < Rn.z0 + 40 && p.x > PK.bench.x - 90 && p.x < PK.bench.x + 90);
 }
 
@@ -247,8 +249,8 @@ function buildSkate(conc, metal, red) {
   { const [c, x] = cnv(256, 64); x.clearRect(0, 0, 256, 64); x.font = '900 44px "Fredoka", sans-serif'; x.lineWidth = 6; x.strokeStyle = 'rgba(30,30,40,.9)'; x.strokeText('MGP', 60, 48); x.fillStyle = '#e85ab0'; x.fillText('MGP', 60, 48); x.fillStyle = '#4ad8e8'; x.fillText('★', 180, 46);
     const m = mesh(new THREE.PlaneGeometry(120, 30), new THREE.MeshStandardMaterial({ map: tex(c), transparent: true, roughness: .8 }), 2540, GY + 17, 2439.4, { cast: false }); m.rotation.y = Math.PI; }
   // flood light for the skate area
-  { cyl(S.x1 + 30, S.z0 - 20, 6, GY, GY + 520, metal, { seg: 12 }); const l = spotL(0xe8f0ff, 380000, V3(S.x1 + 10, GY + 510, S.z0), V3(2540, GY, 2560), .7, .6, 1024, 30, 1000); PK.skL = l; PK.lights.push({ p: l.position.clone(), dir: V3().subVectors(V3(2540, GY, 2560), l.position).normalize(), cos: Math.cos(.7), range: 900, I: () => l.intensity });
-    mesh(new THREE.BoxGeometry(40, 16, 6), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xeef4ff).multiplyScalar(2) }), S.x1 + 14, GY + 512, S.z0 + 2, { cast: false }); }
+  { cyl(S.x1 + 30, S.z0 - 20, 6, GY, GY + 520, metal, { seg: 12 }); const l = spotL(0xe8f0ff, DAY ? 0 : 380000, V3(S.x1 + 10, GY + 510, S.z0), V3(2540, GY, 2560), .7, .6, 1024, 30, 1000); PK.skL = l; PK.lights.push({ p: l.position.clone(), dir: V3().subVectors(V3(2540, GY, 2560), l.position).normalize(), cos: Math.cos(.7), range: 900, I: () => l.intensity });
+    mesh(new THREE.BoxGeometry(40, 16, 6), DAY ? new THREE.MeshStandardMaterial({ color: 0xd8dde4, roughness: .3 }) : new THREE.MeshBasicMaterial({ color: new THREE.Color(0xeef4ff).multiplyScalar(2) }), S.x1 + 14, GY + 512, S.z0 + 2, { cast: false }); }
 }
 
 // ---------- the playground ----------
@@ -268,7 +270,7 @@ function buildPlayground(Mt) {
   box(X1 - 3, X1, top, top + 40, Z0, SLIDE.z0, Mt.teal, { uv: 30 }); box(X1 - 3, X1, top, top + 40, SLIDE.z1, Z1, Mt.teal, { uv: 30 });
   // round porthole cut-outs on the south panel (decals)
   for (const x of [T0.x - 20, T0.x + 20]) { const m = mesh(new THREE.CircleGeometry(9, 24), new THREE.MeshStandardMaterial({ color: 0x14302f, roughness: .6 }), x, top + 22, Z1 + .2, { cast: false }); }
-  // the roof frame (open — the moon shines straight onto the deck), with a flag
+  // the roof frame (open — the sun shines straight onto the deck), with a flag
   for (const [xa, za, xb, zb] of [[X0, Z0, X1, Z0], [X0, Z1, X1, Z1]]) { const b = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.4, 90, 10), Mt.yellow); b.rotation.z = Math.PI / 2; b.position.set(T0.x, top + 70, za); b.castShadow = true; LV.add(b); }
   { cyl(X1, Z0, 1.6, top + 70, top + 150, MAT.steel, { seg: 8, col: false }); const fl = new THREE.Mesh(new THREE.PlaneGeometry(36, 22, 8, 1), new THREE.MeshStandardMaterial({ color: 0xe0a83a, roughness: .7, side: THREE.DoubleSide })); fl.position.set(X1 + 18, top + 138, Z0); LV.add(fl); PK.flag = fl; }
   // ladder on the north side: two rails and rungs (climbable — it's a wall to a 5 cm hero)
@@ -325,8 +327,8 @@ function buildPlayground(Mt) {
     for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(1.6, 10, 8), MAT.black); e.position.set(s * 6.4, 33, 21); d.add(e); const hd = new THREE.Mesh(new THREE.CylinderGeometry(1.2, 1.2, 16, 8), MAT.steel); hd.rotation.z = Math.PI / 2; hd.position.set(0, 34, 12); d.add(hd); }
     cols.push({ t: 'c', x, z, r: 17, y0: GY, y1: GY + 56 }); }
   // a lamp over the playground (warm, shadowed)
-  { cyl(2440, 2830, 5, GY, GY + 440, MAT.dsteel, { seg: 12 }); box(2380, 2444, GY + 436, GY + 442, 2826, 2834, MAT.dsteel, { col: false }); mesh(new THREE.CylinderGeometry(12, 8, 10, 12), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffcf90).multiplyScalar(2.2) }), 2384, GY + 432, 2830, { cast: false });
-    const l = spotL(0xffc890, 200000, V3(2384, GY + 428, 2830), V3(2300, GY, 3060), .82, .75, 1024, 20, 800); PK.lights.push({ p: l.position.clone(), dir: V3().subVectors(V3(2300, GY, 3060), l.position).normalize(), cos: Math.cos(.82), range: 700, I: () => l.intensity }); }
+  { cyl(2440, 2830, 5, GY, GY + 440, MAT.dsteel, { seg: 12 }); box(2380, 2444, GY + 436, GY + 442, 2826, 2834, MAT.dsteel, { col: false }); mesh(new THREE.CylinderGeometry(12, 8, 10, 12), DAY ? new THREE.MeshStandardMaterial({ color: 0xe0dcd0, roughness: .25 }) : new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffcf90).multiplyScalar(2.2) }), 2384, GY + 432, 2830, { cast: false });
+    const l = spotL(0xffc890, DAY ? 0 : 200000, V3(2384, GY + 428, 2830), V3(2300, GY, 3060), .82, .75, 1024, 20, 800); PK.lights.push({ p: l.position.clone(), dir: V3().subVectors(V3(2300, GY, 3060), l.position).normalize(), cos: Math.cos(.82), range: 700, I: () => l.intensity }); }
   // where the chip sits to charge (a little glow while it does)
   { const g = new THREE.Group(); g.position.copy(PK.chipP); LV.add(g); g.visible = false; PK.chipG = g;
     const pcb = new THREE.Mesh(new THREE.BoxGeometry(5, .6, 4), new THREE.MeshStandardMaterial({ color: 0x1f6a3a, roughness: .4, metalness: .2 })); g.add(pcb); const ic = new THREE.Mesh(new THREE.BoxGeometry(2.4, .6, 2.4), MAT.black); ic.position.y = .5; g.add(ic);
@@ -360,10 +362,12 @@ function buildParkPeople() {
   // a jogger with a head torch, running laps of the loop path
   { const vest = new THREE.MeshPhysicalMaterial({ color: 0xc8f040, roughness: .45, sheen: .4, sheenColor: 0xf0ffa0, emissive: 0x1a2408 });
     const H = buildHuman({ pants: pants(0x16181c), top: vest, skin: MAT.skin, shoe: shoe(0xf06a3a), hair: 0x2a1a10, cap: new THREE.MeshStandardMaterial({ color: 0x1a1c22, roughness: .7 }) });
-    H.root.visible = true; const lampM = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xf4f8ff).multiplyScalar(3) }); const hl = new THREE.Mesh(new THREE.BoxGeometry(4, 3, 2), lampM); hl.position.set(0, 4, 10.4); H.head.add(hl);
+    H.root.visible = true;
+    if (DAY) { for (const sx of [-4, 4]) { const g = new THREE.Mesh(new THREE.SphereGeometry(2.6, 14, 10), new THREE.MeshPhysicalMaterial({ color: 0x101418, roughness: .05, metalness: .6, clearcoat: 1 })); g.scale.set(1, .7, .4); g.position.set(sx, 3.4, 10.2); H.head.add(g); } }   // sunglasses
+    else { const lampM = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xf4f8ff).multiplyScalar(3) }); const hl = new THREE.Mesh(new THREE.BoxGeometry(4, 3, 2), lampM); hl.position.set(0, 4, 10.4); H.head.add(hl); }
     const strap = new THREE.Mesh(new THREE.TorusGeometry(10.2, .7, 6, 28), MAT.black); strap.rotation.x = Math.PI / 2 - .2; strap.position.y = 4; H.head.add(strap);
     // the torch's light lives in the park's own light list (the light pool lends it a real light when it matters); it follows his head each frame
-    const lt = new THREE.SpotLight(0xeef4ff, 90000, 0, .42, .5, 2); LV.add(lt, lt.target); const hp = new THREE.Object3D(); hp.position.set(0, 4, 12); H.head.add(hp); const tg = new THREE.Object3D(); tg.position.set(0, -30, 120); H.head.add(tg);
+    const lt = new THREE.SpotLight(0xeef4ff, DAY ? 0 : 90000, 0, .42, .5, 2); LV.add(lt, lt.target); const hp = new THREE.Object3D(); hp.position.set(0, 4, 12); H.head.add(hp); const tg = new THREE.Object3D(); tg.position.set(0, -30, 120); H.head.add(tg);
     const J = { H, a: 0, v: 300, mode: 'run', t: 0, laps: 0, lamp: lt, lampAt: hp, lampTo: tg, ent: { p: V3(), dir: V3(), cos: Math.cos(.42), range: 420, I: () => lt.intensity } }; PK.lights.push(J.ent);
     const L = PK.loop; H.pos.set(L.cx, GY, L.cz - L.rz); npcHome(H.root, H.pos, 0, 'park'); PK.jog = J; }
   // a teenager on the skate ramps
@@ -538,17 +542,17 @@ function pdogTake(J, D, dt) {
 //  rules of the park
 // =====================================================================
 const PQ_SP = [
-  { t: '穿過公園，去遊樂場', s: '晶片要在月光底下才會充電，遊樂場的滑梯塔最開揚。狗、跑步的人都會看到你——長草可以躲，樹蔭下月光照不到' },
+  { t: '穿過公園，去遊樂場', s: '晶片要在陽光底下才會充電，遊樂場的滑梯塔最開揚。狗、跑步的人都會看到你——長草可以躲，樹蔭下比較難被看見' },
   { t: '沙池裡面有東西在動', s: '去沙池看看' },
-  { t: '爬上滑梯塔頂', s: '北面有梯，西面有攀網。塔頂沒有屋頂，月光直接照下來' },
-  { t: '守住晶片，等它充滿電', s: '雲遮住月亮時會停。不要被看見' },
+  { t: '爬上滑梯塔頂', s: '北面有梯，西面有攀網。塔頂沒有屋頂，陽光直接照下來' },
+  { t: '守住晶片，等它充滿電', s: '雲遮住太陽時會停。不要被看見' },
   { t: '拿回晶片', s: '晶片充滿電了，在塔頂' },
   { t: '從公園後門出去', s: '後門在遊樂場南面' }
 ];
 const MP_PARK_Q = [
-  { t: '全隊到遊樂場', s: '晶片要在月光底下充電。狗場的狗會吠，跑步的人會看到你——長草可以躲，樹蔭下月光照不到' },
+  { t: '全隊到遊樂場', s: '晶片要在陽光底下充電。狗場的狗會吠，跑步的人會看到你——長草可以躲，樹蔭下比較難被看見' },
   { t: '爬上滑梯塔頂放下晶片', s: '北面有梯，西面有攀網。疊羅漢、跳跳跳上去都得' },
-  { t: '守住晶片，等它充滿電', s: '雲遮住月亮時會停。全隊不要被看見——小狗豆腐走出了狗場' },
+  { t: '守住晶片，等它充滿電', s: '雲遮住太陽時會停。全隊不要被看見——小狗豆腐走出了狗場' },
   { t: '拿回晶片', s: '晶片充滿電了，在塔頂' },
   { t: '全隊從公園後門出去', s: '後門在遊樂場南面，所有玩家都要出去' }
 ];
@@ -558,9 +562,9 @@ const inPlay = p => { const P = PK.play; return p.x > P.x0 && p.x < P.x1 && p.z 
 const onDeck = C => Math.abs(C.pos.x - PK.tower.x) < 46 && Math.abs(C.pos.z - PK.tower.z) < 46 && C.pos.y > PK.plat - 3 && C.pos.y < PK.plat + 30;
 const outBack = C => C.pos.z > 3734 && Math.abs(C.pos.x - 2060) < 300;
 
-// moonlight: open sky unless under a tree's crown or the tower's deck
+// out in the open (sun or moon) unless under a tree's crown or the tower's deck
 function moonShade(p) { for (const s of PK.shade) { if (s.below != null && p.y > s.below) continue; if (Math.hypot(p.x - s.x, p.z - s.z) < s.r) return true; } return false; }
-function parkLit(p) { const cover = PK.cloud; const dark = moonShade(p) ? .28 : .3 + .3 * (1 - cover); return litAtList(p, PK.lights, dark); }
+function parkLit(p) { const cover = PK.cloud; const dark = DAY ? (moonShade(p) ? .48 : .64 + .18 * (1 - cover)) : (moonShade(p) ? .28 : .3 + .3 * (1 - cover)); return litAtList(p, PK.lights, dark); }
 
 function detectPark(dt) {
   if (STATE !== 'play') return; if (window.__NODET) { meter = 0; return; } if (TOY.grace > 0) { meter = Math.max(0, meter - dt * .5); return; }
@@ -615,11 +619,11 @@ function slideTick(dt) {
     if (!C.sliding && C.vel.x > 30) { C.sliding = true; if (C === leader) { tone(500, 900, .5, .05, 'sine'); if (!PK.said.slide) { PK.said.slide = 1; toast('嘩——滑梯！', 2); } } }
   }
 }
-// the cloud that drifts across the moon (host decides when; everyone draws it)
+// the cloud that drifts across the sun (host decides when; everyone draws it)
 function cloudTick(dt) {
   if (!NET.client) { if (PK.cloudOn) { PK.cloudP += dt / 16; if (PK.cloudP >= 1) { PK.cloudOn = false; PK.cloudT = R(26, 40); } } else if ((PK.cloudT -= dt) <= 0) { PK.cloudOn = true; PK.cloudP = 0; } }
   const pp = PK.cloudOn ? PK.cloudP : 1; PK.cloud = PK.cloudOn ? clamp(1.25 - Math.abs(pp - .5) * 3.2, 0, 1) : 0;
-  if (PK.cloudMesh) { const off = (pp - .5) * 1100; PK.cloudMesh.visible = PK.cloudOn; PK.cloudMesh.position.set(2100 + 700 * .96 + off * .87, 1150 * .96 + off * .12, 800 - 1250 * .96 + off * .48); PK.cloudM.opacity = clamp(1 - Math.abs(pp - .5) * 2, 0, 1) * .95; }
+  if (PK.cloudMesh) { const off = (pp - .5) * 1100; PK.cloudMesh.visible = PK.cloudOn; const sd = V3(-PK.cloudC.z + 800, 0, PK.cloudC.x - 2100).normalize(); PK.cloudMesh.position.set(PK.cloudC.x + sd.x * off, PK.cloudC.y + off * .06, PK.cloudC.z + sd.z * off); PK.cloudM.opacity = clamp(1 - Math.abs(pp - .5) * 2, 0, 1) * .95; }
   if (PK.moonL) PK.moonL.intensity = PK.moonI * (1 - .8 * PK.cloud);
 }
 // the chip charging on the tower deck
@@ -629,15 +633,15 @@ function chipTick(dt) {
   if (NET.client || STATE !== 'play') return;
   if (PK.chipOn && !PK.charged) {
     const was = PK.chip; if (PK.cloud < .45) PK.chip = Math.min(1, PK.chip + dt / 45);
-    if (PK.cloud >= .45 && !PK.said.cloud) { PK.said.cloud = 1; toastW('雲遮住了月亮——晶片暫停充電', 2.6); }
+    if (PK.cloud >= .45 && !PK.said.cloud) { PK.said.cloud = 1; toastW('雲遮住了太陽——晶片暫停充電', 2.6); }
     if (was < .5 && PK.chip >= .5) toastW('晶片充了一半……', 2);
     if (PK.chip >= 1) { PK.charged = true; tone(660, 990, .4, .08, 'triangle'); tone(990, 1320, .5, .06, 'triangle', .2); toastW('晶片充滿電了！', 2.8); }
   }
 }
 function chipPlace(C) {
   if (PK.chipOn) return; PK.chipOn = true; PK.chip = 0; PK.cloudT = Math.min(PK.cloudT, 14);
-  tone(880, 880, .08, .06, 'square'); toastW(`${C ? C.S.name : '你'}把晶片放在月光底下……開始充電`, 3);
-  if (!NET.on) say('爸爸', '月光……好像真的有反應。等它充滿——不要被人看見。', '#f5f0e6', 3.4);
+  tone(880, 880, .08, .06, 'square'); toastW(`${C ? C.S.name : '你'}把晶片放在陽光底下……開始充電`, 3);
+  if (!NET.on) say('爸爸', '陽光……好像真的有反應。等它充滿——不要被人看見。', '#f5f0e6', 3.4);
   // the little terrier slips out of the dog run and comes sniffing round the playground
   const D = PK.dogs[1]; if (D) setTimeout(() => { if (STATE !== 'play' || !PK.chipOn || PK.charged) return; D.mode = 'out'; D.leg = 0; D.t = 0; D.target = null; sayW(PK.owners[0].name, '豆腐？豆腐！又走出去……', PK.owners[0].col, 2.8); }, 6000);
 }
@@ -648,7 +652,7 @@ function chipTake(C) {
 
 function updParkWorld(dt) {
   PK.near = !!(ZONES.park && ZONES.park.near);
-  if (ST.sky && ST.sky.visible) ST.sky.position.set(camera.position.x - 2100, 0, camera.position.z - 800);   // the sky dome (moon, stars, cloud) stays round the camera
+  if (ST.sky && ST.sky.visible) ST.sky.position.set(camera.position.x - 2100, 0, camera.position.z - 800);   // the sky dome (sun, clouds) stays round the camera
   if (!PK.near && !NET.on) return;
   cloudTick(dt); chipTick(dt); slideTick(dt);
   if (PK.swings) for (const S of PK.swings) S.piv.rotation.z = Math.sin(T * 1.3 + S.ph) * S.amp;
@@ -668,13 +672,13 @@ function parkNPC(dt) {
 }
 
 LEVELS.park = {
-  chapter: '第六章', title: '公園', mpChapter: '第五章（多人）', env: 'park', envI: .5, fog: [0x0c1420, .00032], expo: 1.35,
+  chapter: '第六章', title: '公園', mpChapter: '第五章（多人）', env: 'park', envI: DAY ? 1 : .5, fog: DAY ? [0xbcd0e2, .00014] : [0x0c1420, .00032], expo: DAY ? .95 : 1.35,
   dust: { N: 700, box: [1700, 2500, GY, 300, 2700, 3300], beamFrac: .0, door: false },
   toys: true, npcNear: true, build: buildPark,
   cps: [[2060, GY, 1760], [1880, GY, 2300], [2060, GY, 2760], [2120, GY + 121, 2990], [2060, GY, 3560]],
   quests: PQ_SP,
   spawn() { if (!NET.on) { crewJoin('bat', true); crewJoin('tort', true); } spawnSP(this.cps[0], Math.PI, 5); if (!GS.latch) GS.latch = true; if (!LIV.ventOpen) { LIV.ventOpen = true; LIV.ventCol.y0 = -999; LIV.ventCol.y1 = -998; } YS.chip = true; if (YS.chipM) { YS.chipM.visible = false; YS.chipHalo.visible = false; } ST.won = true; parkPrep(); },
-  enter(prev, again) { if (!again && !NET.on && prev === 'road' && STATE === 'play') unlockKey('ch5'); if (again || NET.on) return; setTimeout(() => say('爸爸', '這裡就是楓林公園……晶片要在月光底下才會充電。找個最高、最開揚的地方。', '#f5f0e6', 4), 1400); },
+  enter(prev, again) { if (!again && !NET.on && prev === 'road' && STATE === 'play') unlockKey('ch5'); if (again || NET.on) return; setTimeout(() => say('爸爸', '這裡就是楓林公園……晶片要在陽光底下才會充電。找個最高、最開揚的地方。', '#f5f0e6', 4), 1400); },
   npc(dt) { if (STATE === 'play' || STATE === 'fail' || STATE === 'frozen' || STATE === 'end') parkNPC(dt); },
   detect: detectPark, hear: parkHear, seen: parkSeen,
   update(dt) {
@@ -691,12 +695,12 @@ LEVELS.park = {
     if (quest === 0) return V3(2060, GY + 4, 2830); if (quest === 1) return V3((PK.sand.x0 + PK.sand.x1) / 2, GY + 14, (PK.sand.z0 + PK.sand.z1) / 2);
     if (quest === 2) return onDeck(L) ? null : V3(PK.tower.x, PK.plat + 4, PK.tower.z); if (quest === 3) return null; if (quest === 4) return PK.chipP.clone().add(V3(0, 4, 0)); return V3(2060, GY + 4, 3740); },
   reset() { parkPrep(true); },
-  eyeText: () => meter > .3 ? '被看見了！' : PK.cloud > .45 ? '雲遮住了月亮' : '狗主、跑步的人、滑板少年',
+  eyeText: () => meter > .3 ? '被看見了！' : PK.cloud > .45 ? '雲遮住了太陽' : '狗主、跑步的人、滑板少年',
   hint(L) {
-    if (PK.chipOn && !PK.charged) return PK.cloud >= .45 ? `晶片 ${Math.floor(PK.chip * 100)}%——雲遮住了月亮，等一等` : `晶片充電中 ${Math.floor(PK.chip * 100)}%`;
+    if (PK.chipOn && !PK.charged) return PK.cloud >= .45 ? `晶片 ${Math.floor(PK.chip * 100)}%——雲遮住了太陽，等一等` : `晶片充電中 ${Math.floor(PK.chip * 100)}%`;
     if (L.sliding) return '';
     if (inGrass(L.pos)) return '長草裡面——很難被看見';
-    if (moonShade(L.pos) && L.pos.y < GY + 30) return '樹蔭底下——月光照不到你';
+    if (moonShade(L.pos) && L.pos.y < GY + 30) return '樹蔭底下——比較難被看見';
     return '';
   },
   onSwitch() { }
@@ -711,7 +715,7 @@ function parkPrep(soft) {
 function parkWin() {
   if (STATE !== 'play') return; unlockKey('ch6');
   say('爸爸', '晶片充滿了……我們走。', '#f5f0e6', 3);
-  END_TXT = ['第六章 · 完', '公園', '晶片在月光底下充滿了電。公園後門對面，就是楓林小學。（第七章：學校，製作中）'];
+  END_TXT = ['第六章 · 完', '公園', '晶片在陽光底下充滿了電。公園後門對面，就是楓林小學。（第七章：學校，製作中）'];
   STATE = 'end'; endT = 0;
 }
 // online: the park part of the shared objective list
@@ -720,7 +724,7 @@ function mpParkObjectives(P) {
   if (quest === MPQ_PARK + 1 && PK.chipOn) setQuest(MPQ_PARK + 2);
   if (quest === MPQ_PARK + 2 && PK.charged) setQuest(MPQ_PARK + 3);
   if (quest === MPQ_PARK + 3 && PK.chipGot) setQuest(MPQ_PARK + 4);
-  if (quest === MPQ_PARK + 4 && P.every(outBack) && STATE === 'play') { STATE = 'end'; endT = 0; END_TXT = ['第五章（多人）· 完', '公園', '晶片在月光底下充滿了電。公園後門對面，就是楓林小學。（下一章：學校，製作中）']; nsend({ t: 'end', e: END_TXT }); }
+  if (quest === MPQ_PARK + 4 && P.every(outBack) && STATE === 'play') { STATE = 'end'; endT = 0; END_TXT = ['第五章（多人）· 完', '公園', '晶片在陽光底下充滿了電。公園後門對面，就是楓林小學。（下一章：學校，製作中）']; nsend({ t: 'end', e: END_TXT }); }
 }
 function mpParkMarker() {
   const L = leader, q = quest - MPQ_PARK;

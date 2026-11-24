@@ -14,9 +14,36 @@ function genGrass() {
   return { map: tex(c), normalMap: normalTex(h, W, W, 2.2) };
 }
 function genSoil() { const W = 256, n = noiseField(W, W, 4, 8, 511); const c = fromFn(W, W, (x, y, i, o) => { const v = .6 + (n[i] - .5) * .4 + (hashI(i) > .97 ? .2 : 0); o[0] = 88 * v; o[1] = 62 * v; o[2] = 44 * v; }); return tex(c); }
-// night sky: gradient dome, stars, the moon
+// the sky dome. Daylight: a blue gradient with a haze at the horizon, the sun and its glow, soft clouds.
+// (DAY = false: the old night sky — gradient, stars and the moon.)
+function dayCloudTex(seed) {
+  const [c, x] = cnv(256, 128); x.clearRect(0, 0, 256, 128); let r = seed * 9301 + 49297; const rn = () => ((r = (r * 9301 + 49297) % 233280) / 233280);
+  for (let i = 0; i < 14; i++) { const gx = 40 + rn() * 176, gy = 52 + rn() * 34 - (Math.abs(gx - 128) < 60 ? 14 : 0), rr = 20 + rn() * 30; const h = x.createRadialGradient(gx, gy - rr * .3, 2, gx, gy, rr);
+    h.addColorStop(0, 'rgba(255,255,255,.95)'); h.addColorStop(.6, 'rgba(240,244,250,.7)'); h.addColorStop(1, 'rgba(220,228,240,0)'); x.fillStyle = h; x.fillRect(0, 0, 256, 128); }
+  // flat, slightly grey underside
+  const g = x.createLinearGradient(0, 70, 0, 110); g.addColorStop(0, 'rgba(180,190,210,0)'); g.addColorStop(1, 'rgba(170,182,204,.35)'); x.globalCompositeOperation = 'source-atop'; x.fillStyle = g; x.fillRect(0, 0, 256, 128);
+  return tex(c);
+}
 function buildSky(cx, cz) {
   const g = new THREE.SphereGeometry(1900, 48, 24);
+  if (DAY) {
+    const sd = SUN.clone();
+    const m = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: { sun: { value: sd } },
+      vertexShader: `varying vec3 vP; void main(){ vP=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
+      fragmentShader: `uniform vec3 sun; varying vec3 vP; void main(){ float y=vP.y; vec3 zen=vec3(.14,.33,.72), mid=vec3(.3,.52,.86), hor=vec3(.6,.74,.9), gnd=vec3(.42,.46,.44);
+        vec3 c=mix(hor,mid,smoothstep(0.,.25,y)); c=mix(c,zen,smoothstep(.25,.9,y)); c=mix(gnd,c,smoothstep(-.06,.0,y));
+        float s=max(0.,dot(normalize(vP),sun)); c+=vec3(1.,.92,.78)*(pow(s,8.)*.25+pow(s,64.)*.5); gl_FragColor=vec4(c,1.); }` });
+    const sky = new THREE.Mesh(g, m); sky.position.set(cx, 0, cz); sky.frustumCulled = false; sky.renderOrder = -10; LV.add(sky);
+    const sp = V3(cx, 0, cz).addScaledVector(SUN, 1800);
+    const disc = mesh(new THREE.CircleGeometry(44, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xfff6e4).multiplyScalar(3), fog: false }), sp.x, sp.y, sp.z, { cast: false }); disc.lookAt(cx, 0, cz);
+    const glow = mesh(new THREE.CircleGeometry(260, 40), new THREE.MeshBasicMaterial({ color: 0xfff0d0, transparent: true, opacity: .22, fog: false, depthWrite: false, blending: THREE.AdditiveBlending }), sp.x * .999 + cx * .001, sp.y * .999, sp.z * .999 + cz * .001, { cast: false }); glow.lookAt(cx, 0, cz);
+    // clouds round the horizon
+    const texs = [dayCloudTex(1), dayCloudTex(2), dayCloudTex(3)];
+    for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2 + R(-.15, .15), el = R(.06, .34), r = 1760; const d = V3(Math.cos(a) * Math.cos(el), Math.sin(el), Math.sin(a) * Math.cos(el));
+      if (d.dot(SUN) > .93) continue; const w = R(380, 620); const cm = new THREE.MeshBasicMaterial({ map: texs[i % 3], transparent: true, fog: false, depthWrite: false, opacity: R(.75, .95) });
+      const c = mesh(new THREE.PlaneGeometry(w, w * .5), cm, cx + d.x * r, d.y * r, cz + d.z * r, { cast: false }); c.lookAt(cx, 0, cz); }
+    return;
+  }
   const m = new THREE.ShaderMaterial({ side: THREE.BackSide, depthWrite: false, fog: false, uniforms: {},
     vertexShader: `varying vec3 vP; void main(){ vP=normalize(position); gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
     fragmentShader: `varying vec3 vP; void main(){ float y=vP.y; vec3 top=vec3(.012,.02,.05), mid=vec3(.05,.07,.15), hor=vec3(.28,.17,.16); vec3 c=mix(hor,mid,smoothstep(-.02,.22,y)); c=mix(c,top,smoothstep(.2,.8,y)); c+=vec3(.5,.3,.18)*pow(max(0.,1.-abs(y)*6.),3.)*.35; gl_FragColor=vec4(c,1.); }` });
@@ -174,9 +201,14 @@ function buildYard() {
   addBattery(1900, 128, 360); addBattery(2450, GY + 122, -250); addVial(2130, GY, 150); addCrumb(1640, GY, 40); addCrumb(2470, DECK + 73, 30);
   addSwitch('露台的插座', [2404, DECK + 1.5, 210], [2560, 0, 60], 220, { list: 'yard' }); box(2398, 2410, DECK, DECK + 3, 206, 214, M.white);
   // lights: the moon, a dim sky fill, lamps
-  LV.add(new THREE.HemisphereLight(0x50648c, 0x16220f, .95));
-  YS.moon = spotL(0xb8c8ff, 2600000, V3(2400, 900, -900), V3(2000, GY, 100), .55, .5, 2048, 300, 2600);
-  YS.porchL = pointL(0xffd2a0, 7000, 2564, 200, 70);
+  if (DAY) {   // daylight: a bright sky fill and the sun (one big shadow-casting light from the sun's direction)
+    LV.add(new THREE.HemisphereLight(0xc4dcff, 0x8a9a64, 1.6));
+    const tgt = V3(2080, GY, 100); YS.moon = spotL(0xfff0dc, 26000000, sunFrom(tgt), tgt, .5, .55, 2048, 1200, 3800); YS.moon.userData.prio = 1;
+  } else {
+    LV.add(new THREE.HemisphereLight(0x50648c, 0x16220f, .95));
+    YS.moon = spotL(0xb8c8ff, 2600000, V3(2400, 900, -900), V3(2000, GY, 100), .55, .5, 2048, 300, 2600);
+  }
+  YS.porchL = pointL(0xffd2a0, DAY ? 0 : 7000, 2564, 200, 70); if (DAY) { YS.doorL.intensity = 0; }
   buildYardSwitches(X0);
   YS.lights = [{ p: V3(X0 + 12, 200, 105), range: 120, I: () => YS.doorL.intensity }, { p: V3(2564, 200, 70), range: 150, I: () => YS.porchL.intensity }, { p: V3(2700, DECK + 140, -10), range: 170, I: () => YS.lampL.intensity }];
   // the dog and 陳伯
@@ -268,7 +300,7 @@ function detectYard(dt) {
   if (O && O.lookK > .5 && O.mode !== 'doze' && O.mode !== 'listen') { const hp = V3(); O.H.head.getWorldPosition(hp); const q = new THREE.Quaternion(); O.H.head.getWorldQuaternion(q); const f = V3(0, 0, 1).applyQuaternion(q); const s = seeFrom(hp, f, .5, 320); if (s > seen) { seen = s; who = 'old'; } }
   KS.watch = seen > 0 ? { p: who === 'dog' ? D.head.getWorldPosition(V3()) : O.H.head.getWorldPosition(V3()), s: seen, who } : null;
   if (seen > 0) {
-    const p = V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z); let lit = litAtList(p, YS.lights, .6) * (inDark(L.pos) ? .6 : 1); if (inGrass(L.pos)) lit *= .3;
+    const p = V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z); let lit = litAtList(p, YS.lights, DAY ? .8 : .6) * (inDark(L.pos) ? .6 : 1); if (inGrass(L.pos)) lit *= .3;
     const mv = L.spd > 1.5 ? 1 : .5; const cr = L.crouch ? .55 : 1;
     meter += seen * lit * mv * cr * hideK(L) * (who === 'old' ? OLDB.eye : 1) * dt;
     if (meter > .3) netSeen(V3(L.pos.x, L.pos.y + 2, L.pos.z), who);
@@ -298,7 +330,7 @@ const YQ_SP = [
   { t: '找出控制晶片', s: '晶片在陳伯的書枱上。他在看報紙，但不時會抬頭' }
 ];
 LEVELS.yard = {
-  chapter: '第四章', title: '後園與鄰居家', mpChapter: '第三章（多人）', env: 'yard', envI: .5, fog: [0x0e1626, .0004], expo: 1.35,
+  chapter: '第四章', title: '後園與鄰居家', mpChapter: '第三章（多人）', env: 'yard', envI: DAY ? 1 : .5, fog: DAY ? [0xbcd0e2, .00016] : [0x0e1626, .0004], expo: DAY ? .95 : 1.35,
   dust: { N: 1400, box: [1500, 2740, GY, 220, -420, 620], beamFrac: .0, door: false },
   toys: true, npcNear: true, build: buildYard,
   cps: [[1480, GY, 105], [1900, GY, 112], [2130, GY, 109], [2420, DECK, 100], [2600, DECK, 140]],

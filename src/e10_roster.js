@@ -110,7 +110,7 @@ const CHAPS = [
   { n: '第三章', t: '車房', d: 'Origin Dynamics 的人在搜車房。修好機座，從狗門逃出去。', key: 'ch2', lock: '完成第二章解鎖', go: () => startChapter('garage') },
   { n: '第四章', t: '後園與鄰居家', d: '穿過圍欄、避開陳伯的狗，到陽光房找控制晶片。', key: 'ch3', lock: '完成第三章解鎖', go: () => startChapter('yard') },
   { n: '第五章', t: '馬路', d: '從陳伯的前閘鑽出去，按過路燈，避開車輪，走到對面的公園。', key: 'ch4', lock: '完成第四章解鎖', go: () => startChapter('road') },
-  { n: '第六章', t: '公園', d: '晚上的楓林公園。避開狗、跑步的人和滑板少年，在滑梯塔頂用月光替晶片充電。', key: 'ch5', lock: '完成第五章解鎖', go: () => startChapter('park') },
+  { n: '第六章', t: '公園', d: '陽光下的楓林公園。避開狗、跑步的人和滑板少年，在滑梯塔頂用陽光替晶片充電。', key: 'ch5', lock: '完成第五章解鎖', go: () => startChapter('park') },
   { n: '第七章', t: '學校', d: '製作中', future: true }
 ];
 function startChapter(name, opt) { $('start').hidden = true; $('chaps').hidden = true; playT = 0; fails = 0; requestLock(); return loadLevel(name, opt); }

@@ -64,6 +64,11 @@ function buildEnv(kind = 'basement') {
   const panel = (c, k, w, h, x, y, z, ry = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(w, h), new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(k), side: THREE.DoubleSide })); m.position.set(x, y, z); m.rotation.y = ry; es.add(m); };
   if (kind === 'kitchen') { room.material.color.setHex(0x3a2e24); panel(0xffd2a0, 5, 3, .5, 0, 2.45, 0); panel(0xffc890, 3, 1, 1, -1, 2.2, 2); panel(0x6a86c8, 2.2, 2, 1, -1, 1.6, -4.9); panel(0xfff4e6, 2.5, 1, 2, 3, 1, -4.5); panel(0x4a3a2c, 1, 10, 3, 0, -2.4, 0); }
   else if (kind === 'garage') { room.material.color.setHex(0x16191d); panel(0xdfe8ff, 4, 3, .3, 0, 2.45, 0); panel(0xffa860, 2, 4, .2, 0, -.2, 4.9); panel(0x2a2c30, 1, 10, 3, 0, -2.4, 0); }
+  else if ((kind === 'yard' || kind === 'road' || kind === 'park') && DAY) {   // daylight outdoors: a blue sky all round, the sun, green-brown ground
+    room.material.color.setHex(0x6e90bc); const top = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xa8ccf4).multiplyScalar(1.6), side: THREE.DoubleSide })); top.rotation.x = Math.PI / 2; top.position.y = 2.45; es.add(top);
+    const sp = SUN.clone().multiplyScalar(4.2); const sn = new THREE.Mesh(new THREE.CircleGeometry(.7, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xfff2dc).multiplyScalar(14), side: THREE.DoubleSide })); sn.position.set(sp.x, Math.min(sp.y, 2.3), sp.z); sn.lookAt(0, 0, 0); es.add(sn);
+    const gd = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshBasicMaterial({ color: new THREE.Color(0x56603c).multiplyScalar(1.2), side: THREE.DoubleSide })); gd.rotation.x = Math.PI / 2; gd.position.y = -2.45; es.add(gd);
+    panel(0xd8e6f4, 1.8, 10, 1.4, 0, .2, -4.95); panel(0xd8e6f4, 1.8, 10, 1.4, 0, .2, 4.95); panel(0xd8e6f4, 1.8, 10, 1.4, 4.95, .2, 0, Math.PI / 2); panel(0xd8e6f4, 1.8, 10, 1.4, -4.95, .2, 0, Math.PI / 2); }
   else if (kind === 'yard') { room.material.color.setHex(0x0a1020); panel(0x3a5a9a, 1.6, 10, 10, 0, 2.48, 0); panel(0xb8c8ff, 3, 1, 1, 3, 2, -4); panel(0xffc890, 2.2, .6, .6, 4.9, .6, 0, Math.PI / 2); panel(0x14200f, 1, 10, 3, 0, -2.4, 0); }
   else if (kind === 'park') { room.material.color.setHex(0x0a101c); panel(0x2c3c64, 1.3, 10, 10, 0, 2.48, 0); panel(0xa8bcff, 1.6, 2.2, 2.2, 3.4, 2.3, -3.4); panel(0xffb466, 2.0, 1, 1, -3.4, 2.2, 2); panel(0x101a0e, 1, 10, 3, 0, -2.4, 0); }
   else if (kind === 'road') { room.material.color.setHex(0x0b111c); panel(0x2a3a60, 1.4, 10, 10, 0, 2.48, 0); panel(0xffb466, 2.6, 1.2, 1.2, 3, 2.2, -3); panel(0xffb466, 2.2, 1.2, 1.2, -3.4, 2.2, 2); panel(0x14180f, 1, 10, 3, 0, -2.4, 0); }
@@ -116,9 +121,10 @@ const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.
 const outPass = new OutputPass();
 const grade = new ShaderPass(GradeShader);
 composer.addPass(renderPass);
-composer.addPass(new FnPass(() => { fxGroup.visible = false; }));
+// the dust and the sky dome (with its clouds) stay out of the depth passes: AO and focus blur would outline the clouds' planes
+composer.addPass(new FnPass(() => { fxGroup.visible = false; if (ST.sky) { ST.skyV = ST.sky.visible; ST.sky.visible = false; } }));
 composer.addPass(gtao); composer.addPass(bokeh);
-composer.addPass(new FnPass(() => { fxGroup.visible = true; }));
+composer.addPass(new FnPass(() => { fxGroup.visible = true; if (ST.sky) ST.sky.visible = !!ST.skyV; }));
 const sanitize = new ShaderPass({ uniforms: { tDiffuse: { value: null } }, vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
   fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv; void main(){ vec4 c=texture2D(tDiffuse,vUv); if(any(isnan(c))||any(isinf(c))) c=vec4(0.0,0.0,0.0,1.0); gl_FragColor=vec4(clamp(c.rgb,0.0,48.0),c.a); }` });
 // phones: no MSAA, a cheap FXAA pass instead; bloom can run at lower resolution

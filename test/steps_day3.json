@@ -1,0 +1,6 @@
+[{"eval":"window.__bn.startChapter('park')","wait":6000},
+ {"eval":"(()=>{const b=window.__bn; b.step(60); window.__CAMO={p:[1760,90,2860],t:[1600,30,2480]}; return b.info().lv})()"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"day_park_dogs"},
+ {"eval":"window.__CAMO={p:[1930,40,3300],t:[2120,130,3000]}"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"day_park_tower"}
+]

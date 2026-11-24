@@ -1,0 +1,14 @@
+[{"eval":"window.__bn.startChapter('road')","wait":6000},
+ {"eval":"(()=>{const b=window.__bn; b.step(60); return b.info().lv})()"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"day_road1"},
+ {"eval":"window.__CAMO={p:[2300,260,600],t:[2100,0,1200]}"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"day_road2"},
+ {"eval":"delete window.__CAMO; window.__bn.startChapter('yard'); 1","wait":6000},
+ {"eval":"(()=>{const b=window.__bn; b.step(60); return b.info().lv})()"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"day_yard1"},
+ {"eval":"window.__CAMO={p:[1700,260,500],t:[2200,0,0]}"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"day_yard2"},
+ {"eval":"window.__CAMO={p:[1930,160,3440],t:[2150,50,3000]}; delete window.__CAMO; window.__bn.startChapter('park'); 1","wait":6000},
+ {"eval":"(()=>{const b=window.__bn; b.step(60); window.__CAMO={p:[1760,90,2860],t:[1600,30,2480]}; return b.info().lv})()"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"day_park_dogs"}
+]

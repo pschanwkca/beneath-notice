@@ -98,7 +98,7 @@ function moleTick(dt) {
 
 // ---------- meeting him (single player, chapter 6) ----------
 const MOLE_LINES = [[0, '阿鼴', '（從沙裡探出頭來）……地面上的人走了沒有？'], [2.8, '爸爸', '阿鼴？地質組的阿鼴！你怎麼會在這裡？'], [5.6, '阿鼴', '試機那晚我一縮小就鑽進泥土裡，一直沿着地底挖到這個沙池……三天了。'],
-  [9.2, '爸爸', '跟我們走。晶片要在月光底下充電——滑梯塔頂最開揚。'], [12.4, '阿鼴', '好！在草地和沙裡我可以鑽地走，沒有人看得到，狗也聞不到。']];
+  [9.2, '爸爸', '跟我們走。晶片要在陽光底下充電——滑梯塔頂最開揚。'], [12.4, '阿鼴', '好！在草地和沙裡我可以鑽地走，沒有人看得到，狗也聞不到。']];
 function moleMeet() {
   const C = chars.mole; if (!C || MOLE.met) return; MOLE.met = true;
   if (party.includes(C)) { setQuest(2); return; }   // already with us (test mode)

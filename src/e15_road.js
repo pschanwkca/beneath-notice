@@ -33,9 +33,9 @@ function signTex() {
 function beamTex() { const [c, x] = cnv(64, 256); const g = x.createLinearGradient(0, 0, 0, 256); g.addColorStop(0, 'rgba(255,240,210,.0)'); g.addColorStop(.1, 'rgba(255,240,210,.55)'); g.addColorStop(1, 'rgba(255,240,210,0)'); x.fillStyle = g; x.fillRect(0, 0, 64, 256); return tex(c); }
 function poolTex() { const [c, x] = cnv(128, 256); const g = x.createRadialGradient(64, 40, 4, 64, 120, 140); g.addColorStop(0, 'rgba(255,236,200,.8)'); g.addColorStop(.5, 'rgba(255,236,200,.22)'); g.addColorStop(1, 'rgba(255,236,200,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 256); return tex(c); }
 
-// ---------- the night sky, shared by the yards and the street ----------
+// ---------- the sky, shared by the yards, the street and the park ----------
 function buildNightSky() {
-  const keep = LV; ST.sky = new THREE.Group(); ST.sky.name = 'night-sky'; scene.add(ST.sky); LV = ST.sky; buildSky(2100, 800); LV = keep; ST.sky.visible = false;
+  const keep = LV; ST.sky = new THREE.Group(); ST.sky.name = 'sky'; scene.add(ST.sky); LV = ST.sky; buildSky(2100, 800); LV = keep; ST.sky.visible = false;
 }
 
 // ---------- a car (one shape, several paints) ----------
@@ -62,8 +62,8 @@ function buildRoadCar(i) {
   for (const s of [-1, 1]) { add(G.lamp, ST.mats.head, s * 60, 72, 214, false); add(G.lamp, ST.mats.tail, s * 64, 78, -216, false); }
   const plate = add(new THREE.BoxGeometry(40, 11, 1), ST.mats.plate, 0, 44, 216, false);
   // fake headlight beams + the bright patch they throw on the road (no real lights: there can be several cars)
-  const beams = []; for (const s of [-1, 1]) { const b = new THREE.Mesh(G.beam, ST.mats.beam); b.position.set(s * 60, 70, 216); b.rotation.x = .04; g.add(b); beams.push(b); }
-  const pool = new THREE.Mesh(G.pool, ST.mats.pool); pool.position.set(0, .5, 200); g.add(pool);
+  const beams = []; for (const s of [-1, 1]) { const b = new THREE.Mesh(G.beam, ST.mats.beam); b.position.set(s * 60, 70, 216); b.rotation.x = .04; b.visible = !DAY; g.add(b); beams.push(b); }
+  const pool = new THREE.Mesh(G.pool, ST.mats.pool); pool.position.set(0, .5, 200); pool.visible = !DAY; g.add(pool);   // (daylight: no beams)
   const C = { g, wheels, x: -9999, lane: 0, v: 0, vmax: 0, alive: false, id: i, gust: new Set() };
   g.visible = false; return C;
 }
@@ -133,7 +133,7 @@ function detectRoad(dt) {
   if (W) { const hp = V3(); W.H.head.getWorldPosition(hp); const q = new THREE.Quaternion(); W.H.head.getWorldQuaternion(q); const f = V3(0, 0, 1).applyQuaternion(q); const fov = W.mode === 'look' ? .45 : .7; const s = seeFrom(hp, f, fov, W.mode === 'look' ? 340 : 230); if (s > 0) { seen = s; who = 'walker'; } }
   KS.watch = seen > 0 ? { p: W.H.head.getWorldPosition(V3()), s: seen, who } : null;
   if (seen > 0) {
-    const p = V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z); const lit = litAtList(p, ST.lights, .45) * (inDark(L.pos) ? .6 : 1);
+    const p = V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z); const lit = litAtList(p, ST.lights, DAY ? .8 : .45) * (inDark(L.pos) ? .6 : 1);
     const mv = L.spd > 1.5 ? 1 : .5, cr = L.crouch ? .55 : 1;
     meter += seen * lit * mv * cr * hideK(L) * dt; if (meter > .3) netSeen(V3(L.pos.x, L.pos.y + 2, L.pos.z), who);
   } else meter -= dt * .24;
@@ -146,7 +146,7 @@ function buildRoad() {
   ST.mats = {
     glass: new THREE.MeshPhysicalMaterial({ color: 0x0b1016, roughness: .04, metalness: .3, clearcoat: 1 }),
     tire: new THREE.MeshStandardMaterial({ color: 0x18181a, roughness: .92 }), chrome: new THREE.MeshStandardMaterial({ color: 0xc8ccd2, metalness: 1, roughness: .2 }),
-    head: new THREE.MeshBasicMaterial({ color: new THREE.Color(0xfff2d8).multiplyScalar(3) }), tail: new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff2a1a).multiplyScalar(2) }),
+    head: new THREE.MeshBasicMaterial({ color: new THREE.Color(0xfff2d8).multiplyScalar(DAY ? 1.3 : 3) }), tail: new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff2a1a).multiplyScalar(DAY ? .9 : 2) }),
     plate: new THREE.MeshStandardMaterial({ color: 0xf2efe6, roughness: .5, emissive: 0x403c30 }),
     beam: new THREE.MeshBasicMaterial({ map: beamTex(), transparent: true, opacity: .16, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.DoubleSide, fog: true }),
     pool: new THREE.MeshBasicMaterial({ map: poolTex(), transparent: true, opacity: .45, depthWrite: false, blending: THREE.AdditiveBlending, fog: true })
@@ -160,8 +160,11 @@ function buildRoad() {
   const metal = new THREE.MeshStandardMaterial({ color: 0x3a4048, metalness: .7, roughness: .45 }), dark = new THREE.MeshStandardMaterial({ color: 0x15171a, metalness: .4, roughness: .5 });
   const sidingU = new THREE.MeshStandardMaterial({ ...genSiding(0xb7c4c8, 532), roughness: .85 }), sidingN = new THREE.MeshStandardMaterial({ ...genSiding(0xc8c2b0, 531), roughness: .85 });
   const brick = new THREE.MeshStandardMaterial({ color: 0x7a3e2c, roughness: .9 }), hedgeM = new THREE.MeshStandardMaterial({ color: 0x24401e, roughness: 1 });
-  const winM = new THREE.MeshStandardMaterial({ color: 0x2a1c10, emissive: 0xffa860, emissiveIntensity: .85, roughness: .3 }), winOff = new THREE.MeshStandardMaterial({ color: 0x0c1016, roughness: .1, metalness: .3 });
-  LV.add(new THREE.HemisphereLight(0x4a5a80, 0x1a1a14, .8));
+  // daylight: windows are glass that reflects the sky (nobody needs the lights on)
+  const winOff = DAY ? new THREE.MeshPhysicalMaterial({ color: 0x5a6e84, roughness: .05, metalness: .2, clearcoat: 1 }) : new THREE.MeshStandardMaterial({ color: 0x0c1016, roughness: .1, metalness: .3 });
+  const winM = DAY ? new THREE.MeshPhysicalMaterial({ color: 0x6a7a8a, roughness: .06, metalness: .15, clearcoat: 1 }) : new THREE.MeshStandardMaterial({ color: 0x2a1c10, emissive: 0xffa860, emissiveIntensity: .85, roughness: .3 });
+  LV.add(DAY ? new THREE.HemisphereLight(0xc4dcff, 0x8a8a6a, 1.6) : new THREE.HemisphereLight(0x4a5a80, 0x1a1a14, .8));
+  if (DAY) { const tgt = V3(1900, RY, 1080); ST.sun = spotL(0xfff0dc, 26000000, sunFrom(tgt), tgt, .52, .5, 2048, 1200, 3800); ST.sun.userData.prio = 1; }
 
   // ---- the front of our house, the driveway and garage door ----
   box(-330, 912, GY - 10, GY, 262, 646, grassM, { uv: 90, cast: false });
@@ -175,7 +178,7 @@ function buildRoad() {
   box(400, 490, GY, GY + 14, 262, 296, kerbM); box(410, 480, GY + 14, GY + 28, 262, 280, kerbM);
   box(912, 1460, GY, GY + 200, 312, 314, M.white, { col: false }); for (let y = GY + 40; y < GY + 200; y += 40) box(912, 1460, y - 1, y + 1, 314, 315, new THREE.MeshStandardMaterial({ color: 0xc8c8c4, roughness: .6 }), { col: false });
   box(912, 1460, GY + 200, GY + 290, 312, 318, sidingU, { col: false });
-  ST.porch = pointL(0xffc890, 9000, 445, GY + 230, 300); mesh(new THREE.SphereGeometry(5, 14, 10), K.bulb, 445, GY + 226, 268, { cast: false });
+  ST.porch = pointL(0xffc890, DAY ? 0 : 9000, 445, GY + 230, 300); mesh(new THREE.SphereGeometry(5, 14, 10), K.bulb, 445, GY + 226, 268, { cast: false });
   box(-330, 400, GY, GY + 40, 628, 646, hedgeM, { uv: 40 }); box(490, 912, GY, GY + 40, 628, 646, hedgeM, { uv: 40 });
   // 陳伯's house front, beyond his fence
   box(2768, 3400, GY, GY + 520, 640, 652, sidingN, { uv: 120 });
@@ -209,7 +212,7 @@ function buildRoad() {
   const gateL = new THREE.Group(); gateL.position.set(2010, GY, 1660); gateL.rotation.y = -1.25; LV.add(gateL); const gateR = new THREE.Group(); gateR.position.set(2110, GY, 1660); gateR.rotation.y = 1.25; LV.add(gateR);
   for (const [gg, s] of [[gateL, 1], [gateR, -1]]) { for (let i = 0; i < 7; i++) mesh(new THREE.BoxGeometry(2, 110, 2), metal, s * (5 + i * 7), 58, 0, { parent: gg }); mesh(new THREE.BoxGeometry(50, 3, 3), metal, s * 26, 108, 0, { parent: gg }); mesh(new THREE.BoxGeometry(50, 3, 3), metal, s * 26, 12, 0, { parent: gg }); }
   // (the park itself — its paths, trees and benches — is its own place: e30_park)
-  const trunk = new THREE.MeshStandardMaterial({ color: 0x3a2c22, roughness: .95 }), leafM = new THREE.MeshStandardMaterial({ color: 0x2c4a24, roughness: .9, flatShading: true });
+  const trunk = new THREE.MeshStandardMaterial({ color: 0x3a2c22, roughness: .95 }), leafM = new THREE.MeshStandardMaterial({ color: DAY ? 0x4f7f3a : 0x2c4a24, roughness: .9, flatShading: true, emissive: DAY ? 0x2a4a1c : 0 });
   // ---- street furniture on our side ----
   // tree in a pit with a grate
   box(2350, 2410, GY - 2, GY - .5, 712, 772, new THREE.MeshStandardMaterial({ map: genSoil(), roughness: 1 }), { col: false, cast: false });
@@ -247,11 +250,11 @@ function buildRoad() {
     for (let i = 0; i < N; i++) { const onRoad = rnd() < .35; t.set(R(1400, 2900), (onRoad ? RY : GY) + .25, onRoad ? R(802, 840) : R(650, 790)); e.set(R(-.2, .2), rnd() * 6.28, R(-.2, .2)); q.setFromEuler(e); const k = R(.7, 1.3); s.set(k, 1, k); m4.compose(t, q, s); IM.setMatrixAt(i, m4); col.setHSL(R(.03, .1), R(.35, .6), R(.12, .26)); IM.setColorAt(i, col); }
     IM.receiveShadow = true; LV.add(IM); }
   // ---- street lamps ----
-  const lampHead = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffc070).multiplyScalar(2.4) });
+  const lampHead = DAY ? new THREE.MeshStandardMaterial({ color: 0xd8d4c8, roughness: .3 }) : new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffc070).multiplyScalar(2.4) });
   const lamp = (x, z, side) => { cyl(x, z, 7, GY, GY + 600, metal, { seg: 16 }); box(x - 3, x + 3, GY + 596, GY + 602, side > 0 ? z : z - 90, side > 0 ? z + 90 : z, metal, { col: false }); mesh(new THREE.BoxGeometry(26, 8, 40), metal, x, GY + 594, z + side * 86, { cast: false }); mesh(new THREE.BoxGeometry(20, 2, 32), lampHead, x, GY + 589, z + side * 86, { cast: false }); return V3(x, GY + 580, z + side * 86); };
-  for (const [x, z, s] of [[1500, 788, 1], [2850, 788, 1], [1850, 1512, -1], [2560, 1512, -1]]) { const p = lamp(x, z, s); const l = pointL(0xffb466, 160000, p.x, p.y, p.z); ST.lights.push({ p, range: 420, I: () => l.intensity }); }
-  { const p = lamp(2200, 788, 1); ST.xl = spotL(0xffbf78, 520000, p, V3(2120, RY, 1000), 1.0, .6, 1024, 50, 900); ST.lights.push({ p, dir: V3().subVectors(V3(2120, RY, 1000), p).normalize(), cos: Math.cos(1.0), range: 900, I: () => ST.xl.intensity }); }
-  const gl = [pointL(0xffd8a0, 9000, 2000, GY + 206, 1660), pointL(0xffd8a0, 9000, 2120, GY + 206, 1660)]; for (const l of gl) ST.lights.push({ p: l.position.clone(), range: 120, I: () => l.intensity });
+  for (const [x, z, s] of [[1500, 788, 1], [2850, 788, 1], [1850, 1512, -1], [2560, 1512, -1]]) { const p = lamp(x, z, s); const l = pointL(0xffb466, DAY ? 0 : 160000, p.x, p.y, p.z); ST.lights.push({ p, range: 420, I: () => l.intensity }); }
+  { const p = lamp(2200, 788, 1); ST.xl = spotL(0xffbf78, DAY ? 0 : 520000, p, V3(2120, RY, 1000), 1.0, .6, 1024, 50, 900); ST.lights.push({ p, dir: V3().subVectors(V3(2120, RY, 1000), p).normalize(), cos: Math.cos(1.0), range: 900, I: () => ST.xl.intensity }); }
+  const gl = [pointL(0xffd8a0, DAY ? 0 : 9000, 2000, GY + 206, 1660), pointL(0xffd8a0, DAY ? 0 : 9000, 2120, GY + 206, 1660)]; for (const l of gl) ST.lights.push({ p: l.position.clone(), range: 120, I: () => l.intensity });
   ST.lights.push({ p: V3(445, GY + 230, 300), range: 160, I: () => ST.porch.intensity });
   // ---- crossing signals: near pole (with the button), island pole (lower button), far pole ----
   ST.walkM = new THREE.MeshBasicMaterial({ map: pedTex('walk'), color: 0x222222 }); ST.stopM = new THREE.MeshBasicMaterial({ map: pedTex('stop'), color: 0xffffff });
@@ -380,7 +383,7 @@ const RQ_SP = [
 ];
 const YQ_SP2 = [{ t: '從前園的閘底鑽出去', s: '陳伯的前閘下面有條縫，鑽過去就是馬路。小心他的狗' }];
 LEVELS.road = {
-  chapter: '第五章', title: '馬路', mpChapter: '第四章（多人）', env: 'road', envI: .55, fog: [0x0d1420, .00036], expo: 1.35,
+  chapter: '第五章', title: '馬路', mpChapter: '第四章（多人）', env: 'road', envI: DAY ? 1 : .55, fog: DAY ? [0xbcd0e2, .00014] : [0x0d1420, .00036], expo: DAY ? .95 : 1.35,
   dust: { N: 900, box: [1400, 2900, GY, 400, 660, 1640], beamFrac: .0, door: false },
   toys: true, npcNear: true, build: buildRoad,
   cps: [[2620, GY, 690], [1940, GY, 740], [2060, GY, 1150], [2060, GY, 1580]],
@@ -410,7 +413,7 @@ LEVELS.road = {
 // across: the park carries straight on (no end screen — the world is one place)
 function roadWin() {
   if (STATE !== 'play' || ST.won) return; ST.won = true; unlockKey('ch5');
-  say('爸爸', '到了……公園。晶片要在月光底下才會充電——', '#f5f0e6', 3.6);
+  say('爸爸', '到了……公園。晶片要在陽光底下才會充電——', '#f5f0e6', 3.6);
   QUESTS = [{ t: '走進公園', s: '楓林公園的鐵閘開着' }]; setQuest(0);
 }
 

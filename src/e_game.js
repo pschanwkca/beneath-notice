@@ -799,7 +799,7 @@ function frame(now) {
   { const [w, h] = viewSize(); if (w !== RS.w || h !== RS.h) onResize(); }
   if (STATE === 'load') return;
   if (!PAUSED || NET.on) update(dt);
-  if (window.__CAMO) { camera.position.set(...window.__CAMO.p); camera.lookAt(...window.__CAMO.t); }   // dev: a fixed camera for screenshots
+  if (window.__CAMO) { camera.position.set(...window.__CAMO.p); camera.lookAt(...window.__CAMO.t); if (ST.sky) ST.sky.position.set(camera.position.x - 2100, 0, camera.position.z - 800); }   // dev: a fixed camera for screenshots
   if (!window.__NR) composer.render();
   fpsAcc += dt; fpsN++;
   if (fpsAcc > 2) {
