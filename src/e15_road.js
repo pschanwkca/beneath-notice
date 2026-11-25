@@ -242,7 +242,7 @@ function buildRoad() {
   // ---- street furniture on our side ----
   // tree in a pit with a grate
   box(2350, 2410, GY - 2, GY - .5, 712, 772, new THREE.MeshStandardMaterial({ map: genSoil(), roughness: 1 }), { col: false, cast: false });
-  cyl(2380, 742, 15, GY, GY + 330, trunk, { seg: 14 }); for (let i = 0; i < 5; i++) mesh(new THREE.IcosahedronGeometry(R(80, 110), 1), leafM, 2380 + R(-70, 70), GY + R(300, 420), 742 + R(-60, 60));
+  cyl(2380, 742, 15, GY, GY + 330, trunk, { seg: 14 }); { const bl = []; for (let i = 0; i < 5; i++) { const r = R(80, 110); const m = mesh(new THREE.IcosahedronGeometry(r, 1), leafM, 2380 + R(-70, 70), GY + R(300, 420), 742 + R(-60, 60)); bl.push([m.position.x, m.position.y, m.position.z, r]); } REALT.push({ x: 2380, z: 742, r: 15, y0: GY, top: GY + 330, bl, mat: leafM }); REALHIDE.push(leafM); }
   // mailbox (a battery on the top), recycling bins put out for collection
   box(2557, 2563, GY, GY + 96, 702, 708, metal); box(2540, 2580, GY + 96, GY + 128, 692, 718, new THREE.MeshStandardMaterial({ color: 0x2a4a6a, roughness: .5, metalness: .4 }));
   // recycling bins put out for collection: the blue one stands open (that's where the walker tidies a stray toy), the green one is shut

@@ -20,7 +20,7 @@ await page.route('**/*', async route => {
 });
 if (process.env.INIT) await page.addInitScript(process.env.INIT);
 page.on('crash', () => { console.log('PAGE CRASHED'); console.log(logs.slice(-30).join('\n')); });
-await page.goto('file://' + root + '/index.html#dev'); page.setDefaultTimeout(180000);
+await page.goto('file://' + root + '/' + (process.env.PAGE || 'index.html') + '#dev'); page.setDefaultTimeout(180000);
 const t0 = Date.now();
 await page.waitForFunction(() => document.getElementById('start') && !document.getElementById('start').hidden || document.getElementById('err').textContent.length > 0, null, { timeout: 240000 });
 console.log('loaded in', (Date.now() - t0) / 1000, 's');

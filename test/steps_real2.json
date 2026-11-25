@@ -1,0 +1,14 @@
+[{"eval":"window.__bn.startChapter2()","wait":5000},
+ {"evalFile":"shothelp.js"},
+ {"eval":"(()=>{__S.hud(false); return __S.warp('公園廣場', 120)})()"},
+ {"eval":"(()=>{const b=window.__bn,L=b.leader; const c=b.YS.clumps.find(c=>c.z>1700&&c.z<2100); L.pos.set(c.x+c.r+25,-20,c.z+10); L.vel.set(0,0,0); b.step(20); const p=L.pos; window.__CAMO={p:[p.x+30,p.y+10,p.z+26],t:[c.x,p.y+10,c.z]}; return [c.x,c.z,c.r]})()"},
+ {"frame":1},{"wait":1500},{"frame":1},{"wait":400},{"frame":1,"shot":"r2_clump"},
+ {"eval":"(()=>{const b=window.__bn; window.__CAMO={p:[1500,150,2050],t:[2300,80,2700]}; return 1})()"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"r2_eye"},
+ {"eval":"(()=>{const b=window.__bn; window.__CAMO={p:[1560,-6,2270],t:[1620,0,2320]}; return 1})()"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"r2_hedge"},
+ {"eval":"(()=>{const b=window.__bn; const H=b.PK.owners[0].H; H.root.updateMatrixWorld(true); const p=H.root.position; window.__CAMO={p:[p.x+40,p.y+6,p.z+60],t:[p.x,p.y+8,p.z]}; return [p.x,p.z]})()"},
+ {"frame":1},{"wait":900},{"frame":1,"shot":"r2_feet"},
+ {"eval":"(()=>{const b=window.__bn; delete window.__CAMO; b.step(30); const t0=performance.now(); b.step(120); return {ms:+((performance.now()-t0)/120).toFixed(2)}})()"},
+ {"frame":1},{"eval":"(()=>{const r=window.__bn.renderer; return {calls:r.info.render.calls, tris:r.info.render.triangles}})()"}
+]

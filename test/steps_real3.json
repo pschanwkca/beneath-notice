@@ -1,0 +1,12 @@
+[{"eval":"window.__bn.startChapter2()","wait":5000},
+ {"evalFile":"shothelp.js"},
+ {"eval":"(()=>{return __S.warp('公園廣場', 120)})()"},
+ {"eval":"(()=>{const b=window.__bn,L=b.leader; L.pos.set(1700,-20,2200); L.vel.set(0,0,0); L.yaw=2.4; b.step(60); return [L.pos.x,L.pos.z]})()"},
+ {"frame":1},{"wait":1500},{"frame":1},{"wait":400},{"frame":1,"shot":"r3_play"},
+ {"eval":"(()=>{const b=window.__bn; b.keys['KeyW']=true; b.step(90); b.keys['KeyW']=false; return [b.leader.pos.x,b.leader.pos.z]})()"},
+ {"frame":1},{"wait":700},{"frame":1,"shot":"r3_play2"},
+ {"eval":"(()=>__S.warp('後園', 120))()"},
+ {"frame":1},{"wait":1200},{"frame":1,"shot":"r3_yard"},
+ {"eval":"(()=>__S.warp('過路燈柱', 120))()"},
+ {"frame":1},{"wait":1200},{"frame":1,"shot":"r3_road"}
+]

@@ -131,17 +131,19 @@ function buildPark() {
 
   // ---- big trees: their crowns throw shade ----
   const tree = (x, z, s, leaf) => { cyl(x, z, 18 * s, GY, GY + 330 * s, trunk, { seg: 14 }); for (const [dx, dz] of [[1, .2], [-.8, .6], [.2, -1]]) cyl(x + dx * 50 * s, z + dz * 50 * s, 6 * s, GY + 240 * s, GY + 300 * s, trunk, { seg: 8, col: false });
-    for (let i = 0; i < 6; i++) { const m = mesh(new THREE.IcosahedronGeometry(R(90, 130) * s, 1), leaf, x + R(-80, 80) * s, GY + R(330, 470) * s, z + R(-80, 80) * s); m.rotation.set(R(0, 3), R(0, 3), 0); }
+    const bl = []; for (let i = 0; i < 6; i++) { const r = R(90, 130) * s; const m = mesh(new THREE.IcosahedronGeometry(r, 1), leaf, x + R(-80, 80) * s, GY + R(330, 470) * s, z + R(-80, 80) * s); m.rotation.set(R(0, 3), R(0, 3), 0); bl.push([m.position.x, m.position.y, m.position.z, r]); }
+    REALT.push({ x, z, r: 18 * s, y0: GY, top: GY + 330 * s, bl, mat: leaf });
     PK.shade.push({ x: x + 25 * s, z: z - 40 * s, r: 150 * s }); };
   for (const [x, z, s, l] of [[1660, 1880, 1.1, leafA], [2520, 1930, 1, leafB], [1140, 2420, 1.25, leafA], [2980, 2560, 1.15, leafB], [1500, 3180, 1.2, leafB], [2740, 3260, 1.1, leafA], [1220, 3520, 1.3, leafA], [2930, 3540, 1.2, leafB], [700, 2000, 1.4, leafB], [3300, 2050, 1.3, leafA], [600, 3000, 1.4, leafA], [3350, 3100, 1.3, leafB]]) tree(x, z, s, l);
   // the plaza's old tree with a round bench
   // (on the plaza's north side, clear of the loop path that runs across it)
-  const TZ = 2090; cyl(2060, TZ, 26, GY, GY + 420, trunk, { seg: 18 }); for (let i = 0; i < 8; i++) { const m = mesh(new THREE.IcosahedronGeometry(R(110, 160), 1), i % 2 ? leafA : leafB, 2060 + R(-110, 110), GY + R(400, 560), TZ + R(-110, 110)); m.rotation.set(R(0, 3), R(0, 3), 0); }
+  const TZ = 2090; cyl(2060, TZ, 26, GY, GY + 420, trunk, { seg: 18 }); { const bl = []; for (let i = 0; i < 8; i++) { const r = R(110, 160); const m = mesh(new THREE.IcosahedronGeometry(r, 1), i % 2 ? leafA : leafB, 2060 + R(-110, 110), GY + R(400, 560), TZ + R(-110, 110)); m.rotation.set(R(0, 3), R(0, 3), 0); bl.push([m.position.x, m.position.y, m.position.z, r]); } REALT.push({ x: 2060, z: TZ, r: 26, y0: GY, top: GY + 420, bl, mat: leafA }); }
   PK.shade.push({ x: 2080, z: TZ - 40, r: 190 });
   { const seat = new THREE.Mesh(new THREE.TorusGeometry(58, 9, 6, 40), benchW); seat.rotation.x = Math.PI / 2; seat.scale.z = .25; seat.position.set(2060, GY + 42, TZ); seat.castShadow = seat.receiveShadow = true; LV.add(seat);
     cols.push({ t: 'c', x: 2060, z: TZ, r: 67, y0: GY + 36, y1: GY + 44 }); for (let a = 0; a < 6.28; a += 1.047) cyl(2060 + Math.cos(a) * 58, TZ + Math.sin(a) * 58, 3.5, GY, GY + 36, metal, { seg: 10 }); }
   // hedges along the dog run's north side and around the back gate
-  for (const [x0, x1, z0, z1] of [[1300, 1840, 2300, 2340], [1680, 1980, 3620, 3660], [2140, 2440, 3620, 3660]]) { box(x0, x1, GY, GY + 60, z0, z1, hedgeM, { uv: 40 }); }
+  for (const [x0, x1, z0, z1] of [[1300, 1840, 2300, 2340], [1680, 1980, 3620, 3660], [2140, 2440, 3620, 3660]]) { box(x0, x1, GY, GY + 60, z0, z1, hedgeM, { uv: 40 }); REALH.push([x0, x1, GY, GY + 60, z0, z1]); }
+  REALHIDE.push(leafA, leafB); if (REAL) hedgeM.color.setHex(0x1a2c12);   // (the realistic version covers hedges in leaves; the box inside reads as deep shade)
 
   // ---- tall grass: the safe way round ----
   const clumps = [];

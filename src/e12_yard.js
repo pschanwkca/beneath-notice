@@ -63,7 +63,7 @@ function buildGrassClumps(list) {
   let n = 0; for (const c of list) n += c[3]; const IM = new THREE.InstancedMesh(blade, mat, n); IM.castShadow = true; IM.receiveShadow = true;
   const m4 = new THREE.Matrix4(), q = new THREE.Quaternion(), e = new THREE.Euler(), s = V3(), t = V3(), col = new THREE.Color(); let k = 0;
   for (const [x, z, r, cnt] of list) { YS.clumps.push({ x, z, r }); for (let i = 0; i < cnt; i++) { const a = rnd() * 6.283, d = Math.sqrt(rnd()) * r; t.set(x + Math.cos(a) * d, GY, z + Math.sin(a) * d); e.set(R(-.2, .2), rnd() * 6.283, R(-.25, .25)); q.setFromEuler(e); const hgt = R(14, 30); s.set(R(.8, 1.4), hgt, 1); m4.compose(t, q, s); IM.setMatrixAt(k, m4); col.setHSL(R(.22, .3), R(.35, .55), R(.22, .38)); IM.setColorAt(k, col); k++; } }
-  LV.add(IM); return IM;
+  LV.add(IM); if (REAL) { IM.visible = false; realClumps(list); } return IM;
 }
 function inGrass(p) { if (p.y > GY + 16) return false; for (const c of YS.clumps) if (Math.hypot(p.x - c.x, p.z - c.z) < c.r) return true; return false; }
 
@@ -117,7 +117,7 @@ function buildYard() {
   const bark = new THREE.MeshStandardMaterial({ ...genWood([96, 76, 60], [52, 40, 32], 541), roughness: 1 });
   cyl(1800, 360, 24, GY, 330, bark, { seg: 24, rt: 18 }); box(1818, 1920, 118, 128, 352, 368, bark); box(1910, 1960, 124, 132, 356, 364, bark, { col: false });
   const leafM = furMat({ color: 0x2f5a2a, len: 5, den: .35, droop: -.1, clump: .8, rimK: .12, root: .4 });
-  for (const [x, y, z, r] of [[1800, 360, 360, 120], [1890, 320, 330, 90], [1730, 330, 420, 90], [1830, 420, 400, 80]]) { const f = furMesh(new THREE.SphereGeometry(r, 28, 18), leafM); f.position.set(x, y, z); LV.add(f); }
+  { const bl = []; for (const [x, y, z, r] of [[1800, 360, 360, 120], [1890, 320, 330, 90], [1730, 330, 420, 90], [1830, 420, 400, 80]]) { const f = furMesh(new THREE.SphereGeometry(r, 28, 18), leafM); f.position.set(x, y, z); LV.add(f); bl.push([x, y, z, r]); } REALT.push({ x: 1800, z: 360, r: 22, y0: GY, top: 330, bl, mat: leafM, keepTrunk: true }); REALHIDE.push(leafM); }
   // hose from the house to the sprinkler
   tubeM([[X0 + 2, GY + 40, -120], [X0 + 10, GY + 2, -110], [1560, GY + 1.5, -60], [1700, GY + 1.5, -20], [1820, GY + 1.5, 0]], 1.4, new THREE.MeshStandardMaterial({ color: 0x2f8a3a, roughness: .5 }), 80);
   const sp = new THREE.Group(); sp.position.set(1820, GY, 0); LV.add(sp); mesh(new THREE.CylinderGeometry(5, 7, 4, 16), M.dsteel, 0, 2, 0, { parent: sp }); const arm = mesh(new THREE.BoxGeometry(2, 2, 12), M.paintRed, 0, 5, 0, { parent: sp });
