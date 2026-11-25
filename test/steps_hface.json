@@ -1,0 +1,11 @@
+[{"eval":"window.__bn.startChapter2()","wait":5000},
+ {"evalFile":"shothelp.js"},
+ {"eval":"(()=>{__S.hud(false); return __S.warp('公園廣場', 60)})()"},
+ {"eval":"(()=>{const b=window.__bn,T=b.THREE; const p=b.leader.pos; const M=(c,r=.85)=>new T.MeshPhysicalMaterial({color:c,roughness:r,sheen:.4,sheenColor:0xffffff}); const H=b.buildHuman({skin:b.MAT.skin,top:M(0x8a2f3a),pants:M(0x2a2f3a),shoe:new T.MeshStandardMaterial({color:0xe4e0d8,roughness:.6}),hair:0x3a2418}); H.root.visible=true; H.pos.set(p.x,p.y,p.z-150); H.yaw=0.25; for(let i=0;i<60;i++) b.humanAnim(H,0,1/60); window.__F=H; return 1})()"},
+ {"eval":"(()=>{const H=window.__F,P=H.pos; __S.abs([P.x+12,P.y+160,P.z+52],[P.x+1,P.y+158,P.z]); return 1})()"},
+ {"frame":1},{"wait":700},{"frame":1,"shot":"hf_front"},
+ {"eval":"(()=>{const H=window.__F,P=H.pos; __S.abs([P.x+55,P.y+160,P.z+14],[P.x,P.y+158,P.z+2]); return 1})()"},
+ {"frame":1},{"wait":700},{"frame":1,"shot":"hf_side"},
+ {"eval":"(()=>{const H=window.__F,P=H.pos; __S.abs([P.x+38,P.y+170,P.z+40],[P.x,P.y+157,P.z]); return 1})()"},
+ {"frame":1},{"wait":700},{"frame":1,"shot":"hf_3q"}
+]

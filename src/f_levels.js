@@ -504,34 +504,14 @@ function buildKitchen() {
 // ---------------- daughter (seated at the dining table) ----------------
 const KID = {};
 function buildKid() {
-  if (KID.root) return; const g = new THREE.Group(); scene.add(g); KID.root = g; g.visible = false;
+  if (KID.root) return;
   const hood = new THREE.MeshPhysicalMaterial({ color: 0xb6a2d6, roughness: .95, sheen: .9, sheenColor: 0xfff0ff, normalMap: MAT.knit.normalMap, normalScale: new THREE.Vector2(.8, .8) });
   const legM = new THREE.MeshPhysicalMaterial({ color: 0x2c3550, roughness: .9, sheen: .5, sheenColor: 0x8090c0 });
   const sock = new THREE.MeshPhysicalMaterial({ color: 0xf6f2ea, roughness: .95, sheen: .7 });
-  const mk = (geo, mat, parent, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m; };
-  const pelvis = new THREE.Group(); pelvis.position.y = 50; g.add(pelvis); KID.pelvis = pelvis;
-  mk(ell(12, 8, 9, 24, 16), legM, pelvis, 0, 0, 0);
-  KID.legs = [];
-  for (const s of [-1, 1]) {
-    const hip = new THREE.Group(); hip.position.set(s * 6.2, -2, 0); pelvis.add(hip); hip.rotation.x = -1.45; mk(capG(5, 18), legM, hip, 0, -14, 0);
-    const knee = new THREE.Group(); knee.position.y = -29; hip.add(knee); knee.rotation.x = 1.5; mk(capG(3.8, 18), legM, knee, 0, -13, 0);
-    const foot = mk(ell(3.6, 3, 7.5, 16, 12), sock, knee, 0, -27, 3); KID.legs.push({ hip, knee, s });
-  }
-  const chest = new THREE.Group(); chest.position.y = 3; pelvis.add(chest); chest.rotation.x = .22; KID.chest = chest;
-  const tp = [[11, 0], [12.4, 8], [12.6, 20], [12.4, 30], [10, 36], [5, 39]].map(p => new THREE.Vector2(p[0], p[1]));
-  mk(new THREE.LatheGeometry(tp, 32), hood, chest, 0, 0, 0).scale.z = .72;
-  const hd = mk(new THREE.TorusGeometry(6.5, 2.4, 10, 24, Math.PI * 1.3), hood, chest, 0, 37, -3); hd.rotation.set(Math.PI / 2 + .3, 0, Math.PI * 1.15);
-  mk(new THREE.CylinderGeometry(3.4, 3.8, 6, 16), MAT.skin, chest, 0, 41, 0);
-  const head = new THREE.Group(); head.position.y = 50; chest.add(head); KID.head = head;
-  mk(ell(7.2, 8.4, 7.8, 32, 24), MAT.skin, head, 0, 0, .6);
-  for (const s of [-1, 1]) { const e = mk(new THREE.SphereGeometry(.85, 12, 10), MAT.eye, head, s * 2.6, .8, 7.4); e.scale.set(1, 1.2, .6); }
-  const hairM = furMat({ color: 0x2a1b14, len: .9, den: 2.1, droop: .7, clump: .55, rimK: .1, root: .5, rough: .6 });
-  const hair = furMesh(ell(7.8, 8.6, 8.3, 32, 24), hairM); hair.position.set(0, 1.4, -1); head.add(hair);
-  for (const s of [-1, 1]) { const pt = furMesh(ell(3, 5.4, 3, 20, 14), hairM); pt.position.set(s * 8.4, -2, -3); pt.rotation.z = s * .4; head.add(pt); mk(new THREE.TorusGeometry(1.6, .6, 8, 16), new THREE.MeshPhysicalMaterial({ color: 0xe8607a, roughness: .5 }), head, s * 7.4, 2.4, -2.6).rotation.y = Math.PI / 2; }
-  KID.arms = [];
-  for (const s of [-1, 1]) { const sh = new THREE.Group(); sh.position.set(s * 12.5, 32, 0); chest.add(sh); mk(capG(3.4, 13), hood, sh, 0, -9, 0); const el = new THREE.Group(); el.position.y = -19; sh.add(el); mk(capG(2.9, 12), hood, el, 0, -8, 0); mk(ell(2.4, 3.2, 1.6, 12, 10), MAT.skin, el, 0, -17, 0); KID.arms.push({ sh, el, s }); }
-  const pen = mk(new THREE.CylinderGeometry(.35, .35, 12, 8), new THREE.MeshStandardMaterial({ color: 0xf2c230 }), KID.arms[1].el, 0, -17, 3); pen.rotation.x = 1; KID.pen = pen;
-  KID.mode = 'read'; KID.t = 6; KID.yaw = 0; KID.pitch = .6; KID.look = V3();
+  humanBody({ build: 'k', top: hood, pants: legM, skin: MAT.skin, sock, hood, hair: 0x2a1b14, style: 'pig', tie: new THREE.MeshPhysicalMaterial({ color: 0xe8607a, roughness: .5 }) }, KID);
+  KID.root.visible = false; KID.stride = 40;
+  const pen = new THREE.Mesh(new THREE.CylinderGeometry(.35, .35, 12, 8), new THREE.MeshStandardMaterial({ color: 0xf2c230 })); pen.position.set(0, -16, 2.4); pen.rotation.x = 1; KID.arms[1].el.add(pen); KID.pen = pen; KID.arms[1].grip = .8;
+  KID.pelvis.position.y = 50; KID.mode = 'read'; KID.t = 6; KID.yaw = 0; KID.pitch = .6; KID.look = V3();
 }
 // ---------------- the cat (小橘) ----------------
 const CAT = {};
@@ -598,10 +578,10 @@ function updKitchenMom(dt) {
 function momAnimK(dt, moveD) {
   const P = mom.pos; P.y = mom.fy = humanFloor(P.x, P.z, mom.fy || 0); const R0 = mom.root; R0.position.copy(P); R0.rotation.y = mom.yaw;
   const prev = mom.phase; mom.phase += moveD / 62 * Math.PI; const ph = mom.phase; const walking = moveD > 0;
-  mom.amp = walking ? .42 : damp(mom.amp || 0, 0, 4, dt); const ak = mom.amp / .42;
   const sitting = KM.mode === 'act' && (KM.pt === 'table' || KM.pt === 'toilet' || KM.pt === 'sofa') && !walking; if (sitting) mom.sitY = { table: 53, toilet: 47, sofa: 50 }[KM.pt]; mom.sitK = damp(mom.sitK || 0, sitting ? 1 : 0, 5, dt); const sk = mom.sitK;
-  for (const L of mom.legs) { const s = L.s; const a = Math.sin(ph) * s * mom.amp; L.hip.rotation.x = lerp(-a, -1.5, sk); L.knee.rotation.x = lerp(.08 + Math.max(0, Math.cos(ph) * s) * .75 * ak, 1.55, sk); L.ankle.rotation.x = lerp(-(-a + .08) * .6, -.05, sk); }
-  mom.pelvis.position.y = lerp(88 + Math.abs(Math.cos(ph)) * 1.6 * ak - .8, mom.sitY || 53, sk); mom.pelvis.rotation.y = Math.sin(ph) * .06 * ak * (1 - sk);
+  mom.amp = .42 * humanGait(mom, ph, walking, dt);
+  if (sk > 0) { for (const L of mom.legs) { L.hip.rotation.x = lerp(L.hip.rotation.x, -1.5, sk); L.knee.rotation.x = lerp(L.knee.rotation.x, 1.55, sk); L.ankle.rotation.x = lerp(L.ankle.rotation.x, -.05, sk); } humanSettle(mom, sk); }
+  mom.pelvis.position.y = lerp(mom.pelvis.position.y, mom.sitY || 53, sk);
   mom.aim.x = damp(mom.aim.x, mom.aimT.x, 3, dt); mom.aim.y = damp(mom.aim.y, mom.aimT.y, 3, dt); mom.aim.z = damp(mom.aim.z, mom.aimT.z, 3, dt);
   R0.updateMatrixWorld(true); const hp = V3(); mom.head.getWorldPosition(hp);
   const ad = V3().subVectors(mom.aim, hp); const yr = Math.atan2(Math.sin(Math.atan2(ad.x, ad.z) - mom.yaw), Math.cos(Math.atan2(ad.x, ad.z) - mom.yaw)); const pitch = Math.atan2(-ad.y, Math.hypot(ad.x, ad.z));
@@ -615,7 +595,7 @@ function momAnimK(dt, moveD) {
   else if (KM.mode === 'act' && KM.pt === 'sink') { A1.sh.rotation.set(-.75 + Math.sin(T * 5) * .05, 0, 0); A1.el.rotation.x = -.7; A0.sh.rotation.set(-.75 + Math.cos(T * 5) * .05, 0, 0); A0.el.rotation.x = -.7; mom.spoon.visible = false; }
   else if (KM.mode === 'fetch' && TOY.fetch && TOY.fetch.mode !== 'walk') { const F = TOY.fetch; const reach = F.mode === 'grab' ? sstep(0, .5, F.t) * (1 - sstep(.9, 1.15, F.t)) : F.mode === 'drop' ? Math.sin(clamp(F.t / 1.1, 0, 1) * Math.PI) : 0; const low = F.from && F.from.y < 40 ? 1 : .4; A1.sh.rotation.set(-.55 - reach * (.25 + low * .2), 0, 0); A1.el.rotation.x = F.mode === 'carry' ? -1.35 : -.9 + reach * .7; mom.chest.rotation.x = reach * low * .5; A0.sh.rotation.set(-.15, 0, 0); A0.el.rotation.x = -.3; mom.spoon.visible = false; }
   else if (KM.mode === 'fopen') { A1.sh.rotation.set(-1.25, .2, 0); A1.el.rotation.x = -.25; A0.sh.rotation.x = -.2; A0.el.rotation.x = -.2; mom.spoon.visible = false; }
-  else { A0.sh.rotation.set(Math.sin(ph) * .3 * ak, 0, 0); A0.el.rotation.x = -.25; A1.sh.rotation.set(-Math.sin(ph) * .3 * ak, 0, 0); A1.el.rotation.x = -.25; mom.spoon.visible = KM.pt === 'stove'; }
+  else mom.spoon.visible = KM.pt === 'stove';   // walking: the gait swings the arms
   if (walking && Math.floor(prev / Math.PI) !== Math.floor(ph / Math.PI)) {
     const Lg = mom.legs[Math.floor(ph / Math.PI) % 2 === 0 ? 0 : 1]; const fp = V3(); Lg.ankle.getWorldPosition(fp); fp.y = P.y;
     const dist = Math.hypot(leader.pos.x - fp.x, leader.pos.y - fp.y, leader.pos.z - fp.z);

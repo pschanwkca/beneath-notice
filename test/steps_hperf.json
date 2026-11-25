@@ -1,0 +1,7 @@
+[{"eval":"window.__bn.startChapter2()","wait":5000},
+ {"evalFile":"shothelp.js"},
+ {"eval":"(()=>{__S.hud(false); return __S.warp('公園廣場', 120)})()"},
+ {"eval":"(()=>{const b=window.__bn; b.step(60); const t0=performance.now(); b.step(300); const t1=performance.now(); let n=0; for(const H of b.HUMANS) if(H.root.visible) n++; return {msPerUpdate:+((t1-t0)/300).toFixed(2), humans:b.HUMANS.length, vis:n}})()"},
+ {"frame":1},{"wait":500},{"frame":1},
+ {"eval":"(()=>{const b=window.__bn; return b.info()})()"}
+]

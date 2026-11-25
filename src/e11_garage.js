@@ -12,52 +12,7 @@ const GS = { agent: null, cam: null, camBroken: false, latch: false, flapA: 0, c
 function slick() { cols[cols.length - 1].slick = true; }
 function noRay() { cols[cols.length - 1].noRay = true; }
 
-// ---------- a full-size person (the Origin Dynamics man, the neighbour) ----------
-function buildHuman(o) {
-  const H = { pos: V3(), yaw: 0, phase: 0, amp: 0, legs: [], arms: [], aim: V3(), aimT: V3() };
-  const g = new THREE.Group(); scene.add(g); H.root = g;
-  const mk = (geo, mat, parent, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m; };
-  const pelvis = new THREE.Group(); pelvis.position.y = 90; g.add(pelvis); H.pelvis = pelvis;
-  mk(ell(18, 12, 12, 32, 20), o.pants, pelvis, 0, 0, 0);
-  for (const s of [-1, 1]) {
-    const hip = new THREE.Group(); hip.position.set(s * 9.5, -2, 0); pelvis.add(hip); mk(capG(8, 30), o.pants, hip, 0, -22, 0);
-    const knee = new THREE.Group(); knee.position.y = -44; hip.add(knee); mk(capG(6, 30), o.pants, knee, 0, -20, 0);
-    const ankle = new THREE.Group(); ankle.position.y = -40; knee.add(ankle); mk(ell(6, 4.6, 14, 24, 14), o.shoe, ankle, 0, -2.5, 4.5);
-    H.legs.push({ hip, knee, ankle, s });
-  }
-  const chest = new THREE.Group(); chest.position.y = 4; pelvis.add(chest); H.chest = chest;
-  const tp = [[16, 0], [17.5, 10], [18, 24], [19.5, 40], [17, 50], [8, 56]].map(p => new THREE.Vector2(p[0], p[1]));
-  const torso = mk(new THREE.LatheGeometry(tp, 40), o.top, chest, 0, 0, 0); torso.scale.z = .66;
-  mk(new THREE.CylinderGeometry(4.8, 5.2, 9, 20), o.skin, chest, 0, 59, 0);
-  const head = new THREE.Group(); head.position.y = 70; chest.add(head); H.head = head;
-  mk(ell(9, 11.4, 10.2, 40, 28), o.skin, head, 0, 0, 1);
-  if (o.hair) { const hm = furMat({ color: o.hair, len: .9, den: 2, droop: .6, clump: .5, rimK: .08, root: .5, rough: .7 }); const h = furMesh(ell(9.5, o.bald ? 6 : 10.6, 10.6, 40, 28), hm); h.position.set(0, o.bald ? -1 : 2, -1.6); head.add(h); }
-  if (o.cap) { mk(new THREE.SphereGeometry(10.2, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), o.cap, head, 0, 3, -.5).scale.y = .75; const pk = mk(new THREE.CylinderGeometry(8, 8, .8, 24, 1, false, -Math.PI / 2, Math.PI), o.cap, head, 0, 3.2, 6); pk.rotation.x = .12; if (o.badge) { const b = mk(new THREE.CircleGeometry(2.2, 20), o.badge, head, 0, 7.4, 9.6); b.rotation.x = -.5; } }
-  if (o.glasses) for (const s of [-1, 1]) mk(new THREE.TorusGeometry(2.2, .3, 6, 20), MAT.dsteel, head, s * 3.6, 1.5, 9.8);
-  for (const s of [-1, 1]) {
-    const sh = new THREE.Group(); sh.position.set(s * 19.5, 46, 0); chest.add(sh); mk(capG(4.8, 21), o.top, sh, 0, -13, 0);
-    const el = new THREE.Group(); el.position.y = -28; sh.add(el); mk(capG(4, 18), o.top, el, 0, -11, 0);
-    const hand = mk(ell(3.3, 4.8, 2.2, 16, 12), o.skin, el, 0, -25, 0); H.arms.push({ sh, el, hand, s });
-  }
-  if (o.badge) { const b = mk(new THREE.CircleGeometry(3.2, 24), o.badge, chest, -9, 40, 12.2); b.rotation.y = -.35; }
-  return H;
-}
-// walking / standing animation shared by the people
-function humanAnim(H, moveD, dt) {
-  H.root.position.copy(H.pos); H.root.rotation.y = H.yaw;
-  H.phase += moveD / 64 * Math.PI; const ph = H.phase; const walking = moveD > 0; H.amp = walking ? .42 : damp(H.amp, 0, 4, dt); const a = H.amp / .42;
-  for (const L of H.legs) { const x = Math.sin(ph) * L.s * H.amp; L.hip.rotation.x = -x; L.knee.rotation.x = .08 + Math.max(0, Math.cos(ph) * L.s) * .75 * a; L.ankle.rotation.x = -(L.hip.rotation.x + L.knee.rotation.x) * .6; }
-  H.pelvis.position.y = 90 + Math.abs(Math.cos(ph)) * 1.6 * a - .8;
-  return Math.floor((ph - moveD / 64 * Math.PI) / Math.PI) !== Math.floor(ph / Math.PI) && walking;
-}
-// head / torch-arm aim toward H.aim
-function humanAimArm(H, arm, dt) {
-  H.root.updateMatrixWorld(true);
-  const hp = V3(); H.head.getWorldPosition(hp); const ad = V3().subVectors(H.aim, hp); const yr0 = Math.atan2(ad.x, ad.z) - H.yaw; const yr = Math.atan2(Math.sin(yr0), Math.cos(yr0)); const pitch = Math.atan2(-ad.y, Math.hypot(ad.x, ad.z));
-  H.head.rotation.y = damp(H.head.rotation.y, clamp(yr, -.9, .9), 4, dt); H.head.rotation.x = damp(H.head.rotation.x, clamp(pitch * .6, -.3, .7), 4, dt);
-  if (arm) { const A = H.arms[arm]; A.sh.rotation.set(-.62 - clamp(-pitch, -.5, .9) * .35, clamp(yr, -.7, .7) * .5, 0); A.el.rotation.x = -1.05 + clamp(pitch, -.2, 1.1) * .45; }
-  return { yr, pitch };
-}
+// (people: buildHuman / humanAnim / humanAimArm live in e35_human.js)
 // "can this eye see the leader?" with an explicit eye position and forward direction
 function seeFrom(eye, fwd, fovCos, range) {
   const L = leader; const tp = V3(L.pos.x, L.pos.y + L.h * .55, L.pos.z); const d = V3().subVectors(tp, eye); const dist = d.length(); d.divideScalar(dist);
@@ -306,7 +261,7 @@ function updAgent(dt) {
   takeBend(H, J ? J.bend : 0, J ? 1 : 0);
 }
 function agentPose(H, moveD, dt) {
-  const step = humanAnim(H, moveD, dt); const A0 = H.arms[0]; A0.sh.rotation.x = Math.sin(H.phase) * .3 * (H.amp / .42); A0.el.rotation.x = -.25;
+  const step = humanAnim(H, moveD, dt);
   humanAimArm(H, 1, dt);
   const lp = V3(); H.lens.getWorldPosition(lp); const dir = V3().subVectors(H.aim, lp).normalize(); H.lightPos = lp; H.lightDir = dir;
   const on = ZONES.garage && ZONES.garage.near; GS.torch.position.copy(lp); GS.torch.target.position.copy(lp).addScaledVector(dir, 100); GS.torch.intensity = on ? 90000 : 0;

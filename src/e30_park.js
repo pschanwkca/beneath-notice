@@ -363,13 +363,13 @@ function buildParkPeople() {
   { const vest = new THREE.MeshPhysicalMaterial({ color: 0xc8f040, roughness: .45, sheen: .4, sheenColor: 0xf0ffa0, emissive: 0x1a2408 });
     const H = buildHuman({ pants: pants(0x16181c), top: vest, skin: MAT.skin, shoe: shoe(0xf06a3a), hair: 0x2a1a10, cap: new THREE.MeshStandardMaterial({ color: 0x1a1c22, roughness: .7 }) });
     H.root.visible = true;
-    if (DAY) { for (const sx of [-4, 4]) { const g = new THREE.Mesh(new THREE.SphereGeometry(2.6, 14, 10), new THREE.MeshPhysicalMaterial({ color: 0x101418, roughness: .05, metalness: .6, clearcoat: 1 })); g.scale.set(1, .7, .4); g.position.set(sx, 3.4, 10.2); H.head.add(g); } }   // sunglasses
+    if (DAY) { for (const sx of [-4, 4]) { const g = new THREE.Mesh(new THREE.SphereGeometry(2.6, 14, 10), new THREE.MeshPhysicalMaterial({ color: 0x101418, roughness: .05, metalness: .6, clearcoat: 1 })); g.scale.set(1, .62, .34); g.position.set(sx * .84, 1.9, 10.3); H.head.add(g); } }   // sunglasses
     else { const lampM = new THREE.MeshBasicMaterial({ color: new THREE.Color(0xf4f8ff).multiplyScalar(3) }); const hl = new THREE.Mesh(new THREE.BoxGeometry(4, 3, 2), lampM); hl.position.set(0, 4, 10.4); H.head.add(hl); }
     const strap = new THREE.Mesh(new THREE.TorusGeometry(10.2, .7, 6, 28), MAT.black); strap.rotation.x = Math.PI / 2 - .2; strap.position.y = 4; H.head.add(strap);
     // the torch's light lives in the park's own light list (the light pool lends it a real light when it matters); it follows his head each frame
     const lt = new THREE.SpotLight(0xeef4ff, DAY ? 0 : 90000, 0, .42, .5, 2); LV.add(lt, lt.target); const hp = new THREE.Object3D(); hp.position.set(0, 4, 12); H.head.add(hp); const tg = new THREE.Object3D(); tg.position.set(0, -30, 120); H.head.add(tg);
     const J = { H, a: 0, v: 300, mode: 'run', t: 0, laps: 0, lamp: lt, lampAt: hp, lampTo: tg, ent: { p: V3(), dir: V3(), cos: Math.cos(.42), range: 420, I: () => lt.intensity } }; PK.lights.push(J.ent);
-    const L = PK.loop; H.pos.set(L.cx, GY, L.cz - L.rz); npcHome(H.root, H.pos, 0, 'park'); PK.jog = J; }
+    const L = PK.loop; H.pos.set(L.cx, GY, L.cz - L.rz); npcHome(H.root, H.pos, 0, 'park'); PK.jog = J; H.stride = 92; }
   // a teenager on the skate ramps
   { const hood = new THREE.MeshPhysicalMaterial({ color: 0x3a3048, roughness: .9, sheen: .6, sheenColor: 0x8a78a8 });
     const H = buildHuman({ pants: pants(0x5a5848), top: hood, skin: MAT.skin, shoe: shoe(0xe8e4dc), hair: 0x1a120c, bald: true, cap: new THREE.MeshStandardMaterial({ color: 0xc83a3a, roughness: .95 }) });
@@ -483,8 +483,8 @@ function updJogger(dt) {
     if ((J.t -= dt) <= 0 && !NET.client) { J.mode = 'run'; }
   }
   H.aim.lerp(H.aimT, 1 - Math.exp(-4 * dt));
-  humanAnim(H, moveD, dt); humanAimArm(H, 0, dt);
-  if (J.mode === 'run') { for (const L of H.legs) { L.hip.rotation.x *= 1.7; L.knee.rotation.x = .3 + Math.max(0, Math.cos(H.phase) * L.s) * 1.5; } H.chest.rotation.x = .16; H.pelvis.position.y = 90 + Math.abs(Math.sin(H.phase)) * 5 - 3; for (const A of H.arms) { A.sh.rotation.set(Math.sin(H.phase) * A.s * .9 - .2, 0, -A.s * .12); A.el.rotation.x = -1.5; } }
+  humanAnim(H, moveD, dt, J.mode === 'run' ? 1 : 0); humanAimArm(H, 0, dt);
+  if (J.mode === 'run') { for (const A of H.arms) A.grip = .75; }
   else { H.chest.rotation.x = J.mode === 'stretch' ? .5 + Math.sin(T * .7) * .3 : 0; for (const A of H.arms) { A.sh.rotation.set(J.mode === 'stretch' ? -.3 : -.2, 0, -A.s * .1); A.el.rotation.x = -.3; } }
   // the head torch feeds the detection light list
   H.root.updateMatrixWorld(true); J.lampAt.getWorldPosition(J.lamp.position); J.lampTo.getWorldPosition(J.lamp.target.position); J.lamp.target.updateMatrixWorld();
@@ -837,7 +837,7 @@ function updKids(dt) {
     else if (g.mode === 'toduck' || g.mode === 'toswing') { const R0 = g.mode === 'toduck' ? GIRL_DUCK : GIRL_SWING, w = R0[Math.min(g.ri, R0.length - 1)]; H.root.rotation.set(0, 0, 0); H.pelvis.position.y = 90;
       const st = kidStep(H, w[0], w[1], 130, dt); moveD = st / .6; H.aimT.set(w[0], GY + 30, w[1]);
       if (!st && host) { if (g.ri < R0.length - 1) g.ri++; else { g.mode = g.mode === 'toduck' ? 'duck' : 'swing'; g.t = g.mode === 'duck' ? R(8, 12) : R(20, 32); } }
-      humanAnim(H, moveD, dt); for (const A of H.arms) { A.sh.rotation.set(Math.sin(H.phase) * A.s * .6, 0, A.s * .12); A.el.rotation.x = -.5; } }
+      humanAnim(H, moveD, dt); for (const A of H.arms) { A.sh.rotation.set(-Math.cos(H.phase - .3) * A.s * .5, 0, A.s * .12); A.el.rotation.x = -.5; } }
     else if (g.mode === 'duck') { const D = PK.duck; H.pos.set(D.position.x, D.position.y + 3, D.position.z - 3); H.yaw = 0; H.root.position.copy(H.pos); const r = Math.sin(T * 5) * .12; D.rotation.x = r; H.root.rotation.set(r * .8, 0, 0);
       H.pelvis.position.y = 44; for (const L of H.legs) { L.hip.rotation.set(-1.25, 0, L.s * .38); L.knee.rotation.x = 1.45; } for (const A of H.arms) { A.sh.rotation.set(-.75, 0, A.s * .05); A.el.rotation.x = -.5; }
       H.aimT.set(H.pos.x + Math.sin(T * .5) * 120, GY + 40, H.pos.z + 200); if (host && g.t <= 0) { g.mode = 'toswing'; g.ri = 0; D.rotation.x = 0; H.root.rotation.set(0, 0, 0); H.pos.set(2306, GY, 3170); } }

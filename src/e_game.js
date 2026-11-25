@@ -486,10 +486,7 @@ function updMom(dt) {
   const R0 = mom.root; R0.position.copy(P); R0.rotation.y = mom.yaw;
   const prev = mom.phase; mom.phase += moveD / 62 * Math.PI; const ph = mom.phase;
   const walking = moveD > 0;
-  const amp = walking ? .42 : damp(mom.amp || 0, 0, 4, dt); mom.amp = walking ? .42 : amp;
-  for (const L of mom.legs) { const s = L.s; const a = Math.sin(ph) * s * mom.amp; L.hip.rotation.x = -a; L.knee.rotation.x = .08 + Math.max(0, Math.cos(ph) * s) * .75 * (mom.amp / .42); L.ankle.rotation.x = -(L.hip.rotation.x + L.knee.rotation.x) * .6; }
-  mom.pelvis.position.y = 88 + Math.abs(Math.cos(ph)) * 1.6 * (mom.amp / .42) - .8; mom.pelvis.rotation.y = Math.sin(ph) * .06 * (mom.amp / .42);
-  const A0 = mom.arms[0]; A0.sh.rotation.x = Math.sin(ph) * .3 * (mom.amp / .42); A0.el.rotation.x = -.25;
+  mom.amp = .42 * humanGait(mom, ph, walking, dt); mom.chest.rotation.x = .03 + .04 * mom.amp / .42;
   // phone arm & head aim
   mom.root.updateMatrixWorld(true);
   const lp = V3(); mom.lens.getWorldPosition(lp); mom.lightPos.copy(lp);

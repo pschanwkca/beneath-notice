@@ -1,0 +1,17 @@
+[{"eval":"window.__bn.startChapter2()","wait":5000},
+ {"evalFile":"shothelp.js"},
+ {"eval":"(()=>{__S.hud(false); return __S.warp('公園廣場', 60)})()"},
+ {"eval":"(()=>{const b=window.__bn,T=b.THREE; const p=b.leader.pos; const mk=o=>{const H=b.buildHuman(Object.assign({skin:b.MAT.skin},o)); H.root.visible=true; return H;}; const M=(c,r=.85)=>new T.MeshPhysicalMaterial({color:c,roughness:r,sheen:.4,sheenColor:0xffffff}); window.__L={A:mk({top:M(0x59636e),pants:M(0x59636e), shoe:new T.MeshStandardMaterial({color:0x1e1c1a,roughness:.5}), cap:new T.MeshStandardMaterial({color:0x1f2a44,roughness:.7}), hair:0x241a14}), B:mk({build:'f',top:M(0xcdbca6),pants:M(0x8a8580), shoe:new T.MeshStandardMaterial({color:0xe8e4dc,roughness:.6}), hair:0x2a1c16, style:'long'}), C:mk({top:M(0x4a5a6a),pants:M(0x303a2a),shoe:new T.MeshStandardMaterial({color:0x6a4a30,roughness:.6}),hair:0xd8d4cc,bald:true,glasses:true}), D:mk({top:M(0x8a2f3a),pants:M(0x2a2f3a),shoe:new T.MeshStandardMaterial({color:0xe4e0d8,roughness:.6}),hair:0x3a2418})}; const L=window.__L; L.p=p.clone(); L.A.pos.set(p.x-60,p.y,p.z-150); L.B.pos.set(p.x+10,p.y,p.z-150); L.C.pos.set(p.x+80,p.y,p.z-150); L.D.pos.set(p.x+400,p.y,p.z-150); for(let i=0;i<90;i++) for(const k of 'ABCD') b.humanAnim(L[k],0,1/60); return b.HUMANS.length})()"},
+ {"eval":"(()=>{const L=window.__L,p=L.p; __S.abs([p.x+10,p.y+110,p.z-10],[p.x+10,p.y+90,p.z-150]); return 1})()"},
+ {"frame":1},{"wait":800},{"frame":1,"shot":"hl_group"},
+ {"eval":"(()=>{const L=window.__L,P=L.A.pos; __S.abs([P.x+8,P.y+164,P.z+44],[P.x,P.y+159,P.z]); return 1})()"},
+ {"frame":1},{"wait":700},{"frame":1,"shot":"hl_faceA"},
+ {"eval":"(()=>{const L=window.__L,P=L.B.pos; __S.abs([P.x-16,P.y+150,P.z+40],[P.x,P.y+151,P.z]); return 1})()"},
+ {"frame":1},{"wait":700},{"frame":1,"shot":"hl_faceB"},
+ {"eval":"(()=>{const L=window.__L,P=L.C.pos; __S.abs([P.x+34,P.y+158,P.z+30],[P.x,P.y+157,P.z]); return 1})()"},
+ {"frame":1},{"wait":700},{"frame":1,"shot":"hl_faceC"},
+ {"eval":"(()=>{const L=window.__L,P=L.A.pos; __S.abs([P.x+60,P.y+120,P.z+70],[P.x+5,P.y+100,P.z]); return 1})()"},
+ {"frame":1},{"wait":700},{"frame":1,"shot":"hl_torso"},
+ {"eval":"(()=>{const L=window.__L,P=L.A.pos; __S.abs([P.x+40,P.y+12,P.z+50],[P.x,P.y+8,P.z+4]); return 1})()"},
+ {"frame":1},{"wait":700},{"frame":1,"shot":"hl_feet"}
+]

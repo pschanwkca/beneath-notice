@@ -327,14 +327,13 @@ function kidBody(dt, moveD) {
   const H = KID, pose = H.pose || 'homework', sitting = pose === 'homework' || pose === 'toilet' || pose === 'sofa';
   { const RP = H.root.position; RP.y = H.fy = humanFloor(RP.x, RP.z, H.fy || 0); }
   H.sitK = damp(H.sitK ?? 1, sitting ? 1 : 0, 6, dt); const sk = H.sitK;
-  const prev = H.ph || 0; H.ph = prev + moveD / 30 * Math.PI; const walking = moveD > 0; H.amp = damp(H.amp || 0, walking ? 1 : 0, 9, dt); const a = H.amp;
+  const prev = H.ph || 0; H.ph = prev + moveD / 40 * Math.PI; const walking = moveD > 0;
+  H.root.rotation.y = H.byaw ?? Math.PI;
+  const a = humanGait(H, H.ph, walking, dt, 0, true); H.amp = a;
   const crouch = pose === 'pet' ? 1 : 0; H.crK = damp(H.crK || 0, crouch, 5, dt);
-  H.pelvis.position.y = lerp(lerp(61 + Math.abs(Math.cos(H.ph)) * 1.4 * a, 40, H.crK), H.seatY || 50, sk);
-  for (const L of H.legs) {
-    const sw = Math.sin(H.ph) * L.s * .55 * a;
-    L.hip.rotation.x = lerp(lerp(-sw, -1.2, H.crK), -1.45, sk);
-    L.knee.rotation.x = lerp(lerp(.05 + Math.max(0, Math.cos(H.ph) * L.s) * .85 * a, 2.1, H.crK), pose === 'homework' ? 1.5 + Math.sin(T * 2.2 + L.s * 1.6) * .25 : 1.45, sk);
-  }
+  if (H.crK > .001) { for (const L of H.legs) { L.hip.rotation.x = lerp(L.hip.rotation.x, -1.35, H.crK); L.knee.rotation.x = lerp(L.knee.rotation.x, 2.25, H.crK); L.ankle.rotation.x = lerp(L.ankle.rotation.x, -.9, H.crK); } H.pelvis.position.y = lerp(H.pelvis.position.y, 26.5, H.crK); }
+  if (sk > .001) { for (const L of H.legs) { L.hip.rotation.x = lerp(L.hip.rotation.x, -1.45, sk); L.knee.rotation.x = lerp(L.knee.rotation.x, pose === 'homework' ? 1.5 + Math.sin(T * 2.2 + L.s * 1.6) * .25 : 1.45, sk); L.ankle.rotation.x = lerp(L.ankle.rotation.x, -.05, sk); } H.pelvis.position.y = lerp(H.pelvis.position.y, H.seatY || 50, sk); }
+  humanSettle(H, Math.max(sk, H.crK));
   H.chest.rotation.x = damp(H.chest.rotation.x, pose === 'homework' ? .22 : pose === 'pet' ? .55 : pose === 'fridge' || pose === 'wash' ? .25 : sitting ? .08 : .04 + a * .05, 6, dt);
   const A0 = H.arms[0], A1 = H.arms[1]; const set = (A, x, y, e) => { A.sh.rotation.x = damp(A.sh.rotation.x, x, 8, dt); A.sh.rotation.y = damp(A.sh.rotation.y, y, 8, dt); A.el.rotation.x = damp(A.el.rotation.x, e, 8, dt); };
   if (pose === 'homework') { A1.sh.rotation.set(-.95 + Math.sin(T * 6) * .03, .3, 0); A1.el.rotation.x = -.9 + Math.sin(T * 9) * .04; A0.sh.rotation.set(-1, -.3, 0); A0.el.rotation.x = -.8; }
@@ -342,9 +341,8 @@ function kidBody(dt, moveD) {
   else if (pose === 'pet') { set(A1, -1.1 + Math.sin(T * 5) * .15, .2, -.3); set(A0, -.9, -.2, -.3); }
   else if (pose === 'fridge' || pose === 'wash') { set(A1, -1.2, .15, -.4); set(A0, pose === 'wash' ? -1.2 : -.3, -.15, -.4); }
   else if (pose === 'sofa' || pose === 'toilet') { set(A1, -.6, .2, -.9); set(A0, -.6, -.2, -.9); }
-  else { const s = Math.sin(H.ph) * .45 * a; set(A0, s, 0, -.3); set(A1, -s, 0, -.3); }
+  else { const c = Math.cos(H.ph - .3) * .45 * a; set(A0, c, 0, -.3 - Math.max(0, -c) * .4); set(A1, -c, 0, -.3 - Math.max(0, c) * .4); }   // arms swing against the legs
   if (H.pen) H.pen.visible = pose === 'homework';
-  H.root.rotation.y = H.byaw ?? Math.PI;
   // footsteps: lighter than Mom's, still enough to flatten a tiny person
   if (walking && Math.floor(prev / Math.PI) !== Math.floor(H.ph / Math.PI) && leader) {
     const P = H.root.position, d = Math.hypot(leader.pos.x - P.x, leader.pos.z - P.z);

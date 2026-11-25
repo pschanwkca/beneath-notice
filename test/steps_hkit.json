@@ -1,0 +1,12 @@
+[{"eval":"window.__bn.startChapter('kitchen')","wait":6000},
+ {"evalFile":"shothelp.js"},
+ {"eval":"(()=>{const b=window.__bn; __S.hud(false); window.__C=(H,d,h,ang,th)=>{H.root.updateMatrixWorld(true); const p=H.root.getWorldPosition(new b.THREE.Vector3()); const y=H.root.rotation.y+ang; __S.abs([p.x+Math.sin(y)*d,p.y+h,p.z+Math.cos(y)*d],[p.x,p.y+th,p.z]); return [Math.round(p.x),Math.round(p.y),Math.round(p.z), b.KM.mode, b.KID.pose]}; b.step(400); return [b.LEVEL, b.mom.root.visible, b.KID.root.visible]})()"},
+ {"eval":"(()=>__C(window.__bn.mom,190,100,.4,95))()"},
+ {"frame":1},{"wait":700},{"frame":1,"shot":"hk_mom"},
+ {"eval":"(()=>__C(window.__bn.KID,120,70,.5,60))()"},
+ {"frame":1},{"wait":700},{"frame":1,"shot":"hk_kid"},
+ {"eval":"(()=>{window.__bn.step(600); return __C(window.__bn.mom,190,100,.4,95)})()"},
+ {"frame":1},{"wait":700},{"frame":1,"shot":"hk_mom2"},
+ {"eval":"(()=>__C(window.__bn.mom,60,8,.4,10))()"},
+ {"frame":1},{"wait":700},{"frame":1,"shot":"hk_slip"}
+]

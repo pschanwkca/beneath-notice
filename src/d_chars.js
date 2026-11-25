@@ -142,41 +142,10 @@ function makeChar(id) {
 // ---------- Mom (realistic giant, seen mostly as slippers and legs) ----------
 const mom = { active: false, pos: V3(-252, 260, -244), yaw: 0, phase: 0, node: 0, wait: 0, mode: 'off', timer: 60, visits: 0, lightPos: V3(), lightDir: V3(0, -1, 0), aim: V3(), aimT: V3(), trackT: 0, said: {}, stepSide: 0, lastStep: 0 };
 function buildMom() {
-  const M = MAT; const g = new THREE.Group(); scene.add(g); mom.root = g; g.visible = false;
-  const pelvis = new THREE.Group(); pelvis.position.y = 88; g.add(pelvis); mom.pelvis = pelvis;
-  const mk = (geo, mat, parent, x, y, z) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m; };
-  mk(ell(17, 12, 12, 32, 20), M.pants, pelvis, 0, 0, 0);
-  mom.legs = [];
+  const M = MAT;
   const slipM = furMat({ color: 0xe6cbc4, len: .9, den: 3.4, droop: .2, clump: .5, rimK: .05, root: .6 });
-  for (const s of [-1, 1]) {
-    const hip = new THREE.Group(); hip.position.set(s * 9, -2, 0); pelvis.add(hip);
-    mk(capG(7.6, 30), M.pants, hip, 0, -22, 0);
-    const knee = new THREE.Group(); knee.position.y = -43; hip.add(knee);
-    mk(capG(5.6, 31), M.pants, knee, 0, -20, 0);
-    mk(capG(3.6, 4), M.skin, knee, 0, -38, -.5);
-    const ankle = new THREE.Group(); ankle.position.y = -38; knee.add(ankle);
-    const sl = furMesh(ell(5.6, 3.8, 13, 32, 20), slipM); sl.position.set(0, -1.2, 4.5); ankle.add(sl);
-    mk(ell(5.8, 1.2, 13.4, 24, 8), new THREE.MeshStandardMaterial({ color: 0x8a6e66, roughness: .9 }), ankle, 0, -3.8, 4.5);
-    mom.legs.push({ hip, knee, ankle, s });
-  }
-  const chest = new THREE.Group(); chest.position.y = 4; pelvis.add(chest); mom.chest = chest;
-  const tp = [[15, 0], [16.5, 8], [16.8, 22], [17.6, 38], [16, 48], [8, 54]].map(p => new THREE.Vector2(p[0], p[1]));
-  const torso = mk(new THREE.LatheGeometry(tp, 40), M.knit, chest, 0, 0, 0); torso.scale.z = .66;
-  mk(new THREE.CylinderGeometry(4.6, 5, 9, 20), M.skin, chest, 0, 57, 0);
-  const headG = new THREE.Group(); headG.position.y = 68; chest.add(headG); mom.head = headG;
-  mk(ell(8.6, 11.2, 10, 40, 28), M.skin, headG, 0, 0, 1);
-  const hairM = furMat({ color: 0x2a1c16, len: 1.3, den: 1.6, droop: .9, clump: .55, rimK: .08, root: .5, rough: .6 });
-  const hair = furMesh(ell(9.3, 11.4, 10.6, 40, 28), hairM); hair.position.set(0, 1.6, -1.2); headG.add(hair);
-  const bun = furMesh(new THREE.SphereGeometry(5, 24, 16), hairM); bun.position.set(0, 9, -9); headG.add(bun);
-  mom.arms = [];
-  for (const s of [-1, 1]) {
-    const sh = new THREE.Group(); sh.position.set(s * 18.5, 45, 0); chest.add(sh);
-    mk(capG(4.6, 20), M.knit, sh, 0, -13, 0);
-    const el = new THREE.Group(); el.position.y = -27; sh.add(el);
-    mk(capG(3.9, 18), M.knit, el, 0, -11, 0);
-    const hand = mk(ell(3.2, 4.6, 2, 16, 12), M.skin, el, 0, -25, 0);
-    mom.arms.push({ sh, el, hand, s });
-  }
-  const phone = mk(new THREE.BoxGeometry(7.2, .9, 15), M.phone, mom.arms[1].el, 0, -27, 5); mom.phone = phone;
+  humanBody({ build: 'f', top: M.knit, pants: M.pants, skin: M.skin, slipper: slipM, ankleSkin: true, hair: 0x2a1c16, style: 'bun', sole: new THREE.MeshStandardMaterial({ color: 0x8a6e66, roughness: .9 }) }, mom);
+  mom.root.visible = false; mom.stride = 62;
+  const phone = new THREE.Mesh(new THREE.BoxGeometry(7.2, .9, 15), M.phone); phone.position.set(0, -27, 5); phone.castShadow = true; mom.arms[1].el.add(phone); mom.phone = phone; mom.arms[1].grip = .85;
   const lens = new THREE.Mesh(new THREE.SphereGeometry(.7, 12, 10), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xfff2e0).multiplyScalar(14) })); lens.position.set(2, -.5, 6.5); phone.add(lens); mom.lens = lens;
 }
