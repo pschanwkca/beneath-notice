@@ -234,7 +234,8 @@ function netSendWorld() {
   syncParty();
   const w = { t: 'w', lv: LEVEL, q: quest, cp, pr: PROTO, gb: gotBat, cm: cellMax };
   w.bat = batteries.map(b => b.got ? 1 : 0); w.vi = VIALS.map(v => v.got ? 1 : 0); w.cr = CRUMBS.map(c => c.got ? 1 : 0);
-  w.res = resizables.map(r => [+r.cx.toFixed(2), +r.cz.toFixed(2), +r.y0.toFixed(2), +r.target.toFixed(3), r.gone ? 1 : 0]);
+  w.res = []; resizables.forEach((r, i) => { if (!r.init) return; if (!r.everMoved && (r.gone || r.target !== 1 || Math.abs(r.cx - r.init[0]) + Math.abs(r.cz - r.init[1]) + Math.abs(r.y0 - r.init[2]) > .01)) r.everMoved = true;
+    if (r.everMoved) w.res.push([i, +r.cx.toFixed(2), +r.cz.toFixed(2), +r.y0.toFixed(2), +r.target.toFixed(3), r.gone ? 1 : 0]); });   // (only what has ever moved: there are hundreds of things in the house)
   w.toy = IDS.map(id => { const C = chars[id]; return C.frozen ? [1, C.toyAt === 'hand' ? 2 : C.toyAt === 'box' ? 3 : 1, +(C.toyTilt || 0).toFixed(2), +(C.toyRoll || 0).toFixed(2), +(C.rescueT || 0).toFixed(2), Math.max(0, PLACES.indexOf(C.toyPlace || ''))] : 0; });
   netWorldExtra(w); proSend(w); mpSaveTick();
   {
@@ -258,7 +259,7 @@ function netRecvWorld(w) {
   w.bat.forEach((g, i) => { if (g && batteries[i] && !batteries[i].got) hide(batteries[i]); });
   w.vi.forEach((g, i) => { if (g && VIALS[i] && !VIALS[i].got) hide(VIALS[i]); });
   w.cr.forEach((g, i) => { if (g && CRUMBS[i] && !CRUMBS[i].got) hide(CRUMBS[i]); });
-  w.res.forEach((q, i) => { const r = resizables[i]; if (!r) return; r.net = q; if (q[4] && !r.gone) { r.gone = true; r.mesh.visible = false; r.c.y0 = -999; r.c.y1 = -998; if (r === COOKIE) COOKIE.eaten = true; } });
+  w.res.forEach(e => { const i = e[0], q = e.slice(1), r = resizables[i]; if (!r) return; r.net = q; if (q[4] && !r.gone) { r.gone = true; r.mesh.visible = false; r.c.y0 = -999; r.c.y1 = -998; if (r === COOKIE) COOKIE.eaten = true; } });
   let changed = false;
   w.toy.forEach((t, i) => {
     const C = chars[IDS[i]];
@@ -341,6 +342,7 @@ function netMsg(d, from) {
     case 'gun': if (NET.host) hostGun(d.i, d.g, from); break;
     case 'shv': if (NET.host) { const r = resizables[d.i]; if (r && !r.gone) { shoveRes(r, d.vx, d.vz); SND.push(); } } break;
     case 'peb': launchPebble(V3(...d.a), V3(...d.b), d.d); break;
+    case 'pch': pouchRecv(d); break;
     case 'swr': if (NET.host) hostSwitch(d.i, d.id); break;
     case 'swo': if (!NET.host) swOn(d.i, d.d); break;
     case 'get': if (NET.host) hostGet(d); break;

@@ -2,13 +2,13 @@
 // =====================================================================
 //  THE ORIGIN DYNAMICS CREW — four more playable characters for online games (up to 8 players)
 //  阿刺 (刺蝟, 搬運工): left click = curl up and roll-dash; knocks over anything light in the way
-//  跳跳 (兔, 技術員):   hold left click to crouch, let go = a huge jump
+//  跳跳 (袋鼠, 技術員): hold left click to crouch, let go = a huge jump; hold right click = the pouch (e34_roo.js)
 //  阿浣 (浣熊, 保安):   left click = flick a pebble at the crosshair; it clatters there and pulls attention
 //  阿蛙 (青蛙, 工程師): hold left click = charged long leap; E next to a socket / lamp / TV = lights out
 //                       for a while — the whole team is much harder to see in the dark
 // =====================================================================
 SP.hog = { name: '阿刺', role: '搬運工', k: .9, r: 1.2, h: 4.5, fur: 0xc9a582, belly: 0xf1e2c8, len: .12, den: 40, ear: 'nub', paw: 0x4a3a30, nose: 0x1d1512, tail: 'stub', outfit: 'vest', spines: 0x4b3424, spd: 1.04, jmp: .95, clb: .9, abil: '滾動衝撞', desc: '左鍵縮成一團衝出去，撞跌擋路的東西', col: '#f0a35e' };
-SP.rab = { name: '跳跳', role: '技術員', k: .94, r: 1.15, h: 5, fur: 0xeee8de, belly: 0xffffff, len: .17, den: 38, ear: 'long', paw: 0xe3a8b0, nose: 0xe47a8c, tail: 'stub', outfit: 'headset', spd: 1.08, jmp: 1.18, clb: .95, abil: '超級跳', desc: '按住左鍵蓄力，放手跳得好高', col: '#f4c6d4' };
+SP.rab = { name: '跳跳', role: '技術員', k: .96, r: 1.2, h: 5.2, fur: 0xc4854e, belly: 0xf2dcbc, len: .12, den: 42, ear: 'roo', paw: 0x4a3426, nose: 0x2a1c14, tail: 'roo', outfit: 'headset', roo: true, spd: 1.08, jmp: 1.18, clb: .95, abil: '超級跳＋育兒袋', desc: '按住左鍵蓄力跳 · 按住右鍵打開育兒袋揀道具（彈簧墊、發條老鼠、麵粉彈……）', col: '#e8a86a' };
 SP.coon = { name: '阿浣', role: '保安', k: 1.06, r: 1.35, h: 5.4, fur: 0x8f8a84, belly: 0xd9d3cb, len: .2, den: 30, ear: 'pointy', paw: 0x2a2624, nose: 0x161210, tail: 'ringed', outfit: 'guard', mask: true, spd: 1, jmp: 1, clb: 1.05, abil: '彈石仔', desc: '左鍵把小石子彈到準星位置，聲音會引開別人', col: '#a9b8cc' };
 SP.frog = { name: '阿蛙', role: '工程師', k: .92, r: 1.25, h: 4.5, skin: true, frog: true, skinCol: 0x58a85c, bellyCol: 0xe6e2b4, paw: 0x4f9a52, nose: 0x2b4a22, tail: 'none', outfit: 'hardhat', spd: .98, jmp: 1.08, clb: .9, abil: '蓄力跳＋搞電器', desc: '按住左鍵蓄力遠跳 · E 關掉附近的燈', col: '#7fd4b0' };
 const CORE = ['dad', 'sq', 'bear', 'cham'];
@@ -48,6 +48,7 @@ function crewEar(C, S, g, s, k, part, plain, fm) {
     part(ell(.4 * k, .52 * k, .15 * k, 24, 16), fm(0), g, 0, .1 * k, 0);
     plain(ell(.26 * k, .36 * k, .06 * k, 20, 12), M.mask, g, 0, .06 * k, .11 * k);
     plain(ell(.42 * k, .12 * k, .1 * k, 16, 8), M.white, g, 0, .52 * k, 0);
+  } else if (S.ear === 'roo') { rooEar(g, s, k, part, plain, fm);
   } else if (S.ear === 'bat') { batEar(g, s, k, part, plain, fm);
   } else if (S.ear === 'nub') {
     g.position.set(s * .86 * k, .84 * k, .05 * k); g.rotation.set(0, s * -.4, s * -.4);
@@ -57,6 +58,7 @@ function crewEar(C, S, g, s, k, part, plain, fm) {
 }
 // tails
 function crewTail(C, S, tailRoot, k, part, fm) {
+  if (S.tail === 'roo') { rooTail(C, S, tailRoot, k, part, fm); return true; }
   if (S.tail === 'ringed') {
     let parent = tailRoot; const sz = [.42, .5, .52, .48, .38];
     for (let i = 0; i < 5; i++) {
@@ -71,7 +73,7 @@ function crewTail(C, S, tailRoot, k, part, fm) {
 // faces, spines, outfits
 function crewExtras(C, S, head, body, k, part, plain) {
   const M = crewMats();
-  if (S.bat) batExtras(C, S, head, body, k, plain); if (S.tort) tortExtras(C, S, head, body, k, plain); if (S.mole) moleExtras(C, S, head, body, k, plain);
+  if (S.roo) rooExtras(C, S, head, body, k, part, plain); if (S.bat) batExtras(C, S, head, body, k, plain); if (S.tort) tortExtras(C, S, head, body, k, plain); if (S.mole) moleExtras(C, S, head, body, k, plain);
   const badge = (y = 1.16, z = .98) => { const b = plain(new THREE.CircleGeometry(.17 * k, 24), M.badge, body, -.42 * k, y * k, z * k); b.rotation.y = -.38; b.castShadow = false; };
   const lathe = (pts, mat, sz = .95) => { const m = plain(new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0] * k, p[1] * k)), 48), mat, body, 0, 0, 0); m.scale.z = sz; return m; };
   if (S.spines) {
@@ -98,9 +100,9 @@ function crewExtras(C, S, head, body, k, part, plain) {
     for (const a of C.arms) plain(new THREE.SphereGeometry(.3 * k, 16, 12), M.black, a, 0, -.9 * k, 0);
     badge(1.0, .99);
   } else if (S.outfit === 'headset') {
-    lathe([[1.1, -.32], [1.12, 0], [1.08, .5], [1.0, .92], [.74, 1.22]], M.polo);
-    plain(new THREE.TorusGeometry(.66 * k, .1 * k, 8, 32), M.polo, body, 0, 1.36 * k, 0).rotation.x = Math.PI / 2;
-    const band = plain(new THREE.TorusGeometry(1.24 * k, .07 * k, 8, 40, Math.PI), M.black, head, 0, .1 * k, -.05 * k); band.rotation.y = Math.PI / 2;
+    if (!S.roo) { lathe([[1.1, -.32], [1.12, 0], [1.08, .5], [1.0, .92], [.74, 1.22]], M.polo);   // (the kangaroo keeps its pouch on show: headset only)
+      plain(new THREE.TorusGeometry(.66 * k, .1 * k, 8, 32), M.polo, body, 0, 1.36 * k, 0).rotation.x = Math.PI / 2; }
+    const band = plain(new THREE.TorusGeometry(1.24 * k, .07 * k, 8, 40, Math.PI), M.black, head, 0, .1 * k, -.05 * k);   // (over the top, cup to cup)
     for (const s of [-1, 1]) { const cup = plain(new THREE.CylinderGeometry(.34 * k, .34 * k, .22 * k, 24), M.black, head, s * 1.26 * k, .05 * k, -.05 * k); cup.rotation.z = Math.PI / 2; }
     const boom = plain(new THREE.CylinderGeometry(.04 * k, .04 * k, 1.0 * k, 8), M.black, head, -1.0 * k, -.35 * k, .55 * k); boom.rotation.set(.9, 0, .5);
     plain(new THREE.SphereGeometry(.1 * k, 12, 10), M.black, head, -.75 * k, -.62 * k, .98 * k);
@@ -246,5 +248,5 @@ function crewHint(L) {
   if (!L) return ''; const nh = ncHint(L); if (nh) return nh;
   if (L.id === 'frog') { const s = swNear(L); if (s) return s.until > T ? `${s.name}：已經熄了` : s.cd > T ? `${s.name}：電路冷卻中` : `${TOUCH ? '按「電」' : '<kbd>E</kbd>'} 搞電器：${s.name}（附近熄燈 20 秒）`; }
   if ((L.id === 'rab' || L.id === 'frog') && L.charge > 0) return `蓄力 ${Math.round(L.charge * 100)}%……放手${L.id === 'rab' ? '起跳' : '跳出去'}`;
-  return '';
+  return pouchHint(L);
 }

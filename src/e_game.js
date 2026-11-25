@@ -74,7 +74,7 @@ canvas.addEventListener('mousedown', e => {
   mbtn = e.button; dragDist = 0;
 });
 addEventListener('mouseup', e => { if (e.button === 0) keys.Mouse0 = false; if (e.button === 2) keys.Mouse2 = false; if (dragMode && mbtn >= 0 && dragDist < 6 && STATE === 'play') { primaryDown(mbtn); keys.Mouse0 = false; } mbtn = -1; });
-function primaryDown(btn) { const L = leader; if (!L) return; if (L.id === 'bear') { if (btn === 0) { keys.Mouse0 = true; bearShove(); } else if (btn === 2) keys.Mouse2 = true; return; } if (L.id === 'cham') { if (btn === 0) chamTongue(); return; } if (L.id === 'sq') { if (btn === 0) sqCarry(); else if (btn === 2) sqScout(); return; } if (L.id === 'hog') { if (btn === 0) hogRoll(); return; } if (L.id === 'coon') { if (btn === 0) coonThrow(); return; } if (L.id === 'rab' || L.id === 'frog') { if (btn === 0) keys.Mouse0 = true; else if (btn === 2 && L.id === 'frog') frogSwitch(); return; } if (L.id === 'bat') { if (btn === 0) batPing(); return; } if (L.id === 'tort') { if (btn === 0) tortShell(); return; } if (L.id === 'mole') { if (btn === 0) moleDig(); return; } fireGun(btn === 0); }
+function primaryDown(btn) { const L = leader; if (!L) return; if (L.id === 'bear') { if (btn === 0) { keys.Mouse0 = true; bearShove(); } else if (btn === 2) keys.Mouse2 = true; return; } if (L.id === 'cham') { if (btn === 0) chamTongue(); return; } if (L.id === 'sq') { if (btn === 0) sqCarry(); else if (btn === 2) sqScout(); return; } if (L.id === 'hog') { if (btn === 0) hogRoll(); return; } if (L.id === 'coon') { if (btn === 0) coonThrow(); return; } if (L.id === 'rab' || L.id === 'frog') { if (btn === 0) { if (!POUCH.open) keys.Mouse0 = true; } else if (btn === 2 && L.id === 'frog') frogSwitch(); else if (btn === 2) pouchDown(); return; } if (L.id === 'bat') { if (btn === 0) batPing(); return; } if (L.id === 'tort') { if (btn === 0) tortShell(); return; } if (L.id === 'mole') { if (btn === 0) moleDig(); return; } fireGun(btn === 0); }
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 addEventListener('wheel', e => { cam.dist = clamp(cam.dist + e.deltaY * .012, 8, 42); }, { passive: true });
 
@@ -159,7 +159,7 @@ function land(C, imp) {
   else if (imp > 45) { C.squash = clamp(imp / 160, .25, .75); SND.land(clamp(imp / 130, .2, .8)); }
   else SND.step(.6);
 }
-function speedOf(C, run) { return (C.crouch ? 6.5 : run && !C.drag ? 25 : 13.5) * (C.drag ? C.drag.slow : 1) * C.S.spd * (C.slow || 1) * (C.carry ? 1 - .22 * carryWeight(C) : 1) * (C.stackN ? (C.stackN > 1 ? .6 : .76) : 1); }
+function speedOf(C, run) { return (C.crouch ? 6.5 : run && !C.drag ? 25 : 13.5) * (C.drag ? C.drag.slow : 1) * C.S.spd * (C.slow || 1) * (C.sugarT > T ? 1.22 : 1) * (C.carry ? 1 - .22 * carryWeight(C) : 1) * (C.stackN ? (C.stackN > 1 ? .6 : .76) : 1); }
 const joy = { id: null, x: 0, y: 0, ox: 0, oy: 0, on: false };
 function readMove() {
   if (joy.on && Math.hypot(joy.x, joy.y) > .1) { const m = Math.min(1, Math.hypot(joy.x, joy.y)); return { x: joy.x, y: joy.y, m, run: m > .93 }; }
@@ -372,6 +372,7 @@ function switchTo(N) {
 // ---------- camera ----------
 function updCam(dt) {
   if (EMO.open) { EMO.dx += mouseDX; EMO.dy += mouseDY; mouseDX = mouseDY = 0; }
+  if (POUCH.open) { POUCH.dx += mouseDX; POUCH.dy += mouseDY; mouseDX = mouseDY = 0; }
   if (STATE === 'play' && !PAUSED) { cam.yaw -= mouseDX * .0024 * SET.sens; cam.pitch = clamp(cam.pitch + mouseDY * .0022 * SET.sens * (SET.inv ? -1 : 1), -1.4, 1.35); }
   mouseDX = mouseDY = 0;
   const L = watchTarget() || leader; const ty = L.pos.y + L.h * (L.crouch ? .62 : .8);
@@ -674,7 +675,7 @@ function animChar(C, dt) {
   const bl = C.blinkT > 0 ? (C.blinkT -= dt, .08) : 1.12; for (const e of C.eyes) e.scale.y = bl;
   if (C.S.cham) chamAnim(C, dt);
   if (C.wing) { C.glideK = damp(C.glideK, st === 'glide' ? 1 : 0, 10, dt); for (const w of C.wing) { w.visible = C.glideK > .02; w.scale.y = Math.max(.01, C.glideK); } }
-  ncAnim(C, dt, st); emoAnim(C, dt);
+  ncAnim(C, dt, st); if (C.S.roo) rooAnim(C, dt, st); emoAnim(C, dt);
 }
 
 // ---------- flow ----------
@@ -743,12 +744,12 @@ function update(dt) {
   if (LEVEL === 'basement') { machine.field.material.uniforms.uT.value = T;
   const fl = .75 + Math.sin(T * 13) * .08 + (rnd() < .04 ? R(-.5, .6) : 0); machine.light.intensity = 900 * fl; machine.field.material.uniforms.uK.value = .85 + (fl - .75);
   if (rnd() < dt * 1.3) { const a = R(0, 6.28); const p = V3(machine.x + Math.cos(a) * 17, machine.y + Math.sin(a) * 17, machine.z + 1); for (let i = 0; i < 14; i++) emit(p, V3(R(-25, 25), R(5, 40), R(-10, 25)), rnd() < .5 ? new THREE.Color(3, 1.6, .5) : new THREE.Color(.8, 3, 2.8), R(.12, .25), R(.3, .9), 220, .5); if (leader) SND.crack(clamp(1 - leader.pos.distanceTo(V3(machine.x, machine.y, machine.z)) / 200, 0, 1)); } }
-  updRings(dt); updPebbles(dt); if (STATE === 'play') { bearHold(dt); if (!NET.client) { updSlides(dt); updPushFall(dt); } } updResizables(dt); if (LVL && LVL.toys && STATE !== 'loading') updToys(dt); updTongue(dt); updScout(dt); updWatch(); updBatteries(dt); updParticles(dt);
+  updRings(dt); updPebbles(dt); pouchUpdate(dt); if (STATE === 'play') { bearHold(dt); if (!NET.client) { updSlides(dt); updPushFall(dt); } } updResizables(dt); if (LVL && LVL.toys && STATE !== 'loading') updToys(dt); updTongue(dt); updScout(dt); updWatch(); updBatteries(dt); updParticles(dt);
   if (STATE === 'title') updTitle(dt);
   else if (STATE === 'intro') { updIntro(dt); for (const C of party) { C.state = 'idle'; C.spd = 0; } }
   else if (STATE === 'play') {
     playT += dt;
-    if (!NET.on && !EMO.open) for (let i = 0; i < party.length; i++) if (pressed['Digit' + (i + 1)]) switchTo(party[i]);
+    if (!NET.on && !EMO.open && !POUCH.open) for (let i = 0; i < party.length; i++) if (pressed['Digit' + (i + 1)]) switchTo(party[i]);
     if (!NET.on) if (pressed.Tab) { const act = party.filter(C => !C.frozen); if (act.length > 1) switchTo(act[(act.indexOf(leader) + 1) % act.length]); }
     if (pressed.KeyR) useProto();
     if (!NET.on) for (const C of party) if (pressed['sw_' + C.id]) switchTo(C);
@@ -795,10 +796,10 @@ let last = performance.now();
 function frame(now) {
   requestAnimationFrame(frame); musicFrame();
   // a frame time that goes backwards (it happens: tab switches, some phones) must never reach the physics — a negative step turned into NaN positions
-  const raw = (now - last) / 1000; last = now; const dt = raw > 0 ? Math.min(.05, raw) : 1 / 240; vcFrame(dt); netLogTick(dt); emoTick(dt); watchTick();
+  const raw = (now - last) / 1000; last = now; const dt = raw > 0 ? Math.min(.05, raw) : 1 / 240; vcFrame(dt); netLogTick(dt); emoTick(dt); watchTick(); pouchTick(dt);
   { const [w, h] = viewSize(); if (w !== RS.w || h !== RS.h) onResize(); }
   if (STATE === 'load') return;
-  if (!PAUSED || NET.on) update(dt);
+  if (!PAUSED || NET.on) update(dt * POUCH.slow);   // (the kangaroo's pouch slows time while it's open)
   if (window.__CAMO) { camera.position.set(...window.__CAMO.p); camera.lookAt(...window.__CAMO.t); if (ST.sky) ST.sky.position.set(camera.position.x - 2100, 0, camera.position.z - 800); }   // dev: a fixed camera for screenshots
   if (!window.__NR) composer.render();
   fpsAcc += dt; fpsN++;

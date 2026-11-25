@@ -455,6 +455,27 @@ html.touch .desk{display:none}
 #tbAct,#tbScout{display:none;border-color:rgba(159,216,107,.7);color:#bfe89a}
 #tbAct{right:84px;bottom:84px}
 #tbScout{right:150px;bottom:150px;width:52px;height:52px;font-size:12px}
+#tbPouch{display:none;right:150px;bottom:150px;width:52px;height:52px;font-size:15px;border-color:rgba(232,168,106,.75);color:#f3c590}
+.touchui.rab #tbPouch{display:block}
+/* the kangaroo's pouch: a GTA-style item wheel */
+.pwheel{position:fixed;left:50%;top:50%;width:0;height:0;z-index:31;pointer-events:auto;opacity:0;transform:scale(.94);transition:opacity .12s,transform .14s}
+.pwheel.on{opacity:1;transform:none}
+.pw-ring{position:absolute;left:-200px;top:-200px;width:400px;height:400px;overflow:visible;filter:drop-shadow(0 10px 28px rgba(0,0,0,.5))}
+.pw-seg{fill:rgba(16,14,20,.78);stroke:rgba(255,255,255,.1);stroke-width:1;cursor:pointer;transition:fill .1s}
+.pw-seg.out{fill:rgba(16,14,20,.52)}
+.pw-seg.on{fill:rgba(232,166,96,.9);stroke:rgba(255,226,182,.95);stroke-width:1.5}
+.pw-it{position:absolute;left:calc(var(--x) - 46px);top:calc(var(--y) - 42px);width:92px;height:84px;padding:0;border:0;background:none;color:#f3ebdd;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;pointer-events:none;font:700 12px/1.2 "Noto Sans TC",sans-serif;letter-spacing:.04em;transition:transform .12s,color .1s}
+.pw-it svg{width:40px;height:40px;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+.pw-it i{position:absolute;right:12px;top:4px;min-width:20px;height:20px;padding:0 4px;border-radius:10px;font:800 11px/18px ui-monospace,Menlo,monospace;font-style:normal;text-align:center;color:#f3ebdd;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.2)}
+.pw-it kbd{position:absolute;left:12px;top:4px;font:700 10px/16px ui-monospace,Menlo,monospace;color:rgba(243,235,221,.5)}
+.pw-it.on{color:#2b1a0d;transform:scale(1.08)}.pw-it.on i{background:#2b1a0d;color:#ffd79c;border-color:transparent}.pw-it.on kbd{color:rgba(43,26,13,.55)}
+.pw-it.out{opacity:.36}
+.pw-hub{position:absolute;left:-74px;top:-74px;width:148px;height:148px;box-sizing:border-box;border-radius:50%;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px;background:radial-gradient(circle at 50% 35%,rgba(40,33,36,.96),rgba(16,14,20,.92));border:1px solid rgba(255,255,255,.12);color:#f3ebdd;font-family:"Noto Sans TC",sans-serif;pointer-events:none}
+.pw-hub .pw-k{font-size:10px;letter-spacing:.14em;color:#e8a86a}
+.pw-hub b{font-size:17px;letter-spacing:.1em}
+.pw-hub .pw-d{font-size:10.5px;line-height:1.45;color:#c9bca8}
+.pw-hub em{font-style:normal;font-size:11px;font-weight:700;color:#ffd79c;letter-spacing:.06em}
+html.touch .pwheel{transform:scale(.82)}html.touch .pw-it{pointer-events:auto}html.touch .pw-it kbd{display:none}
 .touchui.sq #tbAct,.touchui.cham #tbAct,.touchui.sq #tbScout,.touchui.hog #tbAct,.touchui.rab #tbAct,.touchui.coon #tbAct,.touchui.frog #tbAct,.touchui.frog #tbScout,.touchui.bat #tbAct,.touchui.tort #tbAct,.touchui.mole #tbAct{display:block}
 #watch{position:fixed;z-index:6;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;transition:opacity .2s;pointer-events:none}
 #watch.on{opacity:1}
@@ -556,6 +577,7 @@ html.touch .mpchip{bottom:auto;top:62px}
     <button class="tb" id="tbProto">復活</button>
     <button class="tb" id="tbUse">用</button>
     <button class="tb" id="tbAct">抱</button>
+    <button class="tb" id="tbPouch" aria-label="育兒袋">袋</button>
     <button class="tb" id="tbScout">偵察</button>
   </div>
   <div class="vctouch"><button class="tb tbemo" id="tbEmo" aria-label="表情">表情</button><button class="tb vcb" id="tbMic">咪</button><button class="tb vcb" id="tbChat">聊天</button>
@@ -591,6 +613,7 @@ html.touch .mpchip{bottom:auto;top:62px}
   </div>
   <div class="party" id="party"></div>
   <div id="emoWheel" class="emowheel" hidden></div>
+  <div id="pouchWheel" class="pwheel" hidden></div>
   <div class="chat" id="chat"><div class="clog" id="chatLog" aria-live="polite"></div><input id="chatIn" maxlength="80" placeholder="講嘢……（Enter 發送 · Esc 取消）" autocomplete="off" spellcheck="false" aria-label="聊天" hidden></div>
   <div class="abil panel" id="abil">
     <div class="an" id="an">尺寸槍</div>
@@ -1052,7 +1075,7 @@ async function buildWorld(prog) {
   MP_CPS = [...LEVELS.kitchen.cps, ...LEVELS.garage.cps, ...LEVELS.yard.cps, ...LEVELS.road.cps, ...LEVELS.park.cps];
   ncPlace();
   for (let i = furMeshes.length - 1; i >= 0; i--) if (!inScene(furMeshes[i])) furMeshes.splice(i, 1);
-  buildHouseShell(); partitionCols(); setupLightPool(); WORLD = true;
+  buildHouseShell(); autoProps(); autoSolid(); if (PK.mergeLater) { PK.merged = mergeZoneStatic(...PK.mergeLater); PK.mergeLater = null; } flushDecoLater(); for (const r of resizables) r.init = [r.cx, r.cz, r.y0]; partitionCols(); setupLightPool(); WORLD = true;
 }
 
 // ---------- colliders: each place keeps its own list (plus anything within 60 cm of it) ----------
@@ -1155,7 +1178,7 @@ function zoneTick(dt) {
   if (!WORLD) return;
   const cp = camera.position, lp = leader ? leader.pos : cp;
   for (const Z of ZL) { Z.near = inZone(Z, cp.x, cp.y, cp.z, 45) || inZone(Z, lp.x, lp.y, lp.z, 45) || (!!Z.peek && Z.peek.some(b => cp.x > b[0] && cp.x < b[1] && cp.y > b[2] && cp.y < b[3] && cp.z > b[4] && cp.z < b[5])); Z.lv.visible = Z.fx.visible = Z.near; if (Z.npcs) for (const o of Z.npcs) o.visible = Z.near; }
-  houseShellTick();
+  houseShellTick(); solidTick();
   // atmosphere of the place the camera is in
   const cz = zoneAt(cp) || (leader && zoneAt(leader.pos)) || WC.cz || ZONES[LEVEL]; if (cz) WC.cz = cz;
   const D = LEVELS[WC.cz.id]; const k = LP.snap ? 1 : 1 - Math.exp(-2.5 * dt);
@@ -1784,8 +1807,10 @@ function addResizable(mesh, cx, cz, y0, sx, sy, sz, mn, mx, name) {
 // round things (a kettle, a ball, a pot…) get a box pulled in a little, so its corners don't stick out into the air
 const ROUND_FILL = { '生果碗': .74, '毛公仔': .76, '電熱水壺': .82, '馬克杯': .84, '香草盆栽': .82, '貓墊': .84, '油漆罐': .84, '波波': .8, '洗潔精': .86, '鋼杯': .84, '花灑': .62, '皮球': .8, '網球': .8, '監視鏡頭': .84 };
 function applyResize(r) {
-  const s = r.s; r.mesh.scale.set(r.sx * s, r.sy * s, r.sz * s); r.mesh.position.set(r.cx, r.y0 + r.sy * s / 2, r.cz);
-  const c = r.c, k = ROUND_FILL[r.name] || 1; c.x0 = r.cx - r.sx * s / 2 * k; c.x1 = r.cx + r.sx * s / 2 * k; c.z0 = r.cz - r.sz * s / 2 * k; c.z1 = r.cz + r.sz * s / 2 * k; c.y1 = r.y0 + r.sy * s;
+  const s = r.s; r.wakeT = T + .6;
+  if (r.prop) { const P = r.prop; r.mesh.scale.copy(P.S0).multiplyScalar(s); r.mesh.position.set(r.cx - s * (P.B0.x - P.P0.x), r.y0 - s * (P.B0.y - P.P0.y), r.cz - s * (P.B0.z - P.P0.z)); }   // a thing that was already in the room (e33_solid.js)
+  else { r.mesh.scale.set(r.sx * s, r.sy * s, r.sz * s); r.mesh.position.set(r.cx, r.y0 + r.sy * s / 2, r.cz); }
+  const c = r.c, k = ROUND_FILL[r.name] || r.fill || 1; c.x0 = r.cx - r.sx * s / 2 * k; c.x1 = r.cx + r.sx * s / 2 * k; c.z0 = r.cz - r.sz * s / 2 * k; c.z1 = r.cz + r.sz * s / 2 * k; c.y1 = r.y0 + r.sy * s;
   c.small = Math.max(r.sx, r.sy, r.sz) * s < 4;
 }
 function addBattery(x, y, z) {
@@ -2147,7 +2172,7 @@ canvas.addEventListener('mousedown', e => {
   mbtn = e.button; dragDist = 0;
 });
 addEventListener('mouseup', e => { if (e.button === 0) keys.Mouse0 = false; if (e.button === 2) keys.Mouse2 = false; if (dragMode && mbtn >= 0 && dragDist < 6 && STATE === 'play') { primaryDown(mbtn); keys.Mouse0 = false; } mbtn = -1; });
-function primaryDown(btn) { const L = leader; if (!L) return; if (L.id === 'bear') { if (btn === 0) { keys.Mouse0 = true; bearShove(); } else if (btn === 2) keys.Mouse2 = true; return; } if (L.id === 'cham') { if (btn === 0) chamTongue(); return; } if (L.id === 'sq') { if (btn === 0) sqCarry(); else if (btn === 2) sqScout(); return; } if (L.id === 'hog') { if (btn === 0) hogRoll(); return; } if (L.id === 'coon') { if (btn === 0) coonThrow(); return; } if (L.id === 'rab' || L.id === 'frog') { if (btn === 0) keys.Mouse0 = true; else if (btn === 2 && L.id === 'frog') frogSwitch(); return; } if (L.id === 'bat') { if (btn === 0) batPing(); return; } if (L.id === 'tort') { if (btn === 0) tortShell(); return; } if (L.id === 'mole') { if (btn === 0) moleDig(); return; } fireGun(btn === 0); }
+function primaryDown(btn) { const L = leader; if (!L) return; if (L.id === 'bear') { if (btn === 0) { keys.Mouse0 = true; bearShove(); } else if (btn === 2) keys.Mouse2 = true; return; } if (L.id === 'cham') { if (btn === 0) chamTongue(); return; } if (L.id === 'sq') { if (btn === 0) sqCarry(); else if (btn === 2) sqScout(); return; } if (L.id === 'hog') { if (btn === 0) hogRoll(); return; } if (L.id === 'coon') { if (btn === 0) coonThrow(); return; } if (L.id === 'rab' || L.id === 'frog') { if (btn === 0) { if (!POUCH.open) keys.Mouse0 = true; } else if (btn === 2 && L.id === 'frog') frogSwitch(); else if (btn === 2) pouchDown(); return; } if (L.id === 'bat') { if (btn === 0) batPing(); return; } if (L.id === 'tort') { if (btn === 0) tortShell(); return; } if (L.id === 'mole') { if (btn === 0) moleDig(); return; } fireGun(btn === 0); }
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 addEventListener('wheel', e => { cam.dist = clamp(cam.dist + e.deltaY * .012, 8, 42); }, { passive: true });
 
@@ -2232,7 +2257,7 @@ function land(C, imp) {
   else if (imp > 45) { C.squash = clamp(imp / 160, .25, .75); SND.land(clamp(imp / 130, .2, .8)); }
   else SND.step(.6);
 }
-function speedOf(C, run) { return (C.crouch ? 6.5 : run && !C.drag ? 25 : 13.5) * (C.drag ? C.drag.slow : 1) * C.S.spd * (C.slow || 1) * (C.carry ? 1 - .22 * carryWeight(C) : 1) * (C.stackN ? (C.stackN > 1 ? .6 : .76) : 1); }
+function speedOf(C, run) { return (C.crouch ? 6.5 : run && !C.drag ? 25 : 13.5) * (C.drag ? C.drag.slow : 1) * C.S.spd * (C.slow || 1) * (C.sugarT > T ? 1.22 : 1) * (C.carry ? 1 - .22 * carryWeight(C) : 1) * (C.stackN ? (C.stackN > 1 ? .6 : .76) : 1); }
 const joy = { id: null, x: 0, y: 0, ox: 0, oy: 0, on: false };
 function readMove() {
   if (joy.on && Math.hypot(joy.x, joy.y) > .1) { const m = Math.min(1, Math.hypot(joy.x, joy.y)); return { x: joy.x, y: joy.y, m, run: m > .93 }; }
@@ -2445,6 +2470,7 @@ function switchTo(N) {
 // ---------- camera ----------
 function updCam(dt) {
   if (EMO.open) { EMO.dx += mouseDX; EMO.dy += mouseDY; mouseDX = mouseDY = 0; }
+  if (POUCH.open) { POUCH.dx += mouseDX; POUCH.dy += mouseDY; mouseDX = mouseDY = 0; }
   if (STATE === 'play' && !PAUSED) { cam.yaw -= mouseDX * .0024 * SET.sens; cam.pitch = clamp(cam.pitch + mouseDY * .0022 * SET.sens * (SET.inv ? -1 : 1), -1.4, 1.35); }
   mouseDX = mouseDY = 0;
   const L = watchTarget() || leader; const ty = L.pos.y + L.h * (L.crouch ? .62 : .8);
@@ -2747,7 +2773,7 @@ function animChar(C, dt) {
   const bl = C.blinkT > 0 ? (C.blinkT -= dt, .08) : 1.12; for (const e of C.eyes) e.scale.y = bl;
   if (C.S.cham) chamAnim(C, dt);
   if (C.wing) { C.glideK = damp(C.glideK, st === 'glide' ? 1 : 0, 10, dt); for (const w of C.wing) { w.visible = C.glideK > .02; w.scale.y = Math.max(.01, C.glideK); } }
-  ncAnim(C, dt, st); emoAnim(C, dt);
+  ncAnim(C, dt, st); if (C.S.roo) rooAnim(C, dt, st); emoAnim(C, dt);
 }
 
 // ---------- flow ----------
@@ -2816,12 +2842,12 @@ function update(dt) {
   if (LEVEL === 'basement') { machine.field.material.uniforms.uT.value = T;
   const fl = .75 + Math.sin(T * 13) * .08 + (rnd() < .04 ? R(-.5, .6) : 0); machine.light.intensity = 900 * fl; machine.field.material.uniforms.uK.value = .85 + (fl - .75);
   if (rnd() < dt * 1.3) { const a = R(0, 6.28); const p = V3(machine.x + Math.cos(a) * 17, machine.y + Math.sin(a) * 17, machine.z + 1); for (let i = 0; i < 14; i++) emit(p, V3(R(-25, 25), R(5, 40), R(-10, 25)), rnd() < .5 ? new THREE.Color(3, 1.6, .5) : new THREE.Color(.8, 3, 2.8), R(.12, .25), R(.3, .9), 220, .5); if (leader) SND.crack(clamp(1 - leader.pos.distanceTo(V3(machine.x, machine.y, machine.z)) / 200, 0, 1)); } }
-  updRings(dt); updPebbles(dt); if (STATE === 'play') { bearHold(dt); if (!NET.client) { updSlides(dt); updPushFall(dt); } } updResizables(dt); if (LVL && LVL.toys && STATE !== 'loading') updToys(dt); updTongue(dt); updScout(dt); updWatch(); updBatteries(dt); updParticles(dt);
+  updRings(dt); updPebbles(dt); pouchUpdate(dt); if (STATE === 'play') { bearHold(dt); if (!NET.client) { updSlides(dt); updPushFall(dt); } } updResizables(dt); if (LVL && LVL.toys && STATE !== 'loading') updToys(dt); updTongue(dt); updScout(dt); updWatch(); updBatteries(dt); updParticles(dt);
   if (STATE === 'title') updTitle(dt);
   else if (STATE === 'intro') { updIntro(dt); for (const C of party) { C.state = 'idle'; C.spd = 0; } }
   else if (STATE === 'play') {
     playT += dt;
-    if (!NET.on && !EMO.open) for (let i = 0; i < party.length; i++) if (pressed['Digit' + (i + 1)]) switchTo(party[i]);
+    if (!NET.on && !EMO.open && !POUCH.open) for (let i = 0; i < party.length; i++) if (pressed['Digit' + (i + 1)]) switchTo(party[i]);
     if (!NET.on) if (pressed.Tab) { const act = party.filter(C => !C.frozen); if (act.length > 1) switchTo(act[(act.indexOf(leader) + 1) % act.length]); }
     if (pressed.KeyR) useProto();
     if (!NET.on) for (const C of party) if (pressed['sw_' + C.id]) switchTo(C);
@@ -2868,10 +2894,10 @@ let last = performance.now();
 function frame(now) {
   requestAnimationFrame(frame); musicFrame();
   // a frame time that goes backwards (it happens: tab switches, some phones) must never reach the physics — a negative step turned into NaN positions
-  const raw = (now - last) / 1000; last = now; const dt = raw > 0 ? Math.min(.05, raw) : 1 / 240; vcFrame(dt); netLogTick(dt); emoTick(dt); watchTick();
+  const raw = (now - last) / 1000; last = now; const dt = raw > 0 ? Math.min(.05, raw) : 1 / 240; vcFrame(dt); netLogTick(dt); emoTick(dt); watchTick(); pouchTick(dt);
   { const [w, h] = viewSize(); if (w !== RS.w || h !== RS.h) onResize(); }
   if (STATE === 'load') return;
-  if (!PAUSED || NET.on) update(dt);
+  if (!PAUSED || NET.on) update(dt * POUCH.slow);   // (the kangaroo's pouch slows time while it's open)
   if (window.__CAMO) { camera.position.set(...window.__CAMO.p); camera.lookAt(...window.__CAMO.t); if (ST.sky) ST.sky.position.set(camera.position.x - 2100, 0, camera.position.z - 800); }   // dev: a fixed camera for screenshots
   if (!window.__NR) composer.render();
   fpsAcc += dt; fpsN++;
@@ -3736,13 +3762,13 @@ function updVentFx(dt) {
 // =====================================================================
 //  THE ORIGIN DYNAMICS CREW — four more playable characters for online games (up to 8 players)
 //  阿刺 (刺蝟, 搬運工): left click = curl up and roll-dash; knocks over anything light in the way
-//  跳跳 (兔, 技術員):   hold left click to crouch, let go = a huge jump
+//  跳跳 (袋鼠, 技術員): hold left click to crouch, let go = a huge jump; hold right click = the pouch (e34_roo.js)
 //  阿浣 (浣熊, 保安):   left click = flick a pebble at the crosshair; it clatters there and pulls attention
 //  阿蛙 (青蛙, 工程師): hold left click = charged long leap; E next to a socket / lamp / TV = lights out
 //                       for a while — the whole team is much harder to see in the dark
 // =====================================================================
 SP.hog = { name: '阿刺', role: '搬運工', k: .9, r: 1.2, h: 4.5, fur: 0xc9a582, belly: 0xf1e2c8, len: .12, den: 40, ear: 'nub', paw: 0x4a3a30, nose: 0x1d1512, tail: 'stub', outfit: 'vest', spines: 0x4b3424, spd: 1.04, jmp: .95, clb: .9, abil: '滾動衝撞', desc: '左鍵縮成一團衝出去，撞跌擋路的東西', col: '#f0a35e' };
-SP.rab = { name: '跳跳', role: '技術員', k: .94, r: 1.15, h: 5, fur: 0xeee8de, belly: 0xffffff, len: .17, den: 38, ear: 'long', paw: 0xe3a8b0, nose: 0xe47a8c, tail: 'stub', outfit: 'headset', spd: 1.08, jmp: 1.18, clb: .95, abil: '超級跳', desc: '按住左鍵蓄力，放手跳得好高', col: '#f4c6d4' };
+SP.rab = { name: '跳跳', role: '技術員', k: .96, r: 1.2, h: 5.2, fur: 0xc4854e, belly: 0xf2dcbc, len: .12, den: 42, ear: 'roo', paw: 0x4a3426, nose: 0x2a1c14, tail: 'roo', outfit: 'headset', roo: true, spd: 1.08, jmp: 1.18, clb: .95, abil: '超級跳＋育兒袋', desc: '按住左鍵蓄力跳 · 按住右鍵打開育兒袋揀道具（彈簧墊、發條老鼠、麵粉彈……）', col: '#e8a86a' };
 SP.coon = { name: '阿浣', role: '保安', k: 1.06, r: 1.35, h: 5.4, fur: 0x8f8a84, belly: 0xd9d3cb, len: .2, den: 30, ear: 'pointy', paw: 0x2a2624, nose: 0x161210, tail: 'ringed', outfit: 'guard', mask: true, spd: 1, jmp: 1, clb: 1.05, abil: '彈石仔', desc: '左鍵把小石子彈到準星位置，聲音會引開別人', col: '#a9b8cc' };
 SP.frog = { name: '阿蛙', role: '工程師', k: .92, r: 1.25, h: 4.5, skin: true, frog: true, skinCol: 0x58a85c, bellyCol: 0xe6e2b4, paw: 0x4f9a52, nose: 0x2b4a22, tail: 'none', outfit: 'hardhat', spd: .98, jmp: 1.08, clb: .9, abil: '蓄力跳＋搞電器', desc: '按住左鍵蓄力遠跳 · E 關掉附近的燈', col: '#7fd4b0' };
 const CORE = ['dad', 'sq', 'bear', 'cham'];
@@ -3782,6 +3808,7 @@ function crewEar(C, S, g, s, k, part, plain, fm) {
     part(ell(.4 * k, .52 * k, .15 * k, 24, 16), fm(0), g, 0, .1 * k, 0);
     plain(ell(.26 * k, .36 * k, .06 * k, 20, 12), M.mask, g, 0, .06 * k, .11 * k);
     plain(ell(.42 * k, .12 * k, .1 * k, 16, 8), M.white, g, 0, .52 * k, 0);
+  } else if (S.ear === 'roo') { rooEar(g, s, k, part, plain, fm);
   } else if (S.ear === 'bat') { batEar(g, s, k, part, plain, fm);
   } else if (S.ear === 'nub') {
     g.position.set(s * .86 * k, .84 * k, .05 * k); g.rotation.set(0, s * -.4, s * -.4);
@@ -3791,6 +3818,7 @@ function crewEar(C, S, g, s, k, part, plain, fm) {
 }
 // tails
 function crewTail(C, S, tailRoot, k, part, fm) {
+  if (S.tail === 'roo') { rooTail(C, S, tailRoot, k, part, fm); return true; }
   if (S.tail === 'ringed') {
     let parent = tailRoot; const sz = [.42, .5, .52, .48, .38];
     for (let i = 0; i < 5; i++) {
@@ -3805,7 +3833,7 @@ function crewTail(C, S, tailRoot, k, part, fm) {
 // faces, spines, outfits
 function crewExtras(C, S, head, body, k, part, plain) {
   const M = crewMats();
-  if (S.bat) batExtras(C, S, head, body, k, plain); if (S.tort) tortExtras(C, S, head, body, k, plain); if (S.mole) moleExtras(C, S, head, body, k, plain);
+  if (S.roo) rooExtras(C, S, head, body, k, part, plain); if (S.bat) batExtras(C, S, head, body, k, plain); if (S.tort) tortExtras(C, S, head, body, k, plain); if (S.mole) moleExtras(C, S, head, body, k, plain);
   const badge = (y = 1.16, z = .98) => { const b = plain(new THREE.CircleGeometry(.17 * k, 24), M.badge, body, -.42 * k, y * k, z * k); b.rotation.y = -.38; b.castShadow = false; };
   const lathe = (pts, mat, sz = .95) => { const m = plain(new THREE.LatheGeometry(pts.map(p => new THREE.Vector2(p[0] * k, p[1] * k)), 48), mat, body, 0, 0, 0); m.scale.z = sz; return m; };
   if (S.spines) {
@@ -3832,9 +3860,9 @@ function crewExtras(C, S, head, body, k, part, plain) {
     for (const a of C.arms) plain(new THREE.SphereGeometry(.3 * k, 16, 12), M.black, a, 0, -.9 * k, 0);
     badge(1.0, .99);
   } else if (S.outfit === 'headset') {
-    lathe([[1.1, -.32], [1.12, 0], [1.08, .5], [1.0, .92], [.74, 1.22]], M.polo);
-    plain(new THREE.TorusGeometry(.66 * k, .1 * k, 8, 32), M.polo, body, 0, 1.36 * k, 0).rotation.x = Math.PI / 2;
-    const band = plain(new THREE.TorusGeometry(1.24 * k, .07 * k, 8, 40, Math.PI), M.black, head, 0, .1 * k, -.05 * k); band.rotation.y = Math.PI / 2;
+    if (!S.roo) { lathe([[1.1, -.32], [1.12, 0], [1.08, .5], [1.0, .92], [.74, 1.22]], M.polo);   // (the kangaroo keeps its pouch on show: headset only)
+      plain(new THREE.TorusGeometry(.66 * k, .1 * k, 8, 32), M.polo, body, 0, 1.36 * k, 0).rotation.x = Math.PI / 2; }
+    const band = plain(new THREE.TorusGeometry(1.24 * k, .07 * k, 8, 40, Math.PI), M.black, head, 0, .1 * k, -.05 * k);   // (over the top, cup to cup)
     for (const s of [-1, 1]) { const cup = plain(new THREE.CylinderGeometry(.34 * k, .34 * k, .22 * k, 24), M.black, head, s * 1.26 * k, .05 * k, -.05 * k); cup.rotation.z = Math.PI / 2; }
     const boom = plain(new THREE.CylinderGeometry(.04 * k, .04 * k, 1.0 * k, 8), M.black, head, -1.0 * k, -.35 * k, .55 * k); boom.rotation.set(.9, 0, .5);
     plain(new THREE.SphereGeometry(.1 * k, 12, 10), M.black, head, -.75 * k, -.62 * k, .98 * k);
@@ -3980,7 +4008,7 @@ function crewHint(L) {
   if (!L) return ''; const nh = ncHint(L); if (nh) return nh;
   if (L.id === 'frog') { const s = swNear(L); if (s) return s.until > T ? `${s.name}：已經熄了` : s.cd > T ? `${s.name}：電路冷卻中` : `${TOUCH ? '按「電」' : '<kbd>E</kbd>'} 搞電器：${s.name}（附近熄燈 20 秒）`; }
   if ((L.id === 'rab' || L.id === 'frog') && L.charge > 0) return `蓄力 ${Math.round(L.charge * 100)}%……放手${L.id === 'rab' ? '起跳' : '跳出去'}`;
-  return '';
+  return pouchHint(L);
 }
 
 // =====================================================================
@@ -4479,7 +4507,7 @@ function tubeM(pts, r, mat, seg = 60) { const c = new THREE.CatmullRomCurve3(pts
 async function loadLevel(name, opt) {
   titleEnd();
   window.__loads = (window.__loads || 0) + 1; if (NET.on && NET.host) nsend({ t: 'lvl', n: name });
-  STATE = 'loading'; const D = LEVELS[name];
+  STATE = 'loading'; const D = LEVELS[name]; pouchRefill();   // (a full pouch for every chapter)
   $('lvlA').textContent = opt && opt.chapter || D.chapter; $('lvlB').textContent = opt && opt.title || D.title; $('lvl').hidden = false; requestAnimationFrame(() => $('lvl').classList.add('on'));
   $('end').hidden = true; $('dead').classList.remove('on');
   await new Promise(r => setTimeout(r, 700));
@@ -4512,9 +4540,12 @@ function noiseRing(p) {
 }
 const NOISERINGS = [];
 function updRings(dt) { for (let i = NOISERINGS.length - 1; i >= 0; i--) { const r = NOISERINGS[i]; r.userData.t += dt; const t = r.userData.t; r.scale.setScalar(1 + t * 60); r.material.opacity = Math.max(0, .8 - t * 1.1); if (t > .75) { r.parent && r.parent.remove(r); r.geometry.dispose(); NOISERINGS.splice(i, 1); } } }
+let _pfI = 0;
 function updPushFall(dt) {
-  for (const r of resizables) {
-    if (!r.c.push) continue;
+  // (things resting where they are only get looked at a few per frame; anything that has just moved, changed size or is falling, every frame)
+  const N = resizables.length, rr = new Set(); for (let k = 0; k < Math.min(N, 14); k++) rr.add((_pfI + k) % N); _pfI = (_pfI + 14) % Math.max(1, N);
+  for (let ri = 0; ri < N; ri++) { const r = resizables[ri];
+    if (!r.c.push) continue; if (!r.vy && !(r.wakeT > T) && !rr.has(ri)) continue;
     const [sup] = supportAt(r.cx, r.cz, .4, r.y0 + .01);
     if (sup < r.y0 - .15 || r.vy) {
       r.vy = (r.vy || 0) - 620 * dt; r.y0 += r.vy * dt;
@@ -6370,6 +6401,7 @@ function shellTick() {
 // how much less a watcher notices someone (chameleon colour, tortoise shell)
 function hideK(L) {
   if (L.state === 'dig') return 0;
+  if (inFlour(L.pos)) return .03;   // inside a cloud of flour (the kangaroo's pouch)
   if (L.state === 'shell') return .04;
   return L.id === 'cham' ? 1 - .82 * L.camo : 1;
 }
@@ -8347,7 +8379,10 @@ function humanFloor(x, z, cur = 0) {
 // trim, nosing, runners, drawer fronts…: no colliders, merged into one mesh per material (far fewer draw calls)
 const DECO = new Map();
 function deco(x0, x1, y0, y1, z0, z1, mat) { const g = new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0); g.translate((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); if (!DECO.has(mat)) DECO.set(mat, []); DECO.get(mat).push(g); }
-function flushDeco() { for (const [mat, gs] of DECO) { const m = new THREE.Mesh(mergeGeometries(gs), mat); m.receiveShadow = true; LV.add(m); gs.forEach(g => g.dispose()); } DECO.clear(); }
+function flushDeco() { if (window.__NOMERGE) { for (const [mat, gs] of DECO) for (const g of gs) { const m = new THREE.Mesh(g, mat); m.receiveShadow = true; LV.add(m); } DECO.clear(); return; } const G = new THREE.Group(); G.name = 'deco'; LV.add(G); for (const [mat, gs] of DECO) for (const g of gs) { const m = new THREE.Mesh(g, mat); m.receiveShadow = true; G.add(m); } DECO.clear(); DECO_LATER.push(G); }
+// (merged into one mesh per material once the world has been made solid — see buildWorld)
+const DECO_LATER = [];
+function flushDecoLater() { for (const G of DECO_LATER) { mergeZoneStatic(G, new Set()); G.position.set(0, 0, 0); G.updateMatrixWorld(true); } DECO_LATER.length = 0; }
 function upMats(K) {
   const C2 = (w, h, f) => { const [c, x] = cnv(w, h); f(x, w, h); return tex(c); };
   const duvet = C2(256, 256, (x) => { x.fillStyle = '#e7a6b6'; x.fillRect(0, 0, 256, 256); for (let i = 0; i < 46; i++) { const px = R(0, 256), py = R(0, 256), r = R(3, 7); x.fillStyle = rnd() < .5 ? '#fff4d6' : '#ffe08a'; x.beginPath(); for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5 - Math.PI / 2, rr = k % 2 ? r * .45 : r; x.lineTo(px + Math.cos(a) * rr, py + Math.sin(a) * rr); } x.fill(); } });
@@ -8851,7 +8886,8 @@ function netSendWorld() {
   syncParty();
   const w = { t: 'w', lv: LEVEL, q: quest, cp, pr: PROTO, gb: gotBat, cm: cellMax };
   w.bat = batteries.map(b => b.got ? 1 : 0); w.vi = VIALS.map(v => v.got ? 1 : 0); w.cr = CRUMBS.map(c => c.got ? 1 : 0);
-  w.res = resizables.map(r => [+r.cx.toFixed(2), +r.cz.toFixed(2), +r.y0.toFixed(2), +r.target.toFixed(3), r.gone ? 1 : 0]);
+  w.res = []; resizables.forEach((r, i) => { if (!r.init) return; if (!r.everMoved && (r.gone || r.target !== 1 || Math.abs(r.cx - r.init[0]) + Math.abs(r.cz - r.init[1]) + Math.abs(r.y0 - r.init[2]) > .01)) r.everMoved = true;
+    if (r.everMoved) w.res.push([i, +r.cx.toFixed(2), +r.cz.toFixed(2), +r.y0.toFixed(2), +r.target.toFixed(3), r.gone ? 1 : 0]); });   // (only what has ever moved: there are hundreds of things in the house)
   w.toy = IDS.map(id => { const C = chars[id]; return C.frozen ? [1, C.toyAt === 'hand' ? 2 : C.toyAt === 'box' ? 3 : 1, +(C.toyTilt || 0).toFixed(2), +(C.toyRoll || 0).toFixed(2), +(C.rescueT || 0).toFixed(2), Math.max(0, PLACES.indexOf(C.toyPlace || ''))] : 0; });
   netWorldExtra(w); proSend(w); mpSaveTick();
   {
@@ -8875,7 +8911,7 @@ function netRecvWorld(w) {
   w.bat.forEach((g, i) => { if (g && batteries[i] && !batteries[i].got) hide(batteries[i]); });
   w.vi.forEach((g, i) => { if (g && VIALS[i] && !VIALS[i].got) hide(VIALS[i]); });
   w.cr.forEach((g, i) => { if (g && CRUMBS[i] && !CRUMBS[i].got) hide(CRUMBS[i]); });
-  w.res.forEach((q, i) => { const r = resizables[i]; if (!r) return; r.net = q; if (q[4] && !r.gone) { r.gone = true; r.mesh.visible = false; r.c.y0 = -999; r.c.y1 = -998; if (r === COOKIE) COOKIE.eaten = true; } });
+  w.res.forEach(e => { const i = e[0], q = e.slice(1), r = resizables[i]; if (!r) return; r.net = q; if (q[4] && !r.gone) { r.gone = true; r.mesh.visible = false; r.c.y0 = -999; r.c.y1 = -998; if (r === COOKIE) COOKIE.eaten = true; } });
   let changed = false;
   w.toy.forEach((t, i) => {
     const C = chars[IDS[i]];
@@ -8958,6 +8994,7 @@ function netMsg(d, from) {
     case 'gun': if (NET.host) hostGun(d.i, d.g, from); break;
     case 'shv': if (NET.host) { const r = resizables[d.i]; if (r && !r.gone) { shoveRes(r, d.vx, d.vz); SND.push(); } } break;
     case 'peb': launchPebble(V3(...d.a), V3(...d.b), d.d); break;
+    case 'pch': pouchRecv(d); break;
     case 'swr': if (NET.host) hostSwitch(d.i, d.id); break;
     case 'swo': if (!NET.host) swOn(d.i, d.d); break;
     case 'get': if (NET.host) hostGet(d); break;
@@ -10154,7 +10191,7 @@ function portalResumeLand(S) {
 // who joined or dropped, how good each link is, frame rate, rescues and errors. One tap copies it as
 // plain text that a player can paste into a chat and send in.
 const NLOG = { t0: performance.now(), lines: [], fps: 0, sumT: 0, mode: '', lv: '', peer: {} };
-const NLOG_BUILD = '20261124-1527';
+const NLOG_BUILD = '20261125-1953';
 function nlog(s) {
   const d = new Date(), p2 = n => String(n).padStart(2, '0');   // the clock time, so "it broke around 9:30" can be matched
   NLOG.lines.push(`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}  ${s}`); if (NLOG.lines.length > 500) NLOG.lines.splice(0, NLOG.lines.length - 500);
@@ -10402,7 +10439,7 @@ function buildPark() {
   addCrumb(1640, GY, 2050); addCrumb(2460, GY, 3120); addCrumb(2060, GY + 44, 2148); addVial(1210, GY, 3460);
   buildParkPeople();
   const keep = new Set([PK.flag, PK.duck, PK.chipG, PK.mound, PK.ball.g, PK.sk.bd, ...PK.swings.map(s => s.piv), ...CRUMBS.map(c => c.g), ...VIALS.map(v => v.g), ...batteries.map(b => b.g)]);
-  PK.merged = mergeZoneStatic(LV, keep);
+  PK.mergeLater = [LV, keep];   // merged once every visible thing has been made solid (buildWorld → autoSolid)
 }
 
 // ---------- the dog run ----------
@@ -10452,7 +10489,7 @@ function buildSkate(conc, metal, red) {
     const Rr = 80, D = 24, W = S.z1 - S.z0 - 40, sh = new THREE.Shape(); sh.moveTo(0, 0); sh.lineTo(0, Rr); sh.lineTo(D, Rr);
     for (let i = 1; i <= 16; i++) { const a = i / 16 * Math.PI / 2; sh.lineTo(D + Rr - Math.cos(a) * Rr, Rr - Math.sin(a) * Rr); } sh.lineTo(0, 0);
     const g = new THREE.ExtrudeGeometry(sh, { depth: W, bevelEnabled: false, curveSegments: 1 }); g.translate(0, 0, -W / 2);
-    const m = new THREE.Mesh(g, cm); m.position.set(x, GY, (S.z0 + S.z1) / 2); m.scale.x = dir; m.castShadow = m.receiveShadow = true; LV.add(m);
+    const m = new THREE.Mesh(g, cm); m.position.set(x, GY, (S.z0 + S.z1) / 2); m.scale.x = dir; m.castShadow = m.receiveShadow = true; m.userData.noSolid = true; LV.add(m);   // (its colliders step up the curve, below)
     // coping pipe along the lip
     const cp = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.4, W, 12), MAT.steel); cp.rotation.x = Math.PI / 2; cp.position.set(x + dir * D, GY + Rr, (S.z0 + S.z1) / 2); LV.add(cp);
     for (let i = 0; i < 6; i++) { const y = (i + 1) / 6 * Rr, xl = D + Rr - Math.sqrt(Math.max(0, Rr * Rr - (Rr - y) * (Rr - y))); const xa = x, xb = x + dir * xl; cols.push({ t: 'b', x0: Math.min(xa, xb), x1: Math.max(xa, xb), y0: GY, y1: GY + y, z0: (S.z0 + S.z1) / 2 - W / 2, z1: (S.z0 + S.z1) / 2 + W / 2 }); }
@@ -10508,7 +10545,7 @@ function buildPlayground(Mt) {
     for (let i = 0; i <= N; i++) { const x = lerp(SLIDE.x0, SLIDE.x1, i / N), y = slideH(x); for (const [dz, dy] of prof) pos.push(x, y + dy, (SLIDE.z0 + SLIDE.z1) / 2 + dz); }
     const P2 = prof.length; for (let i = 0; i < N; i++) for (let j = 0; j < P2 - 1; j++) { const a = i * P2 + j, b = a + P2; idx.push(a, b, a + 1, a + 1, b, b + 1); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
-    const m = new THREE.Mesh(g, Mt.slideM); m.castShadow = m.receiveShadow = true; m.material.side = THREE.DoubleSide; LV.add(m);
+    const m = new THREE.Mesh(g, Mt.slideM); m.castShadow = m.receiveShadow = true; m.material.side = THREE.DoubleSide; m.userData.noSolid = true; LV.add(m);   // (the slide has its own physics: slideTick)
     // its underside and a support leg
     cyl(SLIDE.x1 - 30, (SLIDE.z0 + SLIDE.z1) / 2, 3.2, GY, slideH(SLIDE.x1 - 30) - 2, Mt.yellow, { seg: 10 });
     // side walls of the tub stop you walking off sideways (low, so you can still jump out)
@@ -10987,6 +11024,7 @@ function parkNetNPC(dt) {
 // ---------- fewer draw calls: bake the park's static meshes into one mesh per material ----------
 // (phones choke on hundreds of small meshes; nothing here moves, and nothing looks them up again)
 function mergeZoneStatic(root, keep) {
+  if (window.__NOMERGE) return 0;
   root.updateMatrixWorld(true); const B = new Map(), dead = [];
   root.traverse(o => {
     if (!o.isMesh || o.isInstancedMesh || !o.visible || o.renderOrder) return;
@@ -11337,9 +11375,469 @@ function garageBlindWindow() {
   box(1449, 1451, y1 + 6, y1 + 10, z0 - 4, z1 + 4, new THREE.MeshStandardMaterial({ color: 0xd8d4cc, roughness: .5 }), { col: false });   // the blind's head rail
 }
 function houseShellTick() { if (SHELL.g) SHELL.g.visible = !!(ZONES.yard.near || ZONES.road.near); }
+// =====================================================================
+//  實物就係實物 — anything that looks solid is solid.
+//  When the world has been built, every visible thing a character could walk into, or sink into,
+//  (a mesh that no collider covers) gets colliders shaped like it: one box or one cylinder for
+//  compact, upright things; for long, slanted or odd shapes, columns of boxes from a coarse
+//  voxel pass over its surface. Built the same way on every machine (no randomness), so online
+//  play agrees. Anything that later moves (a swing, a door, a fan) drops its colliders as soon
+//  as it does.
+// =====================================================================
+const SOLID = { list: [], i: 0, made: 0, meshes: 0 };
+const SOLID_SKIP_GEO = new Set(['PlaneGeometry', 'CircleGeometry', 'RingGeometry', 'TubeGeometry', 'ShapeGeometry', 'EdgesGeometry', 'WireframeGeometry']);
+function solidSkipMat(m) {
+  return !m || m.isShaderMaterial || m.isMeshBasicMaterial || m.isPointsMaterial || m.isLineBasicMaterial || m.visible === false || m.colorWrite === false ||
+    m.blending === THREE.AdditiveBlending || (m.transparent && (m.opacity < .55 || m.depthWrite === false));
+}
+function solidSkipSet() {
+  const skip = new Set(), mark = o => o && o.traverse && o.traverse(q => skip.add(q));
+  for (const r of resizables) mark(r.mesh);
+  for (const A of [batteries, VIALS, CRUMBS]) for (const q of A) { mark(q.g); mark(q.halo); }
+  // things the game itself moves or switches (doors, fans, curtains, swings, lamps, people…) keep the colliders they were given
+  const zoneRoots = new Set(ZL.map(Z => Z.lv)), big = o => { let n = 0; o.traverse(() => n++); return n > 400; };
+  const markRef = (v, depth) => {
+    if (!v || typeof v !== 'object') return;
+    if (v.isObject3D) { if (v !== scene && !zoneRoots.has(v) && !big(v)) mark(v); return; }
+    if (depth <= 0 || v.isVector3 || v.isColor || v.isMaterial || v.isTexture || ArrayBuffer.isView(v)) return;
+    for (const k of Object.keys(v)) markRef(v[k], depth - 1);
+  };
+  for (const S of [HX, LIV, UPS, KS, GS, YS, ST, PK, TOY, KM, KID, HB, AGB, OLDB, NC, MOLE, CREW, machine]) markRef(S, 3);
+  return skip;
+}
+function autoSolid() {
+  if (window.__NOSOLID) return;
+  const skip = solidSkipSet();
+  // what's already covered: a coarse grid over the colliders
+  const CS = 40, grid = new Map(), key = (i, j, k) => i + ',' + j + ',' + k;
+  const addGrid = c => { const a = c.t === 'b' ? [c.x0, c.y0, c.z0, c.x1, c.y1, c.z1] : [c.x - c.r, c.y0, c.z - c.r, c.x + c.r, c.y1, c.z + c.r];
+    for (let i = Math.floor(a[0] / CS); i <= Math.floor(a[3] / CS); i++) for (let j = Math.floor(a[1] / CS); j <= Math.floor(a[4] / CS); j++) for (let k = Math.floor(a[2] / CS); k <= Math.floor(a[5] / CS); k++) { const q = key(i, j, k); let L = grid.get(q); if (!L) grid.set(q, L = []); L.push(c); } };
+  for (const c of cols) if (c.y1 > -900) addGrid(c);
+  const TOL = .45, covered = p => { const L = grid.get(key(Math.floor(p.x / CS), Math.floor(p.y / CS), Math.floor(p.z / CS))); if (!L) return false;
+    for (const c of L) { if (p.y < c.y0 - TOL || p.y > c.y1 + TOL) continue; if (c.t === 'b') { if (p.x >= c.x0 - TOL && p.x <= c.x1 + TOL && p.z >= c.z0 - TOL && p.z <= c.z1 + TOL) return true; } else if (Math.hypot(p.x - c.x, p.z - c.z) <= c.r + TOL) return true; } return false; };
+  const v = V3(), ctr = V3(), out = [];
+  for (const Z of ZL) {
+    const lv = Z.lv; if (!lv) continue; lv.updateMatrixWorld(true);
+    const inCore = p => Z.core.some(b => p.x > b[0] && p.x < b[1] && p.y > b[2] && p.y < b[3] - 20 && p.z > b[4] && p.z < b[5]);
+    lv.traverse(o => {
+      if (!o.isMesh || o.isInstancedMesh || o.isSkinnedMesh || skip.has(o)) return;
+      for (let p = o; p && p !== lv; p = p.parent) if (!p.visible || p.userData.noSolid || skip.has(p)) return;
+      const m = Array.isArray(o.material) ? o.material[0] : o.material; if (solidSkipMat(m)) return;
+      const geo = o.geometry; if (!geo || (SOLID_SKIP_GEO.has(geo.type) && !(geo.type === 'TubeGeometry' && geo.parameters && geo.parameters.radius >= 1.2))) return;   // (thin cables stay soft; spouts and hoses don't)
+      const pa = geo.attributes.position; if (!pa) return;
+      const n = pa.count, step = Math.max(1, Math.ceil(n / 260)), pts = [], bb = new THREE.Box3();
+      for (let i = 0; i < n; i += step) { v.fromBufferAttribute(pa, i).applyMatrix4(o.matrixWorld); pts.push(v.clone()); bb.expandByPoint(v); }
+      const d = bb.getSize(V3()), mx = Math.max(d.x, d.y, d.z);
+      const ds = [d.x, d.y, d.z].sort((a, b) => a - b);
+      if (mx < 2.5 || mx > 400 || ds[0] < 1.2 || ds[1] < 3.2) return;   // specks, sheets (tiles, posters, rugs) and thin rods (stems, handles, spouts, rails) stay as they are
+      if (/Icosahedron|Dodecahedron|Octahedron/.test(geo.type) && mx > 40) return;   // tree tops and bushes
+      bb.getCenter(ctr); if (!inCore(ctr)) return;                                     // scenery beyond where anyone can go
+      let un = 0, top = 0, topUn = 0; const ty = bb.max.y - d.y * .15;
+      for (const p of pts) { const q = p.clone(), dir = ctr.clone().sub(q), L = dir.length(); if (L > 1e-4) q.addScaledVector(dir, Math.min(1, L * .3) / L); const ok = covered(q); if (!ok) un++; if (p.y >= ty) { top++; if (!ok) topUn++; } }
+      if (un / pts.length < .3 && (top ? topUn / top : 0) < .5) return;
+      out.push({ o, bb: bb.clone(), d, Z });
+    });
+  }
+  // shape the colliders
+  const e = new THREE.Vector3(), ax = [V3(), V3(), V3()];
+  for (const { o, bb, d } of out) {
+    o.matrixWorld.extractBasis(ax[0], ax[1], ax[2]); for (const a of ax) a.normalize();
+    const aligned = ax.every(a => Math.max(Math.abs(a.x), Math.abs(a.y), Math.abs(a.z)) > .9995), upright = Math.abs(ax[1].y) > .998;
+    const gt = o.geometry.type, made = [], mx = Math.max(d.x, d.y, d.z), small = mx < 4, round = /Cylinder|Sphere|Lathe|Capsule|Cone|Torus|Icosahedron|Dodecahedron/.test(gt);
+    if (gt === 'BoxGeometry' && aligned) made.push({ t: 'b', x0: bb.min.x, x1: bb.max.x, y0: bb.min.y, y1: bb.max.y, z0: bb.min.z, z1: bb.max.z });
+    else if (round && upright && Math.abs(d.x - d.z) < Math.max(d.x, d.z) * .25) made.push({ t: 'c', x: (bb.min.x + bb.max.x) / 2, z: (bb.min.z + bb.max.z) / 2, r: Math.min(d.x, d.z) / 2 * (/Sphere|Icosa|Dodeca/.test(gt) ? .86 : .94), y0: bb.min.y, y1: bb.max.y });
+    else if (mx <= 24) { const k = round ? .82 : .92, cx = (bb.min.x + bb.max.x) / 2, cz = (bb.min.z + bb.max.z) / 2;   // small odd things: one box, pulled in a little at the sides
+      made.push({ t: 'b', x0: cx - d.x / 2 * k, x1: cx + d.x / 2 * k, y0: bb.min.y, y1: bb.max.y, z0: cz - d.z / 2 * k, z1: cz + d.z / 2 * k }); }
+    else for (const b of solidVoxels(o, bb, d)) made.push(b);
+    for (const c of made) { c.m = o; c.small = small; c.auto = true; cols.push(c); }
+    if (made.length) SOLID.list.push({ m: o, e: o.matrixWorld.elements.slice(), cs: made });
+    SOLID.made += made.length;
+  }
+  SOLID.meshes = out.length;
+  // never wall in a checkpoint or a spawn point
+  const spots = []; for (const id of Object.keys(LEVELS)) { const L = LEVELS[id]; if (L.cps) for (const p of L.cps) spots.push(p); }
+  for (const w of WARPS) { const p = typeof w[2] === 'function' ? w[2]() : w[2]; if (p) spots.push([p.x, p.y, p.z]); }
+  for (const S of SOLID.list) for (const c of S.cs) for (const p of spots) { const x = p[0], y = p[1] + 2, z = p[2];
+    if (y < c.y0 - 1 || y > c.y1 + 3) continue;
+    if (c.t === 'b' ? (x > c.x0 - 2 && x < c.x1 + 2 && z > c.z0 - 2 && z < c.z1 + 2) : Math.hypot(x - c.x, z - c.z) < c.r + 2) { c.y0 = -999; c.y1 = -998; }
+  }
+}
+// boxes standing in columns, from the cells the surface passes through (filled top to bottom)
+function solidVoxels(o, bb, d) {
+  const geo = o.geometry, pa = geo.attributes.position, idx = geo.index, nt = idx ? idx.count / 3 : pa.count / 3;
+  let cell = Math.min(5, Math.max(1.3, Math.max(d.x, d.y, d.z) / 9));
+  const A = V3(), B = V3(), C = V3(), P = V3(), e1 = V3(), e2 = V3();
+  for (let tries = 0; tries < 4; tries++) {
+    const colm = new Map(), put = p => { const i = Math.floor((p.x - bb.min.x) / cell), j = Math.floor((p.y - bb.min.y) / cell), k = Math.floor((p.z - bb.min.z) / cell), q = i + ',' + k; const c = colm.get(q); if (!c) colm.set(q, [i, k, j, j]); else { if (j < c[2]) c[2] = j; if (j > c[3]) c[3] = j; } };
+    const tstep = Math.max(1, Math.floor(nt / 6000));
+    for (let t = 0; t < nt; t += tstep) {
+      const ia = idx ? idx.getX(t * 3) : t * 3, ib = idx ? idx.getX(t * 3 + 1) : t * 3 + 1, ic = idx ? idx.getX(t * 3 + 2) : t * 3 + 2;
+      A.fromBufferAttribute(pa, ia).applyMatrix4(o.matrixWorld); B.fromBufferAttribute(pa, ib).applyMatrix4(o.matrixWorld); C.fromBufferAttribute(pa, ic).applyMatrix4(o.matrixWorld);
+      put(A); put(B); put(C);
+      // an even spread over the triangle, finer than a cell along its longest edge (no randomness: every machine gets the same colliders)
+      const g = Math.min(48, Math.ceil(Math.max(A.distanceTo(B), B.distanceTo(C), C.distanceTo(A)) / (cell * .6))); for (let a = 0; a <= g; a++) for (let b = 0; a + b <= g; b++) { const u = a / g, w = b / g; P.copy(A).addScaledVector(e1.subVectors(B, A), u).addScaledVector(e2.subVectors(C, A), w); put(P); }
+    }
+    // merge columns into boxes: runs along x, then runs of runs along z
+    const rows = new Map(); for (const c of colm.values()) { const q = c[1] + '|' + c[2] + '|' + c[3]; let L = rows.get(q); if (!L) rows.set(q, L = []); L.push(c[0]); }
+    const runs = []; for (const [q, xs] of rows) { const [k, j0, j1] = q.split('|').map(Number); xs.sort((a, b) => a - b); let s = xs[0], p = xs[0]; for (let i = 1; i <= xs.length; i++) { if (i < xs.length && xs[i] === p + 1) { p = xs[i]; continue; } runs.push({ i0: s, i1: p, k0: k, k1: k, j0, j1 }); if (i < xs.length) s = p = xs[i]; } }
+    runs.sort((a, b) => a.i0 - b.i0 || a.i1 - b.i1 || a.j0 - b.j0 || a.j1 - b.j1 || a.k0 - b.k0);
+    const boxes = []; for (const r of runs) { const prev = boxes[boxes.length - 1]; if (prev && prev.i0 === r.i0 && prev.i1 === r.i1 && prev.j0 === r.j0 && prev.j1 === r.j1 && prev.k1 === r.k0 - 1) prev.k1 = r.k0; else boxes.push({ ...r }); }
+    if (boxes.length > 24 && tries < 3) { cell *= 1.5; continue; }
+    return boxes.map(r => ({ t: 'b', x0: bb.min.x + r.i0 * cell, x1: Math.min(bb.max.x, bb.min.x + (r.i1 + 1) * cell), y0: bb.min.y + r.j0 * cell, y1: Math.min(bb.max.y, bb.min.y + (r.j1 + 1) * cell), z0: bb.min.z + r.k0 * cell, z1: Math.min(bb.max.z, bb.min.z + (r.k1 + 1) * cell) }));
+  }
+  return [];
+}
+// a thing that moves after it was made solid loses its colliders (a few checked each frame)
+function solidTick() {
+  const L = SOLID.list; if (!L.length) return;
+  for (let n = 0; n < 24; n++) {
+    const S = L[SOLID.i = (SOLID.i + 1) % L.length]; if (S.dead) continue; const a = S.m.matrixWorld.elements;
+    for (let k = 0; k < 16; k++) if (Math.abs(a[k] - S.e[k]) > .02) { S.dead = true; for (const c of S.cs) { c.y0 = -999; c.y1 = -998; } break; }
+  }
+}
+
+// =====================================================================
+//  拎得起嘅嘢都係真物件 — loose household things become real objects.
+//  Every small thing standing loose on a floor, a counter, a shelf or a table (a can, a cup, a box,
+//  a book, a toy…) becomes a resizable: Dad's gun grows and shrinks it, the bear shoves it, it falls
+//  off edges with a clatter. Structural things, the furniture itself, anything the game moves or
+//  switches, and anything that glows stay as they are. Same result on every machine.
+// =====================================================================
+const PROPS = { n: 0 };
+function autoProps() {
+  if (window.__NOPROPS) return;
+  const skip = solidSkipSet(), box = new THREE.Box3(), d = V3();
+  for (const Z of ZL) {
+    const lv = Z.lv; if (!lv || Z.id === 'portal') continue; lv.updateMatrixWorld(true);
+    const inCore = p => Z.core.some(b => p.x > b[0] && p.x < b[1] && p.y > b[2] && p.y < b[3] - 20 && p.z > b[4] && p.z < b[5]);
+    const cand = [];
+    for (const o of lv.children) {
+      if (skip.has(o) || !o.visible || o.userData.noSolid || o.userData.noProp || o.isLight || !(o.isMesh || o.isGroup) || o.renderOrder) continue;
+      let meshes = 0, bad = false;
+      o.traverse(q => { if (q.isLight || q.isPoints || q.isLine || q.isSprite || q.isInstancedMesh || (q !== o && !q.visible)) bad = true;
+        if (q.isMesh) { meshes++; const m = Array.isArray(q.material) ? q.material[0] : q.material; if (!m || m.isShaderMaterial || m.blending === THREE.AdditiveBlending || (m.emissiveIntensity > .6 && m.emissive && m.emissive.getHex() !== 0) || m.isMeshBasicMaterial) bad = true;
+          if (q.geometry && /Plane|Circle|Ring|Shape/.test(q.geometry.type) && meshes === 1 && o === q) bad = true; } });
+      if (bad || !meshes || meshes > 30) continue;
+      box.setFromObject(o); box.getSize(d); const mx = Math.max(d.x, d.y, d.z), mn = Math.min(d.x, d.y, d.z);
+      if (mx < 3.5 || mx > 36 || mn < 1.5) continue;
+      if (d.y > 15 && d.y > 2.5 * Math.max(d.x, d.z)) continue;                          // posts and poles
+      const c = box.getCenter(V3()); if (!inCore(c)) continue;
+      if (machine && machine.x !== undefined && Math.hypot(c.x - machine.x, c.z - machine.z) < 70) continue;   // the shrinking machine and its bench
+      // standing loose on something wider than itself (its underside a hair above a collider's top)
+      const [sup, sc] = supportAt(c.x, c.z, Math.min(d.x, d.z) * .3, box.min.y + 1.5);
+      if (sup < box.min.y - 2.5 || sup > box.min.y + 1.5 || !sc) continue;
+      if (sc.t === 'b' ? (sc.x1 - sc.x0 < d.x + 4 || sc.z1 - sc.z0 < d.z + 4) : sc.r * 2 < Math.max(d.x, d.z) + 4) continue;   // (a cap on a post isn't loose)
+      cand.push({ o, bb: box.clone() });
+    }
+    // a candidate that touches something else that isn't loose (a table leg's foot, a lamp's base, a finial on a fence) is part of that thing
+    const touch = (a, b, t) => Math.min(a.max.x, b.max.x) - Math.max(a.min.x, b.min.x) > -t && Math.min(a.max.y, b.max.y) - Math.max(a.min.y, b.min.y) > -t && Math.min(a.max.z, b.max.z) - Math.max(a.min.z, b.min.z) > -t;
+    const meshBoxes = new Map(); lv.traverse(q => { if (q.isMesh && !q.isInstancedMesh) meshBoxes.set(q, new THREE.Box3().setFromObject(q)); });
+    for (let pass = 0, changed = true; changed && pass < 6; pass++) {
+      changed = false; const live = new Set(cand.map(q => q.o)), others = [], rising = [];
+      const under = q => { for (let p = q; p && p !== lv; p = p.parent) { if (live.has(p)) return true; if (!p.visible) return true; } return false; };
+      for (const o of lv.children) { if (live.has(o) || !o.visible) continue; const b = new THREE.Box3(); let any = false; o.traverse(q => { const mb = meshBoxes.get(q); if (mb && q.visible) { b.union(mb); any = true; } }); if (!any) continue;
+        const s3 = b.getSize(V3()); if (Math.max(s3.x, s3.y, s3.z) <= 150) others.push(b); }
+      for (const [q, b] of meshBoxes) if (!under(q)) rising.push(b);
+      for (let i = cand.length - 1; i >= 0; i--) { const a = cand[i].bb;
+        const attached = others.some(b => b.max.y > a.min.y + .6 && touch(a, b, .25));
+        const under2 = rising.some(b => b.min.y > a.min.y - .5 && b.min.y < a.max.y + 1 && b.max.y > a.max.y + .5 && Math.min(a.max.x, b.max.x) - Math.max(a.min.x, b.min.x) > .5 && Math.min(a.max.z, b.max.z) - Math.max(a.min.z, b.min.z) > .5);
+        if (attached || under2) { cand.splice(i, 1); changed = true; } }
+    }
+    // parts that overlap are one thing (a mug and its handle, a pot and its lid)
+    const par = cand.map((_, i) => i), f = i => par[i] === i ? i : (par[i] = f(par[i]));
+    for (let i = 0; i < cand.length; i++) for (let j = i + 1; j < cand.length; j++) { const a = cand[i].bb, b = cand[j].bb;
+      if (touch(a, b, .25)) par[f(i)] = f(j); }
+    const groups = new Map(); cand.forEach((q, i) => { const k = f(i); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(q); });
+    for (const list of groups.values()) {
+      const bb = list[0].bb.clone(); for (const q of list) bb.union(q.bb); bb.getSize(d); if (Math.max(d.x, d.y, d.z) > 40 || list.length > 4) continue;
+      let o = list[0].o; if (list.length > 1) { o = new THREE.Group(); lv.add(o); for (const q of list) o.attach(q.o); }
+      // the colliders that were made for it go; the resizable brings its own
+      const inside = c => c.t === 'b' ? c.x0 > bb.min.x - .6 && c.x1 < bb.max.x + .6 && c.z0 > bb.min.z - .6 && c.z1 < bb.max.z + .6 && c.y0 > bb.min.y - .6 && c.y1 < bb.max.y + .6
+        : c.x - c.r > bb.min.x - .6 && c.x + c.r < bb.max.x + .6 && c.z - c.r > bb.min.z - .6 && c.z + c.r < bb.max.z + .6 && c.y0 > bb.min.y - .6 && c.y1 < bb.max.y + .6;
+      let mine = false; o.traverse(q => { if (cols.some(c => c.m === q)) mine = true; });
+      for (let i = cols.length - 1; i >= 0; i--) { const c = cols[i]; let ours = false; if (c.m) o.traverse(q => { if (q === c.m) ours = true; }); if (ours || (inside(c) && !c.door && !c.cat && !c.push)) cols.splice(i, 1); }
+      let round = 0, all = 0; o.traverse(q => { if (q.isMesh) { all++; if (/Cylinder|Sphere|Lathe|Capsule|Torus|Cone/.test(q.geometry.type)) round++; } });
+      addPropRes(o, bb, Math.max(d.x, d.y, d.z) < 10 ? '小東西' : '東西', round > all / 2 ? .84 : 1);
+      PROPS.n++;
+    }
+  }
+}
+function addPropRes(o, bb, name, fill) {
+  const d = bb.getSize(V3()), B0 = V3((bb.min.x + bb.max.x) / 2, bb.min.y, (bb.min.z + bb.max.z) / 2), mx = Math.max(d.x, d.y, d.z);
+  o.traverse(q => { if (q.isMesh) { q.castShadow = true; q.receiveShadow = true; } });
+  const c = { t: 'b', x0: 0, x1: 0, y0: B0.y, y1: 0, z0: 0, z1: 0, m: o, small: false, push: true };
+  const r = { mesh: o, c, cx: B0.x, cz: B0.z, y0: B0.y, sx: d.x, sy: d.y, sz: d.z, s: 1, target: 1, min: .35, max: clamp(60 / mx, 1.5, 4), name, pulse: 0, fill,
+    prop: { P0: o.position.clone(), S0: o.scale.clone(), B0 } };
+  cols.push(c); resizables.push(r); o.userData.res = r; applyResize(r); return r;
+}
+// =====================================================================
+//  跳跳 — 袋鼠 (kangaroo, 技術員)
+//  · left click (hold): crouch and let go for the big hop, as before
+//  · right click: HOLD and the pouch opens — a GTA-style item wheel (time slows to a crawl in
+//    single player); flick the mouse toward an item (or press 1–6) and let go to use it.
+//    A quick tap of right click uses the last item again. Touch: the 袋 button.
+//  · items are limited; the pouch is refilled at the start of every chapter
+//      彈簧墊  a spring pad at your feet — anyone who steps on it is thrown high
+//      發條老鼠 a wind-up toy that clicks off ahead of you and pulls everyone's attention
+//      麵粉彈  thrown at the crosshair: a white cloud, and no one sees whoever is inside it
+//      能量糖  everyone close by gets their stamina back, and a burst of speed
+//      磁石    pulls in the batteries, vials and crumbs lying close by
+//      小雨傘  opens over your head: you float down gently from any height
+//  · online: every use is sent to everyone (each machine moves its own players; the host does the noise)
+// =====================================================================
+const POUCH_ITEMS = [
+  { id: 'spring', name: '彈簧墊', n: 3, desc: '放喺腳邊，踩上去彈好高，隊友都用得',
+    svg: '<rect x="8" y="31" width="24" height="4.5" rx="2"/><rect x="10" y="6" width="20" height="4" rx="2"/><path d="M12 28.5 28 25 12 21.5 28 18 12 14.5 28 11"/>' },
+  { id: 'wind', name: '發條老鼠', n: 2, desc: '向前行，一路「卡卡」聲，引開人',
+    svg: '<path d="M6 29c0-6.5 5.5-11 13-11s12 4.5 13.5 9.5c.3 1-.4 1.5-1.4 1.5H6z"/><circle cx="26" cy="18.5" r="3.2"/><path d="M6.5 28C3 28 2.5 23 6 22"/><path d="M18 18v-5M13.5 9.5h9c2 0 2 3.6 0 3.6h-9c-2 0-2-3.6 0-3.6z"/><circle cx="12" cy="31.5" r="2.2"/><circle cx="25" cy="31.5" r="2.2"/>' },
+  { id: 'flour', name: '麵粉彈', n: 2, desc: '掟去準星：一團白霧，霧入面冇人睇到你',
+    svg: '<path d="M11.5 16h15l3 17.5c.2 1.4-.8 2.5-2.2 2.5H10.7c-1.4 0-2.4-1.1-2.2-2.5z"/><path d="M13 16c2-3.2 10-3.2 12 0"/><path d="M16 25h6"/><circle cx="28.5" cy="9" r="3"/><circle cx="33" cy="12.5" r="2.2"/><circle cx="24" cy="6.5" r="1.8"/>' },
+  { id: 'candy', name: '能量糖', n: 3, desc: '附近隊友體力全滿，跑快一陣',
+    svg: '<ellipse cx="20" cy="20" rx="8.5" ry="6.5"/><path d="M11.5 20 4.5 14v12zM28.5 20l7-6v12z"/><path d="M16 15c2 3 2 7 0 10M21 14c2 3.5 2 8.5 0 12"/>' },
+  { id: 'magnet', name: '磁石', n: 2, desc: '吸埋附近嘅鈕扣電池、試管同麵包碎',
+    svg: '<path d="M10 7v13a10 10 0 0 0 20 0V7h-6.5v13a3.5 3.5 0 0 1-7 0V7z"/><path d="M10 12h6.5M23.5 12H30"/><path d="M5 30l-2 2M35 30l2 2M20 36v3"/>' },
+  { id: 'umb', name: '小雨傘', n: 2, desc: '喺高處跳落嚟，慢慢飄落地',
+    svg: '<path d="M4.5 19.5a15.5 14 0 0 1 31 0c-2.6-2.2-5.2-2.2-7.75 0-2.6-2.2-5.2-2.2-7.75 0-2.6-2.2-5.2-2.2-7.75 0-2.6-2.2-5.2-2.2-7.75 0z"/><path d="M20 5.5v2M20 19.5v11a3.2 3.2 0 0 1-6.4 0"/>' }
+];
+const POUCH = { open: false, sel: -1, last: 0, dx: 0, dy: 0, t0: 0, held: false, cnt: {}, slow: 1, springs: [], winds: [], clouds: [], pulls: [] };
+function pouchRefill() { for (const it of POUCH_ITEMS) POUCH.cnt[it.id] = it.n; }
+pouchRefill();
+const isRoo = C => !!(C && C.S && C.S.roo);
+
+// ---------- the kangaroo's body: tall ears, a long muzzle, big hind feet, a heavy tail, the pouch ----------
+function rooEar(g, s, k, part, plain, fm) {
+  g.position.set(s * .5 * k, 1.0 * k, -.16 * k); g.rotation.set(-.12, s * -.22, s * -.3);
+  part(ell(.3 * k, .84 * k, .15 * k, 24, 20), fm(0), g, 0, .74 * k, 0);
+  plain(ell(.18 * k, .64 * k, .06 * k, 20, 16), new THREE.MeshPhysicalMaterial({ color: 0xe6b49a, roughness: .55, sheen: .6, sheenColor: 0xffd8c8 }), g, 0, .72 * k, .11 * k);
+}
+function rooTail(C, S, tailRoot, k, part, fm) {
+  // a heavy tail of overlapping soft lobes, thick at the root, resting on the ground behind
+  let parent = tailRoot; tailRoot.position.set(0, .12 * k, -.7 * k); const tm = fm(0, S.len * .85);
+  for (let i = 0; i < 6; i++) {
+    const g = new THREE.Group(); g.position.z = i ? -.42 * k : 0; parent.add(g); const r = lerp(.46, .16, i / 5);
+    part(ell(r * k, r * .92 * k, r * 1.55 * k, 24, 16), tm, g, 0, 0, -.2 * k); g.rotation.x = i === 0 ? .85 : -.14; C.tail.push(g); parent = g;
+  }
+}
+function rooExtras(C, S, head, body, k, part, plain) {
+  const fm = (bel, len = S.len, den = S.den, col = S.fur) => furMat({ color: col, belly: S.belly, bellyAmt: bel, len, den, rimK: .07 });
+  // a longer muzzle, the nose moved to its tip
+  part(ell(.5 * k, .4 * k, .58 * k), fm(.8, S.len * .7), head, 0, -.28 * k, 1.16 * k);
+  for (const ch of head.children) if (Math.abs(ch.position.z - 1.45 * k) < .01 && ch.position.y < 0) ch.position.set(0, -.1 * k, 1.74 * k);
+  // big hind feet, small forepaws
+  for (const L of C.legs) { const f = L.children[1]; if (f) { f.scale.set(1.05, 1, 1.9); f.position.z = .42 * k; } }
+  for (const A of C.arms) A.scale.setScalar(.82);
+  // the pouch: a soft lip of fur on the belly, which opens when you reach in
+  const g = new THREE.Group(); g.position.set(0, .66 * k, .78 * k); body.add(g); C.pouchG = g;
+  const shell = new THREE.SphereGeometry(1, 32, 12, 0, Math.PI * 2, Math.PI / 2, Math.PI / 2); shell.scale(.62 * k, .5 * k, .3 * k);
+  part(shell, fm(1, S.len * .8, S.den, S.belly), g, 0, 0, .06 * k);
+  const lip = plain(new THREE.TorusGeometry(.6 * k, .055 * k, 8, 28, Math.PI), new THREE.MeshStandardMaterial({ color: 0x8a5a36, roughness: .8 }), g, 0, 0, .06 * k); lip.rotation.set(Math.PI / 2, Math.PI, 0); lip.scale.z = .5;
+  const dark = plain(ell(.5 * k, .06 * k, .2 * k, 20, 8), new THREE.MeshStandardMaterial({ color: 0x3a2418, roughness: 1 }), g, 0, -.01 * k, .02 * k); dark.castShadow = false;
+  // an umbrella, folded away until it is needed
+  const u = new THREE.Group(); u.position.set(.62 * k, 4.7 * k, .15 * k); u.rotation.z = -.12; u.visible = false; C.root.add(u); C.umbG = u;
+  const can = new THREE.Mesh(new THREE.SphereGeometry(2.7 * k, 32, 10, 0, Math.PI * 2, 0, Math.PI * .36), new THREE.MeshPhysicalMaterial({ color: 0xe8523a, roughness: .45, sheen: .5, sheenColor: 0xffc0a8, side: THREE.DoubleSide }));
+  can.position.y = -2.2 * k; can.castShadow = true; u.add(can);
+  const pole = new THREE.Mesh(new THREE.CylinderGeometry(.06 * k, .06 * k, 3.4 * k, 8), MAT.steel); pole.position.y = -1.4 * k; u.add(pole);
+  const hook = new THREE.Mesh(new THREE.TorusGeometry(.28 * k, .07 * k, 6, 16, Math.PI), new THREE.MeshStandardMaterial({ color: 0x3a2a20, roughness: .6 })); hook.position.set(-.28 * k, -3.1 * k, 0); hook.rotation.z = Math.PI; u.add(hook);
+  const tip = new THREE.Mesh(new THREE.SphereGeometry(.13 * k, 10, 8), new THREE.MeshStandardMaterial({ color: 0x2a2a2e })); tip.position.y = .56 * k; u.add(tip);
+}
+function rooAnim(C, dt, st) {
+  const k = C.k, moving = (st === 'walk' || st === 'sneak') && C.grounded;
+  if (moving) {
+    // both feet together: a hop for every step
+    const h = Math.abs(Math.sin(C.phase)); C.body.position.y += h * .5 * k;
+    const v = -.15 + (h - .5) * -.9; C.legs[0].rotation.x = v; C.legs[1].rotation.x = v;
+    for (const A of C.arms) A.rotation.x = -.95; C.body.rotation.x += .18;
+    if (C.tail[0]) C.tail[0].rotation.x = .72 - h * .35;
+  } else if (st === 'air' && C.tail[0]) { C.tail[0].rotation.x = damp(C.tail[0].rotation.x, .3, 6, dt); C.legs[0].rotation.x = C.legs[1].rotation.x = .55; }
+  else if (C.tail[0]) C.tail[0].rotation.x = damp(C.tail[0].rotation.x, .72, 6, dt);
+  if (C.pouchG) { const want = C === leader && POUCH.open ? 1 : 0; C.pouchK = damp(C.pouchK || 0, want, 12, dt); C.pouchG.rotation.x = -C.pouchK * .55; C.pouchG.scale.set(1 + C.pouchK * .12, 1 + C.pouchK * .2, 1 + C.pouchK * .3); }
+  if (C.umbG) { const on = C.umbT > T; C.umbK = damp(C.umbK || 0, on ? 1 : 0, 10, dt); C.umbG.visible = C.umbK > .02; C.umbG.scale.set(C.umbK, Math.max(.05, C.umbK), C.umbK); C.umbG.rotation.z = -.12 + Math.sin(C.t * 3) * .05; if (C.umbK > .5) C.arms[1].rotation.set(-2.9, 0, .25); }
+}
+
+// ---------- the wheel ----------
+function pouchWheelBuild() {
+  const W = $('pouchWheel'); if (!W || W.dataset.built) return; W.dataset.built = 1;
+  const n = POUCH_ITEMS.length, rI = 80, rO = 186, gap = .022; let segs = '';
+  for (let i = 0; i < n; i++) {
+    const a0 = (i - .5) / n * Math.PI * 2 - Math.PI / 2 + gap, a1 = (i + .5) / n * Math.PI * 2 - Math.PI / 2 - gap, P = (r, a) => `${(Math.cos(a) * r).toFixed(1)} ${(Math.sin(a) * r).toFixed(1)}`;
+    segs += `<path class="pw-seg" data-i="${i}" d="M${P(rI, a0)} L${P(rO, a0)} A${rO} ${rO} 0 0 1 ${P(rO, a1)} L${P(rI, a1)} A${rI} ${rI} 0 0 0 ${P(rI, a0)} Z"/>`;
+  }
+  W.innerHTML = `<svg class="pw-ring" viewBox="-200 -200 400 400" aria-hidden="true">${segs}</svg>` + POUCH_ITEMS.map((it, i) => {
+    const a = i / n * Math.PI * 2 - Math.PI / 2, r = (rI + rO) / 2;
+    return `<button class="pw-it" data-i="${i}" style="--x:${(Math.cos(a) * r).toFixed(1)}px;--y:${(Math.sin(a) * r).toFixed(1)}px"><svg viewBox="0 0 40 40" aria-hidden="true">${it.svg}</svg><b>${it.name}</b><i>0</i><kbd>${i + 1}</kbd></button>`;
+  }).join('') + `<div class="pw-hub"><small class="pw-k">育兒袋</small><b class="pw-n"></b><small class="pw-d"></small><em class="pw-c"></em></div>`;
+  W.addEventListener('pointerover', e => { const b = e.target.closest('.pw-it,.pw-seg'); if (b) { POUCH.sel = +b.dataset.i; pouchMark(); } });
+  W.addEventListener('click', e => { const b = e.target.closest('.pw-it,.pw-seg'); if (b) { POUCH.sel = +b.dataset.i; pouchClose(true); } else if (TOUCH) pouchClose(false); });
+}
+function pouchMark() {
+  const W = $('pouchWheel'); if (!W) return; const s = POUCH.sel;
+  W.querySelectorAll('.pw-seg').forEach(p => { const i = +p.dataset.i, it = POUCH_ITEMS[i]; p.classList.toggle('on', i === s); p.classList.toggle('out', !POUCH.cnt[it.id]); });
+  W.querySelectorAll('.pw-it').forEach(b => { const i = +b.dataset.i, it = POUCH_ITEMS[i], c = POUCH.cnt[it.id] || 0; b.classList.toggle('on', i === s); b.classList.toggle('out', !c); b.querySelector('i').textContent = c; });
+  const it = POUCH_ITEMS[s >= 0 ? s : POUCH.last];
+  W.querySelector('.pw-n').textContent = it.name; W.querySelector('.pw-d').textContent = it.desc;
+  const c = POUCH.cnt[it.id] || 0; W.querySelector('.pw-c').textContent = c ? `剩 ${c} 個` : '用晒';
+  W.querySelector('.pw-k').textContent = s >= 0 ? (TOUCH ? '點一下用' : '放手就用') : (TOUCH ? '點一樣嘢' : '甩滑鼠揀 · 1–6');
+}
+function pouchOpen() {
+  const L = leader; if (POUCH.open || !isRoo(L) || STATE !== 'play' || PAUSED || L.frozen || EMO.open) return;
+  pouchWheelBuild(); POUCH.open = true; POUCH.sel = -1; POUCH.dx = POUCH.dy = 0; pouchMark();
+  const W = $('pouchWheel'); W.hidden = false; requestAnimationFrame(() => W.classList.add('on')); SND.swish();
+}
+function pouchClose(use) {
+  if (!POUCH.open) return; POUCH.open = false; const W = $('pouchWheel'); W.classList.remove('on'); setTimeout(() => { if (!POUCH.open) W.hidden = true; }, 140);
+  if (use && POUCH.sel >= 0) pouchUse(POUCH_ITEMS[POUCH.sel].id);
+}
+function pouchWheelMouse() {   // flick toward an item (pointer locked)
+  const d = Math.hypot(POUCH.dx, POUCH.dy); if (d < 24) return; if (d > 150) { POUCH.dx *= 150 / d; POUCH.dy *= 150 / d; }
+  const a = Math.atan2(POUCH.dy, POUCH.dx) + Math.PI / 2, n = POUCH_ITEMS.length, i = ((Math.round(a / (Math.PI * 2) * n) % n) + n) % n;
+  if (i !== POUCH.sel) { POUCH.sel = i; pouchMark(); SND.sw(); }
+}
+// right mouse: held = the wheel, a quick tap = the last item again
+function pouchDown() { POUCH.held = true; POUCH.t0 = performance.now(); setTimeout(() => { if (POUCH.held && !POUCH.open) pouchOpen(); }, 170); }
+function pouchUp() {
+  if (!POUCH.held) return; POUCH.held = false;
+  if (POUCH.open) { pouchClose(true); return; }
+  if (performance.now() - POUCH.t0 < 170) pouchUse(POUCH_ITEMS[POUCH.last].id);
+}
+addEventListener('mouseup', e => { if (e.button === 2) pouchUp(); });
+addEventListener('keydown', e => { if (POUCH.open && /^Digit[1-6]$/.test(e.code)) { POUCH.sel = +e.code.slice(5) - 1; pressed[e.code] = false; POUCH.held = false; pouchClose(true); } });
+{ const b = $('tbPouch'); if (b) b.addEventListener('pointerdown', e => { e.stopPropagation(); e.preventDefault(); POUCH.open ? pouchClose(false) : pouchOpen(); }); }
+
+// ---------- using things ----------
+function pouchUse(id) {
+  const L = leader; if (!isRoo(L) || STATE !== 'play' || L.frozen) return;
+  const it = POUCH_ITEMS.find(q => q.id === id); const i = POUCH_ITEMS.indexOf(it);
+  if (!(POUCH.cnt[id] > 0)) { toast(`育兒袋入面冇${it.name}喇`); return; }
+  if (id === 'umb' && L.umbT > T) { toast('雨傘已經開咗'); return; }
+  const fx = Math.sin(L.yaw), fz = Math.cos(L.yaw); let a = L.pos.clone(), b = null;
+  if (id === 'spring') { a.set(L.pos.x + fx * 3.2, 0, L.pos.z + fz * 3.2); const [sup] = supportAt(a.x, a.z, 1, L.pos.y + 3); if (sup < L.pos.y - 6) { toast('呢度放唔穩彈簧墊'); return; } a.y = sup; }
+  else if (id === 'flour') { ray.setFromCamera(_sc, camera); const o = ray.ray.origin.clone(), d = ray.ray.direction.clone(); const [t] = rayHit(o, d, 300); b = o.addScaledVector(d, Math.min(t, 300) - .5); a = V3(L.pos.x + fx * 1.2, L.pos.y + L.h * .8, L.pos.z + fz * 1.2); }
+  else if (id === 'wind') a.set(L.pos.x + fx * 2.4, L.pos.y, L.pos.z + fz * 2.4);
+  POUCH.cnt[id]--; POUCH.last = i; refreshPartyHUD && refreshPartyHUD();
+  const yaw = id === 'wind' ? Math.atan2(-Math.sin(cam.yaw), -Math.cos(cam.yaw)) : L.yaw;
+  const d = { t: 'pch', c: L.id, k: id, a: a.toArray().map(v => +v.toFixed(2)), b: b ? b.toArray().map(v => +v.toFixed(2)) : null, y: +yaw.toFixed(3) };
+  pouchDo(d, true); if (NET.on) nsend(d);
+  L.arms[1].rotation.x = -2.2; SND.swish(); toast(`${it.name}！（剩 ${POUCH.cnt[id]}）`, 1.6);
+}
+function pouchRecv(d) { if (chars[d.c]) pouchDo(d, false); }
+function pouchDo(d, own) {
+  const C = chars[d.c], a = V3(...d.a);
+  if (d.k === 'spring') spawnSpring(a);
+  else if (d.k === 'wind') spawnWind(a, d.y);
+  else if (d.k === 'flour') throwFlour(a, V3(...d.b));
+  else if (d.k === 'candy') {
+    for (const F of party) { if (!mine(F) || F.frozen || F.pos.distanceTo(C.pos) > 150) continue; F.stamina = F.stamMax; F.sugarT = T + 9; for (let i = 0; i < 12; i++) emit(V3(F.pos.x, F.pos.y + F.h * .6, F.pos.z), V3(R(-14, 14), R(8, 24), R(-14, 14)), new THREE.Color(1.6, 1.1, .5), R(.2, .4), R(.4, .8), 60, 1.5); }
+    refreshPartyHUD && refreshPartyHUD(); tone(660, 990, .14, .05, 'triangle'); tone(990, 1320, .12, .04, 'triangle', .1);
+  } else if (d.k === 'magnet') magnetPull(C, own);
+  else if (d.k === 'umb') { C.umbT = T + 12; tone(300, 520, .12, .05, 'triangle'); }
+}
+
+// 彈簧墊
+let _sprG = null;
+function spawnSpring(p) {
+  if (!_sprG) { const pts = []; for (let i = 0; i <= 50; i++) { const a = i / 50 * Math.PI * 8; pts.push(V3(Math.cos(a) * 1.6, .5 + i / 50 * 2.2, Math.sin(a) * 1.6)); } _sprG = { coil: new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 120, .2, 6), base: new THREE.CylinderGeometry(2.6, 2.8, .5, 24), top: new THREE.CylinderGeometry(2.4, 2.4, .45, 24),
+    mb: new THREE.MeshStandardMaterial({ color: 0x2a2c30, roughness: .6 }), mt: new THREE.MeshPhysicalMaterial({ color: 0xf0b030, roughness: .35, clearcoat: .8 }) }; }
+  const g = new THREE.Group(); g.position.copy(p); fxGroup.add(g);
+  const base = new THREE.Mesh(_sprG.base, _sprG.mb); base.position.y = .25; const coil = new THREE.Mesh(_sprG.coil, MAT.steel); const top = new THREE.Mesh(_sprG.top, _sprG.mt); top.position.y = 2.9;
+  for (const m of [base, coil, top]) { m.castShadow = true; g.add(m); }
+  POUCH.springs.push({ g, coil, top, p: p.clone(), t: 0, k: 0, cd: {} }); if (POUCH.springs.length > 4) { const o = POUCH.springs.shift(); fxGroup.remove(o.g); }
+  SND.clang(.25);
+}
+// 發條老鼠
+let _windM = null;
+function spawnWind(p, yaw) {
+  if (!_windM) _windM = { body: new THREE.MeshPhysicalMaterial({ color: 0x9aa0a8, roughness: .4, metalness: .3, clearcoat: .6 }), key: new THREE.MeshStandardMaterial({ color: 0xd8b040, metalness: .8, roughness: .3 }), pink: new THREE.MeshStandardMaterial({ color: 0xe89aa8, roughness: .6 }) };
+  const g = new THREE.Group(); g.position.copy(p); g.rotation.y = yaw; fxGroup.add(g); const M = _windM;
+  const body = new THREE.Mesh(ell(1.3, 1.1, 2.1, 20, 14), M.body); body.position.y = 1.05; g.add(body);
+  for (const s of [-1, 1]) { const e = new THREE.Mesh(new THREE.SphereGeometry(.55, 12, 10), M.pink); e.position.set(s * .7, 2.0, 1.1); e.scale.z = .4; g.add(e); }
+  const nose = new THREE.Mesh(new THREE.SphereGeometry(.22, 10, 8), M.pink); nose.position.set(0, 1.0, 2.15); g.add(nose);
+  const key = new THREE.Group(); key.position.set(0, 2.2, -.4); g.add(key);
+  const st = new THREE.Mesh(new THREE.CylinderGeometry(.12, .12, .8, 8), M.key); st.position.y = .3; key.add(st);
+  for (const s of [-1, 1]) { const w = new THREE.Mesh(new THREE.TorusGeometry(.45, .14, 6, 14), M.key); w.position.set(s * .5, .85, 0); w.rotation.y = Math.PI / 2; key.add(w); }
+  const tail = new THREE.Mesh(new THREE.CylinderGeometry(.07, .12, 2.2, 6), M.pink); tail.rotation.x = Math.PI / 2 - .3; tail.position.set(0, .9, -2.6); g.add(tail);
+  g.traverse(q => { if (q.isMesh) q.castShadow = true; });
+  POUCH.winds.push({ g, key, p: p.clone(), yaw, t: 0, click: 0 });
+}
+// 麵粉彈
+let _flourM = null;
+function throwFlour(a, b) {
+  if (!_flourM) { const [c, x] = cnv(128, 128), g = x.createRadialGradient(64, 64, 4, 64, 64, 62); g.addColorStop(0, 'rgba(255,255,255,.95)'); g.addColorStop(.35, 'rgba(250,248,242,.7)'); g.addColorStop(.7, 'rgba(246,243,236,.25)'); g.addColorStop(1, 'rgba(240,236,228,0)'); x.fillStyle = g; x.fillRect(0, 0, 128, 128);
+    _flourM = { bag: new THREE.MeshStandardMaterial({ color: 0xefe6d2, roughness: .9 }), puff: new THREE.SpriteMaterial({ map: tex(c), color: 0xf6f2ea, transparent: true, opacity: .8, depthWrite: false }) }; }
+  const m = new THREE.Mesh(ell(.9, 1.1, .9, 12, 10), _flourM.bag); m.castShadow = true; fxGroup.add(m);
+  POUCH.clouds.push({ fly: { m, a: a.clone(), b: b.clone(), t: 0, dur: clamp(a.distanceTo(b) / 150, .3, 1.3), h: Math.min(36, a.distanceTo(b) * .25) + 4 }, p: b.clone(), puffs: [], t: -1, r: 0 });
+}
+function burstFlour(Cl) {
+  Cl.t = 0; fxGroup.remove(Cl.fly.m); Cl.fly = null; const [sup] = supportAt(Cl.p.x, Cl.p.z, 1, Cl.p.y + 2); Cl.p.y = Math.max(sup, Cl.p.y - 6);
+  for (let i = 0; i < 26; i++) { const s = new THREE.Sprite(_flourM.puff); const a = i * 2.39996, r = Math.sqrt((i + .5) / 26); s.userData.o = V3(Math.cos(a) * r, .1 + (i % 5) / 5 * .8, Math.sin(a) * r); s.userData.k = .7 + (i % 3) * .2; s.renderOrder = 3; fxGroup.add(s); Cl.puffs.push(s); }
+  SND.thud(.2); nz(.6, 1400, .6, .12, 'lowpass');
+  for (let i = 0; i < 40; i++) emit(Cl.p.clone().add(V3(0, 3, 0)), V3(R(-60, 60), R(10, 50), R(-60, 60)), new THREE.Color(.95, .93, .9), R(.5, 1.1), R(.8, 1.6), 30, 3);
+  if (!NET.client) noise(Cl.p, .35, .25);
+}
+function inFlour(p) { for (const Cl of POUCH.clouds) if (Cl.t >= 0 && Cl.r > 4 && Math.hypot(p.x - Cl.p.x, p.z - Cl.p.z) < Cl.r * .9 && p.y < Cl.p.y + Cl.r * 1.1 && p.y > Cl.p.y - 4) return true; return false; }
+// 磁石
+function magnetPull(C, own) {
+  const p = C.pos, R0 = 170, list = [];
+  for (const [arr, k] of [[batteries, 'bat'], [VIALS, 'vial'], [CRUMBS, 'crumb']]) arr.forEach((q, i) => { if (!q.got && Math.hypot(q.x - p.x, q.z - p.z) < R0 && Math.abs(q.y - p.y) < 90) list.push({ q, k, i }); });
+  const ring = new THREE.Mesh(new THREE.RingGeometry(1, 1.5, 48), new THREE.MeshBasicMaterial({ color: new THREE.Color(0x9ad8ff).multiplyScalar(2), transparent: true, opacity: .8, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
+  ring.rotation.x = -Math.PI / 2; ring.position.set(p.x, p.y + .4, p.z); ring.userData.t = 0; fxGroup.add(ring); POUCH.pulls.push({ ring, t: 0, C, list, own });
+  tone(220, 880, .35, .05, 'sawtooth'); if (own && !list.length) setTimeout(() => toast('附近冇嘢吸得到'), 500);
+}
+
+// ---------- every frame ----------
+function pouchTick(rawDt) {
+  // time crawls while the wheel is open (single player only: everyone else keeps playing online)
+  POUCH.slow = damp(POUCH.slow, POUCH.open && !NET.on ? .22 : 1, 14, rawDt);
+  if (POUCH.open) { pouchWheelMouse(); if (!isRoo(leader) || STATE !== 'play' || leader.frozen) pouchClose(false); }
+}
+function pouchUpdate(dt) {
+  // springs: land or walk onto one and up you go
+  for (const S of POUCH.springs) {
+    S.t += dt; S.k = damp(S.k, 0, 9, dt); S.coil.scale.y = 1 - S.k * .6; S.top.position.y = 2.9 - S.k * 1.4;
+    for (const F of party) { if (!mine(F) || F.frozen || F.climbing) continue; const top = S.p.y + 3.1;
+      if (Math.hypot(F.pos.x - S.p.x, F.pos.z - S.p.z) < 2.9 && F.pos.y < top + 1.4 && F.pos.y > top - 2.2 && F.vel.y <= 8 && !(S.cd[F.id] > T)) {
+        S.cd[F.id] = T + .45; S.k = 1; F.pos.y = top; F.vel.y = 132; F.grounded = false; F.state = 'air'; F.squash = -.9; F.leapT = .4;
+        if (F === leader) { SND.jump(); tone(240, 900, .25, .06, 'triangle'); cam.shake = Math.max(cam.shake, .08); } } }
+  }
+  for (let i = POUCH.springs.length - 1; i >= 0; i--) if (POUCH.springs[i].t > 90) { fxGroup.remove(POUCH.springs[i].g); POUCH.springs.splice(i, 1); }
+  // wind-up mice: off they go, turning away from walls and edges, clicking all the way
+  for (let i = POUCH.winds.length - 1; i >= 0; i--) {
+    const W = POUCH.winds[i]; W.t += dt; W.key.rotation.z += dt * 10 * (W.t < 8 ? 1 : 0);
+    if (W.t < 8) {
+      const fx = Math.sin(W.yaw), fz = Math.cos(W.yaw), nx = W.p.x + fx * 38 * dt, nz2 = W.p.z + fz * 38 * dt;
+      const [sup] = supportAt(nx + fx * 2.5, nz2 + fz * 2.5, .6, W.p.y + 1.5);
+      if (solidAt(nx + fx * 2.2, W.p.y + 1, nz2 + fz * 2.2) || sup < W.p.y - 3) W.yaw += Math.PI / 2 + R(-.4, .4); else { W.p.x = nx; W.p.z = nz2; W.p.y = Math.max(sup, W.p.y - 60 * dt); }
+      W.g.position.copy(W.p); W.g.position.y += Math.abs(Math.sin(W.t * 26)) * .25; W.g.rotation.y = angDamp(W.g.rotation.y, W.yaw, 12, dt);
+      W.click -= dt; if (W.click <= 0) { W.click = .16; const near = leader && leader.pos.distanceTo(W.p) < 220; if (near) nz(.025, 3800, 2, .05); }
+      if (!NET.client && Math.floor(W.t / .7) !== Math.floor((W.t - dt) / .7)) noise(W.p.clone(), .55, .12);
+    } else if (W.t > 14) { fxGroup.remove(W.g); POUCH.winds.splice(i, 1); }
+  }
+  // flour: the bag in flight, then the cloud swelling and slowly thinning out
+  for (let i = POUCH.clouds.length - 1; i >= 0; i--) {
+    const Cl = POUCH.clouds[i];
+    if (Cl.fly) { const F = Cl.fly; F.t += dt; const u = Math.min(1, F.t / F.dur); F.m.position.lerpVectors(F.a, F.b, u); F.m.position.y += Math.sin(u * Math.PI) * F.h; F.m.rotation.x += dt * 9; if (u >= 1) burstFlour(Cl); continue; }
+    Cl.t += dt; const grow = Math.min(1, Cl.t / .6), fade = Cl.t > 8 ? Math.max(0, 1 - (Cl.t - 8) / 2.5) : 1; Cl.r = 26 * grow * (fade > .2 ? 1 : fade * 5);
+    for (const s of Cl.puffs) { const o = s.userData.o, kk = s.userData.k; s.position.set(Cl.p.x + o.x * Cl.r * .8, Cl.p.y + 4 + o.y * Cl.r * .7 + Cl.t * .6, Cl.p.z + o.z * Cl.r * .8); s.scale.setScalar(Math.max(.01, Cl.r * 1.05 * kk * (.85 + Math.sin(Cl.t * 1.3 + o.x * 5) * .08))); }
+    _flourM.puff.opacity = .72 * Math.min(1, Math.max(...POUCH.clouds.filter(q => !q.fly).map(q => q.t > 8 ? Math.max(0, 1 - (q.t - 8) / 2.5) : 1)));
+    if (Cl.t > 10.5) { for (const s of Cl.puffs) fxGroup.remove(s); POUCH.clouds.splice(i, 1); }
+  }
+  // magnet pulses: everything close by streaks in
+  for (let i = POUCH.pulls.length - 1; i >= 0; i--) {
+    const P = POUCH.pulls[i]; P.t += dt; P.ring.scale.setScalar(1 + P.t * 220); P.ring.material.opacity = Math.max(0, .8 - P.t * 1.3); P.ring.position.set(P.C.pos.x, P.C.pos.y + .4, P.C.pos.z);
+    for (const L of P.list) { if (L.done) continue; const q = L.q, u = Math.min(1, P.t / .55), x = lerp(q.x, P.C.pos.x, u), y = lerp(q.y + 2, P.C.pos.y + 2, u), z = lerp(q.z, P.C.pos.z, u);
+      if (rnd() < .7) emit(V3(x, y, z), V3(R(-3, 3), R(-3, 3), R(-3, 3)), new THREE.Color(.7, 1.3, 1.8), R(.2, .4), R(.2, .4), 0, 2);
+      if (u >= 1) { L.done = true; if (P.own && !q.got) netGet(L.k, L.i); } }
+    if (P.t > .8) { fxGroup.remove(P.ring); POUCH.pulls.splice(i, 1); }
+  }
+  // umbrellas: a gentle way down
+  for (const C of party) if (C.umbT > T && mine(C) && !C.grounded && !C.climbing && C.vel.y < -13) C.vel.y = Math.max(C.vel.y, -13);
+}
+function pouchHint(L) {
+  if (!isRoo(L)) return ''; const it = POUCH_ITEMS[POUCH.last], c = POUCH.cnt[it.id] || 0;
+  return TOUCH ? `「袋」：育兒袋（${it.name} ×${c}）` : `<kbd>右鍵</kbd> 按住開育兒袋 · 快按再用「${it.name}」×${c}`;
+}
 requestAnimationFrame(frame);
 init().catch(e => { console.error(e); $('err').textContent = '載入失敗：' + (e && e.stack || e); });
-if (location.hash === '#dev') window.__VC = () => VC; if (location.hash === '#dev') window.__bn = { get party() { return party; }, dayCloudTex, camera, MOLE, moleDig, softAt, switchTo, LP, WARPS, PK, SLIDE, parkLit, moonShade, NLOG, netLogText, nlog, LOBBY, mpSaveLoad, mpApplySave, setMyName, hostFreeze, toyUnfreezeAll, UNSTK, unstuck, unInside, PORT, PRO, PO, portalOut, proSkip, prC, prPad, MP_PRO, WATCH, watchCycle, watchTarget, STICK, EMO, EMOTES, renderSticker, emoKit, emoKitDone, emoBuildAll, TTL, titleSetup, titleEnd, emoDo, emoShow, emoOpen, emoClose, UPS, humanFloor, roomOf, navNearest, ACTS, roomSteps, brainIncident, react, agentRoom, OLDB, YS, AGB, GS, camPowered, doorOpen, mpChecklist, HB, HX, hxSet, hxNear, navPath, NAVN, KM, KID, LIV, scene, THREE, MUS, ARR, BANK, AU, SET, toyFreeze, useProto, TAKE, protoTarget, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, ST, pressButton, LANES, pause, garageHear, TEST, testWarp, WARPS, testAll, startChapter2, NC, batPing, tortShell, crewJoin, hideK, startGame, startChapter, openChapters, step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT, GS, YS, DECK, GY, WC, ventOpen, latchOpen, mpMarker, zoneFloor, KS }; }, info: () => ({ fps: $('fps').textContent, state: STATE, lv: LEVEL, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
+if (location.hash === '#dev') window.__VC = () => VC; if (location.hash === '#dev') window.__bn = { SOLID, POUCH, pouchUse, pouchOpen, pouchClose, PROPS, get party() { return party; }, get cols() { return cols; }, ZONES, ZL, STATIC, get LV() { return LV; }, dayCloudTex, camera, MOLE, moleDig, softAt, switchTo, LP, WARPS, PK, SLIDE, parkLit, moonShade, NLOG, netLogText, nlog, LOBBY, mpSaveLoad, mpApplySave, setMyName, hostFreeze, toyUnfreezeAll, UNSTK, unstuck, unInside, PORT, PRO, PO, portalOut, proSkip, prC, prPad, MP_PRO, WATCH, watchCycle, watchTarget, STICK, EMO, EMOTES, renderSticker, emoKit, emoKitDone, emoBuildAll, TTL, titleSetup, titleEnd, emoDo, emoShow, emoOpen, emoClose, UPS, humanFloor, roomOf, navNearest, ACTS, roomSteps, brainIncident, react, agentRoom, OLDB, YS, AGB, GS, camPowered, doorOpen, mpChecklist, HB, HX, hxSet, hxNear, navPath, NAVN, KM, KID, LIV, scene, THREE, MUS, ARR, BANK, AU, SET, toyFreeze, useProto, TAKE, protoTarget, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, ST, pressButton, LANES, pause, garageHear, TEST, testWarp, WARPS, testAll, startChapter2, NC, batPing, tortShell, crewJoin, hideK, startGame, startChapter, openChapters, step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT, GS, YS, DECK, GY, WC, ventOpen, latchOpen, mpMarker, zoneFloor, KS }; }, info: () => ({ fps: $('fps').textContent, state: STATE, lv: LEVEL, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
 </script>
 </body>
 </html>

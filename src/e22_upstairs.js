@@ -21,7 +21,10 @@ function humanFloor(x, z, cur = 0) {
 // trim, nosing, runners, drawer fronts…: no colliders, merged into one mesh per material (far fewer draw calls)
 const DECO = new Map();
 function deco(x0, x1, y0, y1, z0, z1, mat) { const g = new THREE.BoxGeometry(x1 - x0, y1 - y0, z1 - z0); g.translate((x0 + x1) / 2, (y0 + y1) / 2, (z0 + z1) / 2); if (!DECO.has(mat)) DECO.set(mat, []); DECO.get(mat).push(g); }
-function flushDeco() { for (const [mat, gs] of DECO) { const m = new THREE.Mesh(mergeGeometries(gs), mat); m.receiveShadow = true; LV.add(m); gs.forEach(g => g.dispose()); } DECO.clear(); }
+function flushDeco() { if (window.__NOMERGE) { for (const [mat, gs] of DECO) for (const g of gs) { const m = new THREE.Mesh(g, mat); m.receiveShadow = true; LV.add(m); } DECO.clear(); return; } const G = new THREE.Group(); G.name = 'deco'; LV.add(G); for (const [mat, gs] of DECO) for (const g of gs) { const m = new THREE.Mesh(g, mat); m.receiveShadow = true; G.add(m); } DECO.clear(); DECO_LATER.push(G); }
+// (merged into one mesh per material once the world has been made solid — see buildWorld)
+const DECO_LATER = [];
+function flushDecoLater() { for (const G of DECO_LATER) { mergeZoneStatic(G, new Set()); G.position.set(0, 0, 0); G.updateMatrixWorld(true); } DECO_LATER.length = 0; }
 function upMats(K) {
   const C2 = (w, h, f) => { const [c, x] = cnv(w, h); f(x, w, h); return tex(c); };
   const duvet = C2(256, 256, (x) => { x.fillStyle = '#e7a6b6'; x.fillRect(0, 0, 256, 256); for (let i = 0; i < 46; i++) { const px = R(0, 256), py = R(0, 256), r = R(3, 7); x.fillStyle = rnd() < .5 ? '#fff4d6' : '#ffe08a'; x.beginPath(); for (let k = 0; k < 10; k++) { const a = k * Math.PI / 5 - Math.PI / 2, rr = k % 2 ? r * .45 : r; x.lineTo(px + Math.cos(a) * rr, py + Math.sin(a) * rr); } x.fill(); } });

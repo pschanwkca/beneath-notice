@@ -186,7 +186,7 @@ function buildPark() {
   addCrumb(1640, GY, 2050); addCrumb(2460, GY, 3120); addCrumb(2060, GY + 44, 2148); addVial(1210, GY, 3460);
   buildParkPeople();
   const keep = new Set([PK.flag, PK.duck, PK.chipG, PK.mound, PK.ball.g, PK.sk.bd, ...PK.swings.map(s => s.piv), ...CRUMBS.map(c => c.g), ...VIALS.map(v => v.g), ...batteries.map(b => b.g)]);
-  PK.merged = mergeZoneStatic(LV, keep);
+  PK.mergeLater = [LV, keep];   // merged once every visible thing has been made solid (buildWorld → autoSolid)
 }
 
 // ---------- the dog run ----------
@@ -236,7 +236,7 @@ function buildSkate(conc, metal, red) {
     const Rr = 80, D = 24, W = S.z1 - S.z0 - 40, sh = new THREE.Shape(); sh.moveTo(0, 0); sh.lineTo(0, Rr); sh.lineTo(D, Rr);
     for (let i = 1; i <= 16; i++) { const a = i / 16 * Math.PI / 2; sh.lineTo(D + Rr - Math.cos(a) * Rr, Rr - Math.sin(a) * Rr); } sh.lineTo(0, 0);
     const g = new THREE.ExtrudeGeometry(sh, { depth: W, bevelEnabled: false, curveSegments: 1 }); g.translate(0, 0, -W / 2);
-    const m = new THREE.Mesh(g, cm); m.position.set(x, GY, (S.z0 + S.z1) / 2); m.scale.x = dir; m.castShadow = m.receiveShadow = true; LV.add(m);
+    const m = new THREE.Mesh(g, cm); m.position.set(x, GY, (S.z0 + S.z1) / 2); m.scale.x = dir; m.castShadow = m.receiveShadow = true; m.userData.noSolid = true; LV.add(m);   // (its colliders step up the curve, below)
     // coping pipe along the lip
     const cp = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.4, W, 12), MAT.steel); cp.rotation.x = Math.PI / 2; cp.position.set(x + dir * D, GY + Rr, (S.z0 + S.z1) / 2); LV.add(cp);
     for (let i = 0; i < 6; i++) { const y = (i + 1) / 6 * Rr, xl = D + Rr - Math.sqrt(Math.max(0, Rr * Rr - (Rr - y) * (Rr - y))); const xa = x, xb = x + dir * xl; cols.push({ t: 'b', x0: Math.min(xa, xb), x1: Math.max(xa, xb), y0: GY, y1: GY + y, z0: (S.z0 + S.z1) / 2 - W / 2, z1: (S.z0 + S.z1) / 2 + W / 2 }); }
@@ -292,7 +292,7 @@ function buildPlayground(Mt) {
     for (let i = 0; i <= N; i++) { const x = lerp(SLIDE.x0, SLIDE.x1, i / N), y = slideH(x); for (const [dz, dy] of prof) pos.push(x, y + dy, (SLIDE.z0 + SLIDE.z1) / 2 + dz); }
     const P2 = prof.length; for (let i = 0; i < N; i++) for (let j = 0; j < P2 - 1; j++) { const a = i * P2 + j, b = a + P2; idx.push(a, b, a + 1, a + 1, b, b + 1); }
     const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setIndex(idx); g.computeVertexNormals();
-    const m = new THREE.Mesh(g, Mt.slideM); m.castShadow = m.receiveShadow = true; m.material.side = THREE.DoubleSide; LV.add(m);
+    const m = new THREE.Mesh(g, Mt.slideM); m.castShadow = m.receiveShadow = true; m.material.side = THREE.DoubleSide; m.userData.noSolid = true; LV.add(m);   // (the slide has its own physics: slideTick)
     // its underside and a support leg
     cyl(SLIDE.x1 - 30, (SLIDE.z0 + SLIDE.z1) / 2, 3.2, GY, slideH(SLIDE.x1 - 30) - 2, Mt.yellow, { seg: 10 });
     // side walls of the tub stop you walking off sideways (low, so you can still jump out)
@@ -771,6 +771,7 @@ function parkNetNPC(dt) {
 // ---------- fewer draw calls: bake the park's static meshes into one mesh per material ----------
 // (phones choke on hundreds of small meshes; nothing here moves, and nothing looks them up again)
 function mergeZoneStatic(root, keep) {
+  if (window.__NOMERGE) return 0;
   root.updateMatrixWorld(true); const B = new Map(), dead = [];
   root.traverse(o => {
     if (!o.isMesh || o.isInstancedMesh || !o.visible || o.renderOrder) return;

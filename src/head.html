@@ -455,6 +455,27 @@ html.touch .desk{display:none}
 #tbAct,#tbScout{display:none;border-color:rgba(159,216,107,.7);color:#bfe89a}
 #tbAct{right:84px;bottom:84px}
 #tbScout{right:150px;bottom:150px;width:52px;height:52px;font-size:12px}
+#tbPouch{display:none;right:150px;bottom:150px;width:52px;height:52px;font-size:15px;border-color:rgba(232,168,106,.75);color:#f3c590}
+.touchui.rab #tbPouch{display:block}
+/* the kangaroo's pouch: a GTA-style item wheel */
+.pwheel{position:fixed;left:50%;top:50%;width:0;height:0;z-index:31;pointer-events:auto;opacity:0;transform:scale(.94);transition:opacity .12s,transform .14s}
+.pwheel.on{opacity:1;transform:none}
+.pw-ring{position:absolute;left:-200px;top:-200px;width:400px;height:400px;overflow:visible;filter:drop-shadow(0 10px 28px rgba(0,0,0,.5))}
+.pw-seg{fill:rgba(16,14,20,.78);stroke:rgba(255,255,255,.1);stroke-width:1;cursor:pointer;transition:fill .1s}
+.pw-seg.out{fill:rgba(16,14,20,.52)}
+.pw-seg.on{fill:rgba(232,166,96,.9);stroke:rgba(255,226,182,.95);stroke-width:1.5}
+.pw-it{position:absolute;left:calc(var(--x) - 46px);top:calc(var(--y) - 42px);width:92px;height:84px;padding:0;border:0;background:none;color:#f3ebdd;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;cursor:pointer;pointer-events:none;font:700 12px/1.2 "Noto Sans TC",sans-serif;letter-spacing:.04em;transition:transform .12s,color .1s}
+.pw-it svg{width:40px;height:40px;fill:none;stroke:currentColor;stroke-width:2.1;stroke-linecap:round;stroke-linejoin:round}
+.pw-it i{position:absolute;right:12px;top:4px;min-width:20px;height:20px;padding:0 4px;border-radius:10px;font:800 11px/18px ui-monospace,Menlo,monospace;font-style:normal;text-align:center;color:#f3ebdd;background:rgba(0,0,0,.5);border:1px solid rgba(255,255,255,.2)}
+.pw-it kbd{position:absolute;left:12px;top:4px;font:700 10px/16px ui-monospace,Menlo,monospace;color:rgba(243,235,221,.5)}
+.pw-it.on{color:#2b1a0d;transform:scale(1.08)}.pw-it.on i{background:#2b1a0d;color:#ffd79c;border-color:transparent}.pw-it.on kbd{color:rgba(43,26,13,.55)}
+.pw-it.out{opacity:.36}
+.pw-hub{position:absolute;left:-74px;top:-74px;width:148px;height:148px;box-sizing:border-box;border-radius:50%;padding:16px;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:4px;background:radial-gradient(circle at 50% 35%,rgba(40,33,36,.96),rgba(16,14,20,.92));border:1px solid rgba(255,255,255,.12);color:#f3ebdd;font-family:"Noto Sans TC",sans-serif;pointer-events:none}
+.pw-hub .pw-k{font-size:10px;letter-spacing:.14em;color:#e8a86a}
+.pw-hub b{font-size:17px;letter-spacing:.1em}
+.pw-hub .pw-d{font-size:10.5px;line-height:1.45;color:#c9bca8}
+.pw-hub em{font-style:normal;font-size:11px;font-weight:700;color:#ffd79c;letter-spacing:.06em}
+html.touch .pwheel{transform:scale(.82)}html.touch .pw-it{pointer-events:auto}html.touch .pw-it kbd{display:none}
 .touchui.sq #tbAct,.touchui.cham #tbAct,.touchui.sq #tbScout,.touchui.hog #tbAct,.touchui.rab #tbAct,.touchui.coon #tbAct,.touchui.frog #tbAct,.touchui.frog #tbScout,.touchui.bat #tbAct,.touchui.tort #tbAct,.touchui.mole #tbAct{display:block}
 #watch{position:fixed;z-index:6;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:6px;opacity:0;transition:opacity .2s;pointer-events:none}
 #watch.on{opacity:1}
@@ -556,6 +577,7 @@ html.touch .mpchip{bottom:auto;top:62px}
     <button class="tb" id="tbProto">復活</button>
     <button class="tb" id="tbUse">用</button>
     <button class="tb" id="tbAct">抱</button>
+    <button class="tb" id="tbPouch" aria-label="育兒袋">袋</button>
     <button class="tb" id="tbScout">偵察</button>
   </div>
   <div class="vctouch"><button class="tb tbemo" id="tbEmo" aria-label="表情">表情</button><button class="tb vcb" id="tbMic">咪</button><button class="tb vcb" id="tbChat">聊天</button>
@@ -591,6 +613,7 @@ html.touch .mpchip{bottom:auto;top:62px}
   </div>
   <div class="party" id="party"></div>
   <div id="emoWheel" class="emowheel" hidden></div>
+  <div id="pouchWheel" class="pwheel" hidden></div>
   <div class="chat" id="chat"><div class="clog" id="chatLog" aria-live="polite"></div><input id="chatIn" maxlength="80" placeholder="講嘢……（Enter 發送 · Esc 取消）" autocomplete="off" spellcheck="false" aria-label="聊天" hidden></div>
   <div class="abil panel" id="abil">
     <div class="an" id="an">尺寸槍</div>

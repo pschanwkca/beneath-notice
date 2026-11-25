@@ -440,8 +440,10 @@ function addResizable(mesh, cx, cz, y0, sx, sy, sz, mn, mx, name) {
 // round things (a kettle, a ball, a pot…) get a box pulled in a little, so its corners don't stick out into the air
 const ROUND_FILL = { '生果碗': .74, '毛公仔': .76, '電熱水壺': .82, '馬克杯': .84, '香草盆栽': .82, '貓墊': .84, '油漆罐': .84, '波波': .8, '洗潔精': .86, '鋼杯': .84, '花灑': .62, '皮球': .8, '網球': .8, '監視鏡頭': .84 };
 function applyResize(r) {
-  const s = r.s; r.mesh.scale.set(r.sx * s, r.sy * s, r.sz * s); r.mesh.position.set(r.cx, r.y0 + r.sy * s / 2, r.cz);
-  const c = r.c, k = ROUND_FILL[r.name] || 1; c.x0 = r.cx - r.sx * s / 2 * k; c.x1 = r.cx + r.sx * s / 2 * k; c.z0 = r.cz - r.sz * s / 2 * k; c.z1 = r.cz + r.sz * s / 2 * k; c.y1 = r.y0 + r.sy * s;
+  const s = r.s; r.wakeT = T + .6;
+  if (r.prop) { const P = r.prop; r.mesh.scale.copy(P.S0).multiplyScalar(s); r.mesh.position.set(r.cx - s * (P.B0.x - P.P0.x), r.y0 - s * (P.B0.y - P.P0.y), r.cz - s * (P.B0.z - P.P0.z)); }   // a thing that was already in the room (e33_solid.js)
+  else { r.mesh.scale.set(r.sx * s, r.sy * s, r.sz * s); r.mesh.position.set(r.cx, r.y0 + r.sy * s / 2, r.cz); }
+  const c = r.c, k = ROUND_FILL[r.name] || r.fill || 1; c.x0 = r.cx - r.sx * s / 2 * k; c.x1 = r.cx + r.sx * s / 2 * k; c.z0 = r.cz - r.sz * s / 2 * k; c.z1 = r.cz + r.sz * s / 2 * k; c.y1 = r.y0 + r.sy * s;
   c.small = Math.max(r.sx, r.sy, r.sz) * s < 4;
 }
 function addBattery(x, y, z) {

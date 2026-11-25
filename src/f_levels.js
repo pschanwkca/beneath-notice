@@ -29,7 +29,7 @@ function tubeM(pts, r, mat, seg = 60) { const c = new THREE.CatmullRomCurve3(pts
 async function loadLevel(name, opt) {
   titleEnd();
   window.__loads = (window.__loads || 0) + 1; if (NET.on && NET.host) nsend({ t: 'lvl', n: name });
-  STATE = 'loading'; const D = LEVELS[name];
+  STATE = 'loading'; const D = LEVELS[name]; pouchRefill();   // (a full pouch for every chapter)
   $('lvlA').textContent = opt && opt.chapter || D.chapter; $('lvlB').textContent = opt && opt.title || D.title; $('lvl').hidden = false; requestAnimationFrame(() => $('lvl').classList.add('on'));
   $('end').hidden = true; $('dead').classList.remove('on');
   await new Promise(r => setTimeout(r, 700));
@@ -62,9 +62,12 @@ function noiseRing(p) {
 }
 const NOISERINGS = [];
 function updRings(dt) { for (let i = NOISERINGS.length - 1; i >= 0; i--) { const r = NOISERINGS[i]; r.userData.t += dt; const t = r.userData.t; r.scale.setScalar(1 + t * 60); r.material.opacity = Math.max(0, .8 - t * 1.1); if (t > .75) { r.parent && r.parent.remove(r); r.geometry.dispose(); NOISERINGS.splice(i, 1); } } }
+let _pfI = 0;
 function updPushFall(dt) {
-  for (const r of resizables) {
-    if (!r.c.push) continue;
+  // (things resting where they are only get looked at a few per frame; anything that has just moved, changed size or is falling, every frame)
+  const N = resizables.length, rr = new Set(); for (let k = 0; k < Math.min(N, 14); k++) rr.add((_pfI + k) % N); _pfI = (_pfI + 14) % Math.max(1, N);
+  for (let ri = 0; ri < N; ri++) { const r = resizables[ri];
+    if (!r.c.push) continue; if (!r.vy && !(r.wakeT > T) && !rr.has(ri)) continue;
     const [sup] = supportAt(r.cx, r.cz, .4, r.y0 + .01);
     if (sup < r.y0 - .15 || r.vy) {
       r.vy = (r.vy || 0) - 620 * dt; r.y0 += r.vy * dt;

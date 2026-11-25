@@ -234,6 +234,7 @@ function shellTick() {
 // how much less a watcher notices someone (chameleon colour, tortoise shell)
 function hideK(L) {
   if (L.state === 'dig') return 0;
+  if (inFlour(L.pos)) return .03;   // inside a cloud of flour (the kangaroo's pouch)
   if (L.state === 'shell') return .04;
   return L.id === 'cham' ? 1 - .82 * L.camo : 1;
 }
