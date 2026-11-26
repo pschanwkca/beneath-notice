@@ -191,8 +191,9 @@ function scramble(C, hit) {
   C.mantle = { from: C.pos.clone(), to: V3(px, c.y1, pz), t: 0, dur: .36 + (c.y1 - C.pos.y) * .012 }; C.yaw = Math.atan2(-hit.nx, -hit.nz);
   if (C.id !== 'gecko') C.stamina = Math.max(0, C.stamina - 2); SND.swish(); return true;
 }
-function startClimb(C, hit) { C.climbing = true; C.climbC = hit.c; C.climbN.set(hit.nx, 0, hit.nz); C.vel.set(0, 0, 0); C.grounded = false; C.crouch = false; C.yaw = Math.atan2(-hit.nx, -hit.nz); SND.swish(); }
-function detach(C, push, up, grounded) { C.climbing = false; C.vel.set(C.climbN.x * push * 20, up, C.climbN.z * push * 20); C.climbCD = .35; if (grounded) C.grounded = true; }
+const LEAP = { cost: 11, dur: .3, up: 1.9, side: 1.5 };   // a climbing leap: stamina, seconds, distance in body heights (up / sideways)
+function startClimb(C, hit) { C.leap = null; C.climbing = true; C.climbC = hit.c; C.climbN.set(hit.nx, 0, hit.nz); C.vel.set(0, 0, 0); C.grounded = false; C.crouch = false; C.yaw = Math.atan2(-hit.nx, -hit.nz); SND.swish(); }
+function detach(C, push, up, grounded) { C.leap = null; C.climbing = false; C.vel.set(C.climbN.x * push * 20, up, C.climbN.z * push * 20); C.climbCD = .35; if (grounded) C.grounded = true; }
 function updLeader(C, dt) {
   const ctl = STATE === 'play' && !(C.tumble > 0) && !PAUSED;
   // the bottom of a tower can still walk, carrying everyone on top (slower; no jumping or climbing)
@@ -268,14 +269,29 @@ function resolveClimb(C) {
   return best;
 }
 function updClimb(C, dt, inX, inY, ctl, run) {
-  const n = C.climbN, grip = C.climbC && C.climbC.grip; const sp = 9 * C.S.clb * (run ? 1.4 : 1) * (grip ? 1.7 : 1);
-  if (ctl && pressed.Space) { C.climbing = false; C.vel.set(n.x * 24, 40, n.z * 24); C.climbCD = .45; C.yaw = Math.atan2(n.x, n.z); SND.jump(); C.state = 'air'; return; }
+  const n = C.climbN, grip = C.climbC && C.climbC.grip; let sp = 9 * C.S.clb * (run ? 1.4 : 1) * (grip ? 1.7 : 1);
+  // Space while climbing: a climbing leap (like Zelda) up — or sideways, with the stick held that way — fast, but it
+  // costs a chunk of stamina; pull down (back) and press it to jump off the wall instead
+  if (ctl && pressed.Space) {
+    if (inY < -.3) { C.leap = null; C.climbing = false; C.vel.set(n.x * 24, 40, n.z * 24); C.climbCD = .45; C.yaw = Math.atan2(n.x, n.z); SND.jump(); C.state = 'air'; return; }
+    const cost = C.id === 'gecko' ? 2 : LEAP.cost;
+    if (C.leap || C.leapCD > 0) { }
+    else if (C.stamina < cost + 2) { if (C === leader) toast('體力唔夠彈上去，慢慢爬或者搵位企穩先'); }
+    else { let lx = inX, ly = Math.max(0, inY); if (Math.hypot(lx, ly) < .3) { lx = 0; ly = 1; } const l = Math.hypot(lx, ly); C.leap = { x: lx / l, y: ly / l, t: 0, d: C.h * (ly / l > .5 ? LEAP.up : LEAP.side) }; C.stamina -= cost; SND.jump();
+      for (let i = 0; i < 6; i++) emit(V3(C.pos.x + n.x * .6, C.pos.y + R(0, C.h * .5), C.pos.z + n.z * .6), V3(n.x * R(4, 10) + R(-3, 3), R(-4, 2), n.z * R(4, 10) + R(-3, 3)), new THREE.Color(.7, .64, .56), R(.12, .24), R(.3, .6), 60, .6); }
+  }
+  if (C.leapCD > 0) C.leapCD -= dt;
+  let leaping = false;
+  if (C.leap) { const L = C.leap; L.t += dt; const k = L.t / LEAP.dur;
+    if (k >= 1) { C.leap = null; C.leapCD = .08; }
+    else { leaping = true; sp = 2 * L.d / LEAP.dur * (1 - k); inX = L.x; inY = L.y; } }   // fast at first, easing off: covers L.d in LEAP.dur
   let sx = n.z, sz = -n.x; if (sx * Math.cos(cam.yaw) + sz * -Math.sin(cam.yaw) < 0) { sx = -sx; sz = -sz; }
+  if (leaping) { if (C.leap.sx === undefined) { C.leap.sx = sx; C.leap.sz = sz; } sx = C.leap.sx; sz = C.leap.sz; }   // a sideways leap keeps the side it started on
   const moving = inX !== 0 || inY !== 0;
-  if (C.id !== 'gecko') C.stamina -= (moving ? (run ? 11 : 5.4) : 1.8) * (grip ? .55 : 1) * dt;
+  if (C.id !== 'gecko' && !leaping) C.stamina -= (moving ? (run ? 11 : 5.4) : 1.8) * (grip ? .55 : 1) * dt;
   if (C.stamina <= 0) { C.stamina = 0; detach(C, .4, 0); toast('體力用完了，先找個地方站穩休息'); return; }
   const ox = C.pos.x, oz = C.pos.z;
-  C.pos.y += inY * sp * dt; C.pos.x += sx * inX * sp * .8 * dt; C.pos.z += sz * inX * sp * .8 * dt;
+  C.pos.y += inY * sp * dt; C.pos.x += sx * inX * sp * (leaping ? 1 : .8) * dt; C.pos.z += sz * inX * sp * (leaping ? 1 : .8) * dt;
   if (inY < 0) { const [sup] = supportAt(C.pos.x, C.pos.z, C.r * .55, C.pos.y + .3); if (C.pos.y <= sup + .05) { C.pos.y = sup; detach(C, 0, 0, true); C.state = 'idle'; return; } }
   const yb = C.pos.y; const cc = ceil(C); if (inY > 0 && C.pos.y < yb - .01) { C.overhang = 1.4; if (C.id === 'bat' && roostOn(C, cc)) { C.overhang = 0; return; } if (lipGrab(C, n, cc) || faceReach(C, n, cc)) { C.overhang = 0; return; } }
   C.pos.x -= n.x * .35; C.pos.z -= n.z * .35;
@@ -652,14 +668,14 @@ function updHUD(dt) {
   else if (L.drag) h = TOUCH ? `拉住「${L.drag.r.name}」——向後行拖住走 · 再按「拉」放手` : `拉住「${L.drag.r.name}」——向後行拖住走 · 放開右鍵放手`;
   else if (ph) h = TOUCH ? `按「推」推動「${ph.name}」 · 按「拉」抓住拖走` : `左鍵 推「${ph.name}」 · 按住左鍵 推着走 · 按住右鍵 拉`;
   else if (TOUCH) {
-    if (L.climbing) h = '推搖桿上下左右攀爬 · 按「跳」跳開';
+    if (L.climbing) h = '推搖桿攀爬 · 按「跳」彈上去（用體力）· 向下拉再按「跳」跳開';
     else if (L.id === 'sq' && !L.grounded) h = '按住「跳」滑翔';
     else if (aimRes) h = `按「放大」或「縮小」改變「${aimRes.r.name}」`;
     else if (LEVEL === 'basement' && quest === 2 && L.id !== 'bear' && L.id !== 'dad') h = '點右上角頭像，換熊去推或換爸爸用尺寸槍';
     else if (LVL.hint(L)) h = LVL.hint(L);
     else if (L.crouch) h = '潛行中，比較不容易被發現';
     else if (playT < 14) h = NET.on ? '推搖桿撞向牆壁就會攀爬 · 按「表情」同隊友打招呼' : '推搖桿撞向牆壁就會攀爬 · 點頭像換角色';
-  } else if (L.climbing) h = '<kbd>W</kbd><kbd>S</kbd> 上下 · <kbd>A</kbd><kbd>D</kbd> 橫移 · <kbd>Space</kbd> 跳開';
+  } else if (L.climbing) h = '<kbd>W</kbd><kbd>S</kbd> 上下 · <kbd>A</kbd><kbd>D</kbd> 橫移 · <kbd>Space</kbd> 彈上去（用體力）· <kbd>S</kbd>+<kbd>Space</kbd> 跳開';
   else if (L.id === 'sq' && !L.grounded) h = '按住 <kbd>Space</kbd> 滑翔';
   else if (aimRes) h = `左鍵 放大 · 右鍵 縮小「${aimRes.r.name}」`;
   else if (LEVEL === 'basement' && quest === 2 && L.id !== 'bear' && L.id !== 'dad') h = '<kbd>Tab</kbd> 換成熊去推，或換爸爸用尺寸槍';
@@ -683,7 +699,8 @@ function animChar(C, dt) {
     if (C === leader && Math.floor(prev / Math.PI) !== Math.floor(C.phase / Math.PI)) SND.step(st === 'sneak' ? .3 : .8);
   } else if (st === 'air' || st === 'tumble') { legT = .55; armX = -1.1; armZ = .5; }
   else if (st === 'glide') { armZ = 1.35; legZ = .55; lean = 1.25; }
-  else if (st === 'climb') { C.phase += dt * Math.max(spd, .001) / (.8 * k) * 1.6; const s = Math.sin(C.phase); armX = -2.55; armAlt = s * .35; legA = s * .35; legT = .35; lean = -.1; }
+  else if (st === 'climb') { C.phase += dt * Math.max(spd, .001) / (.8 * k) * 1.6; const s = Math.sin(C.phase); armX = -2.55; armAlt = s * .35; legA = s * .35; legT = .35; lean = -.1;
+    if (C.leap) { const q = Math.sin(Math.min(1, C.leap.t / LEAP.dur) * Math.PI); armX = -2.55 - .45 * q; armAlt = 0; legA = -.3 * q; legT = .35 - .3 * q; lean = -.1 - .1 * q; } }
   else if (st === 'crouch') { armX = -.4; }
   else if (st === 'stack') { armX = -2.75 + Math.sin(C.t * 4 + k) * .06; legZ = .3; bob = -.14 * k; lean = -.06; }
   else if (st === 'top') { armX = -2.45 + Math.sin(C.t * 3) * .14; armZ = .25; legZ = .12; lean = -.14; }
