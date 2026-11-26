@@ -79,6 +79,14 @@ function buildHood(K) {
   for (let i = 0; i < 5; i++) { const b = mesh(new THREE.BoxGeometry(9, .5, 4), bm, 0, 0, 0, { parent: fg }); b.geometry.translate(5.5, 0, 0); b.rotation.set(.35, i * Math.PI * 2 / 5, 0); }
   const col = { t: 'b', x0: 16, x1: 60, y0: -999, y1: -998, z0: -218, z1: -198, zone: 'kitchen' }; cols.push(col);
   HX.hood = { g: fg, col, y: [186, 193] };
+  // the hot air over the lit burner, rising into the empty filter slot: a faint shimmer you can see from the worktop
+  { const [c, x] = cnv(64, 128); for (let i = 0; i < 46; i++) { const x0 = rnd() * 64, a = .08 + rnd() * .22, w = 1 + rnd() * 2.5, ph = rnd() * 6.3, k = 2 + rnd() * 3;
+      x.strokeStyle = `rgba(255,${170 + (rnd() * 60 | 0)},${110 + (rnd() * 60 | 0)},${a})`; x.lineWidth = w; x.beginPath();
+      for (let y = -4; y <= 132; y += 4) { const px = x0 + Math.sin(y / 128 * Math.PI * k + ph) * 3; y < 0 ? x.moveTo(px, y) : x.lineTo(px, y); } x.stroke(); }
+    const [c2, x2] = cnv(4, 64); const g = x2.createLinearGradient(0, 64, 0, 0); g.addColorStop(0, '#000'); g.addColorStop(.12, '#bbb'); g.addColorStop(.55, '#fff'); g.addColorStop(.9, '#555'); g.addColorStop(1, '#000'); x2.fillStyle = g; x2.fillRect(0, 0, 4, 64);
+    const st = tex(c), fade = new THREE.CanvasTexture(c2); st.repeat.set(2, 1);
+    const m = new THREE.Mesh(new THREE.CylinderGeometry(7.5, 6, 69, 24, 1, true), new THREE.MeshBasicMaterial({ map: st, alphaMap: fade, color: 0xffb070, transparent: true, opacity: .55, blending: THREE.AdditiveBlending, depthWrite: false, side: THREE.DoubleSide }));
+    m.position.set(57, 89 + 34.5, -205); m.renderOrder = 3; LV.add(m); HX.heat = m; }
   // the control panel on the hood's right side (next to the wall cupboards)
   box(78, 78.6, 164, 182, -185, -174, MAT.black, { col: false });
   HX.hoodLed = new THREE.MeshStandardMaterial({ color: 0x111111, emissive: 0x5fe08a, emissiveIntensity: 1.2 });
@@ -157,7 +165,7 @@ function buildBathroom(K) {
   // ---- laundry basket under the fan: land in the towels ----
   { const bx0 = 336, bx1 = 384, bz0 = -344, bz1 = -296, h = 52, W = 2;
     box(bx0, bx1, 0, h, bz0, bz0 + W, M.wicker, { uv: 48 }); box(bx0, bx1, 0, h, bz1 - W, bz1, M.wicker, { uv: 48 }); box(bx0, bx0 + W, 0, h, bz0 + W, bz1 - W, M.wicker, { uv: 48 }); box(bx1 - W, bx1, 0, h, bz0 + W, bz1 - W, M.wicker, { uv: 48 });
-    box(bx0 - 1, bx1 + 1, h, h + 2.4, bz0 - 1, bz1 + 1, new THREE.MeshPhysicalMaterial({ color: 0x8cc4d8, roughness: .3, clearcoat: .6 }), { col: false });   // rolled rim
+    { const rm = new THREE.MeshPhysicalMaterial({ color: 0x8cc4d8, roughness: .3, clearcoat: .6 }); box(bx0 - 1, bx1 + 1, h, h + 2.4, bz0 - 1, bz0 + W + 1, rm); box(bx0 - 1, bx1 + 1, h, h + 2.4, bz1 - W - 1, bz1 + 1, rm); box(bx0 - 1, bx0 + W + 1, h, h + 2.4, bz0 + W + 1, bz1 - W - 1, rm); box(bx1 - W - 1, bx1 + 1, h, h + 2.4, bz0 + W + 1, bz1 - W - 1, rm); }   // rolled rim (a ring: the basket is open)
     box(bx0 + W, bx1 - W, 0, 40, bz0 + W, bz1 - W, M.towel2, { uv: 30 });
     for (let i = 0; i < 6; i++) { const t = mesh(new THREE.SphereGeometry(R(7, 11), 18, 12), [M.towel, M.towel2, new THREE.MeshPhysicalMaterial({ color: 0xf2ede2, roughness: 1, sheen: 1 })][i % 3], R(bx0 + 10, bx1 - 10), 40 + R(0, 3), R(bz0 + 10, bz1 - 10)); t.scale.y = .4; }
   }
@@ -175,6 +183,12 @@ function buildBathroom(K) {
   mesh(new THREE.CylinderGeometry(2.2, 2.2, 3, 14), bm, 0, 0, 0, { parent: fg }); for (let i = 0; i < 4; i++) { const b = mesh(new THREE.BoxGeometry(9.5, .5, 4.5), bm, 0, 0, 0, { parent: fg }); b.geometry.translate(5.5, 0, 0); b.rotation.set(.3, i * Math.PI / 2, 0); }
   const fcol = { t: 'b', x0: 348, x1: 372, y0: -999, y1: -998, z0: -330, z1: -308, zone: 'kitchen' }; cols.push(fcol);
   HX.bfan = { g: fg, col: fcol, y: [254, 262] };
+  // a pull cord hangs from the fan's grille down into the laundry basket: grab it and the light (and the fan)
+  // click off, then climb it up through the grille into the duct
+  { const cx = 366, cz = -312, y0 = 41.5; const rope = new THREE.MeshStandardMaterial({ color: 0xece6da, roughness: .85 });
+    const cm = mesh(new THREE.CylinderGeometry(.32, .32, ceil - y0, 6), rope, cx, (ceil + y0) / 2, cz); cm.castShadow = true;
+    const bob = mesh(new THREE.CylinderGeometry(.9, 1.3, 3.4, 14), new THREE.MeshStandardMaterial({ color: 0xf4f0e6, roughness: .4 }), cx, y0 + 1.2, cz); bob.castShadow = true;
+    HX.bcord = { t: 'b', x0: cx - 1.1, x1: cx + 1.1, y0, y1: ceil - 1, z0: cz - 1.1, z1: cz + 1.1, grip: true, zone: 'kitchen' }; cols.push(HX.bcord); }
   // light leaking up through the fan into the duct
   HX.leak = pointL(0xfff1dc, 0, 360, 266, -319);
   // a battery for the curious: on the cistern shelf
@@ -217,7 +231,7 @@ function buildHouseSwitches(K) {
   const bt = plate(299.6, 118, -200, -Math.PI / 2);
   hxAdd({ id: 'blight', name: '廁所燈掣（連抽氣扇）', kind: 'light', p: V3(299, 118, -200), on: false, toggle: bt, verb: ['熄廁所燈', '開廁所燈'] });
   hxAdd({ id: 'tap', name: '洗碗盆水龍頭', kind: 'tap', p: V3(-96, 97, -213), on: false, r: 10, verb: ['關水龍頭', '開水龍頭'] });
-  hxAdd({ id: 'hood', name: '抽油煙機', kind: 'fan', p: V3(79, 173, -179.5), on: true, r: 11, verb: ['關抽油煙機', '開抽油煙機'] });
+  hxAdd({ id: 'hood', name: '抽油煙機', kind: 'fan', p: V3(79, 173, -179.5), on: true, r: 16, verb: ['關抽油煙機', '開抽油煙機'] });
   hxAdd({ id: 'flush', name: '馬桶', kind: 'flush', p: V3(388, 78, -458), r: 17, oneShot: true, verb: ['沖廁', '沖廁'] });
   hxAdd({ id: 'tv', name: '電視機', kind: 'tv', p: V3(870, 47, 76), on: true, r: 10, verb: ['關電視', '開電視'] });
   hxAdd({ id: 'lamp', name: '落地燈', kind: 'lamp', p: V3(588, 1.5, 4), on: true, r: 8, verb: ['熄落地燈', '開落地燈'] });
@@ -314,6 +328,16 @@ function hxTick(dt) {
   const hood = HX.id.hood, bl = HX.id.blight, tap = HX.id.tap;
   if (HX.hood) HX.hood.g.rotation.y += dt * (hood.on ? 26 : 0);
   if (HX.bfan) HX.bfan.g.rotation.y += dt * (bl.on ? 22 : 0);
+  if (HX.heat) { HX.heat.material.map.offset.y -= dt * .55; HX.heat.material.map.offset.x = Math.sin(T * .7) * .04; }
+  if (HX.bcord) for (const C of party) {
+    if (!C.climbing || C.climbC !== HX.bcord) { C.bcordPull = false; continue; }
+    // grabbing the cord pulls it: the bathroom light and its fan click off
+    if (!C.bcordPull) { C.bcordPull = true; if (bl.on && (C === leader || !NET.on)) { hxRequest(bl, C); if (C === leader) toast('拉咗一下——廁所燈同抽氣扇熄咗', 2.2); } }
+    if (C.pos.y > 241 && !C.mantle) {
+      if (bl.on) { C.pos.y = 241; if (C === leader && !HX.saidFan) { HX.saidFan = 1; toast('扇葉轉緊，上唔到——要熄咗廁所燈先', 2.4); setTimeout(() => HX.saidFan = 0, 4000); } }
+      else { C.climbing = false; C.mantle = { from: C.pos.clone(), to: V3(338, 270.1, -319), t: 0, dur: .6 }; C.yaw = Math.PI * 1.5; if (C === leader) toast('入咗天花風槽', 1.8); }
+    }
+  }
   HX.water = clamp(HX.water + dt * (tap.on ? 1 / 22 : -1 / 90), 0, 1);
   const wy = 68.6 + HX.water * 15.4; if (HX.basinW) HX.basinW.position.y = wy;
   HX.stream.visible = tap.on; if (tap.on) { const top = 116, len = top - wy; HX.stream.scale.y = len; HX.stream.position.y = wy + len / 2; HX.stream.material.opacity = .42 + Math.sin(T * 40) * .06; if (rnd() < dt * 30) emit(V3(-100 + R(-2, 2), wy + .2, -193 + R(-2, 2)), V3(R(-10, 10), R(6, 16), R(-10, 10)), new THREE.Color(.62, .78, .88), R(.12, .25), R(.3, .5), 200, 1); }

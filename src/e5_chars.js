@@ -203,5 +203,8 @@ function buildVent() {
   return { x: 60, z: 120, r: 12, y0: 0, y1: 150 };
 }
 function updVentFx(dt) {
-  for (const u of (LVL.updrafts || [])) if (rnd() < dt * (u.fx || 10)) emit(V3(u.x + R(-u.r * .6, u.r * .6), u.y0 + R(1, 6), u.z + R(-u.r * .5, u.r * .5)), V3(R(-1, 1), R(18, 34), R(-1, 1)), new THREE.Color(.55, .5, .45), R(.15, .35), R(1.4, 2.6), -6, .3);
+  for (const u of (LVL.updrafts || [])) if (rnd() < dt * (u.fx || 10)) {
+    if (u.hot) emit(V3(u.x + R(-u.r * .6, u.r * .6), u.y0 + R(1, 4), u.z + R(-u.r * .6, u.r * .6)), V3(R(-1.5, 1.5), R(30, 44), R(-1.5, 1.5)), new THREE.Color(1.4, .8, .45), R(.18, .32), R(1.6, 2.2), -4, .3);   // warm motes rising into the hood
+    else emit(V3(u.x + R(-u.r * .6, u.r * .6), u.y0 + R(1, 6), u.z + R(-u.r * .5, u.r * .5)), V3(R(-1, 1), R(18, 34), R(-1, 1)), new THREE.Color(.55, .5, .45), R(.15, .35), R(1.4, 2.6), -6, .3);
+  }
 }

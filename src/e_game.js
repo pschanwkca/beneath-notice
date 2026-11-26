@@ -233,7 +233,9 @@ function updLeader(C, dt) {
   }
   if (C.id === 'bat' && ctl && !C.grounded && keys.Space && C.vel.y < -14 && !C.gliding) C.vel.y = -14;   // flutter down slowly
   // strong hot air (over a lit burner) lifts anyone light enough — everyone here is 5 cm tall
-  if (!C.gliding && !C.grounded && !C.climbing) { const ud = updraftAt(C.pos); if (ud && ud.all) { C.vel.y = Math.min(C.vel.y + G * dt + 150 * dt, 30); if (!C.saidUd) { C.saidUd = 1; toast('熱風把你托上去了！'); } } }
+  //  (step onto the burner and it takes you: no jump needed; the column carries you straight up into the slot)
+  if (!C.gliding && !C.climbing && !C.mantle) { const ud = updraftAt(C.pos); if (ud && ud.all && (!C.grounded || C.pos.y < ud.y0 + 6)) { if (C.grounded) { C.grounded = false; C.vel.y = Math.max(C.vel.y, 14); } C.vel.y = Math.min(C.vel.y + G * dt + 150 * dt, 30);
+      if (ud.hot && C.pos.y < ud.y1 - 10) { C.vel.x = damp(C.vel.x, (ud.x - C.pos.x) * 3, 5, dt); C.vel.z = damp(C.vel.z, (ud.z - C.pos.z) * 3, 5, dt); } if (!C.saidUd) { C.saidUd = 1; if (C === leader) toast('熱風把你托上去了！'); } } }
   if (C.vel.y < TERM) C.vel.y = TERM;
   C.pos.x += C.vel.x * dt; C.pos.z += C.vel.z * dt;
   const hit = resolveH(C, true);
@@ -575,7 +577,22 @@ function buildPartyHUD() {
   $('party').classList.toggle('many', order.length > 4);
   $('party').innerHTML = order.map(([id, k]) => `<div class="pm${!has(id) ? ' lock' : ''}" id="pm-${id}" data-id="${id}"><div class="ph">${PORTRAITS[id] ? `<img alt="${SP[id].name}" src="${PORTRAITS[id]}">` : ''}</div><b>${SP[id].name}</b><small>${!has(id) ? '在牆裡等你' : SP[id].role}</small>${has(id) ? `<kbd>${k}</kbd>` : ''}</div>`).join('');
   document.querySelectorAll('.pm[data-id]').forEach(el => el.addEventListener('pointerdown', e => { const id = el.dataset.id; if (has(id)) { e.preventDefault(); pressed['sw_' + id] = true; } }));
-  refreshPartyHUD();
+  refreshPartyHUD(); partyLayout();
+}
+// phone: the portraits sit top-right; a big party wraps into two even rows, and the eye (and the status
+// under it) sits in the middle of whatever room is left between the quest card and the portraits
+function partyLayout() {
+  const P = $('party'), R = document.documentElement;
+  if (!TOUCH) { P.style.maxWidth = ''; return; }
+  const n = P.children.length; if (!n) return;
+  const cs = getComputedStyle(P), pr = parseFloat(cs.right) || 62, gap = parseFloat(cs.columnGap) || 5, w = P.children[0].offsetWidth || 34;
+  const fit = Math.max(3, Math.floor((innerWidth / 2 - pr - 70 + gap) / (w + gap))), cols = n <= fit ? n : Math.ceil(n / 2);
+  P.style.maxWidth = (cols * w + (cols - 1) * gap + 1) + 'px';
+  const b = P.getBoundingClientRect(), q = $('quest').getBoundingClientRect(), qR = q.width ? q.right : 0;
+  const cx = Math.min(innerWidth / 2, (qR + b.left) / 2);
+  R.style.setProperty('--partyB', Math.round(b.bottom) + 'px');
+  R.style.setProperty('--eyeX', Math.round(cx) + 'px');
+  R.style.setProperty('--eyeW', Math.round(Math.max(100, Math.min(280, 2 * Math.min(cx - qR, b.left - cx) - 16))) + 'px');
 }
 QUESTS = [
   { t: '離開工作枱', s: '找路下到地面。你很輕，直接跳下去也不會受傷' },
@@ -584,7 +601,7 @@ QUESTS = [
   { t: '跟着前拍檔進入牆內', s: '穿過牆腳的洞，沿着隧道走' }
 ];
 const BASE_Q = QUESTS;
-function setQuest(q) { quest = q; if (!QUESTS[q]) return; $('qt').textContent = QUESTS[q].t; $('qs').textContent = QUESTS[q].s; questOpen(); }
+function setQuest(q) { quest = q; if (!QUESTS[q]) return; $('qt').textContent = QUESTS[q].t; $('qs').textContent = QUESTS[q].s; questOpen(); if (TOUCH) requestAnimationFrame(partyLayout); }
 let _qT = 0; function questOpen() { const el = $('quest'); el.classList.add('open'); clearTimeout(_qT); _qT = setTimeout(() => el.classList.remove('open'), 7000); }
 $('quest').addEventListener('pointerdown', e => { if (TOUCH) { e.stopPropagation(); questOpen(); } });
 const _pv = V3();
@@ -840,7 +857,7 @@ function onResize() {
   grade.uniforms.uRes.value.set(w * renderer.getPixelRatio(), h * renderer.getPixelRatio()); fxaa.material.uniforms.resolution.value.set(1 / (w * renderer.getPixelRatio()), 1 / (h * renderer.getPixelRatio()));
   const sc = h * renderer.getPixelRatio() / (2 * Math.tan(THREE.MathUtils.degToRad(camera.fov) / 2)); onResizeDust(sc); if (parts) parts.material.uniforms.uScale.value = sc;
 }
-addEventListener('resize', onResize); addEventListener('orientationchange', () => { onResize(); setTimeout(onResize, 250); setTimeout(onResize, 700); }); if (window.visualViewport) visualViewport.addEventListener('resize', onResize);
+addEventListener('resize', () => { onResize(); partyLayout(); }); addEventListener('orientationchange', () => { onResize(); setTimeout(onResize, 250); setTimeout(() => { onResize(); partyLayout(); }, 700); }); if (window.visualViewport) visualViewport.addEventListener('resize', onResize);
 function applyQ(q) {
   QUAL = q; const P = { high: [Math.min(devicePixelRatio, 1.5), true, true, 16], med: [Math.min(devicePixelRatio, 1.1), true, false, 12], low: [TOUCH ? Math.min(devicePixelRatio, 1.25) * DYN.k : .85, false, false, TOUCH ? 5 : 8] }[q];
   BLOOM_K = q === 'low' ? .5 : 1; fxaa.enabled = TOUCH || q === 'low'; grade.uniforms.uGrain.value = TOUCH ? .014 : .035;

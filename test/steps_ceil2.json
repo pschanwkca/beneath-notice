@@ -1,0 +1,5 @@
+[
+ {"eval": "window.__bn.startChapter2(); 1"},
+ {"wait": 6000},
+ {"evalFile": "ceil_eval.js"}
+]

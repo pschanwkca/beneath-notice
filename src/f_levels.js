@@ -727,7 +727,7 @@ function inFridge(L) { return L.pos.x > 154 && L.pos.x < 228 && L.pos.z > -216 &
 function updKitchenPlayer(dt) {
   const L = leader; L.slow = 1;
   const B = KS.basin; if (L.pos.x > B.x0 && L.pos.x < B.x1 && L.pos.z > B.z0 && L.pos.z < B.z1 && L.pos.y < 69 && L.pos.y > 62) { L.slow = .5; if (L.spd > 2 && rnd() < dt * 8) emit(V3(L.pos.x, 68.8, L.pos.z), V3(R(-8, 8), R(6, 14), R(-8, 8)), new THREE.Color(.6, .75, .85), R(.15, .3), R(.3, .5), 200, 1); if (!KS.said.wet) { KS.said.wet = 1; toast('掉進洗手盆的積水裡了，走得比較慢'); } }
-  for (const h of KS.hot) if (Math.hypot(L.pos.x - h.x, L.pos.z - h.z) < h.r && Math.abs(L.pos.y - 88.5) < 1.2) { knock(L, V3(h.x, 88, h.z), '好燙！爐頭還開着！'); SND.sizzle(); for (let i = 0; i < 10; i++) emit(V3(L.pos.x, 90, L.pos.z), V3(R(-5, 5), R(8, 20), R(-5, 5)), new THREE.Color(.3, .3, .32), R(.6, 1.2), R(.6, 1), -6, 1); }
+  for (const h of KS.hot) if (Math.hypot(L.pos.x - h.x, L.pos.z - h.z) < h.r && Math.abs(L.pos.y - 88.5) < 1.2 && !(L.vel.y > 0 && !L.grounded && updraftAt(L.pos))) { knock(L, V3(h.x, 88, h.z), '好燙！爐頭還開着！跳起喺佢上面，熱風會托你上去'); SND.sizzle(); for (let i = 0; i < 10; i++) emit(V3(L.pos.x, 90, L.pos.z), V3(R(-5, 5), R(8, 20), R(-5, 5)), new THREE.Color(.3, .3, .32), R(.6, 1.2), R(.6, 1), -6, 1); }
   if (inFridge(L)) { L.cold = true; if (!KS.said.cold) { KS.said.cold = 1; toast('雪櫃裡好冷……體力不會恢復'); } if (rnd() < dt * 1.5) emit(V3(L.pos.x, L.pos.y + L.h * .8, L.pos.z) .add(V3(Math.sin(L.yaw), 0, Math.cos(L.yaw)).multiplyScalar(1.2)), V3(Math.sin(L.yaw) * 2, 1.5, Math.cos(L.yaw) * 2), new THREE.Color(.25, .27, .3), R(.4, .7), R(.6, 1), -1, 1); } else L.cold = false;
   if (Math.hypot(L.pos.x - KS.drain.x, L.pos.z - KS.drain.z) < 3.6 && Math.abs(L.pos.y - 12) < 1.5) {
     L.pos.set(191, 0, -196); L.vel.set(0, 0, 0); L.climbing = false; L.mantle = null; L.squash = .8; SND.swish(); toast('從排水口滑到了雪櫃底下！');
@@ -752,7 +752,7 @@ LEVELS.kitchen = {
   dust: { N: 2600, box: [-300, 900, 0, 250, -220, 220], beamFrac: .45, door: false },
   toys: true, npcNear: true,
   build() {
-    buildKitchen(); buildKid(); buildCat(); buildToyBin(); LEVELS.kitchen.updrafts = [{ x: 57, z: -205, r: 9, y0: 88.5, y1: 178, fx: 5, all: true }, buildVent()];
+    buildKitchen(); buildKid(); buildCat(); buildToyBin(); LEVELS.kitchen.updrafts = [{ x: 57, z: -205, r: 11, y0: 88.5, y1: 178, fx: 14, all: true, hot: true }, buildVent()];
     addVial(-128, 13, -200); addVial(170, 184, -168); addVial(70, 88.5, -215); for (const p of [[-120, 0, 70], [-70, 0, 100], [20, 0, -146], [-30, 91.8, -182], [246, 1.2, 122]]) addCrumb(...p);
     buildLivingRoom(kitchenMats()); buildHouseSwitches(kitchenMats()); buildUpstairs(kitchenMats());
     // online co-op: the three machine parts
@@ -817,6 +817,11 @@ LEVELS.kitchen = {
   hint(L) {
     // the vent to the garage (single player): rusted shut — say so, and where the way on is
     if (!KS.mp && !LIV.ventOpen && Math.hypot(L.pos.x - 896, L.pos.z + 200) < 26 && L.pos.y < 40) return KS.ch3 ? '通風口個蓋鏽死咗。行樓上：女兒房衣櫃頂有條拉繩通去閣樓' : '通風口個蓋鏽死咗，推唔開——車房要第二條路先去到';
+    // the ways up into the ceiling duct: the hot air over the burner, and the bathroom fan's pull cord
+    const hood = HX.id.hood, bl = HX.id.blight;
+    if (hood && L.pos.x > -2 && L.pos.x < 78 && L.pos.z > -220 && L.pos.z < -172 && L.pos.y > 157 && L.pos.y < 186) return hood.on ? '抽油煙機開住，風扇擋住煙囱。行去右邊撳「用」熄咗佢' : '貼住後面嘅牆向上爬，煙囱上面就係天花風槽';
+    if (hood && !L.climbing && L.pos.y > 82 && L.pos.y < 100 && Math.hypot(L.pos.x - 57, L.pos.z + 205) < 55) return '後面著緊火嘅細爐頭有熱風：行入去，熱風會托你上抽油煙機';
+    if (bl && L.pos.y < 120 && L.pos.x > 150 && L.pos.x < 460 && L.pos.z > -470 && L.pos.z < -244 && Math.hypot(L.pos.x - 366, L.pos.z + 312) < 60 && !L.climbing) return bl.on ? '抽氣扇轉緊。捉住條拉繩一拉，燈同扇都會熄' : '跳入洗衣籃，捉住抽氣扇條拉繩爬上天花風槽';
     if (TOUCH) return '';
     if (L.id === 'bear' && !KS.said.bearhint && L.pos.y > 80) { return '熊可以把檯面上的瓶子推下去，製造聲音引開別人'; }
     return '';
