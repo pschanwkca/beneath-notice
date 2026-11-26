@@ -283,7 +283,7 @@ const HUB_LINES = [
   [22, '前拍檔', '……我會在牆洞那邊看着你們。', '#b7d38a', 3]
 ];
 LEVELS.wall = {
-  chapter: '第一章', title: '牆的另一邊', env: 'hub', envI: .7, fog: [0x120d0a, .0016], expo: 1.25,
+  chapter: '第一章', title: '屋企', room: '牆的另一邊', house: true, env: 'hub', envI: .7, fog: [0x120d0a, .0016], expo: 1.25,
   dust: { N: 1800, box: [-80, 80, 4, 330, -28, 28], beamFrac: .6, door: false },
   build: buildHub,
   cps: [[60, 4, 15], [-50, 70, -20], [50, 130, -20], [-50, 190, -20], [50, 250, -20], [20, 310, -23]],
@@ -744,7 +744,7 @@ const KLINES_SP = [[1.2, '女兒', '媽，爸爸今晚會回來吃飯嗎？', '#
 const KLINES_MP = [[1.2, '女兒', '媽，爸爸今晚會回來吃飯嗎？', '#e8a0c0', 3], [4.6, '太太', '……先吃吧，湯快好了。', '#f4bb72', 2.8], [8, '爸爸', '聽好：縮小機少了三個零件——彈簧、鏡片、電容，全部都掉在這個廚房裡。', '#f5f0e6', 4.2], [12.6, '小彩', '找齊之後去客廳，從通風口出去。別讓她們看見！', '#9fd86b', 3.4]];
 let END_TXT = null;
 LEVELS.kitchen = {
-  chapter: '第一章', title: '晚飯時間的廚房', env: 'kitchen', envI: .75, fog: DAY ? [0xbfb6a8, .00034] : [0x1a1510, .0007], expo: DAY ? 1.22 : 1.18,
+  chapter: '第一章', title: '屋企', room: '晚飯時間的廚房', house: true, env: 'kitchen', envI: .75, fog: DAY ? [0xbfb6a8, .00034] : [0x1a1510, .0007], expo: DAY ? 1.22 : 1.18,
   dust: { N: 2600, box: [-300, 900, 0, 250, -220, 220], beamFrac: .45, door: false },
   toys: true, npcNear: true,
   build() {
@@ -794,10 +794,10 @@ LEVELS.kitchen = {
     if (home) {
       // chapter one is done — but nothing stops: the story just carries on into the living room
       KS.carried = false; KS.coreDrop = null; KS.home = true; KS.core.position.set(-306, 1.6, -100); KS.ch2 = true;
-      QUESTS = SP_Q2; setQuest(0); chapterBanner('第一章 · 完', '核心找回來了'); unlockKey('ch1');
+      QUESTS = SP_Q2; setQuest(0); roomBanner('核心找回來了'); unlockKey('ch1');
       say('前拍檔', '（從牆裡）放在洞口就好，我看着它。……它的光越來越弱了。', '#b7d38a', 3.6);
       setTimeout(() => say('爸爸', '客廳的遙控器裡有電池。去拿過來，幫核心充電。', '#f5f0e6', 3.4), 3800);
-      setTimeout(() => chapterBanner('第二章', '客廳'), 7600);
+      setTimeout(() => roomBanner('客廳'), 7600);
     }
   },
   marker() {
@@ -826,7 +826,7 @@ function kitchenMode() {
   if (KS.mp && QUESTS !== MP_QUESTS && !PRO.on) { QUESTS = MP_QUESTS; LEVELS.kitchen.quests = MP_QUESTS; setQuest(0); }
 }
 LEVELS.basement = {
-  chapter: '序章', title: '地庫實驗室', env: 'basement', envI: .85, fog: DAY ? [0x1e2026, .00105] : [0x0a0d12, .00135], expo: 1.3, dust: {},
+  chapter: '第一章', title: '屋企', room: '地庫實驗室', house: true, env: 'basement', envI: .85, fog: DAY ? [0x1e2026, .00105] : [0x0a0d12, .00135], expo: 1.3, dust: {},
   build() { buildRoom(); buildLights(); },
   afterShift(o) { machine.x += o.x; machine.y += o.y; machine.z += o.z; },
   cps: CPS_B, quests: BASE_Q, spawn() { placeStart(); },

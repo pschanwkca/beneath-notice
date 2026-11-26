@@ -1,6 +1,6 @@
 
 // =====================================================================
-//  第四章 · 後園與鄰居家 — out through the garage's dog flap into the night
+//  第二章 · 後園與鄰居家 — out through the garage's dog flap into the night
 //  Our back yard (tall grass to hide in, a sprinkler sweeping the lawn, a big tree) → a broken board
 //  in the fence → the neighbour's yard (his dog on a chain by its kennel) → the deck → the cat flap
 //  into his glass sunroom, where 陳伯 reads the paper and looks up every so often.
@@ -320,10 +320,10 @@ function chipGet(C) {
   if (YS.chip) return; YS.chip = true; YS.chipM.visible = false; YS.chipHalo.visible = false; SND.pick();
   for (let i = 0; i < 30; i++) emit(YS.chipP.clone().add(V3(0, 2, 0)), V3(R(-10, 10), R(4, 18), R(-10, 10)), new THREE.Color(.6, 2.2, 1), R(.15, .35), R(.4, 1), 30, 2);
   toastW(`${C.S.name}拿到了控制晶片！`, 3);
-  if (NET.on) { if (quest === 10) { setQuest(11); chapterBanner('第三章（多人）· 完', '控制晶片'); nsend({ t: 'ban', a: '第三章（多人）· 完', b: '控制晶片' }); } }
+  if (NET.on) { if (quest === 10) { setQuest(11); roomBanner('控制晶片'); nsend({ t: 'ban', a: '', b: '控制晶片' }); } }
   else {
     say('爸爸', '找到了！有這塊晶片，縮小機就可以重新啟動……', '#f5f0e6', 3.4); setTimeout(() => say('陳伯', '……教授？是你嗎？', '#c8b8a0', 3), 3600); unlockKey('ch4');
-    setTimeout(() => { chapterBanner('第四章 · 完', '控制晶片'); QUESTS = YQ_SP2; setQuest(0); say('爸爸', '別讓他看見！由前園的閘底出去——公園就在馬路對面。', '#f5f0e6', 4); }, 7200);
+    setTimeout(() => { roomBanner('控制晶片'); QUESTS = YQ_SP2; setQuest(0); say('爸爸', '別讓他看見！由前園的閘底出去——公園就在馬路對面。', '#f5f0e6', 4); }, 7200);
   }
 }
 const YQ_SP = [
@@ -332,7 +332,7 @@ const YQ_SP = [
   { t: '找出控制晶片', s: '晶片在陳伯的書枱上。他在看報紙，但不時會抬頭' }
 ];
 LEVELS.yard = {
-  chapter: '第四章', title: '後園與鄰居家', mpChapter: '第三章（多人）', env: 'yard', envI: DAY ? 1 : .5, fog: DAY ? [0xbcd0e2, .00016] : [0x0e1626, .0004], expo: DAY ? .95 : 1.35, bloom: DAY ? [.3, 2.4] : null,
+  chapter: '第二章', title: '後園與鄰居家', env: 'yard', envI: DAY ? 1 : .5, fog: DAY ? [0xbcd0e2, .00016] : [0x0e1626, .0004], expo: DAY ? .95 : 1.35, bloom: DAY ? [.3, 2.4] : null,
   dust: { N: 1400, box: [1500, 2740, GY, 220, -420, 620], beamFrac: .0, door: false },
   toys: true, npcNear: true, build: buildYard,
   cps: [[1480, GY, 105], [1900, GY, 112], [2130, GY, 109], [2420, DECK, 100], [2600, DECK, 140]],
@@ -371,7 +371,7 @@ function mpObjectives() {
   if (quest === 11 && P.every(C => C.pos.z > 650)) { setQuest(12); toastW('全隊到了行人路！', 2.4); }
   if (quest === 12 && ST.pressed) setQuest(13);
   if ((quest === 12 || quest === 13) && P.every(C => C.pos.z > 1505 && C.pos.y > GY - 2)) { setQuest(14); toastW('全隊過了馬路！', 2.4); }
-  if (quest === 14 && P.every(C => C.pos.z > 1640) && STATE === 'play') { setQuest(MPQ_PARK); chapterBanner('第四章（多人）· 完', '馬路'); nsend({ t: 'ban', a: '第四章（多人）· 完', b: '馬路' }); }
+  if (quest === 14 && P.every(C => C.pos.z > 1640) && STATE === 'play') { setQuest(MPQ_PARK); }   // (the park's own title takes over as you walk in)
   if (quest >= MPQ_PARK && quest < MPQ_SCHOOL) mpParkObjectives(P);
   if (quest >= MPQ_SCHOOL) mpSchoolObjectives(P);
 }

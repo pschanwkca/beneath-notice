@@ -1,5 +1,5 @@
 // =====================================================================
-//  第六章 · 公園（楓林公園） — through the park gate, on the far side of the road
+//  第四章 · 公園（楓林公園） — through the park gate, on the far side of the road
 //  A park in the afternoon sun. The control chip only charges in sunlight, and the most open spot
 //  is the top of the playground's slide tower. Between the gate and the tower:
 //   · the dog run, where two dog owners sit chatting while their dogs chase a ball;
@@ -671,7 +671,7 @@ function parkNPC(dt) {
 }
 
 LEVELS.park = {
-  chapter: '第六章', title: '公園', mpChapter: '第五章（多人）', env: 'park', envI: DAY ? 1 : .5, fog: DAY ? [0xbcd0e2, .00014] : [0x0c1420, .00032], expo: DAY ? .95 : 1.35, bloom: DAY ? [.3, 2.4] : null,
+  chapter: '第四章', title: '公園', env: 'park', envI: DAY ? 1 : .5, fog: DAY ? [0xbcd0e2, .00014] : [0x0c1420, .00032], expo: DAY ? .95 : 1.35, bloom: DAY ? [.3, 2.4] : null,
   dust: { N: 700, box: [1700, 2500, GY, 300, 2700, 3300], beamFrac: .0, door: false },
   toys: true, npcNear: true, build: buildPark,
   cps: [[2060, GY, 1760], [1880, GY, 2300], [2060, GY, 2760], [2120, GY + 121, 2990], [2060, GY, 3560]],

@@ -183,7 +183,7 @@ function livingGet(d, C) {
     else {
       say('爸爸', '兩粒電池……夠核心撐一陣子了。', '#f5f0e6', 3.2); unlockKey('ch2');
       // chapter two is done; the vent behind the TV cabinet leads on to the garage — no stopping
-      setTimeout(() => { chapterBanner('第二章 · 完', '核心又亮起來了'); ventOpen(); QUESTS = SP_Q2B; setQuest(0); KS.ch3 = true; say('爸爸', '客廳盡頭的通風口通去車房。我以前的工作枱在那裡——可以修好縮小機。', '#f5f0e6', 4.2); }, 2600);
+      setTimeout(() => { roomBanner('核心又亮起來了'); ventOpen(); QUESTS = SP_Q2B; setQuest(0); KS.ch3 = true; say('爸爸', '客廳盡頭的通風口通去車房。我以前的工作枱在那裡——可以修好縮小機。', '#f5f0e6', 4.2); }, 2600);
     }
   }
 }

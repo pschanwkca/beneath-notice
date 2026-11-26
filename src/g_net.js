@@ -320,7 +320,7 @@ function netMsg(d, from) {
     case 'gh': if (NET.on) ghostRecv(d); break;
     case 'gp': if (NET.on) ghostPingFx(d.id); break;
     case 'end': if (NET.on && !NET.host && STATE === 'play') { if (d.e) END_TXT = d.e; STATE = 'end'; endT = 0; } break;
-    case 'ban': chapterBanner(d.a, d.b); break;
+    case 'ban': if (d.a) chapterBanner(d.a, d.b); else roomBanner(d.b); break;
     case 'xbtn': if (NET.host) pressButton(null); break;
     case 'drg': if (NET.host) { const r = resizables[d.i]; if (r && !r.gone) dragTo(r, d.x, d.z); } break;
     case 'fail': if (NET.on && !NET.host) { cp = d.cp; fail(); } break;

@@ -1,5 +1,5 @@
 // =====================================================================
-//  第七章 · 學校 — online (第六章（多人）)
+//  第五章 · 學校 — online
 //  Out of the park's back gate the shared objective list carries straight on into the school.
 //  The host runs the school day (the bell, the doors, the class, the teacher, the guard, her) and
 //  sends it ~10 times a second; everyone else draws it from that. The three films play on every

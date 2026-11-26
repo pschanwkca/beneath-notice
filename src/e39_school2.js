@@ -1,5 +1,5 @@
 // =====================================================================
-//  第七章 · 學校 — the people and the school day
+//  第五章 · 學校 — the people and the school day
 //  The bell runs everything: lessons (the class at their desks, the teacher at the board, the
 //  playground empty but for the guard in his booth) → break (the doors open, the class pours out to
 //  play, the teacher on duty, the daughter alone on a bench, drawing) → back in (a line through the

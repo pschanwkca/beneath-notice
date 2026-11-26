@@ -1,5 +1,5 @@
 // =====================================================================
-//  第七章 · 學校 — the story: quests, the three films, the way in and out
+//  第五章 · 學校 — the story: quests, the three films, the way in and out
 //  · the street and the gate (lesson time: the playground's empty, the guard reads his paper)
 //  · the bell: break! (film: the class pours out — and spots 跳跳, who ends up hiding in the drain)
 //  · in through the open doors while everyone's out; wait in the corridor for the class to go back in
@@ -37,7 +37,7 @@ function scJoin(id) {
 }
 
 LEVELS.school = {
-  chapter: '第七章', title: '學校', mpChapter: '第六章（多人）', env: 'park', envI: 1, fog: [0xbcd0e2, .00012], expo: .95, bloom: [.3, 2.4],
+  chapter: '第五章', title: '學校', env: 'park', envI: 1, fog: [0xbcd0e2, .00012], expo: .95, bloom: [.3, 2.4],
   dust: { N: 500, box: [1716, 2500, GY, GY + 300, 5196, 5820], beamFrac: 0, door: false },
   get toys() { return NET.on; },   // alone, being seen ends the try; online, teammates can shake you awake
   npcNear: true, build: buildSchool,
@@ -202,8 +202,8 @@ const FILM_END = { id: 'end', len: 34, mus: .3,
     const A = SC_AGENT; A.H.root.visible = false; A.pool.visible = false;
     KS.core.position.copy(SC.endSave.core); KS.core.visible = SC.endSave.coreVis; KS.coreLight.intensity = 0; chars.gecko.root.visible = false;   // (she's gone; the core is dark)
     KS.coreDark = true;
-    if (NET.on) { END_TXT = ['第六章（多人）· 完', '學校', '備份密碼找到了。可是家裡的核心熄了，前拍檔也被 Origin Dynamics 帶走。（下一章：Origin Dynamics，製作中）']; if (NET.host) nsend({ t: 'end', e: END_TXT }); }
-    else { unlockKey('ch7'); END_TXT = ['第七章 · 完', '學校', '備份密碼找到了。可是家裡的核心熄了，前拍檔也被 Origin Dynamics 帶走。（第八章：Origin Dynamics，製作中）']; }
+    END_TXT = ['第五章 · 完', '學校', '備份密碼找到了。可是家裡的核心熄了，前拍檔也被 Origin Dynamics 帶走。（第六章：屋頂，製作中）'];
+    if (NET.on) { if (NET.host) nsend({ t: 'end', e: END_TXT }); } else unlockKey('ch7');
     STATE = 'end'; endT = 2.6; const ov = $('cine'); ov.hidden = true;
   },
   shots: [

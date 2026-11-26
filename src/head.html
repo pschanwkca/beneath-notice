@@ -795,6 +795,18 @@ html.touch #start .zh{font-size:11px}
 html.touch #start .tag{font-size:11px}
 html.touch #start .row button{font-size:12.5px;padding:8px 16px}
 html.touch #start .sel button{font-size:11px}
+
+/* a room's name inside the house: quiet, no chapter line */
+.chap.room .zh{display:none}
+.chap.room .logo{font-size:clamp(15px,1.7vw,20px);letter-spacing:.18em;font-weight:600;opacity:.88;margin-top:0}
+.chap.room i{width:34px;margin-top:8px}
+html.touch .chap.room .logo{font-size:13px}
+/* the chapter list: a long chapter can start part-way through */
+.ch .chst{display:flex;flex-wrap:wrap;align-items:center;gap:5px;margin-top:8px}
+.ch .chst i{font-style:normal;font-size:10px;color:var(--dim);margin-right:2px;letter-spacing:.06em}
+.ch .chs{font-size:11px;padding:3px 9px;border-radius:99px;border:1px solid var(--faint);background:rgba(255,255,255,.04);color:var(--ink);cursor:pointer}
+.ch .chs:hover{border-color:var(--amber);color:var(--amber)}
+.ch .chs.lock{opacity:.35;cursor:default}
 </style>
 </head>
 <body>
@@ -894,7 +906,7 @@ html.touch #start .sel button{font-size:11px}
     <div class="zh">視線之下</div>
     <p class="tag">一次失控的縮小實驗，你只剩 5 公分高。<br>家人就在樓上找你，但絕對不能被他們看見。</p>
     <div class="row">
-      <button id="go">序章：地庫</button>
+      <button id="go">開始：第一章</button>
       <button id="goCh" class="ghost">選擇章節</button>
       <button id="goMP" class="ghost mpbtn">多人連線 · 最多 8 人</button>
       <button id="goRoster" class="ghost">角色</button>
@@ -926,7 +938,7 @@ html.touch #start .sel button{font-size:11px}
       <div><span>疊羅漢</span><span>「疊」按鈕</span></div>
       <div><span>換角色</span><span>點右上頭像</span></div>
     </div>
-    <div class="note"><span class="desk">序章原型 · 地庫實驗室 · 走向牆壁按住前進就會攀爬</span><span class="mob">序章原型 · 地庫實驗室 · 撞向牆壁並繼續前進就會攀爬</span></div>
+    <div class="note"><span class="desk">第一章 · 屋企 · 走向牆壁按住前進就會攀爬</span><span class="mob">第一章 · 屋企 · 撞向牆壁並繼續前進就會攀爬</span></div>
   </div>
 </div>
 

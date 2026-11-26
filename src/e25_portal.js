@@ -257,7 +257,7 @@ function mpProTick(dt) {
 }
 function proEnd() {
   PRO.on = false; QUESTS = MP_QUESTS; LEVELS.kitchen.quests = MP_QUESTS; CPS = MP_CPS; cp = 0; setQuest(0);
-  chapterBanner('第一章', '晚飯時間的廚房'); nsend({ t: 'ban', a: '第一章', b: '晚飯時間的廚房' });
+  chapterBanner('第一章', '屋企'); nsend({ t: 'ban', a: '第一章', b: '屋企' });
 }
 function proSend(w) { w.pro = [PRO.on ? 1 : 0, PORT.rdy, PORT.tot, Math.round(PORT.cd * 10), PORT.out]; }
 function proRecv(w) {

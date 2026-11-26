@@ -1,6 +1,6 @@
 
 // =====================================================================
-//  第三章 · 車房 — through the vent duct at the far end of the living room
+//  第一章 · 屋企（車房） — through the vent duct at the far end of the living room
 //  A man from Origin Dynamics is searching the garage with a torch, and a security camera
 //  sweeps the room from the top of the metal shelving.
 //  Single player: up to the workbench → take the coil from the old radio → fit it to Dad's old
@@ -339,7 +339,7 @@ const GQ_SP = [
   { t: '由狗門逃出後園', s: '快！那個人聽到聲音了' }
 ];
 LEVELS.garage = {
-  chapter: '第三章', title: '車房', mpChapter: '第二章（多人）', env: 'garage', envI: .95, fog: [0x10141a, .0009], expo: 1.3,
+  chapter: '第一章', title: '屋企', room: '車房', house: true, env: 'garage', envI: .95, fog: [0x10141a, .0009], expo: 1.3,
   dust: { N: 2200, box: [930, 1450, GY, 260, -250, 300], beamFrac: .2, door: false },
   toys: true, npcNear: true, build: buildGarage,
   cps: [[978, GY, -196], [1000, GY, -150], [1172, GY + 80, -232], [1400, GY, 100]],

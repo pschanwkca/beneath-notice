@@ -1,5 +1,5 @@
 // =====================================================================
-//  第七章 · 學校（楓林小學） — across the quiet street from the park's back gate
+//  第五章 · 學校（楓林小學） — across the quiet street from the park's back gate
 //  The machine's backup password is hidden in the daughter's old notebook, in her cubby at the back
 //  of her classroom (3A). Between the park and the notebook:
 //   · the street, crossed on the raised zebra crossing;

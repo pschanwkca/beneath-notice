@@ -9,15 +9,15 @@
 const ROSTER = [
   { id: 'dad' }, { id: 'sq' }, { id: 'bear' }, { id: 'cham' },
   // mp: free to pick online from the start (online play takes up to 8 players, so 8 characters are always open)
-  { id: 'hog', key: 'prologue', how: '完成序章（地庫實驗室）', mp: true },
+  { id: 'hog', key: 'prologue', how: '第一章：離開地庫實驗室', mp: true },
   { id: 'rab', key: 'ch1', how: '完成第一章（把核心帶回牆腳）', mp: true },
-  { id: 'coon', key: 'ch2', how: '完成第二章（客廳的電池）', mp: true },
+  { id: 'coon', key: 'ch2', how: '第一章：拿到客廳的電池', mp: true },
   { id: 'frog', key: 'bat6', how: '單人模式集齊全部鈕扣電池' },
-  { id: 'bat', key: 'bat', how: '單人第三章：在車房找到阿蝠', mp: true },
-  { id: 'tort', key: 'tort', how: '單人第四章：在陳伯的後園找到阿龜' },
-  { id: 'mole', key: 'mole', how: '單人第六章：在公園的沙池找到阿鼴' },
-  { id: 'f2', future: true, how: '第七章：學校（製作中）' },
-  { id: 'f3', future: true, how: '第八章（製作中）' }
+  { id: 'bat', key: 'bat', how: '單人第一章：在車房找到阿蝠', mp: true },
+  { id: 'tort', key: 'tort', how: '單人第二章：在陳伯的後園找到阿龜' },
+  { id: 'mole', key: 'mole', how: '單人第四章：在公園的沙池找到阿鼴' },
+  { id: 'f2', future: true, how: '第六章：屋頂（製作中）' },
+  { id: 'f3', future: true, how: '第七章（製作中）' }
 ];
 const UNL = (() => { try { return JSON.parse(localStorage.getItem('bn_unlock_v1') || '{}') || {}; } catch (e) { return {}; } })();
 function isUnlocked(id) { const r = ROSTER.find(q => q.id === id); return !!r && !r.future && (!r.key || !!UNL[r.key]); }
@@ -106,22 +106,21 @@ function openHelp() {
 
 // ---------- chapter list (title screen) ----------
 const CHAPS = [
-  { n: '序章', t: '地庫實驗室', d: '縮小實驗失控。由工作枱爬到地上，找出路。', go: () => startGame(0) },
-  { n: '第一章', t: '牆內與廚房', d: '穿過牆內的老鼠洞，避開太太、女兒和貓，從雪櫃底拿回核心。', go: () => startGame(1) },
-  { n: '第二章', t: '客廳', d: '核心的光越來越弱。打開往客廳的門，拿遙控器的電池。', key: 'ch1', lock: '完成第一章解鎖', go: () => startChapter2() },
-  { n: '第三章', t: '車房', d: 'Origin Dynamics 的人在搜車房。修好機座，從狗門逃出去。', key: 'ch2', lock: '完成第二章解鎖', go: () => startChapter('garage') },
-  { n: '第四章', t: '後園與鄰居家', d: '穿過圍欄、避開陳伯的狗，到陽光房找控制晶片。', key: 'ch3', lock: '完成第三章解鎖', go: () => startChapter('yard') },
-  { n: '第五章', t: '馬路', d: '從陳伯的前閘鑽出去，按過路燈，避開車輪，走到對面的公園。', key: 'ch4', lock: '完成第四章解鎖', go: () => startChapter('road') },
-  { n: '第六章', t: '公園', d: '陽光下的楓林公園。避開狗、跑步的人和滑板少年，在滑梯塔頂用陽光替晶片充電。', key: 'ch5', lock: '完成第五章解鎖', go: () => startChapter('park') },
-  { n: '第七章', t: '學校', d: '楓林小學。趁小息溜進課室，在女兒的儲物格找出備份密碼。', key: 'ch6', lock: '完成第六章解鎖', go: () => startChapter('school') },
-  { n: '第八章', t: 'Origin Dynamics', d: '製作中', future: true }
+  { n: '第一章', t: '屋企', d: '縮小實驗失控。由地庫爬出去，穿過牆內、廚房、客廳同車房，避開太太、女兒、貓同 Origin Dynamics 的人。', go: () => startGame(0),
+    starts: [{ t: '地庫', go: () => startGame(0) }, { t: '牆內與廚房', go: () => startGame(1) }, { t: '客廳', key: 'ch1', go: () => startChapter2() }, { t: '車房', key: 'ch2', go: () => startChapter('garage') }] },
+  { n: '第二章', t: '後園與鄰居家', d: '穿過圍欄、避開陳伯的狗，到陽光房找控制晶片。', key: 'ch3', lock: '完成第一章解鎖', go: () => startChapter('yard') },
+  { n: '第三章', t: '馬路', d: '從陳伯的前閘鑽出去，按過路燈，避開車輪，走到對面的公園。', key: 'ch4', lock: '完成第二章解鎖', go: () => startChapter('road') },
+  { n: '第四章', t: '公園', d: '陽光下的楓林公園。避開狗、跑步的人和滑板少年，在滑梯塔頂用陽光替晶片充電。', key: 'ch5', lock: '完成第三章解鎖', go: () => startChapter('park') },
+  { n: '第五章', t: '學校', d: '楓林小學。趁小息溜進課室，在女兒的儲物格找出備份密碼。', key: 'ch6', lock: '完成第四章解鎖', go: () => startChapter('school') },
+  { n: '第六章', t: '屋頂', d: '製作中', future: true },
+  { n: '第七章', t: 'Origin Dynamics', d: '製作中', future: true }
 ];
 function startChapter(name, opt) { $('start').hidden = true; $('chaps').hidden = true; playT = 0; fails = 0; requestLock(); return loadLevel(name, opt); }
 // chapter two starts in the kitchen, with the core already back at the mouse hole
 function startChapter2() {
-  return startChapter('kitchen', { chapter: '第二章', title: '客廳', after() {
+  return startChapter('kitchen', { chapter: '第一章', title: '屋企', after() {
     KS.coreGot = true; KS.carried = false; KS.coreDrop = null; KS.home = true; KS.ch2 = true; KS.core.position.set(-306, 1.6, -100);
-    QUESTS = SP_Q2; setQuest(0); setTimeout(() => chapterBanner('第二章', '客廳'), 900);
+    QUESTS = SP_Q2; setQuest(0); setTimeout(() => roomBanner('客廳'), 900);
   } });
 }
 function openChapters() {
@@ -131,6 +130,11 @@ function openChapters() {
     b.className = 'ch' + (open ? '' : ' lock') + (open && !real ? ' tst' : ''); b.disabled = !open;
     b.innerHTML = `<small>${c.n}${open && !real ? '<i>測試</i>' : ''}</small><b>${c.t}</b><em>${open ? c.d : c.future ? '製作中' : c.lock}</em>`;
     if (open) b.addEventListener('click', () => { $('chaps').hidden = true; audioInit(); c.go(); });
+    // a long chapter can be started part-way through: the rooms you've reached
+    if (open && c.starts) { const row = document.createElement('span'); row.className = 'chst'; row.innerHTML = `<i>由呢度開始</i>`;
+      for (const st of c.starts) { const ok = !st.key || UNL[st.key] || TEST.on, x = document.createElement('span'); x.className = 'chs' + (ok ? '' : ' lock'); x.textContent = st.t; x.setAttribute('role', 'button');
+        if (ok) x.addEventListener('click', e => { e.stopPropagation(); $('chaps').hidden = true; audioInit(); st.go(); }); row.appendChild(x); }
+      b.appendChild(row); }
     L.appendChild(b);
   }
   $('chapsN').textContent = TEST.on ? '測試模式：全部章節開放，進度不會儲存' : `${CHAPS.filter(c => !c.future && (!c.key || UNL[c.key])).length} / ${CHAPS.filter(c => !c.future).length} 已解鎖`; $('testOn').checked = TEST.on;

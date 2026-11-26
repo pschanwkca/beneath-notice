@@ -187,10 +187,10 @@ function enterZone(id, quiet) {
   if (P && prev !== id) { P.save = { qs: QUESTS, q: quest, cp, lvT }; if (LVL && LVL.leave) LVL.leave(id); }
   LEVEL = id; LVL = D; LV = Z.lv; LVFX = Z.fx; beams = Z.beams; dust = Z.dust; CPS = D.cps;
   const again = !quiet && !!Z.save;   // walking back into a place you've been: carry on where you left off
-  if (NET.on && MP_CPS) { if (PRO.on) { CPS = PRO.cps || MP_CPS; QUESTS = MP_PRO; } else { CPS = MP_CPS; QUESTS = MP_QUESTS; } setQuest(quest); if (!quiet && !Z.mpSeen) { Z.mpSeen = true; if (D.mpChapter) chapterBanner(D.mpChapter, D.title); } if (party.length && PORTRAITS.dad) buildPartyHUD(); return; }
+  if (NET.on && MP_CPS) { if (PRO.on) { CPS = PRO.cps || MP_CPS; QUESTS = MP_PRO; } else { CPS = MP_CPS; QUESTS = MP_QUESTS; } setQuest(quest); if (!quiet && !Z.mpSeen) { Z.mpSeen = true; zoneTitle(D); } if (party.length && PORTRAITS.dad) buildPartyHUD(); return; }
   if (again) { QUESTS = Z.save.qs; cp = Z.save.cp; lvT = Z.save.lvT; setQuest(Z.save.q); } else { QUESTS = D.quests; cp = 0; lvT = 0; setQuest(0); }
   if (D.enter) D.enter(prev, again);
-  if (!quiet && !again) chapterBanner(D.chapter, D.title);
+  if (!quiet && !again) zoneTitle(D);
   if (party.length && PORTRAITS.dad) buildPartyHUD();
 }
 function onResizeDust(sc) { for (const Z of ZL) if (Z.dust) Z.dust.material.uniforms.uScale.value = sc; }
@@ -213,5 +213,8 @@ function updNpcWalk(dt) {
 }
 
 // ---------- chapter title: fades in over the game, never stops it ----------
-function chapterBanner(a, b) { const el = $('chap'); if (!el || !a) return; $('chapA').textContent = a; $('chapB').textContent = b || ''; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); WC.banner = 4.2; }
+// walking into a place: a new chapter only once you're outside the house; indoors, just the room's name
+function zoneTitle(D) { if (D.house) roomBanner(D.room || D.title); else chapterBanner(D.chapter, D.title); }
+function roomBanner(t) { chapterBanner(' ', t); $('chap').classList.add('room'); }
+function chapterBanner(a, b) { $('chap') && $('chap').classList.remove('room'); const el = $('chap'); if (!el || !a) return; $('chapA').textContent = a; $('chapB').textContent = b || ''; el.classList.remove('on'); void el.offsetWidth; el.classList.add('on'); WC.banner = 4.2; }
 function updBanner(dt) { if (WC.banner > 0) { WC.banner -= dt; if (WC.banner <= 0) $('chap').classList.remove('on'); } }
