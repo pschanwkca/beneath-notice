@@ -192,13 +192,16 @@ function trapSteps() {
 // cardboard over a mouse hole: after a search that found nothing, or once she's very sure (and again, a while after one's been broken)
 function sealWant() {
   if (NET.client || !HX.id.seal_fh) return -1; const V = susV(), use = HB.holeUse || {};
-  const open = Object.keys(SEALS).filter(id => !HX.id[id].on && (use[id] || 0) > 0); if (!open.length) return -1;
+  const open = Object.keys(SEALS).filter(id => !HX.id[id].on && !steelIn(id) && (use[id] || 0) > 0); if (!open.length) return -1;
   if (HB.sealNow) return 2;
   return V >= .7 && T - (HB.sealT || -99) > 75 ? .5 + V : -1;
 }
 function sealSteps() {
   HB.sealNow = false; HB.sealT = T; const use = HB.holeUse || {};
-  const id = Object.keys(SEALS).filter(id => !HX.id[id].on).sort((a, b) => (use[b] || 0) - (use[a] || 0))[0]; if (!id) return [];
+  const id = Object.keys(SEALS).filter(id => !HX.id[id].on && !steelIn(id)).sort((a, b) => (use[b] || 0) - (use[a] || 0))[0]; if (!id) return [];
+  // cardboard first; once they've got through cardboard there, steel wool (which the bear can't barge)
+  const steel = ((HB.sealBroke || {})[id] || 0) + ((HB.steelOut || {})[id] || 0) > 0, again = ((HB.steelOut || {})[id] || 0) > 0;
+  if (steel) return [{ say: again ? '鋼絲球都俾佢哋搞走咗？……再塞過，塞實啲。' : pick(['紙皮都撞得爛？……今次用鋼絲球塞實佢。', '買咗鋼絲球返嚟——老鼠咬唔穿嘅。']) }, { go: 'bathIn' }, { go: 'bmid' }, { wait: 2.4, look: 2.4, at: [SEALS[id].x, 4, -244], low: true }, { fn: () => { steelPlug(id); brainSay('mom', '……鋼絲球，睇你哋點入嚟。', 2.4); } }];
   return [{ say: pick(['一定係老鼠窿……今日先用紙皮封住，聽日買鋼絲球。', '又俾佢哋撞爛咗？再封過。']) }, { go: 'bathIn' }, { go: 'bmid' }, { wait: 2, look: 2, at: [SEALS[id].x, 4, -244], low: true }, { fn: () => { hxSet(HX.id[id], true, 'mom'); brainSay('mom', '……咁就入唔到嚟喇。', 2.2); } }];
 }
 function brainSearch() {
@@ -335,7 +338,7 @@ function brainNeeds(A, dt) {
 }
 // set up when the kitchen is prepared (dinner: Mom at the stove, the daughter doing homework)
 function brainReset() {
-  HUM.v = HUM.bel = HUM.quiet = 0; HB.belief = 0; HB.sealNow = false; HB.sealT = 0; HB.holeUse = {};
+  HUM.v = HUM.bel = HUM.quiet = 0; HB.belief = 0; HB.sealNow = false; HB.sealT = 0; HB.holeUse = {}; HB.sealBroke = {}; HB.steelOut = {}; for (const id in SEALS) if (SEALS[id].steel) STEEL_PARK(SEALS[id].x, SEALS[id].steel);
   HB.sus = 0; HB.stage = 0; HB.search = 0; HB.inc = []; HB.mem = []; HB.quiet = 0; HB.kidForgot = 0; HB.lastSay = {};
   const M = HB.m = mkAgent('mom'); M.act = 'cook'; M.last = ['cook', '', '']; M.q = [{ wait: 10, km: ['act', 'stove'], at: [22, 96, -178] }];
   M.need = { wash: .3, fridge: .4, sit: .2, bath: R(0, .4), tidy: .2, checkKid: .1, phone: .45, window: .1, wipe: .15, toys: .1 };

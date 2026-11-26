@@ -270,7 +270,32 @@ function buildMouseWar(K) {
   for (const id in SEALS) { const S = SEALS[id], g = new THREE.Group(); g.position.set(S.x, 0, -244.9); g.visible = false; LV.add(g);
     mesh(new THREE.BoxGeometry(15, 11.5, 1.2), new THREE.MeshStandardMaterial({ color: 0xb08a5a, roughness: .95 }), 0, 5.6, 0, { parent: g });
     for (const [x, r] of [[-4.5, .25], [4.2, -.3]]) { const t = mesh(new THREE.BoxGeometry(2.6, 14, .3), new THREE.MeshStandardMaterial({ color: 0xcfc6a8, roughness: .5, transparent: true, opacity: .85 }), x, 5.5, -.72, { parent: g, cast: false }); t.rotation.z = r; }
-    S.g = g; S.col = { t: 'b', x0: S.hole[0] - 1.5, x1: S.hole[1] + 1.5, y0: -999, y1: -998, z0: -245.6, z1: -244, slick: true }; cols.push(S.col); }
+    S.g = g; S.col = { t: 'b', x0: S.hole[0] - 1.5, x1: S.hole[1] + 1.5, y0: -999, y1: -998, z0: -245.6, z1: -244, slick: true }; cols.push(S.col);
+    S.steel = steelWool(S.x); }
+}
+// ---------- steel wool: the next step up from cardboard ----------
+// Stuffed into the hole, it won't move for the bear. Shrink it with the size gun and it drops out.
+// (it waits inside the wall when it isn't in use, so its collider is filed with the kitchen from the start)
+const STEEL_PARK = (x, r) => { r.cx = x; r.cz = -238; r.y0 = 20; r.s = r.target = 1; applyResize(r); };
+function steelWool(x) {
+  const sm = new THREE.MeshStandardMaterial({ color: 0x9aa2aa, metalness: .85, roughness: .38 });
+  const fm = furMat({ color: 0xa8b0b8, len: .55, den: 2.2, droop: .05, clump: .85, rimK: .25, root: .8 });
+  const G = cmGroup(11, 9, 7, ({ part, fur }) => {
+    const g = new THREE.IcosahedronGeometry(1, 3), p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) { const k = 1 + .14 * Math.sin(p.getX(i) * 9.1 + p.getY(i) * 5.3) + .1 * Math.sin(p.getZ(i) * 11.7); p.setXYZ(i, p.getX(i) * k, p.getY(i) * k, p.getZ(i) * k); }
+    g.computeVertexNormals(); part(g, sm, 0, 0, 0, { s: [4.9, 3.9, 3.1] });
+    fur(ell(5.2, 4.2, 3.4, 24, 16), fm, 0, 0, 0);
+  }, [sm]);
+  const r = resGroup(G, x, -238, 20, 11, 9, 7, .3, 1, '鋼絲球', false); r.c.push = false; STEEL_PARK(x, r); return r;   // (no falling: it's wedged in)
+}
+const steelIn = id => { const S = SEALS[id], r = S && S.steel; return !!r && r.y0 < 5 && Math.abs(r.cx - S.x) < 3 && r.s > .45; };
+function steelPlug(id) { const S = SEALS[id], r = S.steel; r.cx = S.x; r.cz = -238; r.y0 = 0; r.s = r.target = 1; applyResize(r); r.wakeT = T + 1; }
+// shrunk in the hole: it drops out on the bathroom side, and the hole is open again
+function steelTick() {
+  if (NET.client) return;
+  for (const id in SEALS) { const S = SEALS[id], r = S.steel; if (!r || !(r.y0 < 5 && Math.abs(r.cx - S.x) < 3) || r.s > .45) continue;
+    r.cx = S.x + 9; r.cz = -251; r.y0 = 0; applyResize(r); HB.steelOut = HB.steelOut || {}; HB.steelOut[id] = (HB.steelOut[id] || 0) + 1;
+    toastW('鋼絲球縮細咗，跌咗出嚟——條老鼠窿又通返', 2.8); SND.snap && SND.snap(); for (let i = 0; i < 14; i++) emit(V3(S.x, 4, -244), V3(R(-10, 10), R(2, 10), R(-14, -2)), new THREE.Color(.62, .66, .7), R(.15, .3), R(.4, .8), 200, 1); }
 }
 function hxPassageSwitches() {
   // the family's own counter-measures: not for players to switch (glue), or only the bear can undo (seals)
@@ -322,7 +347,7 @@ function fridgeTick(dt) {
   { const dk = $('fdark'), k = L && !L.frozen && inFridge(L) && KS.doorA < .3 ? 1 : 0; if (dk && dk.dataset.k !== String(k)) { dk.dataset.k = k; dk.style.opacity = k ? .82 : 0; } }
   // a toy left on a fridge shelf: once the door's open it gets tidied away; until then Mom wants something from the fridge
   if (NET.client) return;
-  fridgeStock(dt);
+  fridgeStock(dt); steelTick();
   for (const C of party) if (C.frozen && C.toyAt === 'floor' && inFridge(C)) {
     if (KS.doorA > .8) { if (!TOY.fetchQ.includes(C) && !(TOY.fetch && TOY.fetch.C === C)) TOY.fetchQ.push(C); }
     else if (HB.m && HB.m.need) HB.m.need.fridge = Math.max(HB.m.need.fridge || 0, 1.6);
@@ -381,7 +406,7 @@ function hxApply(o, quiet) {
   if (o.id === 'blight' && HX.bfan) HX.bfan.col.y0 = o.on ? HX.bfan.y[0] : -999, HX.bfan.col.y1 = o.on ? HX.bfan.y[1] : -998;
   if (o.id === 'mhcover' && HX.mhc) { const g = HX.mhc.g; if (o.on) { g.position.set(346, .4, -225); g.rotation.set(-Math.PI / 2, 0, .4); HX.mhc.col.y0 = -999; HX.mhc.col.y1 = -998; if (!quiet) toastW('踢腳線蓋拆開咗——後面個老鼠窿通去廁所', 2.6); } }
   if (o.kind === 'trap' && HX.glue) { const G = HX.glue[+o.id.slice(4)]; if (G) G.g.visible = o.on; }
-  if (o.seal && SEALS[o.id] && SEALS[o.id].g) { const S = SEALS[o.id]; S.g.visible = o.on; S.col.y0 = o.on ? 0 : -999; S.col.y1 = o.on ? 11.5 : -998; if (!o.on && !quiet) { toastW('紙皮俾老友撞爛咗——條老鼠窿又通返', 2.4); for (let i = 0; i < 16; i++) emit(V3(S.x, 5, -245), V3(R(-12, 12), R(2, 14), R(-14, -2)), new THREE.Color(.7, .55, .36), R(.3, .6), R(.5, .9), 200, 1); } }
+  if (o.seal && SEALS[o.id] && SEALS[o.id].g) { const S = SEALS[o.id]; S.g.visible = o.on; S.col.y0 = o.on ? 0 : -999; S.col.y1 = o.on ? 11.5 : -998; if (!o.on && !quiet) { if (!NET.client) { HB.sealBroke = HB.sealBroke || {}; HB.sealBroke[o.id] = (HB.sealBroke[o.id] || 0) + 1; } toastW('紙皮俾老友撞爛咗——條老鼠窿又通返', 2.4); for (let i = 0; i < 16; i++) emit(V3(S.x, 5, -245), V3(R(-12, 12), R(2, 14), R(-14, -2)), new THREE.Color(.7, .55, .36), R(.3, .6), R(.5, .9), 200, 1); } }
   if (o.id === 'gvent' && o.on && !LIV.ventOpen) { ventOpen(); if (!quiet) toastW('通風口蓋推開咗——客廳同車房而家打通咗', 2.6); }
   if (!quiet) { SND.snap && SND.snap(); if (o.kind === 'flush') hxFlushSnd(o.p); }
 }

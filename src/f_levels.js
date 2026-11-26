@@ -845,6 +845,7 @@ LEVELS.kitchen = {
     if (hood && !L.climbing && L.pos.y > 82 && L.pos.y < 100 && Math.hypot(L.pos.x - 57, L.pos.z + 205) < 55) return '後面著緊火嘅細爐頭有熱風：行入去，熱風會托你上抽油煙機';
     if (bl && L.pos.y < 120 && L.pos.x > 150 && L.pos.x < 460 && L.pos.z > -470 && L.pos.z < -244 && Math.hypot(L.pos.x - 366, L.pos.z + 312) < 60 && !L.climbing) return bl.on ? '抽氣扇轉緊。捉住條拉繩一拉，燈同扇都會熄' : '跳入洗衣籃，捉住抽氣扇條拉繩爬上天花風槽';
     if (inFridge(L) && Math.hypot(L.pos.x - 174, L.pos.z + 168) < 22 && Math.abs(L.pos.y - 86) < 6) { const s = fridgeChillLeft(); if (s) return `新嘅 Prototype 凍緊：門閂住再等 ${s} 秒`; if (PROTO >= PROTO_COLD) return '身上最多帶 2 支 Prototype——用完先返嚟攞'; }
+    for (const id in SEALS) if (steelIn(id) && L.pos.y < 12 && Math.abs(L.pos.x - SEALS[id].x) < 14 && L.pos.z > -262 && L.pos.z < -214) return L.id === 'dad' ? '鋼絲球塞實咗個窿——用尺寸槍對準佢縮細，佢就會跌出嚟' : '鋼絲球塞實咗個窿，老友都撞唔開——換爸爸用尺寸槍縮細佢';
     const fr = HX.id.fridge; if (fr && !fr.on && KS.doorA < .3 && L.pos.y < 12 && L.pos.x > 140 && L.pos.x < 240 && L.pos.z > -150 && L.pos.z < -125) return L.id === 'bear' ? '老友：撳「用」用力拉開雪櫃門' : '雪櫃門好實——換老友（熊）嚟拉開';
     const mh = HX.id.mhcover;
     if (mh && !mh.on && L.pos.y < 9 && L.pos.x > 326 && L.pos.x < 344 && L.pos.z > -248 && L.pos.z < -233) return '另一邊有塊踢腳線蓋擋住——要由客廳嗰邊拆開';

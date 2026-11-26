@@ -1113,6 +1113,7 @@ Object.assign(I18N_EN, {"人類質疑度": "Human suspicion", "搜緊": "Searchi
 Object.assign(I18N_EN, {"樓梯頂道門開住——趁太太喺下面，可以爬樓梯溜出去": "The door at the top of the stairs is open — while she's down here, climb the stairs and slip out", "捉實衣架！按「跳」可以中途鬆手": "Hold on to the hanger! Press Jump to let go on the way", "捉實衣架！撳 Space 可以中途鬆手": "Hold on to the hanger! Press Space to let go on the way", "儲物房：呢度冇人望到你，整出聲都冇人聽到。架上啲嘢拎得，拎完過一陣會補返": "The storeroom: nobody can see you in here, and nobody hears a thing. Take what's on the shelves — it comes back after a while", "由後面條走廊都入到客廳！遙控器應該喺沙發前面嘅咖啡枱。": "The back hallway gets you into the living room too! The remote should be on the coffee table by the sofa.", "滑緊……按「跳」可以中途鬆手": "Sliding… press Jump to let go", "滑緊……撳 Space 可以中途鬆手": "Sliding… press Space to let go", "按「用」捉住衣架，沿晾衫繩滑去走廊尾": "Press Use to grab the hanger and slide down the clothesline to the end of the hallway", "撳 E 捉住衣架，沿晾衫繩滑去走廊尾": "Press E to grab the hanger and slide down the clothesline to the end of the hallway", "爬上報紙、鞋櫃同鞋盒，捉住頂嗰個衣架就可以滑過成條走廊": "Climb the newspapers, the shoe cabinet and the shoe boxes — grab the hanger at the top and slide the whole hallway", "牆腳個窿通去廚房櫃底——一出去就係太太腳邊，小心": "The hole at the foot of the wall comes out under the kitchen counter — right by her feet. Careful", "櫃底條窿通去後面嘅儲物房（嗰度冇人望到你）": "The gap under the cabinet leads to the storeroom behind (nobody can see you in there)", "提子乾": "Raisin", "食咗：體力回返一半": "Eat it: half your stamina back", "波子": "Marble", "掟出去：落地之後會一路碌、一路響，引人行遠啲": "Throw it: it keeps rolling and ticking along the floor, leading people further away", "食咗粒提子乾——體力回返一半": "Ate a raisin — half your stamina back", "出咗地庫門！呢度係屋後走廊——太太返咗上廚房煮飯，唔會再落地庫": "Out through the basement door! This is the back hallway — she's gone back up to cook, and won't come down to the basement again", "（牆入面有把聲）……教授？係你？放喺洞口就得，我幫你睇住佢。": "(A voice from inside the wall) …Professor? Is that you? Leave it by the hole — I'll keep an eye on it."});
 Object.assign(I18N_EN, {"身上最多帶 2 支 Prototype——用完先返嚟攞": "You can carry two Prototypes at most — use one, then come back for another", "勿動！爸爸": "DON'T TOUCH! — Dad", "芝士": "cheese", "火腿": "ham", "餅乾碎": "cookie crumbs"});
 Object.assign(I18N_ENT, {"身上已經有 {0} 支 Prototype——離開雪櫃太耐會暖壞，用完先返嚟攞": "You already have {0} Prototypes — out of the cold too long they go off. Use one, then come back", "{0}由雪櫃攞咗一支 Prototype（共 {1} 支）。個位要閂住門凍 {2} 秒先有新嘅": "{0} took a Prototype from the fridge ({1} in all). With the door shut, a new one sets in that slot in {2} s", "新嘅 Prototype 凍緊：門閂住再等 {0} 秒": "A new Prototype is setting: keep the door shut another {0} s", "{0}吃了{1}，體力上限回到 {2}%": "{0} ate some {1} — stamina cap back to {2}%"});
+Object.assign(I18N_EN, {"鋼絲球": "Steel wool", "鋼絲球縮細咗，跌咗出嚟——條老鼠窿又通返": "The steel wool shrank and dropped out — the mouse hole is open again", "鋼絲球都俾佢哋搞走咗？……再塞過，塞實啲。": "They got the steel wool out too? …Stuff it again, tighter.", "紙皮都撞得爛？……今次用鋼絲球塞實佢。": "They broke through cardboard? …Steel wool this time.", "買咗鋼絲球返嚟——老鼠咬唔穿嘅。": "I bought steel wool — mice can't chew through that.", "……鋼絲球，睇你哋點入嚟。": "…Steel wool. Let's see you get in now.", "鋼絲球塞實咗個窿——用尺寸槍對準佢縮細，佢就會跌出嚟": "Steel wool is stuffed in the hole — aim the size gun at it and shrink it, and it'll drop out", "鋼絲球塞實咗個窿，老友都撞唔開——換爸爸用尺寸槍縮細佢": "Steel wool is stuffed in the hole; even Old Pal can't barge it — switch to Dad and shrink it with the size gun"});
 
 // =====================================================================
 //  Language: 中文 (default) or English.  ?lang=en / ?lang=zh in the address, or the button on the title
@@ -6507,6 +6508,7 @@ LEVELS.kitchen = {
     if (hood && !L.climbing && L.pos.y > 82 && L.pos.y < 100 && Math.hypot(L.pos.x - 57, L.pos.z + 205) < 55) return TR('後面著緊火嘅細爐頭有熱風：行入去，熱風會托你上抽油煙機');
     if (bl && L.pos.y < 120 && L.pos.x > 150 && L.pos.x < 460 && L.pos.z > -470 && L.pos.z < -244 && Math.hypot(L.pos.x - 366, L.pos.z + 312) < 60 && !L.climbing) return bl.on ? TR('抽氣扇轉緊。捉住條拉繩一拉，燈同扇都會熄') : TR('跳入洗衣籃，捉住抽氣扇條拉繩爬上天花風槽');
     if (inFridge(L) && Math.hypot(L.pos.x - 174, L.pos.z + 168) < 22 && Math.abs(L.pos.y - 86) < 6) { const s = fridgeChillLeft(); if (s) return TRT`新嘅 Prototype 凍緊：門閂住再等 ${s} 秒`; if (PROTO >= PROTO_COLD) return TR('身上最多帶 2 支 Prototype——用完先返嚟攞'); }
+    for (const id in SEALS) if (steelIn(id) && L.pos.y < 12 && Math.abs(L.pos.x - SEALS[id].x) < 14 && L.pos.z > -262 && L.pos.z < -214) return L.id === 'dad' ? TR('鋼絲球塞實咗個窿——用尺寸槍對準佢縮細，佢就會跌出嚟') : TR('鋼絲球塞實咗個窿，老友都撞唔開——換爸爸用尺寸槍縮細佢');
     const fr = HX.id.fridge; if (fr && !fr.on && KS.doorA < .3 && L.pos.y < 12 && L.pos.x > 140 && L.pos.x < 240 && L.pos.z > -150 && L.pos.z < -125) return L.id === 'bear' ? TR('老友：撳「用」用力拉開雪櫃門') : TR('雪櫃門好實——換老友（熊）嚟拉開');
     const mh = HX.id.mhcover;
     if (mh && !mh.on && L.pos.y < 9 && L.pos.x > 326 && L.pos.x < 344 && L.pos.z > -248 && L.pos.z < -233) return TR('另一邊有塊踢腳線蓋擋住——要由客廳嗰邊拆開');
@@ -8887,7 +8889,32 @@ function buildMouseWar(K) {
   for (const id in SEALS) { const S = SEALS[id], g = new THREE.Group(); g.position.set(S.x, 0, -244.9); g.visible = false; LV.add(g);
     mesh(new THREE.BoxGeometry(15, 11.5, 1.2), new THREE.MeshStandardMaterial({ color: 0xb08a5a, roughness: .95 }), 0, 5.6, 0, { parent: g });
     for (const [x, r] of [[-4.5, .25], [4.2, -.3]]) { const t = mesh(new THREE.BoxGeometry(2.6, 14, .3), new THREE.MeshStandardMaterial({ color: 0xcfc6a8, roughness: .5, transparent: true, opacity: .85 }), x, 5.5, -.72, { parent: g, cast: false }); t.rotation.z = r; }
-    S.g = g; S.col = { t: 'b', x0: S.hole[0] - 1.5, x1: S.hole[1] + 1.5, y0: -999, y1: -998, z0: -245.6, z1: -244, slick: true }; cols.push(S.col); }
+    S.g = g; S.col = { t: 'b', x0: S.hole[0] - 1.5, x1: S.hole[1] + 1.5, y0: -999, y1: -998, z0: -245.6, z1: -244, slick: true }; cols.push(S.col);
+    S.steel = steelWool(S.x); }
+}
+// ---------- steel wool: the next step up from cardboard ----------
+// Stuffed into the hole, it won't move for the bear. Shrink it with the size gun and it drops out.
+// (it waits inside the wall when it isn't in use, so its collider is filed with the kitchen from the start)
+const STEEL_PARK = (x, r) => { r.cx = x; r.cz = -238; r.y0 = 20; r.s = r.target = 1; applyResize(r); };
+function steelWool(x) {
+  const sm = new THREE.MeshStandardMaterial({ color: 0x9aa2aa, metalness: .85, roughness: .38 });
+  const fm = furMat({ color: 0xa8b0b8, len: .55, den: 2.2, droop: .05, clump: .85, rimK: .25, root: .8 });
+  const G = cmGroup(11, 9, 7, ({ part, fur }) => {
+    const g = new THREE.IcosahedronGeometry(1, 3), p = g.attributes.position;
+    for (let i = 0; i < p.count; i++) { const k = 1 + .14 * Math.sin(p.getX(i) * 9.1 + p.getY(i) * 5.3) + .1 * Math.sin(p.getZ(i) * 11.7); p.setXYZ(i, p.getX(i) * k, p.getY(i) * k, p.getZ(i) * k); }
+    g.computeVertexNormals(); part(g, sm, 0, 0, 0, { s: [4.9, 3.9, 3.1] });
+    fur(ell(5.2, 4.2, 3.4, 24, 16), fm, 0, 0, 0);
+  }, [sm]);
+  const r = resGroup(G, x, -238, 20, 11, 9, 7, .3, 1, TR('鋼絲球'), false); r.c.push = false; STEEL_PARK(x, r); return r;   // (no falling: it's wedged in)
+}
+const steelIn = id => { const S = SEALS[id], r = S && S.steel; return !!r && r.y0 < 5 && Math.abs(r.cx - S.x) < 3 && r.s > .45; };
+function steelPlug(id) { const S = SEALS[id], r = S.steel; r.cx = S.x; r.cz = -238; r.y0 = 0; r.s = r.target = 1; applyResize(r); r.wakeT = T + 1; }
+// shrunk in the hole: it drops out on the bathroom side, and the hole is open again
+function steelTick() {
+  if (NET.client) return;
+  for (const id in SEALS) { const S = SEALS[id], r = S.steel; if (!r || !(r.y0 < 5 && Math.abs(r.cx - S.x) < 3) || r.s > .45) continue;
+    r.cx = S.x + 9; r.cz = -251; r.y0 = 0; applyResize(r); HB.steelOut = HB.steelOut || {}; HB.steelOut[id] = (HB.steelOut[id] || 0) + 1;
+    toastW(TR('鋼絲球縮細咗，跌咗出嚟——條老鼠窿又通返'), 2.8); SND.snap && SND.snap(); for (let i = 0; i < 14; i++) emit(V3(S.x, 4, -244), V3(R(-10, 10), R(2, 10), R(-14, -2)), new THREE.Color(.62, .66, .7), R(.15, .3), R(.4, .8), 200, 1); }
 }
 function hxPassageSwitches() {
   // the family's own counter-measures: not for players to switch (glue), or only the bear can undo (seals)
@@ -8939,7 +8966,7 @@ function fridgeTick(dt) {
   { const dk = $('fdark'), k = L && !L.frozen && inFridge(L) && KS.doorA < .3 ? 1 : 0; if (dk && dk.dataset.k !== String(k)) { dk.dataset.k = k; dk.style.opacity = k ? .82 : 0; } }
   // a toy left on a fridge shelf: once the door's open it gets tidied away; until then Mom wants something from the fridge
   if (NET.client) return;
-  fridgeStock(dt);
+  fridgeStock(dt); steelTick();
   for (const C of party) if (C.frozen && C.toyAt === 'floor' && inFridge(C)) {
     if (KS.doorA > .8) { if (!TOY.fetchQ.includes(C) && !(TOY.fetch && TOY.fetch.C === C)) TOY.fetchQ.push(C); }
     else if (HB.m && HB.m.need) HB.m.need.fridge = Math.max(HB.m.need.fridge || 0, 1.6);
@@ -8998,7 +9025,7 @@ function hxApply(o, quiet) {
   if (o.id === 'blight' && HX.bfan) HX.bfan.col.y0 = o.on ? HX.bfan.y[0] : -999, HX.bfan.col.y1 = o.on ? HX.bfan.y[1] : -998;
   if (o.id === 'mhcover' && HX.mhc) { const g = HX.mhc.g; if (o.on) { g.position.set(346, .4, -225); g.rotation.set(-Math.PI / 2, 0, .4); HX.mhc.col.y0 = -999; HX.mhc.col.y1 = -998; if (!quiet) toastW(TR('踢腳線蓋拆開咗——後面個老鼠窿通去廁所'), 2.6); } }
   if (o.kind === 'trap' && HX.glue) { const G = HX.glue[+o.id.slice(4)]; if (G) G.g.visible = o.on; }
-  if (o.seal && SEALS[o.id] && SEALS[o.id].g) { const S = SEALS[o.id]; S.g.visible = o.on; S.col.y0 = o.on ? 0 : -999; S.col.y1 = o.on ? 11.5 : -998; if (!o.on && !quiet) { toastW(TR('紙皮俾老友撞爛咗——條老鼠窿又通返'), 2.4); for (let i = 0; i < 16; i++) emit(V3(S.x, 5, -245), V3(R(-12, 12), R(2, 14), R(-14, -2)), new THREE.Color(.7, .55, .36), R(.3, .6), R(.5, .9), 200, 1); } }
+  if (o.seal && SEALS[o.id] && SEALS[o.id].g) { const S = SEALS[o.id]; S.g.visible = o.on; S.col.y0 = o.on ? 0 : -999; S.col.y1 = o.on ? 11.5 : -998; if (!o.on && !quiet) { if (!NET.client) { HB.sealBroke = HB.sealBroke || {}; HB.sealBroke[o.id] = (HB.sealBroke[o.id] || 0) + 1; } toastW(TR('紙皮俾老友撞爛咗——條老鼠窿又通返'), 2.4); for (let i = 0; i < 16; i++) emit(V3(S.x, 5, -245), V3(R(-12, 12), R(2, 14), R(-14, -2)), new THREE.Color(.7, .55, .36), R(.3, .6), R(.5, .9), 200, 1); } }
   if (o.id === 'gvent' && o.on && !LIV.ventOpen) { ventOpen(); if (!quiet) toastW(TR('通風口蓋推開咗——客廳同車房而家打通咗'), 2.6); }
   if (!quiet) { SND.snap && SND.snap(); if (o.kind === 'flush') hxFlushSnd(o.p); }
 }
@@ -9309,13 +9336,16 @@ function trapSteps() {
 // cardboard over a mouse hole: after a search that found nothing, or once she's very sure (and again, a while after one's been broken)
 function sealWant() {
   if (NET.client || !HX.id.seal_fh) return -1; const V = susV(), use = HB.holeUse || {};
-  const open = Object.keys(SEALS).filter(id => !HX.id[id].on && (use[id] || 0) > 0); if (!open.length) return -1;
+  const open = Object.keys(SEALS).filter(id => !HX.id[id].on && !steelIn(id) && (use[id] || 0) > 0); if (!open.length) return -1;
   if (HB.sealNow) return 2;
   return V >= .7 && T - (HB.sealT || -99) > 75 ? .5 + V : -1;
 }
 function sealSteps() {
   HB.sealNow = false; HB.sealT = T; const use = HB.holeUse || {};
-  const id = Object.keys(SEALS).filter(id => !HX.id[id].on).sort((a, b) => (use[b] || 0) - (use[a] || 0))[0]; if (!id) return [];
+  const id = Object.keys(SEALS).filter(id => !HX.id[id].on && !steelIn(id)).sort((a, b) => (use[b] || 0) - (use[a] || 0))[0]; if (!id) return [];
+  // cardboard first; once they've got through cardboard there, steel wool (which the bear can't barge)
+  const steel = ((HB.sealBroke || {})[id] || 0) + ((HB.steelOut || {})[id] || 0) > 0, again = ((HB.steelOut || {})[id] || 0) > 0;
+  if (steel) return [{ say: again ? TR('鋼絲球都俾佢哋搞走咗？……再塞過，塞實啲。') : pick([TR('紙皮都撞得爛？……今次用鋼絲球塞實佢。'), TR('買咗鋼絲球返嚟——老鼠咬唔穿嘅。')]) }, { go: 'bathIn' }, { go: 'bmid' }, { wait: 2.4, look: 2.4, at: [SEALS[id].x, 4, -244], low: true }, { fn: () => { steelPlug(id); brainSay('mom', TR('……鋼絲球，睇你哋點入嚟。'), 2.4); } }];
   return [{ say: pick([TR('一定係老鼠窿……今日先用紙皮封住，聽日買鋼絲球。'), TR('又俾佢哋撞爛咗？再封過。')]) }, { go: 'bathIn' }, { go: 'bmid' }, { wait: 2, look: 2, at: [SEALS[id].x, 4, -244], low: true }, { fn: () => { hxSet(HX.id[id], true, 'mom'); brainSay('mom', TR('……咁就入唔到嚟喇。'), 2.2); } }];
 }
 function brainSearch() {
@@ -9452,7 +9482,7 @@ function brainNeeds(A, dt) {
 }
 // set up when the kitchen is prepared (dinner: Mom at the stove, the daughter doing homework)
 function brainReset() {
-  HUM.v = HUM.bel = HUM.quiet = 0; HB.belief = 0; HB.sealNow = false; HB.sealT = 0; HB.holeUse = {};
+  HUM.v = HUM.bel = HUM.quiet = 0; HB.belief = 0; HB.sealNow = false; HB.sealT = 0; HB.holeUse = {}; HB.sealBroke = {}; HB.steelOut = {}; for (const id in SEALS) if (SEALS[id].steel) STEEL_PARK(SEALS[id].x, SEALS[id].steel);
   HB.sus = 0; HB.stage = 0; HB.search = 0; HB.inc = []; HB.mem = []; HB.quiet = 0; HB.kidForgot = 0; HB.lastSay = {};
   const M = HB.m = mkAgent('mom'); M.act = 'cook'; M.last = ['cook', '', '']; M.q = [{ wait: 10, km: ['act', 'stove'], at: [22, 96, -178] }];
   M.need = { wash: .3, fridge: .4, sit: .2, bath: R(0, .4), tidy: .2, checkKid: .1, phone: .45, window: .1, wipe: .15, toys: .1 };
@@ -11608,7 +11638,7 @@ function portalResumeLand(S) {
 // who joined or dropped, how good each link is, frame rate, rescues and errors. One tap copies it as
 // plain text that a player can paste into a chat and send in.
 const NLOG = { t0: performance.now(), lines: [], fps: 0, sumT: 0, mode: '', lv: '', peer: {} };
-const NLOG_BUILD = '20261126-2328';
+const NLOG_BUILD = '20261126-2332';
 function nlog(s) {
   const d = new Date(), p2 = n => String(n).padStart(2, '0');   // the clock time, so "it broke around 9:30" can be matched
   NLOG.lines.push(`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}  ${s}`); if (NLOG.lines.length > 500) NLOG.lines.splice(0, NLOG.lines.length - 500);

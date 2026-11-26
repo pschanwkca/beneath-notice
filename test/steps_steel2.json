@@ -1,0 +1,4 @@
+[{"eval": "window.__bn.startChapter2(); 1"}, {"wait": 6000},
+ {"eval": "(()=>{const B=window.__bn; window.__NODET=true; B.toyUnfreezeAll(); B.state='play'; const r=B.resizables.find(q=>q.name==='鋼絲球'); r.cx=201; r.cz=-238; r.y0=0; r.s=r.target=1; B.W.applyResize(r); B.switchTo(B.chars.dad); const L=B.leader; L.pos.set(203,0,-208); L.vel.set(0,0,0); L.crouch=true; B.cam.yaw=0.05; B.cam.pitch=.08; B.cam.dist=14; B.step(30); return [r.cx,r.y0]; })()"},
+ {"frame": 1}, {"shot": "steel_in"}
+]

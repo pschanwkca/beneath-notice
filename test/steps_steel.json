@@ -1,0 +1,7 @@
+[{"eval": "window.__bn.startChapter2(); 1"}, {"wait": 6000},
+ {"eval": "(()=>{const B=window.__bn,L=B.leader; window.__NODET=true; B.toyUnfreezeAll(); B.state='play'; const r=B.resizables.filter(q=>q.name==='鋼絲球'); return r.map(q=>[q.cx,q.y0,q.cz,q.s]); })()"},
+ {"eval": "(()=>{const B=window.__bn,L=B.leader; const HB=B.HB; HB.holeUse={seal_fh:3}; HB.sealBroke={seal_fh:1}; HB.sealNow=true; let t=0; for(;t<60*60;t+=30){ B.step(30); const r=B.resizables.find(q=>q.name==='鋼絲球'); if(r.y0<5) break; } const r=B.resizables.find(q=>q.name==='鋼絲球'); return {secs:t/60, at:[r.cx,r.y0,r.cz,r.s], act:HB.m&&HB.m.act}; })()"},
+ {"eval": "(()=>{const B=window.__bn,L=B.leader; B.switchTo(B.chars.dad); const r=B.resizables.find(q=>q.name==='鋼絲球'); L.pos.set(201,0,-212); L.vel.set(0,0,0); B.step(5); const L2=B.leader; L2.pos.set(201,0,-214); B.step(5); const h=B.W.LEVELS.kitchen.hint(B.leader); B.leader.pos.set(201,0,-222); B.step(3); const h2=B.W.LEVELS.kitchen.hint(B.leader); B.keys.KeyW=false; B.cam.yaw=0; B.step(5); const blocked=B.leader.pos.z; r.target=.3; B.step(120); return {h, h2, s:+r.s.toFixed(2), at:[r.cx,r.y0,r.cz], out:B.HB.steelOut}; })()"},
+ {"eval": "(()=>{const B=window.__bn; const r=B.resizables.find(q=>q.name==='鋼絲球'); B.leader.pos.set(201,0,-248); B.cam.yaw=0; B.cam.pitch=.2; B.cam.dist=30; B.step(30); return 1; })()"},
+ {"frame": 1}, {"shot": "steel_out"}
+]
