@@ -318,12 +318,31 @@ function fridgeTick(dt) {
     } else { C.frost = Math.max(0, (C.frost || 0) - dt / 5); if (C.frost < .2) C.frostSaid = 0; }
   }
   const L = leader, f = L && !L.frozen ? L.frost || 0 : 0, el = $('frost'); if (el && Math.abs((+el.dataset.k || 0) - f) > .01) { el.dataset.k = f.toFixed(2); el.style.opacity = (f * .9).toFixed(2); }
+  // shut in the dark: only light that leaks round the door seal
+  { const dk = $('fdark'), k = L && !L.frozen && inFridge(L) && KS.doorA < .3 ? 1 : 0; if (dk && dk.dataset.k !== String(k)) { dk.dataset.k = k; dk.style.opacity = k ? .82 : 0; } }
   // a toy left on a fridge shelf: once the door's open it gets tidied away; until then Mom wants something from the fridge
   if (NET.client) return;
+  fridgeStock(dt);
   for (const C of party) if (C.frozen && C.toyAt === 'floor' && inFridge(C)) {
     if (KS.doorA > .8) { if (!TOY.fetchQ.includes(C) && !(TOY.fetch && TOY.fetch.C === C)) TOY.fetchQ.push(C); }
     else if (HB.m && HB.m.need) HB.m.need.fridge = Math.max(HB.m.need.fridge || 0, 1.6);
   }
+}
+// the fridge restocks: a fresh Prototype sets once its slot has had a minute's cold with the door shut; food comes back too
+const FSTOCK = { v: [], c: [], vT: 60, cT: 75 };
+const PROTO_COLD = 2;   // Prototypes go off out of the cold: nobody carries more than two from the fridge
+function fridgeStock(dt) {
+  const shut = KS.doorA < .15;
+  for (const S of FSTOCK.v) { const o = VIALS[S.i]; if (!o) continue; if (!o.got) { S.t = 0; continue; } if (shut) S.t += dt;
+    if (S.t >= FSTOCK.vT) { S.t = 0; o.got = false; o.g.visible = o.halo.visible = true; } }
+  for (const S of FSTOCK.c) { const o = CRUMBS[S.i]; if (!o) continue; if (!o.got) { S.t = 0; continue; } if (shut) S.t += dt;
+    if (S.t >= FSTOCK.cT) { S.t = 0; o.got = false; o.g.visible = o.halo.visible = true; } }
+}
+function fridgeChillLeft() { let m = 1e9; for (const S of FSTOCK.v) { const o = VIALS[S.i]; if (o && o.got) m = Math.min(m, FSTOCK.vT - S.t); } return m < 1e9 ? Math.max(1, Math.ceil(m)) : 0; }
+function fridgeLabelTex() {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 48; const x = c.getContext('2d');
+  x.fillStyle = '#f6f2e6'; x.fillRect(0, 0, 256, 48); x.fillStyle = '#c8312a'; x.font = '900 30px "Noto Sans TC", sans-serif'; x.textBaseline = 'middle'; const tx = '勿動！爸爸'; const w = x.measureText(tx).width; if (w > 232) x.font = `900 ${Math.floor(30 * 232 / w)}px "Noto Sans TC", sans-serif`; x.fillText(tx, 12, 25);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 // ---------- switches, taps and fans ----------
 function hxAdd(o) { o.i = HX.list.length; o.on = !!o.on; o.def = o.on; o.r = o.r || 8; HX.list.push(o); HX.id[o.id] = o; return o; }

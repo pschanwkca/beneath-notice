@@ -377,6 +377,7 @@ html.touch .susbar{width:64px;height:5px}html.touch #susLbl{font-size:9.5px;left
 .acd i{display:block;height:4px;border-radius:99px;background:rgba(245,240,230,.14);overflow:hidden}
 .acd b{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#ffb36b,#ffe0a8)}
 .touchui.cdOn #tbAct::after,.touchui.cdOn #tbGrow::after,.touchui.cdOn #tbShrink::after,.touchui.cdOn #tbScout::after,.touchui.cdOn #tbPouch::after{content:'';position:absolute;inset:-1px;border-radius:50%;pointer-events:none;background:conic-gradient(rgba(8,10,14,.62) calc(var(--cd) * 360deg),transparent 0);border:0;opacity:1;transform:none}
+.fdark{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .5s;z-index:1;background:radial-gradient(ellipse at 50% 55%,rgba(6,12,20,.5) 15%,rgba(4,8,14,.9) 68%,rgba(2,4,8,.97) 100%)}
 .frost{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;z-index:2;background:radial-gradient(ellipse at center,rgba(220,240,255,0) 48%,rgba(210,235,255,.35) 72%,rgba(235,248,255,.85) 100%);box-shadow:inset 0 0 80px rgba(190,225,255,.6)}
 body.paused .testchip{display:none}
 html.touch .testchip{top:auto;bottom:calc(8px + env(safe-area-inset-bottom));left:calc(14px + env(safe-area-inset-left));transform:none;font-size:10px;padding:2px 10px}
@@ -835,6 +836,7 @@ html.touch .chap.room .logo{font-size:13px}
 </head>
 <body>
 <canvas id="c" tabindex="0"></canvas>
+<div class="fdark" id="fdark"></div>
 
 <div id="touch" class="touchui" hidden>
   <div class="joyhint">移動</div>

@@ -377,6 +377,7 @@ html.touch .susbar{width:64px;height:5px}html.touch #susLbl{font-size:9.5px;left
 .acd i{display:block;height:4px;border-radius:99px;background:rgba(245,240,230,.14);overflow:hidden}
 .acd b{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#ffb36b,#ffe0a8)}
 .touchui.cdOn #tbAct::after,.touchui.cdOn #tbGrow::after,.touchui.cdOn #tbShrink::after,.touchui.cdOn #tbScout::after,.touchui.cdOn #tbPouch::after{content:'';position:absolute;inset:-1px;border-radius:50%;pointer-events:none;background:conic-gradient(rgba(8,10,14,.62) calc(var(--cd) * 360deg),transparent 0);border:0;opacity:1;transform:none}
+.fdark{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .5s;z-index:1;background:radial-gradient(ellipse at 50% 55%,rgba(6,12,20,.5) 15%,rgba(4,8,14,.9) 68%,rgba(2,4,8,.97) 100%)}
 .frost{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;z-index:2;background:radial-gradient(ellipse at center,rgba(220,240,255,0) 48%,rgba(210,235,255,.35) 72%,rgba(235,248,255,.85) 100%);box-shadow:inset 0 0 80px rgba(190,225,255,.6)}
 body.paused .testchip{display:none}
 html.touch .testchip{top:auto;bottom:calc(8px + env(safe-area-inset-bottom));left:calc(14px + env(safe-area-inset-left));transform:none;font-size:10px;padding:2px 10px}
@@ -835,6 +836,7 @@ html.touch .chap.room .logo{font-size:13px}
 </head>
 <body>
 <canvas id="c" tabindex="0"></canvas>
+<div class="fdark" id="fdark"></div>
 
 <div id="touch" class="touchui" hidden>
   <div class="joyhint">移動</div>
@@ -1109,6 +1111,8 @@ Object.assign(I18N_EN, {"樽蓋": "Bottle cap", "鈕扣": "Button", "方糖": "S
 Object.assign(I18N_EN, {"執起／放低細嘢（揸住時左鍵用）": "Pick up / put down small things (left click uses what you hold)"});
 Object.assign(I18N_EN, {"人類質疑度": "Human suspicion", "搜緊": "Searching"});
 Object.assign(I18N_EN, {"樓梯頂道門開住——趁太太喺下面，可以爬樓梯溜出去": "The door at the top of the stairs is open — while she's down here, climb the stairs and slip out", "捉實衣架！按「跳」可以中途鬆手": "Hold on to the hanger! Press Jump to let go on the way", "捉實衣架！撳 Space 可以中途鬆手": "Hold on to the hanger! Press Space to let go on the way", "儲物房：呢度冇人望到你，整出聲都冇人聽到。架上啲嘢拎得，拎完過一陣會補返": "The storeroom: nobody can see you in here, and nobody hears a thing. Take what's on the shelves — it comes back after a while", "由後面條走廊都入到客廳！遙控器應該喺沙發前面嘅咖啡枱。": "The back hallway gets you into the living room too! The remote should be on the coffee table by the sofa.", "滑緊……按「跳」可以中途鬆手": "Sliding… press Jump to let go", "滑緊……撳 Space 可以中途鬆手": "Sliding… press Space to let go", "按「用」捉住衣架，沿晾衫繩滑去走廊尾": "Press Use to grab the hanger and slide down the clothesline to the end of the hallway", "撳 E 捉住衣架，沿晾衫繩滑去走廊尾": "Press E to grab the hanger and slide down the clothesline to the end of the hallway", "爬上報紙、鞋櫃同鞋盒，捉住頂嗰個衣架就可以滑過成條走廊": "Climb the newspapers, the shoe cabinet and the shoe boxes — grab the hanger at the top and slide the whole hallway", "牆腳個窿通去廚房櫃底——一出去就係太太腳邊，小心": "The hole at the foot of the wall comes out under the kitchen counter — right by her feet. Careful", "櫃底條窿通去後面嘅儲物房（嗰度冇人望到你）": "The gap under the cabinet leads to the storeroom behind (nobody can see you in there)", "提子乾": "Raisin", "食咗：體力回返一半": "Eat it: half your stamina back", "波子": "Marble", "掟出去：落地之後會一路碌、一路響，引人行遠啲": "Throw it: it keeps rolling and ticking along the floor, leading people further away", "食咗粒提子乾——體力回返一半": "Ate a raisin — half your stamina back", "出咗地庫門！呢度係屋後走廊——太太返咗上廚房煮飯，唔會再落地庫": "Out through the basement door! This is the back hallway — she's gone back up to cook, and won't come down to the basement again", "（牆入面有把聲）……教授？係你？放喺洞口就得，我幫你睇住佢。": "(A voice from inside the wall) …Professor? Is that you? Leave it by the hole — I'll keep an eye on it."});
+Object.assign(I18N_EN, {"身上最多帶 2 支 Prototype——用完先返嚟攞": "You can carry two Prototypes at most — use one, then come back for another", "勿動！爸爸": "DON'T TOUCH! — Dad", "芝士": "cheese", "火腿": "ham", "餅乾碎": "cookie crumbs"});
+Object.assign(I18N_ENT, {"身上已經有 {0} 支 Prototype——離開雪櫃太耐會暖壞，用完先返嚟攞": "You already have {0} Prototypes — out of the cold too long they go off. Use one, then come back", "{0}由雪櫃攞咗一支 Prototype（共 {1} 支）。個位要閂住門凍 {2} 秒先有新嘅": "{0} took a Prototype from the fridge ({1} in all). With the door shut, a new one sets in that slot in {2} s", "新嘅 Prototype 凍緊：門閂住再等 {0} 秒": "A new Prototype is setting: keep the door shut another {0} s", "{0}吃了{1}，體力上限回到 {2}%": "{0} ate some {1} — stamina cap back to {2}%"});
 
 // =====================================================================
 //  Language: 中文 (default) or English.  ?lang=en / ?lang=zh in the address, or the button on the title
@@ -4478,7 +4482,9 @@ function updToys(dt) {
   // vials
   for (const v of VIALS) {
     if (v.got) continue; v.g.rotation.y += dt * 1.6; v.g.position.y = v.y + 1.6 + Math.sin(T * 2.2 + v.x) * .35; v.halo.position.set(v.x, v.g.position.y, v.z); v.halo.lookAt(camera.position);
-    if (STATE === 'play' && !L.frozen && mine(L) && Math.hypot(L.pos.x - v.x, L.pos.y + 1 - v.y - 1.6, L.pos.z - v.z) < 3.6) netGet('vial', VIALS.indexOf(v));
+    if (STATE === 'play' && !L.frozen && mine(L) && Math.hypot(L.pos.x - v.x, L.pos.y + 1 - v.y - 1.6, L.pos.z - v.z) < 3.6) {
+      if (v.cold && PROTO >= PROTO_COLD) { if (!v.full || T - v.full > 6) { v.full = T; toast(TRT`身上已經有 ${PROTO} 支 Prototype——離開雪櫃太耐會暖壞，用完先返嚟攞`, 3.4); } }
+      else netGet('vial', VIALS.indexOf(v)); }
   }
   // crumbs restore the stamina cap
   for (const c of CRUMBS) {
@@ -4506,15 +4512,24 @@ function addVial(x, y, z) {
   VIALS.push({ g, halo, x, y, z, got: false });
 }
 let _crumbM = null;
-function addCrumb(x, y, z, big) {
+function addCrumb(x, y, z, big, kind) {
   if (!_crumbM) _crumbM = new THREE.MeshStandardMaterial({ color: 0xc58a45, roughness: .85, map: null });
   const g = new THREE.Group(); g.position.set(x, y, z); LV.add(g);
-  const n = big ? 1 : 4;
+  if (kind === 'cheese') {   // three cubes of cheese, a little sweaty from the fridge
+    const cm = new THREE.MeshPhysicalMaterial({ color: 0xf2c84a, roughness: .45, clearcoat: .3 });
+    for (const [dx, dz, s] of [[-.9, .2, 1.5], [.8, -.5, 1.3], [.2, .9, 1.1]]) { const m = new THREE.Mesh(new THREE.BoxGeometry(s, s, s), cm); m.position.set(dx, s / 2, dz); m.rotation.y = dx * 2; m.castShadow = true; g.add(m); }
+  } else if (kind === 'ham') {   // a slice of ham, folded over
+    const hm = new THREE.MeshPhysicalMaterial({ color: 0xe88a8a, roughness: .5, clearcoat: .25 });
+    const a = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.4, .35, 24), hm); a.position.y = .2; a.castShadow = true; g.add(a);
+    const b = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.3, .35, 24, 1, false, 0, Math.PI), hm); b.position.set(0, .55, 0); b.rotation.x = .25; g.add(b);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(2.4, .14, 6, 28), new THREE.MeshStandardMaterial({ color: 0xf6e2d8, roughness: .6 })); rim.rotation.x = Math.PI / 2; rim.position.y = .38; g.add(rim);
+  }
+  const n = kind ? 0 : big ? 1 : 4;
   for (let i = 0; i < n; i++) { const geo = big ? new THREE.CylinderGeometry(2.2, 2.3, .8, 18) : new THREE.IcosahedronGeometry(R(.45, .8), 0); const m = new THREE.Mesh(geo, _crumbM); m.position.set(big ? 0 : R(-1, 1), big ? .4 : .35, big ? 0 : R(-1, 1)); m.rotation.set(R(0, 3), R(0, 3), big ? 0 : R(0, 3)); if (big) m.rotation.set(.1, 0, .06); m.castShadow = true; g.add(m); }
   if (big) for (let i = 0; i < 7; i++) { const ch = new THREE.Mesh(new THREE.SphereGeometry(.28, 8, 6), new THREE.MeshStandardMaterial({ color: 0x3a2214, roughness: .6 })); const a = R(0, 6.28), r = R(.3, 1.7); ch.position.set(Math.cos(a) * r, .82, Math.sin(a) * r); ch.scale.y = .5; g.add(ch); }
   const halo = new THREE.Mesh(new THREE.RingGeometry(1.5, 1.9, 28), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xf4bb72).multiplyScalar(1.6), transparent: true, opacity: .35, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
   LVFX.add(halo); halo.position.set(x, y + 1.5, z);
-  CRUMBS.push({ g, halo, x, y, z, v: big ? 20 : 10, big, got: false });
+  CRUMBS.push({ g, halo, x, y, z, v: big ? 20 : 10, big, kind, got: false });
 }
 function buildToyBin() {
   const X0 = 226, X1 = 274, Z0 = 98, Z1 = 142, H = 26, W = 1.6;
@@ -6079,7 +6094,13 @@ function buildKitchen() {
   mesh(new THREE.SphereGeometry(4, 20, 16), K.apple, 210, 90, -190); mesh(new THREE.SphereGeometry(3.8, 20, 16), K.apple, 218, 89.8, -178);
   cols.push({ t: 'c', x: 210, z: -190, r: 4, y0: 86, y1: 94 });
   box(196, 224, 124, 134, -210, -186, MAT.white, { uv: 0 });
-  addVial(170, 86, -168); addCrumb(204, 48, -172);   // kept cold: a Prototype vial, and some cheese (food puts back lost stamina)
+  // kept cold: Dad's Prototype rack (two vials), cheese and ham (food puts back lost stamina). Taken, they come back while the door stays shut
+  box(162, 186, 86, 88.5, -173, -163, new THREE.MeshPhysicalMaterial({ color: 0x5aa8d8, roughness: .3, clearcoat: .7 }));   // (low enough to step onto)
+  box(162, 186, 88.5, 92, -173.4, -172.6, new THREE.MeshPhysicalMaterial({ color: 0x5aa8d8, roughness: .3, clearcoat: .7 }), { col: false });
+  { const t = mesh(new THREE.PlaneGeometry(14, 2.6), new THREE.MeshBasicMaterial({ map: fridgeLabelTex() }), 174, 90.3, -172.5, { cast: false }); t.userData.noSolid = true; }
+  for (const x of [168, 180]) { FSTOCK.v.push({ i: VIALS.length, t: 0 }); addVial(x, 88.5, -168); VIALS[VIALS.length - 1].cold = true; }
+  FSTOCK.c.push({ i: CRUMBS.length, t: 0 }); addCrumb(204, 48, -172, false, 'cheese');
+  FSTOCK.c.push({ i: CRUMBS.length, t: 0 }); addCrumb(176, 124, -172, true, 'ham');
   KS.fridgeLight = pointL(0xeaf4ff, 0, 191, 172, -178);
   mesh(new THREE.PlaneGeometry(40, 3), K.bulb, 191, 179.5, -190, { cast: false }).rotation.x = Math.PI / 2;
   // drain hole (secret route to under the fridge)
@@ -6485,6 +6506,7 @@ LEVELS.kitchen = {
     if (hood && L.pos.x > -2 && L.pos.x < 78 && L.pos.z > -220 && L.pos.z < -172 && L.pos.y > 157 && L.pos.y < 186) return hood.on ? TR('抽油煙機開住，風扇擋住煙囱。行去右邊撳「用」熄咗佢') : TR('貼住後面嘅牆向上爬，煙囱上面就係天花風槽');
     if (hood && !L.climbing && L.pos.y > 82 && L.pos.y < 100 && Math.hypot(L.pos.x - 57, L.pos.z + 205) < 55) return TR('後面著緊火嘅細爐頭有熱風：行入去，熱風會托你上抽油煙機');
     if (bl && L.pos.y < 120 && L.pos.x > 150 && L.pos.x < 460 && L.pos.z > -470 && L.pos.z < -244 && Math.hypot(L.pos.x - 366, L.pos.z + 312) < 60 && !L.climbing) return bl.on ? TR('抽氣扇轉緊。捉住條拉繩一拉，燈同扇都會熄') : TR('跳入洗衣籃，捉住抽氣扇條拉繩爬上天花風槽');
+    if (inFridge(L) && Math.hypot(L.pos.x - 174, L.pos.z + 168) < 22 && Math.abs(L.pos.y - 86) < 6) { const s = fridgeChillLeft(); if (s) return TRT`新嘅 Prototype 凍緊：門閂住再等 ${s} 秒`; if (PROTO >= PROTO_COLD) return TR('身上最多帶 2 支 Prototype——用完先返嚟攞'); }
     const fr = HX.id.fridge; if (fr && !fr.on && KS.doorA < .3 && L.pos.y < 12 && L.pos.x > 140 && L.pos.x < 240 && L.pos.z > -150 && L.pos.z < -125) return L.id === 'bear' ? TR('老友：撳「用」用力拉開雪櫃門') : TR('雪櫃門好實——換老友（熊）嚟拉開');
     const mh = HX.id.mhcover;
     if (mh && !mh.on && L.pos.y < 9 && L.pos.x > 326 && L.pos.x < 344 && L.pos.z > -248 && L.pos.z < -233) return TR('另一邊有塊踢腳線蓋擋住——要由客廳嗰邊拆開');
@@ -8913,12 +8935,31 @@ function fridgeTick(dt) {
     } else { C.frost = Math.max(0, (C.frost || 0) - dt / 5); if (C.frost < .2) C.frostSaid = 0; }
   }
   const L = leader, f = L && !L.frozen ? L.frost || 0 : 0, el = $('frost'); if (el && Math.abs((+el.dataset.k || 0) - f) > .01) { el.dataset.k = f.toFixed(2); el.style.opacity = (f * .9).toFixed(2); }
+  // shut in the dark: only light that leaks round the door seal
+  { const dk = $('fdark'), k = L && !L.frozen && inFridge(L) && KS.doorA < .3 ? 1 : 0; if (dk && dk.dataset.k !== String(k)) { dk.dataset.k = k; dk.style.opacity = k ? .82 : 0; } }
   // a toy left on a fridge shelf: once the door's open it gets tidied away; until then Mom wants something from the fridge
   if (NET.client) return;
+  fridgeStock(dt);
   for (const C of party) if (C.frozen && C.toyAt === 'floor' && inFridge(C)) {
     if (KS.doorA > .8) { if (!TOY.fetchQ.includes(C) && !(TOY.fetch && TOY.fetch.C === C)) TOY.fetchQ.push(C); }
     else if (HB.m && HB.m.need) HB.m.need.fridge = Math.max(HB.m.need.fridge || 0, 1.6);
   }
+}
+// the fridge restocks: a fresh Prototype sets once its slot has had a minute's cold with the door shut; food comes back too
+const FSTOCK = { v: [], c: [], vT: 60, cT: 75 };
+const PROTO_COLD = 2;   // Prototypes go off out of the cold: nobody carries more than two from the fridge
+function fridgeStock(dt) {
+  const shut = KS.doorA < .15;
+  for (const S of FSTOCK.v) { const o = VIALS[S.i]; if (!o) continue; if (!o.got) { S.t = 0; continue; } if (shut) S.t += dt;
+    if (S.t >= FSTOCK.vT) { S.t = 0; o.got = false; o.g.visible = o.halo.visible = true; } }
+  for (const S of FSTOCK.c) { const o = CRUMBS[S.i]; if (!o) continue; if (!o.got) { S.t = 0; continue; } if (shut) S.t += dt;
+    if (S.t >= FSTOCK.cT) { S.t = 0; o.got = false; o.g.visible = o.halo.visible = true; } }
+}
+function fridgeChillLeft() { let m = 1e9; for (const S of FSTOCK.v) { const o = VIALS[S.i]; if (o && o.got) m = Math.min(m, FSTOCK.vT - S.t); } return m < 1e9 ? Math.max(1, Math.ceil(m)) : 0; }
+function fridgeLabelTex() {
+  const c = document.createElement('canvas'); c.width = 256; c.height = 48; const x = c.getContext('2d');
+  x.fillStyle = '#f6f2e6'; x.fillRect(0, 0, 256, 48); x.fillStyle = '#c8312a'; x.font = '900 30px "Noto Sans TC", sans-serif'; x.textBaseline = 'middle'; const tx = TR('勿動！爸爸'); const w = x.measureText(tx).width; if (w > 232) x.font = `900 ${Math.floor(30 * 232 / w)}px "Noto Sans TC", sans-serif`; x.fillText(tx, 12, 25);
+  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
 }
 // ---------- switches, taps and fans ----------
 function hxAdd(o) { o.i = HX.list.length; o.on = !!o.on; o.def = o.on; o.r = o.r || 8; HX.list.push(o); HX.id[o.id] = o; return o; }
@@ -10270,8 +10311,9 @@ function netRecvWorld(w) {
   if (w.q !== quest) setQuest(w.q); cp = w.cp; PROTO = w.pr; gotBat = w.gb; if (w.cm !== cellMax) { cellMax = w.cm; cells = cellMax; }
   const hide = o => { o.got = true; if (o.g) o.g.visible = false; if (o.halo) o.halo.visible = false; };
   w.bat.forEach((g, i) => { if (g && batteries[i] && !batteries[i].got) hide(batteries[i]); });
-  w.vi.forEach((g, i) => { if (g && VIALS[i] && !VIALS[i].got) hide(VIALS[i]); });
-  w.cr.forEach((g, i) => { if (g && CRUMBS[i] && !CRUMBS[i].got) hide(CRUMBS[i]); });
+  const back = o => { o.got = false; if (o.g) o.g.visible = true; if (o.halo) o.halo.visible = true; };   // (the fridge restocks)
+  w.vi.forEach((g, i) => { const o = VIALS[i]; if (!o) return; if (g && !o.got) hide(o); else if (!g && o.got && o.cold) back(o); });
+  w.cr.forEach((g, i) => { const o = CRUMBS[i]; if (!o) return; if (g && !o.got) hide(o); else if (!g && o.got && o.kind) back(o); });
   w.res.forEach(e => { const i = e[0], q = e.slice(1), r = resizables[i]; if (!r) return; r.net = q; if (q[4] && !r.gone) { r.gone = true; r.mesh.visible = false; r.c.y0 = -999; r.c.y1 = -998; if (r === COOKIE) COOKIE.eaten = true; } });
   let changed = false;
   w.toy.forEach((t, i) => {
@@ -10384,12 +10426,13 @@ function hostGet(d) {
     if (batteries.every(q => q.got)) unlockKey('bat6');
     for (let i = 0; i < 30; i++) emit(V3(b.x, b.y + 1.4, b.z), V3(R(-10, 10), R(4, 20), R(-10, 10)), new THREE.Color(.5, 2, 1.9), R(.15, .35), R(.4, 1), 30, 2);
   } else if (d.k === 'vial') {
-    const v = VIALS[d.i]; if (!v || v.got) return; v.got = true; v.g.visible = false; v.halo.visible = false; PROTO++; SND.pick(); toyBurst(V3(v.x, v.y + 1.6, v.z));
-    toastW(TRT`${NET.on ? C.S.name : ''}拾到一支 Prototype！（共 ${PROTO} 支）隊友變成玩具時，按 ${TOUCH ? TR('「復活」') : 'R'} 就能救回來`, 3.6);
+    const v = VIALS[d.i]; if (!v || v.got || (v.cold && PROTO >= PROTO_COLD)) return; v.got = true; v.g.visible = false; v.halo.visible = false; PROTO++; SND.pick(); toyBurst(V3(v.x, v.y + 1.6, v.z));
+    if (v.cold) toastW(TRT`${NET.on ? C.S.name : ''}由雪櫃攞咗一支 Prototype（共 ${PROTO} 支）。個位要閂住門凍 ${FSTOCK.vT} 秒先有新嘅`, 3.8);
+    else toastW(TRT`${NET.on ? C.S.name : ''}拾到一支 Prototype！（共 ${PROTO} 支）隊友變成玩具時，按 ${TOUCH ? TR('「復活」') : 'R'} 就能救回來`, 3.6);
   } else if (d.k === 'crumb') {
     const c = CRUMBS[d.i]; const cap = C.stamMax || 100; if (!c || c.got || cap >= 100) return;
     c.got = true; c.g.visible = false; c.halo.visible = false; const nm = Math.min(100, cap + c.v); stamGive(C, nm, 30); SND.pick();
-    toastW(TRT`${C.S.name}吃了餅乾碎，體力上限回到 ${nm}%`, 3);
+    toastW(TRT`${C.S.name}吃了${c.kind === 'cheese' ? TR('芝士') : c.kind === 'ham' ? TR('火腿') : TR('餅乾碎')}，體力上限回到 ${nm}%`, 3);
   } else if (d.k === 'cookie') {
     const r = COOKIE; if (!r || r.eaten) return; const team = r.s >= 1.9; const who = team ? party.filter(q => !q.frozen) : [C];
     if (!who.some(q => (q.stamMax || 100) < 100)) return;
@@ -11565,7 +11608,7 @@ function portalResumeLand(S) {
 // who joined or dropped, how good each link is, frame rate, rescues and errors. One tap copies it as
 // plain text that a player can paste into a chat and send in.
 const NLOG = { t0: performance.now(), lines: [], fps: 0, sumT: 0, mode: '', lv: '', peer: {} };
-const NLOG_BUILD = '20261126-2257';
+const NLOG_BUILD = '20261126-2328';
 function nlog(s) {
   const d = new Date(), p2 = n => String(n).padStart(2, '0');   // the clock time, so "it broke around 9:30" can be matched
   NLOG.lines.push(`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}  ${s}`); if (NLOG.lines.length > 500) NLOG.lines.splice(0, NLOG.lines.length - 500);

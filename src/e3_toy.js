@@ -156,7 +156,9 @@ function updToys(dt) {
   // vials
   for (const v of VIALS) {
     if (v.got) continue; v.g.rotation.y += dt * 1.6; v.g.position.y = v.y + 1.6 + Math.sin(T * 2.2 + v.x) * .35; v.halo.position.set(v.x, v.g.position.y, v.z); v.halo.lookAt(camera.position);
-    if (STATE === 'play' && !L.frozen && mine(L) && Math.hypot(L.pos.x - v.x, L.pos.y + 1 - v.y - 1.6, L.pos.z - v.z) < 3.6) netGet('vial', VIALS.indexOf(v));
+    if (STATE === 'play' && !L.frozen && mine(L) && Math.hypot(L.pos.x - v.x, L.pos.y + 1 - v.y - 1.6, L.pos.z - v.z) < 3.6) {
+      if (v.cold && PROTO >= PROTO_COLD) { if (!v.full || T - v.full > 6) { v.full = T; toast(`身上已經有 ${PROTO} 支 Prototype——離開雪櫃太耐會暖壞，用完先返嚟攞`, 3.4); } }
+      else netGet('vial', VIALS.indexOf(v)); }
   }
   // crumbs restore the stamina cap
   for (const c of CRUMBS) {
@@ -184,15 +186,24 @@ function addVial(x, y, z) {
   VIALS.push({ g, halo, x, y, z, got: false });
 }
 let _crumbM = null;
-function addCrumb(x, y, z, big) {
+function addCrumb(x, y, z, big, kind) {
   if (!_crumbM) _crumbM = new THREE.MeshStandardMaterial({ color: 0xc58a45, roughness: .85, map: null });
   const g = new THREE.Group(); g.position.set(x, y, z); LV.add(g);
-  const n = big ? 1 : 4;
+  if (kind === 'cheese') {   // three cubes of cheese, a little sweaty from the fridge
+    const cm = new THREE.MeshPhysicalMaterial({ color: 0xf2c84a, roughness: .45, clearcoat: .3 });
+    for (const [dx, dz, s] of [[-.9, .2, 1.5], [.8, -.5, 1.3], [.2, .9, 1.1]]) { const m = new THREE.Mesh(new THREE.BoxGeometry(s, s, s), cm); m.position.set(dx, s / 2, dz); m.rotation.y = dx * 2; m.castShadow = true; g.add(m); }
+  } else if (kind === 'ham') {   // a slice of ham, folded over
+    const hm = new THREE.MeshPhysicalMaterial({ color: 0xe88a8a, roughness: .5, clearcoat: .25 });
+    const a = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.4, .35, 24), hm); a.position.y = .2; a.castShadow = true; g.add(a);
+    const b = new THREE.Mesh(new THREE.CylinderGeometry(2.3, 2.3, .35, 24, 1, false, 0, Math.PI), hm); b.position.set(0, .55, 0); b.rotation.x = .25; g.add(b);
+    const rim = new THREE.Mesh(new THREE.TorusGeometry(2.4, .14, 6, 28), new THREE.MeshStandardMaterial({ color: 0xf6e2d8, roughness: .6 })); rim.rotation.x = Math.PI / 2; rim.position.y = .38; g.add(rim);
+  }
+  const n = kind ? 0 : big ? 1 : 4;
   for (let i = 0; i < n; i++) { const geo = big ? new THREE.CylinderGeometry(2.2, 2.3, .8, 18) : new THREE.IcosahedronGeometry(R(.45, .8), 0); const m = new THREE.Mesh(geo, _crumbM); m.position.set(big ? 0 : R(-1, 1), big ? .4 : .35, big ? 0 : R(-1, 1)); m.rotation.set(R(0, 3), R(0, 3), big ? 0 : R(0, 3)); if (big) m.rotation.set(.1, 0, .06); m.castShadow = true; g.add(m); }
   if (big) for (let i = 0; i < 7; i++) { const ch = new THREE.Mesh(new THREE.SphereGeometry(.28, 8, 6), new THREE.MeshStandardMaterial({ color: 0x3a2214, roughness: .6 })); const a = R(0, 6.28), r = R(.3, 1.7); ch.position.set(Math.cos(a) * r, .82, Math.sin(a) * r); ch.scale.y = .5; g.add(ch); }
   const halo = new THREE.Mesh(new THREE.RingGeometry(1.5, 1.9, 28), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xf4bb72).multiplyScalar(1.6), transparent: true, opacity: .35, side: THREE.DoubleSide, blending: THREE.AdditiveBlending, depthWrite: false }));
   LVFX.add(halo); halo.position.set(x, y + 1.5, z);
-  CRUMBS.push({ g, halo, x, y, z, v: big ? 20 : 10, big, got: false });
+  CRUMBS.push({ g, halo, x, y, z, v: big ? 20 : 10, big, kind, got: false });
 }
 function buildToyBin() {
   const X0 = 226, X1 = 274, Z0 = 98, Z1 = 142, H = 26, W = 1.6;

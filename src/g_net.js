@@ -258,8 +258,9 @@ function netRecvWorld(w) {
   if (w.q !== quest) setQuest(w.q); cp = w.cp; PROTO = w.pr; gotBat = w.gb; if (w.cm !== cellMax) { cellMax = w.cm; cells = cellMax; }
   const hide = o => { o.got = true; if (o.g) o.g.visible = false; if (o.halo) o.halo.visible = false; };
   w.bat.forEach((g, i) => { if (g && batteries[i] && !batteries[i].got) hide(batteries[i]); });
-  w.vi.forEach((g, i) => { if (g && VIALS[i] && !VIALS[i].got) hide(VIALS[i]); });
-  w.cr.forEach((g, i) => { if (g && CRUMBS[i] && !CRUMBS[i].got) hide(CRUMBS[i]); });
+  const back = o => { o.got = false; if (o.g) o.g.visible = true; if (o.halo) o.halo.visible = true; };   // (the fridge restocks)
+  w.vi.forEach((g, i) => { const o = VIALS[i]; if (!o) return; if (g && !o.got) hide(o); else if (!g && o.got && o.cold) back(o); });
+  w.cr.forEach((g, i) => { const o = CRUMBS[i]; if (!o) return; if (g && !o.got) hide(o); else if (!g && o.got && o.kind) back(o); });
   w.res.forEach(e => { const i = e[0], q = e.slice(1), r = resizables[i]; if (!r) return; r.net = q; if (q[4] && !r.gone) { r.gone = true; r.mesh.visible = false; r.c.y0 = -999; r.c.y1 = -998; if (r === COOKIE) COOKIE.eaten = true; } });
   let changed = false;
   w.toy.forEach((t, i) => {
@@ -372,12 +373,13 @@ function hostGet(d) {
     if (batteries.every(q => q.got)) unlockKey('bat6');
     for (let i = 0; i < 30; i++) emit(V3(b.x, b.y + 1.4, b.z), V3(R(-10, 10), R(4, 20), R(-10, 10)), new THREE.Color(.5, 2, 1.9), R(.15, .35), R(.4, 1), 30, 2);
   } else if (d.k === 'vial') {
-    const v = VIALS[d.i]; if (!v || v.got) return; v.got = true; v.g.visible = false; v.halo.visible = false; PROTO++; SND.pick(); toyBurst(V3(v.x, v.y + 1.6, v.z));
-    toastW(`${NET.on ? C.S.name : ''}拾到一支 Prototype！（共 ${PROTO} 支）隊友變成玩具時，按 ${TOUCH ? '「復活」' : 'R'} 就能救回來`, 3.6);
+    const v = VIALS[d.i]; if (!v || v.got || (v.cold && PROTO >= PROTO_COLD)) return; v.got = true; v.g.visible = false; v.halo.visible = false; PROTO++; SND.pick(); toyBurst(V3(v.x, v.y + 1.6, v.z));
+    if (v.cold) toastW(`${NET.on ? C.S.name : ''}由雪櫃攞咗一支 Prototype（共 ${PROTO} 支）。個位要閂住門凍 ${FSTOCK.vT} 秒先有新嘅`, 3.8);
+    else toastW(`${NET.on ? C.S.name : ''}拾到一支 Prototype！（共 ${PROTO} 支）隊友變成玩具時，按 ${TOUCH ? '「復活」' : 'R'} 就能救回來`, 3.6);
   } else if (d.k === 'crumb') {
     const c = CRUMBS[d.i]; const cap = C.stamMax || 100; if (!c || c.got || cap >= 100) return;
     c.got = true; c.g.visible = false; c.halo.visible = false; const nm = Math.min(100, cap + c.v); stamGive(C, nm, 30); SND.pick();
-    toastW(`${C.S.name}吃了餅乾碎，體力上限回到 ${nm}%`, 3);
+    toastW(`${C.S.name}吃了${c.kind === 'cheese' ? '芝士' : c.kind === 'ham' ? '火腿' : '餅乾碎'}，體力上限回到 ${nm}%`, 3);
   } else if (d.k === 'cookie') {
     const r = COOKIE; if (!r || r.eaten) return; const team = r.s >= 1.9; const who = team ? party.filter(q => !q.frozen) : [C];
     if (!who.some(q => (q.stamMax || 100) < 100)) return;

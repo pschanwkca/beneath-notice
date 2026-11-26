@@ -1,0 +1,9 @@
+[{"eval": "window.__bn.startChapter2(); 1"}, {"wait": 6000},
+ {"eval": "(()=>{const B=window.__bn,L=B.leader; window.__NODET=true; B.toyUnfreezeAll(); B.state='play'; B.PROTO=0; B.hxSet && B.HX.id.fridge && B.hxSet(B.HX.id.fridge, true); B.step(120); const v=B.VIALS.filter(q=>q.cold); L.pos.set(168,88.5,-168); L.vel.set(0,0,0); B.step(10); const p1=B.PROTO; L.pos.set(180,88.5,-168); B.step(10); const p2=B.PROTO; return {cold:v.length, p1, p2, got:v.map(q=>q.got), doorA:+B.KS.doorA.toFixed(2), hint:B.W.LEVELS.kitchen.hint(L)}; })()"},
+ {"eval": "(()=>{const B=window.__bn,L=B.leader; B.PROTO=0; const v=B.VIALS.filter(q=>q.cold); L.pos.set(100,0,-60); B.hxSet(B.HX.id.fridge,false); B.step(200); const d0=+B.KS.doorA.toFixed(2); B.step(3700); return {d0, got:v.map(q=>q.got)}; })()"},
+ {"eval": "(()=>{const B=window.__bn,L=B.leader; B.PROTO=2; const v=B.VIALS.filter(q=>q.cold); B.hxSet(B.HX.id.fridge,true); B.step(120); L.pos.set(168,88.5,-168); B.step(10); const blocked=v[0].got; L.stamMax=60; L.stamina=40; L.pos.set(204,48,-172); B.step(10); const c=B.CRUMBS.find(q=>q.kind==='cheese'); return {blocked, proto:B.PROTO, cheese:c.got, stamMax:L.stamMax}; })()"},
+ {"eval": "(()=>{const B=window.__bn,L=B.leader; L.pos.set(172,88.5,-160); L.vel.set(0,0,0); L.yaw=Math.PI; B.cam.yaw=0; B.cam.pitch=.35; B.cam.dist=22; B.step(30); return document.getElementById('fdark').style.opacity; })()"},
+ {"frame": 1}, {"shot": "fridge_rack"},
+ {"eval": "(()=>{const B=window.__bn,L=B.leader; B.hxSet(B.HX.id.fridge,false); B.step(200); return [document.getElementById('fdark').style.opacity, +B.KS.doorA.toFixed(2)]; })()"},
+ {"frame": 1}, {"shot": "fridge_dark"}
+]
