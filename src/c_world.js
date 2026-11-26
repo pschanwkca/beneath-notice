@@ -312,9 +312,9 @@ function buildRoom() {
   }
   box(-296, -206, 257, 260, -250, -226, M.stair, { uv: 60 });
   const strL = Math.hypot(286, 260), ang = Math.atan2(260, 286);
-  for (const sx of [-208, -294]) { const s = new THREE.Mesh(new THREE.BoxGeometry(4, 26, strL), M.stair); s.position.set(sx, 130 - 4, -83); s.rotation.x = ang; s.castShadow = true; s.receiveShadow = true; LV.add(s); }
+  for (const sx of [-208, -294]) { const s = new THREE.Mesh(new THREE.BoxGeometry(4, 26, strL), M.stair); s.position.set(sx, 130 - 4, -83); s.rotation.x = ang; s.castShadow = true; s.receiveShadow = true; s.userData.noSolid = true; LV.add(s); }   // (the side boards: open underneath — the steps carry their own colliders)
   for (let i = 0; i < 13; i += 3) { const zf = 60 - i * 22 - 11; cyl(-203, zf, 1.6, 20 * (i + 1), 20 * (i + 1) + 85, M.stair, { col: false }); }
-  const rail = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, strL, 12), M.stair); rail.rotation.x = Math.PI / 2 - ang; rail.position.set(-203, 130 + 80, -83); rail.rotation.order = 'YXZ'; rail.rotation.set(-(Math.PI / 2 - ang), 0, 0); rail.castShadow = true; LV.add(rail);
+  const rail = new THREE.Mesh(new THREE.CylinderGeometry(2.2, 2.2, strL, 12), M.stair); rail.userData.noSolid = true; rail.rotation.x = Math.PI / 2 - ang; rail.position.set(-203, 130 + 80, -83); rail.rotation.order = 'YXZ'; rail.rotation.set(-(Math.PI / 2 - ang), 0, 0); rail.castShadow = true; LV.add(rail);
   // under-stairs storage
   box(-296, -258, 0, 26, -92, -58, M.cardC, { uv: 0 });
   cyl(-236, -40, 9, 0, 12.5, M.paint, { seg: 32 }); cyl(-236, -40, 9.2, 12.5, 13.2, M.dsteel, { seg: 32 });
