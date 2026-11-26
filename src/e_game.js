@@ -440,14 +440,38 @@ function updAim() {
   const hits = ray.intersectObjects(resizables.filter(r => r.gun !== false && !r.gone).map(r => r.mesh), true);
   if (hits.length) { const h = hits[0]; let o = h.object; while (o && !o.userData.res) o = o.parent; if (o && !rayBlocked(ray.ray.origin, ray.ray.direction, h.distance - .6, true)) aimRes = { r: o.userData.res, p: h.point.clone() }; }
 }
+// ---------- cooldowns: every character's main ability, and how long until it's ready again ----------
+const ACD = { gun: 0, tongue: 0 };
+function abilCD() {
+  const C = leader; if (!C) return null;
+  switch (C.id) {
+    case 'dad': if (cells < 1) return { left: 10 - cellT, dur: 10, what: '充電' }; return { left: ACD.gun - T, dur: .9 };
+    case 'coon': return { left: CREW.pebCD - T, dur: 2.2 };
+    case 'hog': return { left: (C.dashCD || 0) - T, dur: 1.1 };
+    case 'cham': return { left: ACD.tongue - T, dur: 1.2 };
+    case 'sq': return { left: SCOUT.cd, dur: 14 };
+    case 'bat': return { left: NC.pingCD - T, dur: 8 };
+    case 'frog': { const s = swNear(C); return s && s.cd > T ? { left: s.cd - T, dur: (s.cd - s.until) + (s.until > T ? s.until - T : 0) || 25 } : null; }
+    case 'rab': return { left: (POUCH.cd || 0) - T, dur: 2.5 };
+  }
+  return null;
+}
+function cdHUD() {
+  const A = abilCD(), left = A ? Math.max(0, A.left) : 0, k = A && left > 0 ? clamp(left / A.dur, 0, 1) : 0;
+  const el = $('acd'); if (!el) return; const on = k > 0;
+  if (el.classList.contains('on') !== on) el.classList.toggle('on', on);
+  if (on) { $('acdF').style.width = ((1 - k) * 100).toFixed(1) + '%'; const t = `${A.what || '冷卻中'} ${left < 10 ? left.toFixed(1) : Math.ceil(left)} 秒`; if ($('acdT').textContent !== t) $('acdT').textContent = t; }
+  const tu = $('touch'); if (tu && !tu.hidden) { const v = k.toFixed(3); if (tu.style.getPropertyValue('--cd') !== v) tu.style.setProperty('--cd', v); tu.classList.toggle('cdOn', on); }
+}
 function fireGun(grow) {
   if (!leader || leader.id !== 'dad') return;
   if (!aimRes) { toast('瞄準可以改變大小的東西（會發光）再開槍'); return; }
   if (cells < 1) { toast('尺寸槍能量不足，等一下會慢慢充回'); return; }
+  if (ACD.gun > T) return;
   const r = aimRes.r; const nt = clamp(r.target * (grow ? 2 : .5), r.min, r.max);
   if (Math.abs(nt - r.target) < 1e-3) { toast(grow ? `${r.name}已經放到最大了` : `${r.name}已經縮到最小了`); return; }
   if (grow && !roomFor(r, nt)) { toast(`空間不夠，「${r.name}」放不大`); SND.zapDn(); return; }
-  if (NET.client) nsend({ t: 'gun', i: resizables.indexOf(r), g: grow }, NET.hostId); else { r.target = nt; sizeNotice(r, grow); } cells--; r.pulse = 1; grow ? SND.zapUp() : SND.zapDn();
+  if (NET.client) nsend({ t: 'gun', i: resizables.indexOf(r), g: grow }, NET.hostId); else { r.target = nt; sizeNotice(r, grow); } cells--; ACD.gun = T + .9; r.pulse = 1; grow ? SND.zapUp() : SND.zapDn();
   const tip = V3(); leader.gunTip.getWorldPosition(tip); const dv = V3().subVectors(aimRes.p, tip); const len = dv.length();
   gunBeam.position.copy(tip); gunBeam.scale.set(1, 1, len); gunBeam.lookAt(aimRes.p); gunBeam.material.opacity = 1;
   for (let i = 0; i < 26; i++) emit(aimRes.p, V3(R(-14, 14), R(-6, 18), R(-14, 14)), new THREE.Color(.5, 2.2, 2.1), R(.15, .4), R(.3, .8), 20, 2);
@@ -650,6 +674,7 @@ function updHUD(dt) {
   if (mkp) { const on = project(mkp, $('mk'), 0, -18, true); $('mk').classList.add('on'); $('mkd').textContent = (Math.hypot(L.pos.x - mkp.x, L.pos.z - mkp.z) / 100).toFixed(1) + ' m'; } else $('mk').classList.remove('on');
   $('cross').classList.toggle('on', L.id === 'dad' || L.id === 'cham'); $('cross').classList.toggle('t', !!aimRes || !!tongueAim);
   $('cells').innerHTML = Array.from({ length: cellMax }, (_, i) => `<i class="${i < cells ? 'f' : ''}"></i>`).join('');
+  cdHUD();
   let h = '';
   const ph = L.id === 'bear' && !STK ? pushTarget(L) : null;
   if (NET.on && L.frozen) h = L.toyAt === 'box' ? `你被收在${L.toyPlace || '某處'}裡——要隊友帶 Prototype 走過來救你` : L.toyAt === 'hand' ? '你正被拿走……' : (TOUCH ? '靈魂出竅：搖桿飄 · 「我喺度」叫隊友 · 撳上面頭像換鏡頭' : '靈魂出竅：WASD 飄 · Space／C 上落 · F 叫隊友 · 撳上面頭像或 Tab 換鏡頭');

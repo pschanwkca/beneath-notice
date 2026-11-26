@@ -370,6 +370,12 @@ body.paused #chap{opacity:0!important}
 .susrow.hot #susLbl{color:var(--c)}
 @keyframes susPulse{50%{opacity:.55}}
 html.touch .susbar{width:64px;height:5px}html.touch #susLbl{font-size:9.5px;left:calc(50% + 38px)}html.touch .susrow{height:12px}
+.acd{display:none;margin-top:8px;text-align:right}
+.acd.on{display:block}
+.acd span{display:block;font:600 11px "Noto Sans TC",sans-serif;letter-spacing:.06em;color:#ffd7a0;margin-bottom:4px}
+.acd i{display:block;height:4px;border-radius:99px;background:rgba(245,240,230,.14);overflow:hidden}
+.acd b{display:block;height:100%;width:0;border-radius:99px;background:linear-gradient(90deg,#ffb36b,#ffe0a8)}
+.touchui.cdOn #tbAct::after,.touchui.cdOn #tbGrow::after,.touchui.cdOn #tbShrink::after,.touchui.cdOn #tbScout::after,.touchui.cdOn #tbPouch::after{content:'';position:absolute;inset:-1px;border-radius:50%;pointer-events:none;background:conic-gradient(rgba(8,10,14,.62) calc(var(--cd) * 360deg),transparent 0);border:0;opacity:1;transform:none}
 .frost{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;z-index:2;background:radial-gradient(ellipse at center,rgba(220,240,255,0) 48%,rgba(210,235,255,.35) 72%,rgba(235,248,255,.85) 100%);box-shadow:inset 0 0 80px rgba(190,225,255,.6)}
 body.paused .testchip{display:none}
 html.touch .testchip{top:auto;bottom:calc(8px + env(safe-area-inset-bottom));left:calc(14px + env(safe-area-inset-left));transform:none;font-size:10px;padding:2px 10px}
@@ -888,6 +894,7 @@ html.touch .chap.room .logo{font-size:13px}
     <div class="an" id="an">尺寸槍</div>
     <div class="ad" id="ad">左鍵放大 · 右鍵縮小</div>
     <div class="cells" id="cells"></div>
+    <div class="acd" id="acd"><span id="acdT"></span><i><b id="acdF"></b></i></div>
   </div>
   <div class="stam" id="stam"><svg viewBox="0 0 40 40"><circle class="bg" cx="20" cy="20" r="15"/><circle class="fg" id="stc" cx="20" cy="20" r="15"/><circle class="cap" id="stcap" cx="20" cy="20" r="15"/></svg></div>
   <div class="mk" id="mk"><div class="dia"></div><span id="mkd"></span></div>
@@ -1094,6 +1101,7 @@ Object.assign(I18N_EN, {"雪櫃門": "Fridge door", "閂雪櫃門": "Shut the fr
 Object.assign(I18N_EN, {"佢哋以為係小橘": "they think it was the cat", "起疑": "suspicious", "廚房燈自己開咗": "kitchen light came on", "廚房燈熄咗": "kitchen light went off", "水龍頭開咗": "tap left running", "抽油煙機自己郁": "the hood switched itself", "廁所燈開咗": "bathroom light on", "廁所燈熄咗": "bathroom light off", "冇人沖廁": "a flush with nobody there", "電視自己開咗": "TV came on by itself", "電視熄咗": "TV went off", "落地燈熄咗": "lamp went off", "雪櫃門開咗": "fridge left open", "女兒房燈郁咗": "her light changed", "枱燈郁咗": "desk lamp changed", "星星燈郁咗": "star lamp changed", "音樂盒響": "the music box", "有嘢變咗": "something changed", "聽到聲": "heard a noise", "好似見到嘢郁": "glimpsed something move", "有古怪": "something's off", "靜咗落嚟": "calming down", "平靜": "Calm", "怪怪地": "Uneasy", "起疑心": "Suspicious", "搜屋中": "Searching", "例行": "Routine", "留意": "Wary", "搜查中": "Searching", "搵緊": "Looking"});
 Object.assign(I18N_EN, {"黐鼠膠": "Glue trap", "封住老鼠窿嘅紙皮": "Cardboard over the mouse hole", "撞開紙皮": "Barge through the cardboard", "紙皮俾老友撞爛咗——條老鼠窿又通返": "Buddy barged through the cardboard — the mouse hole's open again", "甩開咗！": "Free!", "黐住咗！撳「跳」用力掙扎，或者等隊友過嚟拉你": "Stuck! Press Jump to struggle, or wait for a teammate to pull you off", "一定有老鼠……放幾塊黐鼠膠先。": "There must be mice… I'll put down some glue traps.", "我去拿黐鼠膠。": "I'll get the glue traps.", "一定係老鼠窿……今日先用紙皮封住，聽日買鋼絲球。": "It's a mouse hole… I'll cover it with cardboard today and get steel wool tomorrow.", "……咁就入唔到嚟喇。": "…That'll keep them out."});
 Object.assign(I18N_EN, {"再放一塊。": "One more here.", "呢度都放一塊。": "One here too.", "又俾佢哋撞爛咗？再封過。": "They broke through again? I'll cover it again."});
+Object.assign(I18N_EN, {"冷卻中": "Cooling down", "充電": "Recharging", "秒": "s"});
 
 // =====================================================================
 //  Language: 中文 (default) or English.  ?lang=en / ?lang=zh in the address, or the button on the title
@@ -3493,14 +3501,38 @@ function updAim() {
   const hits = ray.intersectObjects(resizables.filter(r => r.gun !== false && !r.gone).map(r => r.mesh), true);
   if (hits.length) { const h = hits[0]; let o = h.object; while (o && !o.userData.res) o = o.parent; if (o && !rayBlocked(ray.ray.origin, ray.ray.direction, h.distance - .6, true)) aimRes = { r: o.userData.res, p: h.point.clone() }; }
 }
+// ---------- cooldowns: every character's main ability, and how long until it's ready again ----------
+const ACD = { gun: 0, tongue: 0 };
+function abilCD() {
+  const C = leader; if (!C) return null;
+  switch (C.id) {
+    case 'dad': if (cells < 1) return { left: 10 - cellT, dur: 10, what: TR('充電') }; return { left: ACD.gun - T, dur: .9 };
+    case 'coon': return { left: CREW.pebCD - T, dur: 2.2 };
+    case 'hog': return { left: (C.dashCD || 0) - T, dur: 1.1 };
+    case 'cham': return { left: ACD.tongue - T, dur: 1.2 };
+    case 'sq': return { left: SCOUT.cd, dur: 14 };
+    case 'bat': return { left: NC.pingCD - T, dur: 8 };
+    case 'frog': { const s = swNear(C); return s && s.cd > T ? { left: s.cd - T, dur: (s.cd - s.until) + (s.until > T ? s.until - T : 0) || 25 } : null; }
+    case 'rab': return { left: (POUCH.cd || 0) - T, dur: 2.5 };
+  }
+  return null;
+}
+function cdHUD() {
+  const A = abilCD(), left = A ? Math.max(0, A.left) : 0, k = A && left > 0 ? clamp(left / A.dur, 0, 1) : 0;
+  const el = $('acd'); if (!el) return; const on = k > 0;
+  if (el.classList.contains('on') !== on) el.classList.toggle('on', on);
+  if (on) { $('acdF').style.width = ((1 - k) * 100).toFixed(1) + '%'; const t = TRT`${A.what || TR('冷卻中')} ${left < 10 ? left.toFixed(1) : Math.ceil(left)} 秒`; if ($('acdT').textContent !== t) $('acdT').textContent = t; }
+  const tu = $('touch'); if (tu && !tu.hidden) { const v = k.toFixed(3); if (tu.style.getPropertyValue('--cd') !== v) tu.style.setProperty('--cd', v); tu.classList.toggle('cdOn', on); }
+}
 function fireGun(grow) {
   if (!leader || leader.id !== 'dad') return;
   if (!aimRes) { toast(TR('瞄準可以改變大小的東西（會發光）再開槍')); return; }
   if (cells < 1) { toast(TR('尺寸槍能量不足，等一下會慢慢充回')); return; }
+  if (ACD.gun > T) return;
   const r = aimRes.r; const nt = clamp(r.target * (grow ? 2 : .5), r.min, r.max);
   if (Math.abs(nt - r.target) < 1e-3) { toast(grow ? TRT`${r.name}已經放到最大了` : TRT`${r.name}已經縮到最小了`); return; }
   if (grow && !roomFor(r, nt)) { toast(TRT`空間不夠，「${r.name}」放不大`); SND.zapDn(); return; }
-  if (NET.client) nsend({ t: 'gun', i: resizables.indexOf(r), g: grow }, NET.hostId); else { r.target = nt; sizeNotice(r, grow); } cells--; r.pulse = 1; grow ? SND.zapUp() : SND.zapDn();
+  if (NET.client) nsend({ t: 'gun', i: resizables.indexOf(r), g: grow }, NET.hostId); else { r.target = nt; sizeNotice(r, grow); } cells--; ACD.gun = T + .9; r.pulse = 1; grow ? SND.zapUp() : SND.zapDn();
   const tip = V3(); leader.gunTip.getWorldPosition(tip); const dv = V3().subVectors(aimRes.p, tip); const len = dv.length();
   gunBeam.position.copy(tip); gunBeam.scale.set(1, 1, len); gunBeam.lookAt(aimRes.p); gunBeam.material.opacity = 1;
   for (let i = 0; i < 26; i++) emit(aimRes.p, V3(R(-14, 14), R(-6, 18), R(-14, 14)), new THREE.Color(.5, 2.2, 2.1), R(.15, .4), R(.3, .8), 20, 2);
@@ -3703,6 +3735,7 @@ function updHUD(dt) {
   if (mkp) { const on = project(mkp, $('mk'), 0, -18, true); $('mk').classList.add('on'); $('mkd').textContent = (Math.hypot(L.pos.x - mkp.x, L.pos.z - mkp.z) / 100).toFixed(1) + ' m'; } else $('mk').classList.remove('on');
   $('cross').classList.toggle('on', L.id === 'dad' || L.id === 'cham'); $('cross').classList.toggle('t', !!aimRes || !!tongueAim);
   $('cells').innerHTML = Array.from({ length: cellMax }, (_, i) => `<i class="${i < cells ? 'f' : ''}"></i>`).join('');
+  cdHUD();
   let h = '';
   const ph = L.id === 'bear' && !STK ? pushTarget(L) : null;
   if (NET.on && L.frozen) h = L.toyAt === 'box' ? TRT`你被收在${L.toyPlace || TR('某處')}裡——要隊友帶 Prototype 走過來救你` : L.toyAt === 'hand' ? TR('你正被拿走……') : (TOUCH ? TR('靈魂出竅：搖桿飄 · 「我喺度」叫隊友 · 撳上面頭像換鏡頭') : TR('靈魂出竅：WASD 飄 · Space／C 上落 · F 叫隊友 · 撳上面頭像或 Tab 換鏡頭'));
@@ -4674,7 +4707,7 @@ function updTongueAim() {
   tongueAim = { P, c, item: null, n: hitNormal(c, P) };
 }
 function chamTongue() {
-  const C = leader; if (!C || C.id !== 'cham' || TNG.phase !== 'off' || STK || C.mantle || C.zip || STATE !== 'play' || !mine(C) || C.frozen) return; tongueMesh();
+  const C = leader; if (!C || C.id !== 'cham' || TNG.phase !== 'off' || STK || C.mantle || C.zip || STATE !== 'play' || !mine(C) || C.frozen) return; if (ACD.tongue > T) return; ACD.tongue = T + 1.2; tongueMesh();
   const A = tongueAim; SND.swish(); tone(900, 300, .12, .04, 'triangle');
   if (!A) { TNG.phase = 'miss'; TNG.t = 0; const d = V3(); camera.getWorldDirection(d); TNG.b.copy(mouthPos(C)).addScaledVector(d, 14); return; }
   TNG.b.copy(A.item ? A.item.p : A.P); TNG.t = 0;
@@ -11500,7 +11533,7 @@ function portalResumeLand(S) {
 // who joined or dropped, how good each link is, frame rate, rescues and errors. One tap copies it as
 // plain text that a player can paste into a chat and send in.
 const NLOG = { t0: performance.now(), lines: [], fps: 0, sumT: 0, mode: '', lv: '', peer: {} };
-const NLOG_BUILD = '20261126-2124';
+const NLOG_BUILD = '20261126-2132';
 function nlog(s) {
   const d = new Date(), p2 = n => String(n).padStart(2, '0');   // the clock time, so "it broke around 9:30" can be matched
   NLOG.lines.push(`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}  ${s}`); if (NLOG.lines.length > 500) NLOG.lines.splice(0, NLOG.lines.length - 500);
@@ -13027,6 +13060,7 @@ function pouchUse(id) {
   const L = leader; if (!isRoo(L) || STATE !== 'play' || L.frozen) return;
   const it = POUCH_ITEMS.find(q => q.id === id); const i = POUCH_ITEMS.indexOf(it);
   if (!(POUCH.cnt[id] > 0)) { toast(TRT`育兒袋入面冇${it.name}喇`); return; }
+  if (id === 'spring') { if ((POUCH.cd || 0) > T) { toast(TRT`彈簧墊冷卻中（${Math.ceil(POUCH.cd - T)} 秒）`); return; } POUCH.cd = T + 2.5; }
   if (id === 'umb' && L.umbT > T) { toast(TR('雨傘已經開咗')); return; }
   const fx = Math.sin(L.yaw), fz = Math.cos(L.yaw); let a = L.pos.clone(), b = null;
   if (id === 'spring') { a.set(L.pos.x + fx * 3.2, 0, L.pos.z + fz * 3.2); const [sup] = supportAt(a.x, a.z, 1, L.pos.y + 3); if (sup < L.pos.y - 6) { toast(TR('呢度放唔穩彈簧墊')); return; } a.y = sup; }
@@ -15184,7 +15218,7 @@ function startRoof() { return startChapter('roof', { chapter: TR('第一章'), t
 
 requestAnimationFrame(frame);
 init().catch(e => { console.error(e); $('err').textContent = TR('載入失敗：') + (e && e.stack || e); });
-if (location.hash === '#dev') window.__VC = () => VC; if (location.hash === '#dev') window.__bn = { CINE, cineStart, cineAt, cineSay, SC, scBell, filmPlay, filmEnd, FILM_RECESS, FILM_ESSAY, FILM_END, MPQ_SCHOOL, MPQ_PARK, scFilm, mpSchoolMarker, say, toast, chapterBanner, emoShow, GHOST, ghostPing, watchCycle, keys, grade, RL, REAL, ST, MAT, HUMANS, humanBody, humanAnim, humanGait, buildHuman, SOLID, POUCH, pouchUse, pouchOpen, pouchClose, PROPS, get party() { return party; }, get cols() { return cols; }, ZONES, ZL, STATIC, get LV() { return LV; }, dayCloudTex, camera, MOLE, moleDig, softAt, switchTo, LP, WARPS, PK, SLIDE, parkLit, moonShade, NLOG, netLogText, nlog, LOBBY, mpSaveLoad, mpApplySave, setMyName, hostFreeze, toyUnfreezeAll, UNSTK, unstuck, unInside, PORT, PRO, PO, portalOut, proSkip, prC, prPad, MP_PRO, WATCH, watchCycle, watchTarget, STICK, EMO, EMOTES, renderSticker, emoKit, emoKitDone, emoBuildAll, TTL, titleSetup, titleEnd, RoomEnvironment, livingGet, RF, RFH, RFG, rfHatch, rfTopAt, rfHip, rfGab, FILM_RIDGE, startRoof, birdSees, birdGrab, RF_NEST, get CPS() { return CPS; }, emoDo, emoShow, emoOpen, emoClose, UPS, humanFloor, roomOf, navNearest, ACTS, roomSteps, brainIncident, react, agentRoom, OLDB, YS, AGB, GS, camPowered, doorOpen, mpChecklist, HB, HX, hxSet, hxNear, navPath, NAVN, KM, KID, LIV, scene, THREE, MUS, ARR, BANK, AU, SET, toyFreeze, useProto, TAKE, protoTarget, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, ST, pressButton, LANES, pause, garageHear, TEST, testWarp, WARPS, testAll, startChapter2, NC, batPing, tortShell, crewJoin, hideK, startGame, startChapter, openChapters, step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT, GS, YS, DECK, GY, WC, ventOpen, latchOpen, mpMarker, zoneFloor, KS }; }, info: () => ({ fps: $('fps').textContent, state: STATE, lv: LEVEL, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
+if (location.hash === '#dev') window.__VC = () => VC; if (location.hash === '#dev') window.__bn = { ACD, abilCD, get T() { return T; }, CINE, cineStart, cineAt, cineSay, SC, scBell, filmPlay, filmEnd, FILM_RECESS, FILM_ESSAY, FILM_END, MPQ_SCHOOL, MPQ_PARK, scFilm, mpSchoolMarker, say, toast, chapterBanner, emoShow, GHOST, ghostPing, watchCycle, keys, grade, RL, REAL, ST, MAT, HUMANS, humanBody, humanAnim, humanGait, buildHuman, SOLID, POUCH, pouchUse, pouchOpen, pouchClose, PROPS, get party() { return party; }, get cols() { return cols; }, ZONES, ZL, STATIC, get LV() { return LV; }, dayCloudTex, camera, MOLE, moleDig, softAt, switchTo, LP, WARPS, PK, SLIDE, parkLit, moonShade, NLOG, netLogText, nlog, LOBBY, mpSaveLoad, mpApplySave, setMyName, hostFreeze, toyUnfreezeAll, UNSTK, unstuck, unInside, PORT, PRO, PO, portalOut, proSkip, prC, prPad, MP_PRO, WATCH, watchCycle, watchTarget, STICK, EMO, EMOTES, renderSticker, emoKit, emoKitDone, emoBuildAll, TTL, titleSetup, titleEnd, RoomEnvironment, livingGet, RF, RFH, RFG, rfHatch, rfTopAt, rfHip, rfGab, FILM_RIDGE, startRoof, birdSees, birdGrab, RF_NEST, get CPS() { return CPS; }, emoDo, emoShow, emoOpen, emoClose, UPS, humanFloor, roomOf, navNearest, ACTS, roomSteps, brainIncident, react, agentRoom, OLDB, YS, AGB, GS, camPowered, doorOpen, mpChecklist, HB, HX, hxSet, hxNear, navPath, NAVN, KM, KID, LIV, scene, THREE, MUS, ARR, BANK, AU, SET, toyFreeze, useProto, TAKE, protoTarget, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, ST, pressButton, LANES, pause, garageHear, TEST, testWarp, WARPS, testAll, startChapter2, NC, batPing, tortShell, crewJoin, hideK, startGame, startChapter, openChapters, step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT, GS, YS, DECK, GY, WC, ventOpen, latchOpen, mpMarker, zoneFloor, KS }; }, info: () => ({ fps: $('fps').textContent, state: STATE, lv: LEVEL, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
 
 </script>
 </body>

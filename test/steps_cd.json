@@ -1,0 +1,4 @@
+[ {"eval": "window.__bn.startChapter2(); 1"}, {"wait": 6000},
+  {"eval": "(() => { const B = window.__bn; B.toyUnfreezeAll(); B.state = 'play'; window.__NODET = true; B.ACD.gun = B.T + .9; B.step(3); const a = [document.getElementById('acd').className, document.getElementById('acdT').textContent, document.getElementById('acdF').style.width]; B.step(60); a.push(document.getElementById('acd').className); B.ACD.gun = B.T + .9; B.step(20); return a; })()"},
+  {"frame": 1}, {"shot": "cd_hud"}
+]

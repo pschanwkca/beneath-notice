@@ -81,7 +81,7 @@ function updTongueAim() {
   tongueAim = { P, c, item: null, n: hitNormal(c, P) };
 }
 function chamTongue() {
-  const C = leader; if (!C || C.id !== 'cham' || TNG.phase !== 'off' || STK || C.mantle || C.zip || STATE !== 'play' || !mine(C) || C.frozen) return; tongueMesh();
+  const C = leader; if (!C || C.id !== 'cham' || TNG.phase !== 'off' || STK || C.mantle || C.zip || STATE !== 'play' || !mine(C) || C.frozen) return; if (ACD.tongue > T) return; ACD.tongue = T + 1.2; tongueMesh();
   const A = tongueAim; SND.swish(); tone(900, 300, .12, .04, 'triangle');
   if (!A) { TNG.phase = 'miss'; TNG.t = 0; const d = V3(); camera.getWorldDirection(d); TNG.b.copy(mouthPos(C)).addScaledVector(d, 14); return; }
   TNG.b.copy(A.item ? A.item.p : A.P); TNG.t = 0;

@@ -136,6 +136,7 @@ function pouchUse(id) {
   const L = leader; if (!isRoo(L) || STATE !== 'play' || L.frozen) return;
   const it = POUCH_ITEMS.find(q => q.id === id); const i = POUCH_ITEMS.indexOf(it);
   if (!(POUCH.cnt[id] > 0)) { toast(`育兒袋入面冇${it.name}喇`); return; }
+  if (id === 'spring') { if ((POUCH.cd || 0) > T) { toast(`彈簧墊冷卻中（${Math.ceil(POUCH.cd - T)} 秒）`); return; } POUCH.cd = T + 2.5; }
   if (id === 'umb' && L.umbT > T) { toast('雨傘已經開咗'); return; }
   const fx = Math.sin(L.yaw), fz = Math.cos(L.yaw); let a = L.pos.clone(), b = null;
   if (id === 'spring') { a.set(L.pos.x + fx * 3.2, 0, L.pos.z + fz * 3.2); const [sup] = supportAt(a.x, a.z, 1, L.pos.y + 3); if (sup < L.pos.y - 6) { toast('呢度放唔穩彈簧墊'); return; } a.y = sup; }
