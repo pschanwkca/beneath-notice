@@ -36,8 +36,8 @@ function watchTick() {
   const sig = [me.id, cur ? cur.id : '', ...mates.map(C => C.id + (C.frozen ? '*' : ''))].join('|') + (TOUCH ? 't' : '');
   if (!WATCH.shown) { el.hidden = false; WATCH.shown = true; WATCH.sig = ''; }
   if (sig === WATCH.sig) return; WATCH.sig = sig;
-  const btn = (C, self) => { const act = self ? !cur : cur === C, off = !self && C.frozen, nm = self ? TR('你') : C.S.name;
-    return `<button class="sw${act ? ' on' : ''}${off ? ' off' : ''}${self ? ' me' : ''}" data-id="${C.id}" style="--c:${C.S.col}" aria-label="${self ? TR('你的靈魂') : nm}" title="${nm}"${off ? ' disabled' : ''}><span class="sw-ph">${PORTRAITS[C.id] ? `<img alt="" src="${PORTRAITS[C.id]}">` : ''}</span>${self ? `<span class="sw-g">${SW_WISP}</span>` : ''}<em>${nm}</em></button>`; };
+  const btn = (C, self) => { const act = self ? !cur : cur === C, off = !self && C.frozen, nm = self ? '' : partyName(C.id);
+    return `<button class="sw${act ? ' on' : ''}${off ? ' off' : ''}${self ? ' me' : ''}" data-id="${C.id}" style="--c:${C.S.col}" aria-label="${self ? TR('你的靈魂') : nm}" title="${self ? TR('你的靈魂') : nm}"${off ? ' disabled' : ''}><span class="sw-ph">${PORTRAITS[C.id] ? `<img alt="" src="${PORTRAITS[C.id]}">` : ''}</span>${self ? `<span class="sw-g">${SW_WISP}</span>` : `<em>${nm}</em>`}</button>`; };   // (your own soul needs no name)
   $('specRow').innerHTML = btn(me, true) + mates.map(C => btn(C, false)).join('') + (TOUCH || !mates.length ? '' : '<kbd class="sw-k">Tab</kbd>');
 }
 addEventListener('keydown', e => {

@@ -26,10 +26,10 @@ const shot = async (p, name) => { await p.evaluate(() => { window.__NR = false; 
 
 
 // lobby
-await A.evaluate(() => document.getElementById('goMP').click()); await A.evaluate(() => document.getElementById('mpCreate').click());
+await A.evaluate(() => document.getElementById('goMP').click()); await A.evaluate(() => { const e = document.getElementById('mpName'); e.value = 'Jason'; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); }); await A.evaluate(() => document.getElementById('mpCreate').click());
 await until(A, () => !!window.__bn.NET.me);
 const code = await ev(A, () => document.getElementById('mpRoomCode').textContent); log('room', code);
-await B.evaluate(() => document.getElementById('goMP').click()); await B.evaluate(v => { document.getElementById('mpCode').value = v; }, code); await B.evaluate(() => document.getElementById('mpJoin').click());
+await B.evaluate(() => document.getElementById('goMP').click()); await B.evaluate(() => { const e = document.getElementById('mpName'); e.value = 'Kiki'; e.dispatchEvent(new Event('input', { bubbles: true })); e.dispatchEvent(new Event('change', { bubbles: true })); }); await B.evaluate(v => { document.getElementById('mpCode').value = v; }, code); await B.evaluate(() => document.getElementById('mpJoin').click());
 log('B found host', await until(B, () => !!window.__bn.NET.hostId));
 await ev(A, () => window.__bn.mpPick('dad')); await wait(300); await ev(B, () => window.__bn.mpPick('bear'));
 await until(A, () => window.__bn.NET.slots.bear && window.__bn.NET.slots.dad);
@@ -45,6 +45,7 @@ const tag = PHONE ? 'phone' : 'desk';
 await tp(A, 600, 0, 40); await tp(B, 640, 0, 60); await wait(1500);
 for (const p of [A, B]) await ev(p, () => { window.__bn.cam.yaw = Math.PI * .5; });
 await ev(B, () => window.__bn.toyFreeze('mom'));
+log('names', await Promise.all([A, B].map(p => ev(p, () => [...document.querySelectorAll('#party .pm')].map(el => el.dataset.id + ':' + el.querySelector('b').textContent)))));
 log('B a toy', [await until(A, () => window.__bn.chars.bear.frozen, 8000), await until(B, () => window.__bn.chars.bear.frozen, 8000)]);
 log('soul out', await until(B, () => window.__bn.GHOST.on && window.__bn.GHOST.t > 1.5, 20000));
 await shot(B, 'gh_' + tag + '_soul');

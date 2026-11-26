@@ -1,0 +1,20 @@
+import { chromium, devices } from '/opt/npm-tools/node_modules/playwright/index.mjs';
+import path from 'path'; import fs from 'fs';
+const root = '/home/claude/beneath-notice';
+const browser = await chromium.launch({ executablePath: '/usr/bin/google-chrome', args: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader'] });
+const ctx = await browser.newContext({ viewport: { width: 844, height: 390 }, deviceScaleFactor: 1, isMobile: true, hasTouch: true, userAgent: devices['iPhone 13'].userAgent });
+await ctx.route('**/*', async route => { const u = route.request().url();
+  if (u.startsWith('https://cdn.jsdelivr.net/npm/three@0.170.0/')) { const f = path.join(root, 'node_modules/three', u.replace('https://cdn.jsdelivr.net/npm/three@0.170.0/', '')); return route.fulfill({ status: 200, contentType: 'application/javascript', body: fs.readFileSync(f) }); }
+  if (u.includes('fonts.g')) return route.fulfill({ status: 200, contentType: 'text/css', body: '' }); return route.continue(); });
+await ctx.addInitScript('window.__NR=true; window.__NODET=true;');
+const p = await ctx.newPage(); await p.goto('file://' + root + '/index.html#dev');
+await p.waitForFunction(() => !document.getElementById('start').hidden, null, { timeout: 300000 });
+const sel = ['#start .logo', '#start .zh', '#start .tag', '#start .row button', '#start .sel button'];
+console.log(await p.evaluate(s => s.map(q => { const e = document.querySelector(q); if (!e) return q + ' -'; const c = getComputedStyle(e); return q + ' ' + c.fontSize + ' ' + c.fontWeight; }), sel));
+await p.evaluate(async () => { await window.__bn.startChapter('park'); }); await p.waitForFunction(() => window.__bn.state === 'play', null, { timeout: 200000 });
+await p.evaluate(() => { const b = window.__bn; b.step(10); b.say('爸爸', '測試', '#fff', 30); b.toast('測試', 30); const h = document.getElementById('hint'); h.textContent = '測試'; h.classList.add('on'); });
+const s2 = ['#qt', '#qs', '.bat', '.bat b', '.bat span', '#protn', '.pm b', '.sub', '.sub b', '.toast', '.hint', '#tbJump b', '#tbCrouch b', '.eye span', '.mk span', '.ptag', '.chap .logo', '.chap .zh', '.unl b', '.tbemo b', '.qck'];
+console.log(await p.evaluate(s => s.map(q => { const e = document.querySelector(q); if (!e) return q + ' -'; const c = getComputedStyle(e); return q + ' ' + c.fontSize + ' ' + c.fontWeight; }), s2));
+await p.evaluate(() => window.__bn.pause()); 
+console.log(await p.evaluate(s => s.map(q => { const e = document.querySelector(q); if (!e) return q + ' -'; const c = getComputedStyle(e); return q + ' ' + c.fontSize; }), ['.pcard .ptitle', '.pcard .tag', '#resume', '.pmenu b', '.pset', '.pset .sel button']));
+await browser.close();
