@@ -254,8 +254,32 @@ function buildPassages(K) {
 }
 // the passages' own switches (only players use them; the family doesn't notice) — added with the house's switches
 function hxPassageSwitches() {
+  // the fridge: its seal is strong — only the bear can pull the door open (and the family will notice it's open)
+  hxAdd({ id: 'fridge', name: '雪櫃門', kind: 'door', who: 'bear', p: V3(152, 8, -142), r: 10, on: false, verb: ['閂雪櫃門', '用力拉開雪櫃門'] });
   hxAdd({ id: 'mhcover', name: '踢腳線蓋', kind: 'cover', p: V3(335, 4, -226), r: 7, once: true, quiet: true, verb: ['拆開踢腳線蓋', '拆開踢腳線蓋'] });
   hxAdd({ id: 'gvent', name: '通風口蓋（由呢邊推開）', kind: 'cover', lv: 'any', sp: true, p: V3(903, 12, -200), r: 8, once: true, quiet: true, verb: ['推開通風口蓋', '推開通風口蓋'] });
+}
+// ---------- the fridge's cold ----------
+//  · inside, the cold creeps in (twice as fast with the door shut): stay too long and you freeze stiff —
+//    a toy on the shelf. Mom comes for something soon after, finds it, and tidies it away to the toy box
+//  · the way out when the door's shut: the drain hole in the floor of the fridge, down to under it
+function fridgeTick(dt) {
+  if (!KS.door) return;
+  for (const C of party) {
+    if (C !== leader || !mine(C) || C.frozen) continue;
+    if (inFridge(C) && STATE === 'play') {
+      const shut = KS.doorA < .5; C.frost = Math.min(1, (C.frost || 0) + dt / (shut ? 16 : 32));
+      if (C.frost > .5 && !C.frostSaid) { C.frostSaid = 1; toast(shut ? '好凍……門閂咗！搵雪櫃底嘅排水口滑出去' : '好凍……再留落去會凍僵變玩具！快啲出去', 3); }
+      if (C.frost >= 1) { C.frost = 0; C.frostSaid = 0; toyFreeze('fridge'); }
+    } else { C.frost = Math.max(0, (C.frost || 0) - dt / 5); if (C.frost < .2) C.frostSaid = 0; }
+  }
+  const L = leader, f = L && !L.frozen ? L.frost || 0 : 0, el = $('frost'); if (el && Math.abs((+el.dataset.k || 0) - f) > .01) { el.dataset.k = f.toFixed(2); el.style.opacity = (f * .9).toFixed(2); }
+  // a toy left on a fridge shelf: once the door's open it gets tidied away; until then Mom wants something from the fridge
+  if (NET.client) return;
+  for (const C of party) if (C.frozen && C.toyAt === 'floor' && inFridge(C)) {
+    if (KS.doorA > .8) { if (!TOY.fetchQ.includes(C) && !(TOY.fetch && TOY.fetch.C === C)) TOY.fetchQ.push(C); }
+    else if (HB.m && HB.m.need) HB.m.need.fridge = Math.max(HB.m.need.fridge || 0, 1.6);
+  }
 }
 // ---------- switches, taps and fans ----------
 function hxAdd(o) { o.i = HX.list.length; o.on = !!o.on; o.def = o.on; o.r = o.r || 8; HX.list.push(o); HX.id[o.id] = o; return o; }
@@ -314,7 +338,7 @@ function hxState() { return HX.list.map(o => o.on ? 1 : 0).join('') + '|' + HX.w
 function hxRecvState(s) { if (!s) return; const [f, w, d] = s.split('|'); [...f].forEach((c, i) => { const o = HX.list[i]; if (o && !o.oneShot && o.on !== (c === '1')) { o.on = c === '1'; hxApply(o, true); } }); HX.water = +w; HX.bd.tgt = +d; }
 function hxNear(C) {
   if (!C || !HX.list.length) return null; const cx = C.pos.x, cy = C.pos.y + C.h * .5, cz = C.pos.z; let best = null, bd = 1e9;
-  for (const o of HX.list) { if (o.lv !== 'any' && (o.lv || 'kitchen') !== LEVEL) continue; if (o.once && o.on) continue; if (o.sp && (NET.on || (o.id === 'gvent' && LIV.ventOpen))) continue; const d = Math.hypot(o.p.x - cx, o.p.y - cy, o.p.z - cz); if (d < o.r && d < bd) { bd = d; best = o; } }
+  for (const o of HX.list) { if (o.lv !== 'any' && (o.lv || 'kitchen') !== LEVEL) continue; if (o.once && o.on) continue; if (o.who && C.id !== o.who) continue; if (o.sp && (NET.on || (o.id === 'gvent' && LIV.ventOpen))) continue; const d = Math.hypot(o.p.x - cx, o.p.y - cy, o.p.z - cz); if (d < o.r && d < bd) { bd = d; best = o; } }
   return best;
 }
 function hxInput(L, ctl) { if (!ctl || !pressed.KeyE || STATE !== 'play') return false; const o = hxNear(L); if (!o) return false; hxRequest(o, L); return true; }
@@ -371,6 +395,7 @@ function hxTick(dt) {
   if (HX.bfan) HX.bfan.g.rotation.y += dt * (bl.on ? 22 : 0);
   // up the vent shaft over the fish tank: pull yourself over its lip into the duct
   for (const C of party) if (C.climbing && !C.mantle && C.climbDir > 0 && C.pos.y > 257 && C.pos.y < 270 && C.pos.x > 648 && C.pos.x < 668 && C.pos.z > -246 && C.pos.z < -230) { C.climbing = false; C.leap = null; C.mantle = { from: C.pos.clone(), to: V3(658, 270.1, -225), t: 0, dur: .55 }; if (C === leader) toast('入咗天花風槽', 1.8); }
+  fridgeTick(dt);
   if (HX.heat) { HX.heat.material.map.offset.y -= dt * .55; HX.heat.material.map.offset.x = Math.sin(T * .7) * .04; }
   if (HX.bcord) for (const C of party) {
     if (!C.climbing || C.climbC !== HX.bcord) { C.bcordPull = false; continue; }

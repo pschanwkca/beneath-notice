@@ -23,7 +23,7 @@ function toyBurst(p) { for (let i = 0; i < 34; i++) emit(p, V3(R(-16, 16), R(4, 
 function toyReachable(C) {
   const p = C.pos; if (p.x < -300 || p.x > 300) return false;
   if (p.y < 6 && p.x > 148 && p.x < 234 && p.z > -222 && p.z < -148) return false; // under the fridge
-  if (inFridge(C)) return false;
+  if (inFridge(C)) return KS.doorA > .8;
   return true;
 }
 function toyFreeze(who) {
@@ -58,6 +58,7 @@ function toyWho(who) {
   if (w === 'jog') return ['跑步的人', '……（停下來，撿起玩具放到長椅上）', '#a8c8e0'];
   if (w === 'sk') return ['滑板少年', '哈，誰的玩具？差點輾到。', '#e0a8c0'];
   if (w === 'phone') return ['講電話的人', '等等……地上有隻玩具。', '#c0b0d8'];
+  if (w === 'fridge') return ['雪櫃入面', '……好凍……身體凍到硬晒，變咗一件玩具', '#bfe3ff'];
   return ['太太', '咦？……哪來的玩具？', '#f4bb72'];
 }
 function toySay(who, fn) { const [n, t, c] = toyWho(who); fn(n, t, c, 2.6); TOY.lastWho = who; }

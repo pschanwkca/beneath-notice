@@ -359,6 +359,7 @@ body.paused #chap{opacity:0!important}
 .ptt button{margin-left:auto}
 .testchip{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:6;font:600 11px "Noto Sans TC";letter-spacing:.14em;color:var(--cyan);padding:3px 12px;border-radius:99px;border:1px solid rgba(110,220,230,.5);background:rgba(8,12,16,.55);pointer-events:none}
 .testchip[hidden]{display:none}
+.frost{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;z-index:2;background:radial-gradient(ellipse at center,rgba(220,240,255,0) 48%,rgba(210,235,255,.35) 72%,rgba(235,248,255,.85) 100%);box-shadow:inset 0 0 80px rgba(190,225,255,.6)}
 body.paused .testchip{display:none}
 html.touch .testchip{top:auto;bottom:calc(8px + env(safe-area-inset-bottom));left:calc(14px + env(safe-area-inset-left));transform:none;font-size:10px;padding:2px 10px}
 /* ---- phone HUD (landscape): quest top-left, status top-centre, party + pause top-right,
@@ -866,6 +867,7 @@ html.touch .chap.room .logo{font-size:13px}
     </svg>
     <span id="eyet">太太在地庫</span>
   </div>
+  <div class="frost" id="frost"></div>
   <div class="party" id="party"></div>
   <div id="emoWheel" class="emowheel" hidden></div>
   <div id="pouchWheel" class="pwheel" hidden></div>
@@ -1076,6 +1078,7 @@ Object.assign(I18N_EN, {"拉咗一下——廁所燈同抽氣扇熄咗": "A tug 
 Object.assign(I18N_EN, {"體力唔夠彈上去，慢慢爬或者搵位企穩先": "Not enough stamina to leap — climb slowly or find somewhere to stand", "推搖桿攀爬 · 按「跳」彈上去（用體力）· 向下拉再按「跳」跳開": "Push the stick to climb · \"Jump\" to leap up (uses stamina) · pull down + \"Jump\" to let go", "<kbd>W</kbd><kbd>S</kbd> 上下 · <kbd>A</kbd><kbd>D</kbd> 橫移 · <kbd>Space</kbd> 彈上去（用體力）· <kbd>S</kbd>+<kbd>Space</kbd> 跳開": "<kbd>W</kbd><kbd>S</kbd> up/down · <kbd>A</kbd><kbd>D</kbd> sideways · <kbd>Space</kbd> leap up (uses stamina) · <kbd>S</kbd>+<kbd>Space</kbd> let go"});
 Object.assign(I18N_EN, {"跳／攀爬時彈上去（S＋Space 跳開）": "Jump / leap up while climbing (S+Space lets go)"});
 Object.assign(I18N_EN, {"踢腳線蓋拆開咗——後面個老鼠窿通去廁所": "The skirting vent cover's off — the mouse hole behind it leads to the bathroom", "通風口蓋推開咗——客廳同車房而家打通咗": "The vent cover's pushed open — the living room and the garage are connected now", "另一邊有塊踢腳線蓋擋住——要由客廳嗰邊拆開": "A skirting vent cover blocks the other end — it has to be unclipped from the living-room side", "牆上個通風口個蓋甩咗——爬上去，入面條槽通上天花風槽": "The cover of the vent on the wall has come loose — climb up: the shaft inside leads to the ceiling duct", "踢腳線蓋": "Skirting vent cover", "通風口蓋（由呢邊推開）": "Vent cover (push it open from this side)", "拆開踢腳線蓋": "Unclip the skirting vent cover", "推開通風口蓋": "Push the vent cover open"});
+Object.assign(I18N_EN, {"雪櫃門": "Fridge door", "閂雪櫃門": "Shut the fridge", "用力拉開雪櫃門": "Heave the fridge door open", "雪櫃門點解開咗？": "Why's the fridge open?", "邊個打開咗雪櫃……冷氣都走晒。": "Who left the fridge open… all the cold's getting out.", "好凍……門閂咗！搵雪櫃底嘅排水口滑出去": "So cold… the door's shut! Find the drain hole in the floor of the fridge and slide out", "好凍……再留落去會凍僵變玩具！快啲出去": "So cold… stay much longer and you'll freeze stiff into a toy! Get out", "雪櫃入面": "In the fridge", "……好凍……身體凍到硬晒，變咗一件玩具": "…so cold… frozen stiff — just a toy now", "老友：撳「用」用力拉開雪櫃門": "Buddy: press Use to heave the fridge door open", "雪櫃門好實——換老友（熊）嚟拉開": "The fridge door's sealed tight — switch to Buddy (the bear) to pull it open"});
 
 // =====================================================================
 //  Language: 中文 (default) or English.  ?lang=en / ?lang=zh in the address, or the button on the title
@@ -4288,7 +4291,7 @@ function toyBurst(p) { for (let i = 0; i < 34; i++) emit(p, V3(R(-16, 16), R(4, 
 function toyReachable(C) {
   const p = C.pos; if (p.x < -300 || p.x > 300) return false;
   if (p.y < 6 && p.x > 148 && p.x < 234 && p.z > -222 && p.z < -148) return false; // under the fridge
-  if (inFridge(C)) return false;
+  if (inFridge(C)) return KS.doorA > .8;
   return true;
 }
 function toyFreeze(who) {
@@ -4323,6 +4326,7 @@ function toyWho(who) {
   if (w === 'jog') return [TR('跑步的人'), TR('……（停下來，撿起玩具放到長椅上）'), '#a8c8e0'];
   if (w === 'sk') return [TR('滑板少年'), TR('哈，誰的玩具？差點輾到。'), '#e0a8c0'];
   if (w === 'phone') return [TR('講電話的人'), TR('等等……地上有隻玩具。'), '#c0b0d8'];
+  if (w === 'fridge') return [TR('雪櫃入面'), TR('……好凍……身體凍到硬晒，變咗一件玩具'), '#bfe3ff'];
   return [TR('太太'), TR('咦？……哪來的玩具？'), '#f4bb72'];
 }
 function toySay(who, fn) { const [n, t, c] = toyWho(who); fn(n, t, c, 2.6); TOY.lastWho = who; }
@@ -5946,6 +5950,7 @@ function buildKitchen() {
   mesh(new THREE.SphereGeometry(4, 20, 16), K.apple, 210, 90, -190); mesh(new THREE.SphereGeometry(3.8, 20, 16), K.apple, 218, 89.8, -178);
   cols.push({ t: 'c', x: 210, z: -190, r: 4, y0: 86, y1: 94 });
   box(196, 224, 124, 134, -210, -186, MAT.white, { uv: 0 });
+  addVial(170, 86, -168); addCrumb(204, 48, -172);   // kept cold: a Prototype vial, and some cheese (food puts back lost stamina)
   KS.fridgeLight = pointL(0xeaf4ff, 0, 191, 172, -178);
   mesh(new THREE.PlaneGeometry(40, 3), K.bulb, 191, 179.5, -190, { cast: false }).rotation.x = Math.PI / 2;
   // drain hole (secret route to under the fridge)
@@ -6089,7 +6094,8 @@ function updKitchenMom(dt) {
   else moveD = brainMom(dt);
   brainTick(dt);
   // the fridge door stays open while someone's getting something out
-  if (HB.fridgeHold > 0) { HB.fridgeHold -= dt; KS.doorTarget = 1.5; KS.closeT = 2.4; } else if (KS.closeT > 0) { KS.closeT -= dt; if (KS.closeT <= 0) KS.doorTarget = 0; }
+  const forced = HX.id.fridge && HX.id.fridge.on;   // a player pulled it open (the bear): it stays open until someone shuts it
+  if (HB.fridgeHold > 0) { HB.fridgeHold -= dt; KS.doorTarget = 1.5; KS.closeT = 2.4; } else if (forced) { KS.doorTarget = 1.5; KS.closeT = 0; } else if (KS.closeT > 0) { KS.closeT -= dt; if (KS.closeT <= 0) KS.doorTarget = 0; } else KS.doorTarget = 0;
   KS.doorA = damp(KS.doorA, KS.doorTarget || 0, KS.doorTarget ? 3.2 : 2.4, dt); fridgeDoor();
   momAnimK(dt, moveD);
 }
@@ -6340,6 +6346,7 @@ LEVELS.kitchen = {
     if (hood && L.pos.x > -2 && L.pos.x < 78 && L.pos.z > -220 && L.pos.z < -172 && L.pos.y > 157 && L.pos.y < 186) return hood.on ? TR('抽油煙機開住，風扇擋住煙囱。行去右邊撳「用」熄咗佢') : TR('貼住後面嘅牆向上爬，煙囱上面就係天花風槽');
     if (hood && !L.climbing && L.pos.y > 82 && L.pos.y < 100 && Math.hypot(L.pos.x - 57, L.pos.z + 205) < 55) return TR('後面著緊火嘅細爐頭有熱風：行入去，熱風會托你上抽油煙機');
     if (bl && L.pos.y < 120 && L.pos.x > 150 && L.pos.x < 460 && L.pos.z > -470 && L.pos.z < -244 && Math.hypot(L.pos.x - 366, L.pos.z + 312) < 60 && !L.climbing) return bl.on ? TR('抽氣扇轉緊。捉住條拉繩一拉，燈同扇都會熄') : TR('跳入洗衣籃，捉住抽氣扇條拉繩爬上天花風槽');
+    const fr = HX.id.fridge; if (fr && !fr.on && KS.doorA < .3 && L.pos.y < 12 && L.pos.x > 140 && L.pos.x < 240 && L.pos.z > -150 && L.pos.z < -125) return L.id === 'bear' ? TR('老友：撳「用」用力拉開雪櫃門') : TR('雪櫃門好實——換老友（熊）嚟拉開');
     const mh = HX.id.mhcover;
     if (mh && !mh.on && L.pos.y < 9 && L.pos.x > 326 && L.pos.x < 344 && L.pos.z > -248 && L.pos.z < -233) return TR('另一邊有塊踢腳線蓋擋住——要由客廳嗰邊拆開');
     if (!L.climbing && L.pos.y > 140 && L.pos.y < 150 && L.pos.x > 618 && L.pos.x < 722 && L.pos.z > -232 && L.pos.z < -184) return TR('牆上個通風口個蓋甩咗——爬上去，入面條槽通上天花風槽');
@@ -8703,8 +8710,32 @@ function buildPassages(K) {
 }
 // the passages' own switches (only players use them; the family doesn't notice) — added with the house's switches
 function hxPassageSwitches() {
+  // the fridge: its seal is strong — only the bear can pull the door open (and the family will notice it's open)
+  hxAdd({ id: 'fridge', name: TR('雪櫃門'), kind: 'door', who: 'bear', p: V3(152, 8, -142), r: 10, on: false, verb: [TR('閂雪櫃門'), TR('用力拉開雪櫃門')] });
   hxAdd({ id: 'mhcover', name: TR('踢腳線蓋'), kind: 'cover', p: V3(335, 4, -226), r: 7, once: true, quiet: true, verb: [TR('拆開踢腳線蓋'), TR('拆開踢腳線蓋')] });
   hxAdd({ id: 'gvent', name: TR('通風口蓋（由呢邊推開）'), kind: 'cover', lv: 'any', sp: true, p: V3(903, 12, -200), r: 8, once: true, quiet: true, verb: [TR('推開通風口蓋'), TR('推開通風口蓋')] });
+}
+// ---------- the fridge's cold ----------
+//  · inside, the cold creeps in (twice as fast with the door shut): stay too long and you freeze stiff —
+//    a toy on the shelf. Mom comes for something soon after, finds it, and tidies it away to the toy box
+//  · the way out when the door's shut: the drain hole in the floor of the fridge, down to under it
+function fridgeTick(dt) {
+  if (!KS.door) return;
+  for (const C of party) {
+    if (C !== leader || !mine(C) || C.frozen) continue;
+    if (inFridge(C) && STATE === 'play') {
+      const shut = KS.doorA < .5; C.frost = Math.min(1, (C.frost || 0) + dt / (shut ? 16 : 32));
+      if (C.frost > .5 && !C.frostSaid) { C.frostSaid = 1; toast(shut ? TR('好凍……門閂咗！搵雪櫃底嘅排水口滑出去') : TR('好凍……再留落去會凍僵變玩具！快啲出去'), 3); }
+      if (C.frost >= 1) { C.frost = 0; C.frostSaid = 0; toyFreeze('fridge'); }
+    } else { C.frost = Math.max(0, (C.frost || 0) - dt / 5); if (C.frost < .2) C.frostSaid = 0; }
+  }
+  const L = leader, f = L && !L.frozen ? L.frost || 0 : 0, el = $('frost'); if (el && Math.abs((+el.dataset.k || 0) - f) > .01) { el.dataset.k = f.toFixed(2); el.style.opacity = (f * .9).toFixed(2); }
+  // a toy left on a fridge shelf: once the door's open it gets tidied away; until then Mom wants something from the fridge
+  if (NET.client) return;
+  for (const C of party) if (C.frozen && C.toyAt === 'floor' && inFridge(C)) {
+    if (KS.doorA > .8) { if (!TOY.fetchQ.includes(C) && !(TOY.fetch && TOY.fetch.C === C)) TOY.fetchQ.push(C); }
+    else if (HB.m && HB.m.need) HB.m.need.fridge = Math.max(HB.m.need.fridge || 0, 1.6);
+  }
 }
 // ---------- switches, taps and fans ----------
 function hxAdd(o) { o.i = HX.list.length; o.on = !!o.on; o.def = o.on; o.r = o.r || 8; HX.list.push(o); HX.id[o.id] = o; return o; }
@@ -8763,7 +8794,7 @@ function hxState() { return HX.list.map(o => o.on ? 1 : 0).join('') + '|' + HX.w
 function hxRecvState(s) { if (!s) return; const [f, w, d] = s.split('|'); [...f].forEach((c, i) => { const o = HX.list[i]; if (o && !o.oneShot && o.on !== (c === '1')) { o.on = c === '1'; hxApply(o, true); } }); HX.water = +w; HX.bd.tgt = +d; }
 function hxNear(C) {
   if (!C || !HX.list.length) return null; const cx = C.pos.x, cy = C.pos.y + C.h * .5, cz = C.pos.z; let best = null, bd = 1e9;
-  for (const o of HX.list) { if (o.lv !== 'any' && (o.lv || 'kitchen') !== LEVEL) continue; if (o.once && o.on) continue; if (o.sp && (NET.on || (o.id === 'gvent' && LIV.ventOpen))) continue; const d = Math.hypot(o.p.x - cx, o.p.y - cy, o.p.z - cz); if (d < o.r && d < bd) { bd = d; best = o; } }
+  for (const o of HX.list) { if (o.lv !== 'any' && (o.lv || 'kitchen') !== LEVEL) continue; if (o.once && o.on) continue; if (o.who && C.id !== o.who) continue; if (o.sp && (NET.on || (o.id === 'gvent' && LIV.ventOpen))) continue; const d = Math.hypot(o.p.x - cx, o.p.y - cy, o.p.z - cz); if (d < o.r && d < bd) { bd = d; best = o; } }
   return best;
 }
 function hxInput(L, ctl) { if (!ctl || !pressed.KeyE || STATE !== 'play') return false; const o = hxNear(L); if (!o) return false; hxRequest(o, L); return true; }
@@ -8820,6 +8851,7 @@ function hxTick(dt) {
   if (HX.bfan) HX.bfan.g.rotation.y += dt * (bl.on ? 22 : 0);
   // up the vent shaft over the fish tank: pull yourself over its lip into the duct
   for (const C of party) if (C.climbing && !C.mantle && C.climbDir > 0 && C.pos.y > 257 && C.pos.y < 270 && C.pos.x > 648 && C.pos.x < 668 && C.pos.z > -246 && C.pos.z < -230) { C.climbing = false; C.leap = null; C.mantle = { from: C.pos.clone(), to: V3(658, 270.1, -225), t: 0, dur: .55 }; if (C === leader) toast(TR('入咗天花風槽'), 1.8); }
+  fridgeTick(dt);
   if (HX.heat) { HX.heat.material.map.offset.y -= dt * .55; HX.heat.material.map.offset.x = Math.sin(T * .7) * .04; }
   if (HX.bcord) for (const C of party) {
     if (!C.climbing || C.climbC !== HX.bcord) { C.bcordPull = false; continue; }
@@ -8990,6 +9022,8 @@ function brainIncident(id, o, on, by) {
     if (on && K && K.act === 'homework') { brainSay('kid', TR('咦？電視自己開了？')); if (mr !== 'l' && rnd() < .55) { setTimeout(() => brainSay('mom', TR('功課做完才看電視！')), 1400); later(M, [{ go: 'ltv' }, { sw: 'tv', on: false }]); } else react(K, 2, ACTS.kid.tv.steps().slice(1), 'tv'); }
     else if (on && (!K || K.act !== 'tv')) later(M, [{ go: 'ltv' }, { sw: 'tv', on: false }, { say: TR('誰開的電視……') }]);
     else if (!on && K && K.act === 'tv') react(K, 3, [{ say: TR('怎麼熄了？我在看呀！') }, { stand: 1 }, { go: 'ltv' }, { sw: 'tv', on: true }, { go: 'lsofa' }, { sit: 'sofa' }, { wait: R(10, 18), pose: 'sofa', at: [888, 96, 120] }, { stand: 1 }], 'tv');
+  } else if (id === 'fridge' && on) {
+    react(M, 3, [{ say: pick([TR('雪櫃門點解開咗？'), TR('邊個打開咗雪櫃……冷氣都走晒。')]) }, { go: 'fridge' }, { sw: 'fridge', on: false }, ...look]);
   } else if (id === 'lamp' && !on) {
     const who = K && kr === 'l' ? K : M, st = [{ say: who === K ? TR('盞燈怎麼熄了……') : TR('燈泡壞了？') }, { go: 'llamp' }, { sw: 'lamp', on: true }];
     if (who === M && mr !== 'l') later(M, st); else react(who, 2, st);
@@ -11276,7 +11310,7 @@ function portalResumeLand(S) {
 // who joined or dropped, how good each link is, frame rate, rescues and errors. One tap copies it as
 // plain text that a player can paste into a chat and send in.
 const NLOG = { t0: performance.now(), lines: [], fps: 0, sumT: 0, mode: '', lv: '', peer: {} };
-const NLOG_BUILD = '20261126-1937';
+const NLOG_BUILD = '20261126-1942';
 function nlog(s) {
   const d = new Date(), p2 = n => String(n).padStart(2, '0');   // the clock time, so "it broke around 9:30" can be matched
   NLOG.lines.push(`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}  ${s}`); if (NLOG.lines.length > 500) NLOG.lines.splice(0, NLOG.lines.length - 500);

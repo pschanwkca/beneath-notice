@@ -428,6 +428,7 @@ function buildKitchen() {
   mesh(new THREE.SphereGeometry(4, 20, 16), K.apple, 210, 90, -190); mesh(new THREE.SphereGeometry(3.8, 20, 16), K.apple, 218, 89.8, -178);
   cols.push({ t: 'c', x: 210, z: -190, r: 4, y0: 86, y1: 94 });
   box(196, 224, 124, 134, -210, -186, MAT.white, { uv: 0 });
+  addVial(170, 86, -168); addCrumb(204, 48, -172);   // kept cold: a Prototype vial, and some cheese (food puts back lost stamina)
   KS.fridgeLight = pointL(0xeaf4ff, 0, 191, 172, -178);
   mesh(new THREE.PlaneGeometry(40, 3), K.bulb, 191, 179.5, -190, { cast: false }).rotation.x = Math.PI / 2;
   // drain hole (secret route to under the fridge)
@@ -571,7 +572,8 @@ function updKitchenMom(dt) {
   else moveD = brainMom(dt);
   brainTick(dt);
   // the fridge door stays open while someone's getting something out
-  if (HB.fridgeHold > 0) { HB.fridgeHold -= dt; KS.doorTarget = 1.5; KS.closeT = 2.4; } else if (KS.closeT > 0) { KS.closeT -= dt; if (KS.closeT <= 0) KS.doorTarget = 0; }
+  const forced = HX.id.fridge && HX.id.fridge.on;   // a player pulled it open (the bear): it stays open until someone shuts it
+  if (HB.fridgeHold > 0) { HB.fridgeHold -= dt; KS.doorTarget = 1.5; KS.closeT = 2.4; } else if (forced) { KS.doorTarget = 1.5; KS.closeT = 0; } else if (KS.closeT > 0) { KS.closeT -= dt; if (KS.closeT <= 0) KS.doorTarget = 0; } else KS.doorTarget = 0;
   KS.doorA = damp(KS.doorA, KS.doorTarget || 0, KS.doorTarget ? 3.2 : 2.4, dt); fridgeDoor();
   momAnimK(dt, moveD);
 }
@@ -822,6 +824,7 @@ LEVELS.kitchen = {
     if (hood && L.pos.x > -2 && L.pos.x < 78 && L.pos.z > -220 && L.pos.z < -172 && L.pos.y > 157 && L.pos.y < 186) return hood.on ? '抽油煙機開住，風扇擋住煙囱。行去右邊撳「用」熄咗佢' : '貼住後面嘅牆向上爬，煙囱上面就係天花風槽';
     if (hood && !L.climbing && L.pos.y > 82 && L.pos.y < 100 && Math.hypot(L.pos.x - 57, L.pos.z + 205) < 55) return '後面著緊火嘅細爐頭有熱風：行入去，熱風會托你上抽油煙機';
     if (bl && L.pos.y < 120 && L.pos.x > 150 && L.pos.x < 460 && L.pos.z > -470 && L.pos.z < -244 && Math.hypot(L.pos.x - 366, L.pos.z + 312) < 60 && !L.climbing) return bl.on ? '抽氣扇轉緊。捉住條拉繩一拉，燈同扇都會熄' : '跳入洗衣籃，捉住抽氣扇條拉繩爬上天花風槽';
+    const fr = HX.id.fridge; if (fr && !fr.on && KS.doorA < .3 && L.pos.y < 12 && L.pos.x > 140 && L.pos.x < 240 && L.pos.z > -150 && L.pos.z < -125) return L.id === 'bear' ? '老友：撳「用」用力拉開雪櫃門' : '雪櫃門好實——換老友（熊）嚟拉開';
     const mh = HX.id.mhcover;
     if (mh && !mh.on && L.pos.y < 9 && L.pos.x > 326 && L.pos.x < 344 && L.pos.z > -248 && L.pos.z < -233) return '另一邊有塊踢腳線蓋擋住——要由客廳嗰邊拆開';
     if (!L.climbing && L.pos.y > 140 && L.pos.y < 150 && L.pos.x > 618 && L.pos.x < 722 && L.pos.z > -232 && L.pos.z < -184) return '牆上個通風口個蓋甩咗——爬上去，入面條槽通上天花風槽';

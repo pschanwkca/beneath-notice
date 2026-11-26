@@ -131,6 +131,8 @@ function brainIncident(id, o, on, by) {
     if (on && K && K.act === 'homework') { brainSay('kid', '咦？電視自己開了？'); if (mr !== 'l' && rnd() < .55) { setTimeout(() => brainSay('mom', '功課做完才看電視！'), 1400); later(M, [{ go: 'ltv' }, { sw: 'tv', on: false }]); } else react(K, 2, ACTS.kid.tv.steps().slice(1), 'tv'); }
     else if (on && (!K || K.act !== 'tv')) later(M, [{ go: 'ltv' }, { sw: 'tv', on: false }, { say: '誰開的電視……' }]);
     else if (!on && K && K.act === 'tv') react(K, 3, [{ say: '怎麼熄了？我在看呀！' }, { stand: 1 }, { go: 'ltv' }, { sw: 'tv', on: true }, { go: 'lsofa' }, { sit: 'sofa' }, { wait: R(10, 18), pose: 'sofa', at: [888, 96, 120] }, { stand: 1 }], 'tv');
+  } else if (id === 'fridge' && on) {
+    react(M, 3, [{ say: pick(['雪櫃門點解開咗？', '邊個打開咗雪櫃……冷氣都走晒。']) }, { go: 'fridge' }, { sw: 'fridge', on: false }, ...look]);
   } else if (id === 'lamp' && !on) {
     const who = K && kr === 'l' ? K : M, st = [{ say: who === K ? '盞燈怎麼熄了……' : '燈泡壞了？' }, { go: 'llamp' }, { sw: 'lamp', on: true }];
     if (who === M && mr !== 'l') later(M, st); else react(who, 2, st);
