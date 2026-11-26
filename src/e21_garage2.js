@@ -112,7 +112,7 @@ function agentIncident(id, on) {
   if (id === 'gpanel' && !on) agentSayB('嗯？停電了？');
 }
 function agentSus(v, p, why) {
-  if (LEVEL === 'garage') susWhy(why || '有古怪'); AGB.sus = Math.min(3.4, AGB.sus + v); AGB.quiet = 0;
+  AGB.sus = humanSus(v, why || '有古怪'); AGB.quiet = 0;
   const st = AGB.sus >= 3 ? 3 : AGB.sus >= 2 ? 2 : AGB.sus >= 1 ? 1 : 0;
   if (st > AGB.stage) { AGB.stage = st;
     if (st === 2) setTimeout(() => agentSayB('（對講機）這間屋有古怪……好像有東西在動。'), 1800);
@@ -166,7 +166,7 @@ function oldIncident(id, on) {
   if (id === 'oradio' && !on && O.mode === 'listen') { O.mode = 'alert'; O.t = 4; O.look.set(2616, 60, 110); oldSay('咦？怎麼停了？'); oldSus(.45); }
 }
 function oldSay(t) { if (OLDB.sayT && T - OLDB.sayT < 3) return; OLDB.sayT = T; sayW('陳伯', t, '#c8b8a0', 2.8); }
-function oldSus(v, why) { if (LEVEL === 'yard') susWhy(why || '有古怪'); OLDB.sus = Math.min(3.4, OLDB.sus + v); OLDB.quiet = 0; const st = Math.floor(Math.min(3, OLDB.sus)); if (st > OLDB.stage) { OLDB.stage = st; if (st === 2) oldSay('……是不是有小偷？'); if (st === 3) { oldSay('出來！我報警了！'); } } }
+function oldSus(v, why) { OLDB.sus = humanSus(v, why || '有古怪'); OLDB.quiet = 0; const st = Math.floor(Math.min(3, OLDB.sus)); if (st > OLDB.stage) { OLDB.stage = st; if (st === 2) oldSay('……是不是有小偷？'); if (st === 3) { oldSay('出來！我報警了！'); } } }
 // choose what to do next (runs on the host)
 function oldChoose(O) {
   const lampOn = !HX.id.olamp || HX.id.olamp.on, radioOn = HX.id.oradio && HX.id.oradio.on;

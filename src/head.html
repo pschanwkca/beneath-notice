@@ -366,10 +366,11 @@ body.paused #chap{opacity:0!important}
 #susFill{background:var(--c);opacity:.55}
 #susBase{background:var(--c)}
 .susrow.hot .susbar{animation:susPulse 1s ease-in-out infinite}
+.suscap{position:absolute;right:calc(50% + 56px);top:50%;transform:translateY(-50%);white-space:nowrap;font:600 10px "Noto Sans TC",sans-serif;letter-spacing:.12em;color:rgba(245,240,230,.62);text-shadow:0 1px 4px rgba(0,0,0,.8)}
 #susLbl{position:absolute;left:calc(50% + 56px);top:50%;transform:translateY(-50%);white-space:nowrap;font:600 11px "Noto Sans TC",sans-serif;font-style:normal;letter-spacing:.06em;color:#ffe2b8;text-shadow:0 1px 4px rgba(0,0,0,.8)}
 .susrow.hot #susLbl{color:var(--c)}
 @keyframes susPulse{50%{opacity:.55}}
-html.touch .susbar{width:64px;height:5px}html.touch #susLbl{font-size:9.5px;left:calc(50% + 38px)}html.touch .susrow{height:12px}
+html.touch .susbar{width:64px;height:5px}html.touch #susLbl{font-size:9.5px;left:calc(50% + 38px)}html.touch .suscap{font-size:8.5px;right:calc(50% + 38px)}html.touch .susrow{height:12px}
 .acd{display:none;margin-top:8px;text-align:right}
 .acd.on{display:block}
 .acd span{display:block;font:600 11px "Noto Sans TC",sans-serif;letter-spacing:.06em;color:#ffd7a0;margin-bottom:4px}
@@ -883,7 +884,7 @@ html.touch .chap.room .logo{font-size:13px}
       <path id="eyelid" d="M14 32 Q32 16 50 32 Q32 48 14 32Z" fill="none" stroke="#f5f0e6" stroke-width="2.4"/>
       <circle id="eyepupil" cx="32" cy="32" r="5.5" fill="#f5f0e6"/>
     </svg>
-    <div class="susrow" id="susRow" hidden><div class="susbar"><b id="susFill"></b><b id="susBase"></b></div><em id="susLbl"></em></div>
+    <div class="susrow" id="susRow" hidden><small class="suscap">人類質疑度</small><div class="susbar"><b id="susFill"></b><b id="susBase"></b></div><em id="susLbl"></em></div>
     <span id="eyet">太太在地庫</span>
   </div>
   <div class="frost" id="frost"></div>

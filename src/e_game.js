@@ -842,7 +842,7 @@ function update(dt) {
     if (!lockL) pushTrail(leader); for (const F of party) if (F !== leader && !F.on && !F.hop && !F.drop && !F.frozen && !F.carried && !F.ptw && mine(F) && !isBase(F)) updFollower(F, leader, dt);
     updCarry(dt); updTongueAim(); updVentFx(dt);
     stackScan(dt);
-    updAim(); LVL.detect(dt); if (!NET.client) updCheckpoints(); LVL.update(dt); looseTick(dt); if (!NET.client) LVL.win();
+    updAim(); LVL.detect(dt); if (!NET.client) updCheckpoints(); LVL.update(dt); looseTick(dt); humanTick(dt); if (!NET.client) LVL.win();
     cellT += dt; if (cells < cellMax && cellT > 10) { cells++; cellT = 0; } if (cells >= cellMax) cellT = 0;
     updCam(dt); hideOccluders();
     if (meter > .4 && Math.floor((T - dt) * (1 + meter * 1.5)) !== Math.floor(T * (1 + meter * 1.5))) SND.heart(meter);

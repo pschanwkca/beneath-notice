@@ -14,6 +14,17 @@
 //  · they talk to each other; lines are only shown to players near enough to hear them
 //  Runs on the host (or single player); clients get positions and poses in the world snapshot.
 // =====================================================================
+// 人類質疑度: one pool shared by every human (the family, the Origin Dynamics man, 陳伯 …). Whatever any of
+// them notices adds to it; everyone's alertness follows it; it cools down on its own when things stay
+// quiet — the alarm of the moment quickly, what they've come to believe slowly (about fifteen minutes from full)
+const HUM = { v: 0, bel: 0, quiet: 0 };
+function humanSus(v, why) { HUM.v = Math.min(3.4, HUM.v + v); HUM.bel = Math.min(1, HUM.bel + v * .075); HUM.quiet = 0; susWhy(why || '起疑'); return HUM.v; }
+function humanTick(dt) {
+  if (NET.client) return;
+  HUM.quiet += dt;
+  if (HUM.quiet > 10) { HUM.bel = Math.max(0, HUM.bel - dt / 900); const floor = HUM.bel * 3; if (HUM.v > floor) HUM.v = Math.max(floor, HUM.v - dt / 70); else HUM.v = floor; }
+  HB.sus = HUM.v; HB.belief = HUM.bel; AGB.sus = HUM.v; OLDB.sus = HUM.v;   // everyone shares it
+}
 const HB = { sus: 0, quiet: 0, stage: 0, search: 0, inc: [], mem: [], eye: 1, m: null, k: null, said: {}, glT: 0, kidForgot: 0, lastSay: {} };
 const NAVN = {}, NAVE = {};
 function navN(id, x, z, y = 0) { NAVN[id] = { id, x, z, y }; NAVE[id] = []; }
@@ -154,9 +165,7 @@ function brainGlimpse(p) { if (NET.client || !HB.m || T - HB.glT < 4) return; HB
 function brainSus(v, p, why) {
   // done right beside the cat? they blame the cat — once in a while (not every time: that would be too easy)
   if (p && CAT && CAT.pos && CAT.pos.distanceTo(p) < 90 && !(HB.catT && T - HB.catT < 25)) { HB.catT = T; v *= .3; why = '佢哋以為係小橘'; }
-  susWhy(why || '起疑');
-  HB.belief = Math.min(1, (HB.belief || 0) + v * .075);   // what she's come to believe: it stays
-  HB.sus = Math.min(3.4, HB.sus + v); HB.quiet = 0; if (p) { HB.mem.push({ p: p.clone(), t: T }); if (HB.mem.length > 6) HB.mem.shift(); }
+  HB.sus = humanSus(v, why); HB.belief = HUM.bel; HB.quiet = 0; if (p) { HB.mem.push({ p: p.clone(), t: T }); if (HB.mem.length > 6) HB.mem.shift(); }
   const st = HB.sus >= 3 ? 3 : HB.sus >= 2 ? 2 : HB.sus >= 1 ? 1 : 0;
   if (st > HB.stage) {
     HB.stage = st;
@@ -166,7 +175,7 @@ function brainSus(v, p, why) {
   }
 }
 // how sure she is that there are mice (0–1): the alert of the moment, or what she's come to believe, whichever is more
-function susV() { return clamp(Math.max(HB.sus / 3, HB.belief || 0), 0, 1); }
+function susV() { return clamp(Math.max(HUM.v / 3, HUM.bel), 0, 1); }
 const glueOn = i => HX.id['glue' + i] && HX.id['glue' + i].on;
 // glue boards: more of them the surer she is (none below 35 %, up to six)
 function trapWant() {
@@ -326,7 +335,7 @@ function brainNeeds(A, dt) {
 }
 // set up when the kitchen is prepared (dinner: Mom at the stove, the daughter doing homework)
 function brainReset() {
-  HB.belief = 0; HB.sealNow = false; HB.sealT = 0; HB.holeUse = {};
+  HUM.v = HUM.bel = HUM.quiet = 0; HB.belief = 0; HB.sealNow = false; HB.sealT = 0; HB.holeUse = {};
   HB.sus = 0; HB.stage = 0; HB.search = 0; HB.inc = []; HB.mem = []; HB.quiet = 0; HB.kidForgot = 0; HB.lastSay = {};
   const M = HB.m = mkAgent('mom'); M.act = 'cook'; M.last = ['cook', '', '']; M.q = [{ wait: 10, km: ['act', 'stove'], at: [22, 96, -178] }];
   M.need = { wash: .3, fridge: .4, sit: .2, bath: R(0, .4), tidy: .2, checkKid: .1, phone: .45, window: .1, wipe: .15, toys: .1 };
@@ -340,8 +349,8 @@ function brainKid(dt) { if (!HB.k) brainReset(); brainNeeds(HB.k, dt); return br
 // once a frame on the host: cool down, keep the fridge door open while someone's at it
 function brainTick(dt) {
   if (!HB.m) return;
-  HB.quiet += dt; const floor = (HB.belief || 0) * 3; if (HB.quiet > 18 && HB.sus > floor) { HB.sus = Math.max(floor, HB.sus - dt / 40); if (HB.sus < HB.stage - .6) { if (HB.stage >= 2 && HB.sus < 1.4) brainSay('mom', '……算了，大概是我太累了。', 2.6); HB.stage = Math.floor(HB.sus); } }
-  if (HB.search > 0) { HB.search -= dt; if (HB.search <= 0) { HB.sus = Math.min(HB.sus, 2.2); HB.stage = 2; brainSay('mom', '找不到……先吃飯吧。', 2.6); HB.sealNow = true; } }
+  HB.quiet += dt; if (HB.quiet > 18 && HB.sus > 0) { if (HB.sus < HB.stage - .6) { if (HB.stage >= 2 && HB.sus < 1.4) brainSay('mom', '……算了，大概是我太累了。', 2.6); HB.stage = Math.floor(HB.sus); } }
+  if (HB.search > 0) { HB.search -= dt; if (HB.search <= 0) { HUM.v = HB.sus = Math.min(HB.sus, 2.2); HB.stage = 2; brainSay('mom', '找不到……先吃飯吧。', 2.6); HB.sealNow = true; } }
   HB.eye = 1 + HB.sus * .13 + (HB.belief || 0) * .15;
 }
 function bathOccupant() { for (const A of [HB.m, HB.k]) if (A && agentRoom(A) === 'b' && A.act === 'bath') return A; return null; }
@@ -360,10 +369,9 @@ function brainEyeText() {
 const SUSV = { why: '', whyT: 0, last: 0, drop: 0, shown: -1 };
 function susWhy(t) { SUSV.why = t; SUSV.whyT = 2.6; }
 function susNow() {
-  if (LEVEL === 'kitchen' && HB.m) { const a = NET.client ? (HB.netSus || 0) : HB.sus, b = NET.client ? (HB.netBel || 0) : (HB.belief || 0); return { v: clamp(Math.max(a / 3, b), 0, 1), base: b, search: HB.search > 0 || !!HB.netSearch }; }
-  if (LEVEL === 'garage') { const a = NET.client ? (AGB.netSus || 0) : AGB.sus; return { v: clamp(a / 3, 0, 1), base: 0, search: AGB.search > 0 }; }
-  if (LEVEL === 'yard') return { v: clamp(OLDB.sus / 3, 0, 1), base: 0, search: false };
-  return null;
+  if (!LVL || LEVEL === 'portal') return null;
+  const v = NET.client ? (HB.netSus || 0) : HUM.v, b = NET.client ? (HB.netBel || 0) : HUM.bel;
+  return { v: clamp(Math.max(v / 3, b), 0, 1), base: b, search: HB.search > 0 || !!HB.netSearch || AGB.search > 0 };
 }
 // colour along the bar: calm teal → amber → orange → red
 function susCol(v) { const S = [[0, [159, 216, 208]], [.4, [242, 211, 138]], [.7, [244, 166, 92]], [1, [255, 122, 122]]]; let i = 0; while (i < S.length - 2 && v > S[i + 1][0]) i++; const [a, A] = S[i], [b, B] = S[i + 1], k = clamp((v - a) / (b - a), 0, 1); return `rgb(${A.map((c, j) => Math.round(c + (B[j] - c) * k)).join(',')})`; }
@@ -378,11 +386,11 @@ function susHUD(dt) {
     $('susFill').style.width = (v * 100).toFixed(1) + '%'; $('susBase').style.width = (S.base * 100).toFixed(1) + '%'; }
   row.classList.toggle('hot', !!S.search);
   if (SUSV.whyT > 0) SUSV.whyT -= dt;
-  const lbl = S.search ? (LEVEL === 'kitchen' ? '搜屋中' : '搜查中') : SUSV.whyT > 0 ? '＋ ' + SUSV.why : '';
+  const lbl = S.search ? '搜緊' : SUSV.whyT > 0 ? '＋ ' + SUSV.why : '';
   const L2 = $('susLbl'); if (L2.textContent !== lbl) L2.textContent = lbl;
 }
 // network: the daughter's body and the household mood
-function brainNet() { return [+HB.sus.toFixed(2), HB.search > 0 ? 1 : 0, +AGB.sus.toFixed(2) + (AGB.search > 0 ? 10 : 0), +(HB.belief || 0).toFixed(3)]; }
+function brainNet() { return [+HUM.v.toFixed(2), HB.search > 0 ? 1 : 0, +AGB.sus.toFixed(2) + (AGB.search > 0 ? 10 : 0), +HUM.bel.toFixed(3)]; }
 function brainNetRecv(b) { HB.netSus = b[0]; HB.netSearch = !!b[1]; HB.netBel = b[3] || 0; if (b[2] !== undefined) AGB.netSus = b[2] >= 10 ? 3 : b[2]; }
 
 // the daughter's body: sitting, standing, walking, reaching, crouching to the cat

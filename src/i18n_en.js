@@ -13,3 +13,4 @@ Object.assign(I18N_EN, {"再放一塊。": "One more here.", "呢度都放一塊
 Object.assign(I18N_EN, {"冷卻中": "Cooling down", "充電": "Recharging", "秒": "s"});
 Object.assign(I18N_EN, {"樽蓋": "Bottle cap", "鈕扣": "Button", "方糖": "Sugar cube", "掟": "Throw", "食": "Eat", "掟出去：跌落地嗰度會響，引人過去": "Throw it: it clatters where it lands and draws people there", "食咗：體力即刻滿返，上限都補返啲": "Eat it: stamina back to full, and some of the cap restored", "（拎出嚟揸喺手）": " (taken out into your paws)", "食咗粒方糖——體力滿返": "Ate a sugar cube — stamina full", "手揸住嘢，開唔到槍——E 放低先": "Paws full — can't fire. Put it down first (E)", "點一下": "Tap one", "放手就揀": "Let go to pick"});
 Object.assign(I18N_EN, {"執起／放低細嘢（揸住時左鍵用）": "Pick up / put down small things (left click uses what you hold)"});
+Object.assign(I18N_EN, {"人類質疑度": "Human suspicion", "搜緊": "Searching"});
