@@ -292,7 +292,8 @@ button.ghost{background:transparent;color:var(--ink);border:1px solid var(--fain
 /* the cold-open film: 2.39:1 letterbox, subtitles sitting in the lower bar, a quiet skip button in the upper one */
 .cineov{position:fixed;inset:0;z-index:30;pointer-events:none;--bar:clamp(0px,calc((100vh - 100vw / 2.39) / 2),13vh)}
 .cineov[hidden]{display:none}
-.cbar{position:absolute;left:0;right:0;top:0;height:var(--bar);background:#000;z-index:2}
+.cbar{position:absolute;left:0;right:0;top:0;height:var(--bar);background:#000;z-index:2;transition:height .7s cubic-bezier(.3,.7,.2,1)}
+.cineov.out .cbar{height:0}
 .cbar.b{top:auto;bottom:0}
 .cfade,.cflash{position:absolute;inset:0;background:#000;opacity:1;z-index:1}
 .cflash{background:#eef8fb;opacity:0}

@@ -1,13 +1,44 @@
 // =====================================================================
-//  COLD OPEN — a short film before the prologue (about a minute; the button, Space, Enter or Esc skips it)
+//  FILMS — short movie-style scenes played in the game's own world (letterbox, subtitles, skip)
+//  A film is { len, shots: [{ t0, fov, set(), run(u, dt) → [camera, look at, focus] }], ev: [[t, fn]],
+//  begin(), end(skipped), black(t)?, white(t)?, audio(t)?, mus? }. filmPlay(F) runs it; the game stands
+//  still meanwhile (STATE 'cine'); when it ends the film puts its things back and play carries on
+//  (or, for the cold open, the prologue loads). The button, Space, Enter or Esc skips.
+//
+//  COLD OPEN — the first film, before the prologue (about a minute)
 //  · upstairs it's dinner: the daughter calls Dad, the soup is on the table, his chair stays empty
 //  · in the basement Dad says "just a minute" and runs the shrinking machine one last time
 //  · the kitchen light flickers, the music box winds down — the flash, the bang — an empty bench
 //    with his glasses on it, a tiny voice from inside the machine… the title, and the prologue begins
 //  Everything here only moves things for the camera and puts them back at the end.
 // =====================================================================
-const CINE = { on: false, t: 0, last: 0, ev: 0, shot: -1, mus: 1, manual: false, skipReq: false, sub: 0, subT: 0,
+const CINE = { on: false, F: null, prev: 'play', t: 0, last: 0, ev: 0, shot: -1, mus: 1, manual: false, skipReq: false, sub: 0, subT: 0, hud: false,
   dad: null, props: null, specs: null, saved: null, au: null, kh: { y: 0, p: .3 }, shake: 0, white: 0, fov: 52, ap: 0, hw: null, tick: -1 };
+
+// ---------- the player ----------
+function filmPlay(F) {
+  if (CINE.on || !WORLD) return false;
+  CINE.F = F; CINE.prev = STATE; STATE = 'cine';
+  Object.assign(CINE, { on: true, t: 0, last: 0, ev: 0, shot: -1, mus: F.mus ?? 1, skipReq: false, subT: 0, shake: 0, tick: -1 });
+  CINE.fov = camera.fov; CINE.ap = bokeh.uniforms.aperture.value; bokeh.uniforms.aperture.value = Math.min(CINE.ap * .22, .000035);   // (people-sized distances: a much smaller lens opening)
+  CINE.hud = $('hud').classList.contains('off'); $('hud').classList.add('off'); if (TOUCH) $('touch').hidden = true;
+  const ov = $('cine'); ov.hidden = false; ov.classList.add('out'); void ov.offsetWidth; ov.classList.remove('out'); $('cineFade').style.transition = ''; $('cineFade').style.opacity = F.black ? F.black(0) : 1;
+  $('cineFlash').style.opacity = 0; $('cineTitle').classList.remove('on'); $('cineSub').classList.remove('on'); $('cineSkip').classList.remove('on');
+  setTimeout(() => { if (CINE.on && CINE.F === F) $('cineSkip').classList.add('on'); }, 1200);
+  if (F.begin) F.begin();
+  return true;
+}
+function filmEnd(skipped) {
+  if (!CINE.on) return; const F = CINE.F; CINE.on = false;
+  camera.fov = CINE.fov; onResize(); bokeh.uniforms.aperture.value = CINE.ap; LP.snap = true; CINE.mus = 1; CINE.shake = 0;
+  $('cineSkip').classList.remove('on'); $('cineSub').classList.remove('on'); $('cineTitle').classList.remove('on'); $('cineFlash').style.opacity = 0;
+  if (F.end) F.end(skipped);   // the film puts its things back (and may load what comes next)
+  if (STATE !== 'cine') return;
+  // back to the game: the bars slide away and the black lifts off the game's own camera
+  STATE = CINE.prev && CINE.prev !== 'cine' ? CINE.prev : 'play'; if (!CINE.hud) $('hud').classList.remove('off'); if (TOUCH && STATE === 'play') $('touch').hidden = false;
+  const ov = $('cine'), fd = $('cineFade'); fd.style.transition = 'opacity .7s ease'; fd.style.opacity = 0; ov.classList.add('out');
+  setTimeout(() => { if (CINE.on) return; ov.hidden = true; ov.classList.remove('out'); fd.style.transition = ''; }, 900);
+}
 const CINE_LEN = 60;
 const CBP = (x, y, z) => V3(x, y, z).add(BO);   // basement coordinates → world
 
@@ -70,14 +101,18 @@ const CINE_EV = [
   [50.9, () => cineSay(LANG_EN ? '???' : '？？？', '……咦？', '#82ece6', 2.2)],
   [53.6, () => { $('cineTitle').classList.add('on'); CINE.mus = 1; }],
   [58.4, () => $('cineTitle').classList.remove('on')],
-  [CINE_LEN, () => cineFinish(false)],
 ];
 
 // ---------- start / stop ----------
+const FILM_OPEN = { id: 'open', title: true, len: CINE_LEN, mus: 0, shots: CINE_SHOTS, ev: CINE_EV,
+  begin: openBegin, end: openEnd, audio: cineAudioTick,
+  black: t => t < 1.8 ? 1 - sstep(.2, 1.8, t) : t > 52.4 ? sstep(52.4, 53.5, t) : 0,
+  white: t => t < 45.6 ? 0 : t < 45.7 ? sstep(45.6, 45.7, t) : t < 47.2 ? 1 : 1 - sstep(47.2, 49.8, t) };
 function cineStart() {
   if (CINE.on || !WORLD) { startGame(0); return; }
-  titleEnd(); $('start').hidden = true; STATE = 'cine';
-  Object.assign(CINE, { on: true, t: 0, last: 0, ev: 0, shot: -1, mus: 0, skipReq: false, subT: 0, shake: 0, white: 0, tick: -1 });
+  titleEnd(); $('start').hidden = true; filmPlay(FILM_OPEN);
+}
+function openBegin() {
   // put away what the title screen shows: the tiny crew isn't tiny yet
   CINE.saved = { vis: {}, kid: KID.root.visible, mom: mom.root.visible, phone: mom.phone.visible, km: [KM.mode, KM.pt], kidP: KID.root.position.clone(), kidY: KID.root.rotation.y, kpose: KID.pose, kseat: KID.seatY, cat: CAT.root ? CAT.root.visible : false };
   for (const id in chars) { CINE.saved.vis[id] = chars[id].root.visible; chars[id].root.visible = false; }
@@ -88,53 +123,47 @@ function cineStart() {
   if (!mom.spoon) { mom.spoon = new THREE.Mesh(new THREE.CylinderGeometry(.5, .7, 26, 8), kitchenMats().wood); mom.spoon.position.set(0, -27, 8); mom.spoon.rotation.x = 1.2; mom.arms[1].el.add(mom.spoon); }
   mom.root.visible = true; mom.phone.visible = false; KID.root.visible = true; if (CAT.root) CAT.root.visible = false;
   CINE.specs = HX.pend.map(P => [P.l.intensity, P.bulb ? P.bulb.emissiveIntensity : 0]);
-  CINE.fov = camera.fov; CINE.ap = bokeh.uniforms.aperture.value; bokeh.uniforms.aperture.value = Math.min(CINE.ap * .22, .000035);   // (people-sized distances: a much smaller lens opening)
-  const ov = $('cine'); ov.hidden = false; ov.classList.remove('out'); $('cineFade').style.opacity = 1; $('cineFlash').style.opacity = 0; $('cineTitle').classList.remove('on'); $('cineSub').classList.remove('on');
-  setTimeout(() => { if (CINE.on) $('cineSkip').classList.add('on'); }, 1200);
   cineAudioStart(); renderer.compile(scene, camera); CINE.props.glasses.visible = false; CINE.dad.root.visible = false;
 }
 // skipped, or the film ran out: everything back as it was, then the prologue loads behind the black
-function cineFinish(skipped) {
-  if (!CINE.on) return; CINE.on = false;
+function openEnd(skipped) {
   const S = CINE.saved;
   for (const id in S.vis) if (chars[id]) chars[id].root.visible = S.vis[id];
   KID.root.visible = S.kid; KID.root.position.copy(S.kidP); KID.root.rotation.y = S.kidY; KID.pose = S.kpose; KID.seatY = S.kseat; if (KID.pen) KID.pen.visible = true;
   mom.root.visible = S.mom; mom.phone.visible = S.phone; if (mom.spoon) mom.spoon.visible = false; KM.mode = S.km[0]; KM.pt = S.km[1]; mom.sitK = 0; if (CAT.root) CAT.root.visible = S.cat;
   CINE.props.g.visible = false; CINE.props.glasses.visible = false; CINE.dad.root.visible = false; if (CINE.hw) CINE.hw.visible = true; for (const r of CINE.tbl || []) r.mesh.visible = true;
   cineFlicker(1); HX.pend.forEach((P, i) => { P.l.intensity = CINE.specs[i][0]; if (P.bulb) P.bulb.emissiveIntensity = CINE.specs[i][1]; });
-  camera.fov = CINE.fov; onResize(); bokeh.uniforms.aperture.value = CINE.ap;
-  cineAudioStop(); CINE.mus = 1; $('cineSkip').classList.remove('on'); $('cineSub').classList.remove('on');
-  $('cineFade').style.opacity = 1; $('cineFlash').style.opacity = 0; $('cineTitle').classList.remove('on');
+  cineAudioStop(); $('cineFade').style.opacity = 1;
   // the prologue's chapter card fades in over the black, then the film's black goes away underneath it
   const ov = $('cine'); startGame(0); setTimeout(() => { ov.hidden = true; }, 1100);
   // the film ended on its own (no click to grab the mouse with): once the prologue is up, say how to take over
   let n = 0; const iv = setInterval(() => { if (++n > 40 || locked || dragMode || TOUCH) { clearInterval(iv); return; } if (STATE === 'play') { clearInterval(iv); toast('點一下畫面，開始行動', 4); } }, 300);
 }
-function cineSkip() { cineFinish(true); }
 
 // ---------- per frame ----------
 function cineTick(dt) {
-  if (!CINE.on) return;
+  if (!CINE.on) return; const F = CINE.F;
   const now = performance.now(), d = CINE.last ? (now - CINE.last) / 1000 : dt; CINE.last = now;
-  if (!CINE.manual) CINE.t += clamp(d, 0, .1);   // real time, so the music stays with the pictures on a slow machine
+  if (!CINE.manual) CINE.t += clamp(d, 0, .1);   // real time, so music stays with the pictures on a slow machine
   const t = CINE.t;
-  if (t > .5 && (pressed.Space || pressed.Enter || pressed.Escape || CINE.skipReq)) { cineSkip(); return; }
+  if (t > .5 && (pressed.Space || pressed.Enter || pressed.Escape || CINE.skipReq)) { filmEnd(true); return; }
   // which shot
-  let si = 0; for (let i = 0; i < CINE_SHOTS.length; i++) if (t >= CINE_SHOTS[i].t0) si = i;
-  if (si !== CINE.shot) { CINE.shot = si; const S = CINE_SHOTS[si]; S.set(); camera.fov = S.fov; onResize(); LP.snap = true; }
-  while (CINE.ev < CINE_EV.length && CINE_EV[CINE.ev][0] <= t) { CINE_EV[CINE.ev++][1](); if (!CINE.on) return; }
-  const S = CINE_SHOTS[CINE.shot], u = t - S.t0;
+  let si = 0; for (let i = 0; i < F.shots.length; i++) if (t >= F.shots[i].t0) si = i;
+  if (si !== CINE.shot) { CINE.shot = si; const S = F.shots[si]; S.set(); camera.fov = S.fov; onResize(); LP.snap = true; }
+  while (CINE.ev < F.ev.length && F.ev[CINE.ev][0] <= t) { F.ev[CINE.ev++][1](); if (!CINE.on) return; }
+  const S = F.shots[CINE.shot], u = t - S.t0;
   const [p, look, fp] = S.run(u, dt);
-  // camera, with a little hand-held breathing (and a shake when the machine goes)
-  const br = V3(Math.sin(t * .71) * .35 + Math.sin(t * 1.9) * .12, Math.sin(t * .53 + 1) * .25, Math.sin(t * .87 + 2) * .3);
+  // camera, with a little hand-held breathing (and a shake when asked)
+  const br = V3(Math.sin(t * .71) * .35 + Math.sin(t * 1.9) * .12, Math.sin(t * .53 + 1) * .25, Math.sin(t * .87 + 2) * .3).multiplyScalar(F.breath ?? 1);
   const sh = CINE.shake; if (sh > 0) br.add(V3(R(-1, 1), R(-1, 1), R(-1, 1)).multiplyScalar(sh));
   camera.position.copy(p).add(br); camera.lookAt(look); bokeh.uniforms.focus.value = camera.position.distanceTo(fp || look);
-  // black at the start and the end, white for the flash
-  const black = t < 1.8 ? 1 - sstep(.2, 1.8, t) : t > 52.4 ? sstep(52.4, 53.5, t) : 0;
-  const white = t < 45.6 ? 0 : t < 45.7 ? sstep(45.6, 45.7, t) : t < 47.2 ? 1 : 1 - sstep(47.2, 49.8, t);
+  // black at the start and the end (unless the film says otherwise), white for a flash
+  const black = F.black ? F.black(t) : t < .8 ? 1 - sstep(0, .8, t) : t > F.len - .8 ? sstep(F.len - .8, F.len, t) : 0;
+  const white = F.white ? F.white(t) : 0;
   $('cineFade').style.opacity = black.toFixed(3); $('cineFlash').style.opacity = white.toFixed(3);
   if (CINE.subT > 0) { CINE.subT -= dt; if (CINE.subT <= 0) $('cineSub').classList.remove('on'); }
-  cineAudioTick(t);
+  if (F.audio) F.audio(t);
+  if (t >= F.len) filmEnd(false);
 }
 
 // ---------- the people ----------
@@ -297,6 +326,9 @@ function cineSfx(k) {
 function cineSay(n, t, c, dur) { $('cineSubN').textContent = n; $('cineSubN').style.color = c; $('cineSubT').textContent = t; $('cineSub').classList.add('on'); CINE.subT = dur; }
 
 // skip: the button, or Space / Enter / Esc (read in cineTick)
-$('cineSkip').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (CINE.on && CINE.t > .5) { audioInit(); cineSkip(); } });
+$('cineSkip').addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (CINE.on && CINE.t > .5) { audioInit(); filmEnd(true); } });
 // dev: jump to a moment of the film (tests)
-function cineAt(t) { if (!CINE.on) cineStart(); CINE.manual = true; CINE.t = t; let si = 0; for (let i = 0; i < CINE_SHOTS.length; i++) if (t >= CINE_SHOTS[i].t0) si = i; CINE.ev = CINE_EV.findIndex(e => e[0] > t); if (CINE.ev < 0) CINE.ev = CINE_EV.length; if (si !== CINE.shot) { CINE.shot = -1; } return si; }
+function cineAt(t, F) {
+  F = F || CINE.F || FILM_OPEN; if (!CINE.on) { if (F === FILM_OPEN) cineStart(); else filmPlay(F); }
+  CINE.manual = true; CINE.t = t; CINE.ev = F.ev.findIndex(e => e[0] > t); if (CINE.ev < 0) CINE.ev = F.ev.length; CINE.shot = -1; return 1;
+}

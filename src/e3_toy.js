@@ -47,6 +47,10 @@ function toyWho(who) {
   if (w === 'dog' && !park) return ['鄰居的狗', '汪！（叼着玩具搖尾巴）', '#d8a45a'];
   if (w === 'old') return ['陳伯', '咦，誰把玩具留在這裡？', '#c8b8a0'];
   if (w === 'walker' || w === 'wdog') return ['行人', '……誰把玩具丟在行人路上？', '#9ec4e8'];
+  if (w.startsWith('skid')) { const k = SC.kids[+w.slice(4)]; return [k ? k.name : '同學', rnd() < .5 ? '嘩！隻老鼠公仔識郁㗎！' : '老師！有隻玩具老鼠！', k ? k.col : '#f0c070']; }
+  if (w === 'tch') return ['陳老師', '……邊個帶咗公仔返學校？交畀我先。', '#b8d0b0'];
+  if (w === 'grd') return ['保安伯伯', '咦？乜嘢嚟㗎……一隻玩具老鼠？', '#a8b4c8'];
+  if (w === 'her') return ['女兒', '……老鼠公仔？', '#e8a0c0'];
   if (w.startsWith('kid')) return ['公園的小朋友', '哇！有隻玩具老鼠！我撿到的！', '#f0c070'];
   if (w.startsWith('dog')) return ['公園的狗', '汪汪！（叼着玩具跑回主人身邊）', '#d8a45a'];
   if (w.startsWith('owner') || w === 'par') return ['公園的家長', '咦？誰家小朋友的玩具掉了？', '#b8c8a0'];

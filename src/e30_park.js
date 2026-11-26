@@ -120,14 +120,7 @@ function buildPark() {
   { const gL = new THREE.Group(); gL.position.set(2010, GY, 3728); gL.rotation.y = 1.3; LV.add(gL); const gR = new THREE.Group(); gR.position.set(2110, GY, 3728); gR.rotation.y = -1.3; LV.add(gR);
     for (const [gg, s] of [[gL, 1], [gR, -1]]) { for (let i = 0; i < 7; i++) mesh(new THREE.BoxGeometry(2, 110, 2), metal, s * (5 + i * 7), 58, 0, { parent: gg }); mesh(new THREE.BoxGeometry(50, 3, 3), metal, s * 26, 108, 0, { parent: gg }); mesh(new THREE.BoxGeometry(50, 3, 3), metal, s * 26, 12, 0, { parent: gg }); } }
 
-  // ---- beyond the back gate: a quiet street and the school (next chapter) ----
-  box(-340, 3500, GY - 10, GY, 3740, 3900, new THREE.MeshStandardMaterial({ map: MAT.floor.map, color: 0xa8a49c, roughness: .9 }), { uv: 128, cast: false });
-  box(-340, 3500, GY - 22, GY - 10, 3900, 4200, new THREE.MeshStandardMaterial({ color: 0x24272b, roughness: .85 }), { col: false, cast: false });
-  { const sx = new THREE.MeshStandardMaterial({ color: 0x8a4a34, roughness: .9 }), win = DAY ? new THREE.MeshPhysicalMaterial({ color: 0x6a7c90, roughness: .05, metalness: .2, clearcoat: 1 }) : new THREE.MeshStandardMaterial({ color: 0x241a10, emissive: 0xffc070, emissiveIntensity: .7, roughness: .3 }), wo = DAY ? new THREE.MeshPhysicalMaterial({ color: 0x4e6074, roughness: .05, metalness: .2, clearcoat: 1 }) : new THREE.MeshStandardMaterial({ color: 0x0c1016, roughness: .1, metalness: .3 });
-    box(900, 3300, GY - 10, GY + 760, 4260, 4400, sx, { col: false, uv: 120 }); box(890, 3310, GY + 760, GY + 784, 4250, 4410, conc, { col: false });
-    for (let row = 0; row < 3; row++) for (let x = 980; x < 3240; x += 170) { const lit = hashI(row * 31 + x) > .82; box(x, x + 110, GY + 90 + row * 230, GY + 230 + row * 230, 4258, 4260, lit ? win : wo, { col: false, cast: false }); box(x - 4, x + 114, GY + 86 + row * 230, GY + 90 + row * 230, 4256, 4260, conc, { col: false }); }
-    const sg = mesh(new THREE.PlaneGeometry(420, 105), new THREE.MeshStandardMaterial({ map: schoolSignTex(), roughness: .6, emissive: 0x444038, emissiveMap: null }), 2100, GY + 700, 4257, { cast: false }); sg.rotation.y = Math.PI;
-    PK.schoolL = pointL(0xffe0b0, LI(60000), 2100, GY + 560, 4120); }
+  // (beyond the back gate: the street and the school are the next chapter's — e38_school)
 
   // ---- big trees: their crowns throw shade ----
   const tree = (x, z, s, leaf) => { cyl(x, z, 18 * s, GY, GY + 330 * s, trunk, { seg: 14 }); for (const [dx, dz] of [[1, .2], [-.8, .6], [.2, -1]]) cyl(x + dx * 50 * s, z + dz * 50 * s, 6 * s, GY + 240 * s, GY + 300 * s, trunk, { seg: 8, col: false });
@@ -719,10 +712,8 @@ function parkPrep(soft) {
   if (PK.jog) { PK.jog.mode = 'run'; } if (PK.sk) { PK.sk.mode = 'ride'; PK.sk.t = R(20, 40); }
 }
 function parkWin() {
-  if (STATE !== 'play') return; unlockKey('ch6');
-  say('爸爸', '晶片充滿了……我們走。', '#f5f0e6', 3);
-  END_TXT = ['第六章 · 完', '公園', '晶片在陽光底下充滿了電。公園後門對面，就是楓林小學。（第七章：學校，製作中）'];
-  STATE = 'end'; endT = 0;
+  if (STATE !== 'play' || PK.out) return; PK.out = true; unlockKey('ch6');
+  say('爸爸', '晶片充滿了……對面就是楓林小學。走。', '#f5f0e6', 3);   // (no chapter card: the street and the school carry straight on — e38_school)
 }
 // online: the park part of the shared objective list
 function mpParkObjectives(P) {

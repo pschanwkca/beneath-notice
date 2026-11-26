@@ -5,7 +5,7 @@
 //  One original 8-bar theme (D minor, round the circle of fifths) runs through every place;
 //  each place re-arranges it (title: solo piano · lab: celesta · wall: cosy piano and pizz ·
 //  kitchen: pizz + clarinet, the sneakiest · garage: bassoon, ostinato bass, pulse ·
-//  yards: a nocturne · street: a brushed jazz trio).
+//  yards: a nocturne · street: a brushed jazz trio · school: a celesta-and-pizz playground tune).
 //  The band follows the play, like a stealth-comedy score:
 //    layer 0  still / hidden     bass and soft piano
 //    layer 1  moving             + the place's motion figure (pizz, arpeggios, brushes)
@@ -46,7 +46,8 @@ const ARR = {
   sneak: { key: 0, bpm: 108, swing: .1, floor: [1, 0, 0, 0], parts: [['stab', 'piano', 0, .11], ['tiptoe', 'bass', 0, .27], ['pizz8', 'pizz', 1, .27], ['brushLight', 'brush', 1, .5], ['mel', 'clar', 2, .13, 0, 'stacc'], ['mel', 'pizz', 3, .22, 12, 'stacc'], ['trem', 'str', 3, .065], ['heart', 'kick', 3, .32]] },
   tense: { key: -5, bpm: 92, swing: 0, floor: [1, 0, 0, 0], parts: [['cluster', 'piano', 0, .11], ['ostinato', 'bass', 0, .28], ['pulse', 'kick', 1, .26], ['tick', 'brush', 1, .5], ['mel', 'bsn', 2, .14, -12, 'frag'], ['mel', 'clar', 3, .07, 0, 'frag'], ['trem', 'str', 3, .07], ['heart', 'kick', 3, .3]] },
   night: { key: -2, bpm: 66, swing: 0, floor: [1, .3, 0, 0], parts: [['bassLong', 'bass', 0, .28], ['block', 'piano', 0, .09, 58], ['flow', 'piano', 1, .16], ['mel', 'cel', 2, .2, 12], ['mel', 'piano', 2, .14, 0], ['trem', 'str', 3, .065], ['heart', 'kick', 3, .3]] },
-  street: { key: 3, bpm: 96, swing: .2, floor: [1, .45, .25, 0], parts: [['walk', 'bass', 0, .36], ['jazz', 'piano', 0, .12], ['swing', 'brush', 1, .55], ['mel', 'piano', 2, .26, 0], ['mel', 'clar', 3, .08, 12], ['heart', 'kick', 3, .3]] }
+  street: { key: 3, bpm: 96, swing: .2, floor: [1, .45, .25, 0], parts: [['walk', 'bass', 0, .36], ['jazz', 'piano', 0, .12], ['swing', 'brush', 1, .55], ['mel', 'piano', 2, .26, 0], ['mel', 'clar', 3, .08, 12], ['heart', 'kick', 3, .3]] },
+  school: { key: 5, bpm: 100, swing: .12, floor: [1, .35, 0, 0], parts: [['root5', 'bass', 0, .3], ['stab', 'piano', 0, .1], ['pizz8', 'pizz', 1, .22], ['brushLight', 'brush', 1, .42], ['mel', 'cel', 2, .2, 12, 'stacc'], ['mel', 'clar', 2, .09, 0], ['trem', 'str', 3, .065], ['heart', 'kick', 3, .3]] }
 };
 
 // ---------- sample bank ----------
@@ -242,8 +243,8 @@ function musicSwitch(name, t) {
 }
 function musicWant() {
   if (MUS.force) return MUS.force;
-  if (STATE === 'title' || STATE === 'load' || STATE === 'intro' || STATE === 'end' || STATE === 'cine') return 'title';
-  return ({ basement: 'lab', wall: 'hub', kitchen: 'sneak', garage: 'tense', yard: 'night', road: 'street' })[LEVEL] || 'title';
+  if (STATE === 'title' || STATE === 'load' || STATE === 'intro' || STATE === 'end' || (STATE === 'cine' && (!CINE.F || CINE.F.title))) return 'title';
+  return ({ basement: 'lab', wall: 'hub', kitchen: 'sneak', garage: 'tense', yard: 'night', road: 'street', school: 'school' })[LEVEL] || 'title';
 }
 // how much of the band plays: moving, a grown-up nearby, being seen
 function musicLayers(dt) {

@@ -14,6 +14,7 @@ const UPS = { y: 300, ceil: 540, stars: null, mNext: 0, mStep: 0, mbus: null, mO
 // the family's feet: the stairs ramp up, the landing / hall / bedroom are at y 300 (the bedroom sits over
 // the living room, so there it keeps whichever floor you were already on)
 function humanFloor(x, z, cur = 0) {
+  if (z > 3700) return GY;   // (the school, across the park)
   if (x > 744 && x < 904 && z < -244) { if (x < 830 && z > -472) return clamp((-246 - z) / 214, 0, 1) * UPS.y; return UPS.y; }
   if (x > 306 && z > -244) return cur > 150 ? UPS.y : 0;
   return 0;

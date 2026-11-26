@@ -25,7 +25,7 @@ function solidSkipSet() {
     if (depth <= 0 || v.isVector3 || v.isColor || v.isMaterial || v.isTexture || ArrayBuffer.isView(v)) return;
     for (const k of Object.keys(v)) markRef(v[k], depth - 1);
   };
-  for (const S of [HX, LIV, UPS, KS, GS, YS, ST, PK, TOY, KM, KID, HB, AGB, OLDB, NC, MOLE, CREW, machine]) markRef(S, 3);
+  for (const S of [HX, LIV, UPS, KS, GS, YS, ST, PK, SC, TOY, KM, KID, HB, AGB, OLDB, NC, MOLE, CREW, machine]) markRef(S, 3);
   return skip;
 }
 function autoSolid() {

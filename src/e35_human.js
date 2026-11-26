@@ -40,7 +40,8 @@ function humMats() {
   return HUMM;
 }
 // a lathe outline for a limb: points top→bottom given as [r, t]; built bottom→top so the normals face out
-function humLimb(prof, len, kr, seg = 18) {
+let HUM_LOD = 0;   // set while building a crowd person: coarser surfaces, plain hair, mitten hands
+function humLimb(prof, len, kr, seg = HUM_LOD ? 10 : 18) {
   const pts = [new THREE.Vector2(0, -prof[prof.length - 1][1] * len - .25)];
   for (let i = prof.length - 1; i >= 0; i--) pts.push(new THREE.Vector2(prof[i][0] * kr, -prof[i][1] * len));
   pts.push(new THREE.Vector2(0, -prof[0][1] * len + .25));
@@ -87,6 +88,7 @@ const grp = (parent, x = 0, y = 0, z = 0) => { const g = new THREE.Group(); g.po
 // o: { build 'm'|'f'|'k', top, pants, skin, shoe, sole, hair (colour), style 'short'|'bald'|'bun'|'long'|'pig', bald, cap, badge,
 //      glasses, sleeve 'long'|'short', slipper (fur material), ankleSkin, sock (material, no shoe), lip, hood }
 function humanBody(o, H = {}) {
+  HUM_LOD = o.lod ? 1 : 0;
   const B = HUM_B[o.build || 'm'], MM = humMats(), P = humParts();
   const kl = B.kl, ka = B.ka, F = B.foot;
   Object.assign(H, { pos: H.pos || V3(), yaw: H.yaw || 0, phase: H.phase || 0, amp: 0, legs: [], arms: [], aim: H.aim || V3(), aimT: H.aimT || V3() });
@@ -142,12 +144,13 @@ function humanBody(o, H = {}) {
     humHand(P, hand, fing, s, B.hand, skin);
     H.arms.push({ sh, el, hand, fing, s, shY0: B.shY, grip: .35 });
   }
-  P.done();
+  P.done(); HUM_LOD = 0; H.lod = !!o.lod;
   H._g = { a: 0, run: 0, wt: R(0, 50), py: H.dim.pelN, ry: null, yr: 0 }; H._nk = { x: 0, y: 0, z: 0 }; H._lt = R(0, 20); H._seed = R(0, 6.28); H._bl = R(1, 4); H._bk = 0;
   HUMANS.push(H);
   return H;
 }
 function humHand(P, hand, fing, s, k, skin) {
+  if (HUM_LOD) { P.add(hand, skin, ell(1.35 * k, 3.4 * k, 2.75 * k, 10, 8), [0, -2.8 * k, 0]); P.add(fing, skin, ell(1.1 * k, 2.6 * k, 2.6 * k, 10, 8), [0, -2.2 * k, 0]); return; }   // a mitten
   // palm faces the thigh (−s·x), thumb at the front edge, fingers curl toward the palm
   P.add(hand, skin, ell(1.35 * k, 3.4 * k, 2.75 * k, 14, 10), [0, -2.8 * k, 0]);
   P.add(hand, skin, ell(1.2 * k, 1.4 * k, 2.6 * k, 12, 8), [0, -.2 * k, 0]);   // wrist
@@ -177,7 +180,7 @@ function humHeadPt(x, y, z, out) {
   return out.set(px + x * d, py + y * d + .2, pz + z * d - .4);
 }
 function humHeadGeo() {
-  const g = new THREE.SphereGeometry(1, 96, 84); const P = g.attributes.position; const col = new Float32Array(P.count * 3); const v = V3(), w = V3();
+  const g = HUM_LOD ? new THREE.SphereGeometry(1, 40, 34) : new THREE.SphereGeometry(1, 96, 84); const P = g.attributes.position; const col = new Float32Array(P.count * 3); const v = V3(), w = V3();
   for (let i = 0; i < P.count; i++) {
     v.set(P.getX(i), P.getY(i), P.getZ(i)).normalize(); humHeadPt(v.x, v.y, v.z, w); P.setXYZ(i, w.x, w.y, w.z);
     let r = 1, gg = 1, b = 1;
@@ -189,7 +192,7 @@ function humHeadGeo() {
 function humColor(geo) { const n = geo.attributes.position.count; geo.setAttribute('color', new THREE.BufferAttribute(new Float32Array(n * 3).fill(1), 3)); return geo; }
 // hair that follows the skull: part of a sphere (θ ≤ thL, tipped back by tilt), each point pushed onto the head + lift
 function humHairGeo(thL, tilt, lift, phiS = 0, phiL = Math.PI * 2, thS = 0) {
-  const g = new THREE.SphereGeometry(1, 56, 22, phiS, phiL, thS, thL); g.rotateX(tilt); const P = g.attributes.position, v = V3(), w = V3();
+  const g = new THREE.SphereGeometry(1, HUM_LOD ? 24 : 56, HUM_LOD ? 10 : 22, phiS, phiL, thS, thL); g.rotateX(tilt); const P = g.attributes.position, v = V3(), w = V3();
   for (let i = 0; i < P.count; i++) { v.set(P.getX(i), P.getY(i), P.getZ(i)).normalize(); humHeadPt(v.x, v.y, v.z, w); w.addScaledVector(v, lift * (1 + .5 * Math.max(0, v.y))); P.setXYZ(i, w.x, w.y, w.z); }
   g.computeVertexNormals(); return g;
 }
@@ -215,8 +218,8 @@ function humFace(H, P, f, o, skin, MM) {
   // hair
   const st = style0(o);
   if (o.hair !== undefined && o.hair !== null) {
-    const hm = furMat({ color: o.hair, len: st === 'bald' ? .55 : .8, den: 2.4, droop: .45, clump: .55, rimK: .08, root: .55, rough: .7 });
-    const add = (geo, x = 0, y = 0, z = 0) => { const m = furMesh(geo, hm); m.position.set(x, y, z); f.add(m); return m; };
+    const hm = HUM_LOD ? new THREE.MeshStandardMaterial({ color: o.hair, roughness: .75 }) : furMat({ color: o.hair, len: st === 'bald' ? .55 : .8, den: 2.4, droop: .45, clump: .55, rimK: .08, root: .55, rough: .7 });
+    const add = (geo, x = 0, y = 0, z = 0) => { const m = HUM_LOD ? new THREE.Mesh(geo, hm) : furMesh(geo, hm); if (HUM_LOD) m.castShadow = true; m.position.set(x, y, z); f.add(m); return m; };
     if (st === 'bald') add(humHairGeo(.5, -.25, .3, Math.PI - .35, Math.PI + .7, 1.35));
     else {
       add(o.cap ? humHairGeo(.5, -.62, .45, 0, Math.PI * 2, 1.05) : humHairGeo(1.52, -.62, .55));
