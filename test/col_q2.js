@@ -1,0 +1,2 @@
+(() => { const B = window.__bn; const q = (x0, x1, y0, y1, z0, z1) => B.cols.filter(c => c.y1 > -900 && (c.t === 'b' ? c.x1 > x0 && c.x0 < x1 && c.y1 > y0 && c.y0 < y1 && c.z1 > z0 && c.z0 < z1 : c.x + c.r > x0 && c.x - c.r < x1 && c.y1 > y0 && c.y0 < y1 && c.z + c.r > z0 && c.z - c.r < z1)).map(c => [c.t, ...(c.t === 'b' ? [c.x0, c.x1, c.y0, c.y1, c.z0, c.z1] : [c.x, c.z, c.r, c.y0, c.y1]).map(v => +(+v).toFixed(1)), c.auto ? 'auto' : '']);
+  return { shoe: q(276, 280, 0, 3, 150, 160), box: q(468, 476, 0, 3, 70, 80), bag: q(230, 240, 0, 3, 203, 208) }; })()

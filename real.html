@@ -5535,6 +5535,74 @@ function tvShowTex() {
   const t = tex(c); t.repeat.set(.5, 1); return t;
 }
 
+// =====================================================================
+//  生活感 — the things a family leaves lying about, each one good for something when you're 5 cm tall
+//  · the daughter's school shoes by the kitchen wall, and her bunny slippers by the sofa: crawl inside to hide
+//  · a paper shopping bag on its side, a delivery box on its side: tunnels to hide in (the box's top is a look-out)
+//  · a stack of magazines and books by the sofa: steps up its back
+//  · her toy piano on the living-room floor: step on a key and it plays — loud enough to bring someone over
+//    (or to send them the wrong way, if you're clever about where you are when you do it)
+// =====================================================================
+const LIVED = { keys: [], keyCd: 0 };
+function plate(x0, x1, y1, z0, z1, mat) { const m = box(x0, x1, 0, y1, z0, z1, mat, { col: false }); m.userData.noSolid = true; cols.push({ t: 'b', x0, x1, y0: 0, y1: .12, z0, z1 }); return m; }
+function buildLivedIn(K) {
+  const M = MAT;
+  // a hollow shoe along z, toe at +z: sole, two sides, a toe cap over the front half (the roof you hide under)
+  const shoe = (x, z, upper, trim, len = 26, w = 10, h = 9) => {
+    const x0 = x - w / 2, x1 = x + w / 2, z0 = z - len / 2, z1 = z + len / 2, sole = new THREE.MeshStandardMaterial({ color: 0xf4f1ea, roughness: .7 });
+    plate(x0, x1, .9, z0, z1, sole); box(x0, x0 + 1.2, .9, h - 1.5, z0 + 2, z1, upper); box(x1 - 1.2, x1, .9, h - 1.5, z0 + 2, z1, upper);
+    box(x0, x1, .9, h - 1.5, z1 - 1.2, z1, upper); box(x0, x1, h - 1.5, h, z0 + len * .45, z1, upper);
+    box(x0 - .25, x0, .9, 2.2, z0 + 1, z1, trim, { col: false, cast: false }); box(x1, x1 + .25, .9, 2.2, z0 + 1, z1, trim, { col: false, cast: false });   // a stripe along each side
+    for (let i = 0; i < 4; i++) box(x0 + 1.4, x1 - 1.4, h + .02, h + .35, z0 + len * .5 + i * 2.6, z0 + len * .5 + i * 2.6 + .7, M.white, { col: false, cast: false });   // laces
+    // a rounded toe and a heel tab, so it reads as a shoe and not a box
+    const toe = mesh(new THREE.SphereGeometry(w / 2 + .15, 20, 10, 0, Math.PI * 2, 0, Math.PI / 2), upper, x, .9, z1 - w * .35); toe.scale.set(1, (h - .9) / (w / 2), 1.05); toe.userData.noSolid = true;
+    const cap = mesh(new THREE.SphereGeometry(w / 2 + .3, 20, 8, 0, Math.PI * 2, 0, Math.PI / 2), M.white, x, .9, z1 - w * .3); cap.scale.set(1, .32, 1.1); cap.userData.noSolid = true;
+    const tab = box(x - 1.6, x + 1.6, .9, 4.5, z0 - .2, z0 + .6, trim, { col: false }); tab.userData.noSolid = true;
+  };
+  const canvasPink = new THREE.MeshStandardMaterial({ color: 0xf2a9b8, roughness: .85 }), navy = new THREE.MeshStandardMaterial({ color: 0x2d3e6a, roughness: .7 });
+  shoe(278, 170, canvasPink, navy); shoe(291, 183, canvasPink, navy);
+  // the shopping bag, fallen on its side: open end facing the room
+  { const kraft = new THREE.MeshStandardMaterial({ color: 0xc49a64, roughness: .95 }), x0 = 198, x1 = 234, z0 = 194, z1 = 218, h = 20;
+    plate(x0, x1, .5, z0, z1, kraft); box(x0, x1, h - .7, h, z0, z1, kraft); box(x0, x1, .7, h - .7, z0, z0 + .7, kraft); box(x0, x1, .7, h - .7, z1 - .7, z1, kraft); box(x0, x0 + .7, .7, h - .7, z0, z1, kraft);
+    box(x0 + 8, x0 + 22, h, h + .1, z0 + 4, z1 - 4, new THREE.MeshStandardMaterial({ color: 0x3f7a4a, roughness: .9 }), { col: false, cast: false });   // the shop's green stamp
+    mesh(new THREE.SphereGeometry(4.2, 18, 14), new THREE.MeshPhysicalMaterial({ color: 0xc8312a, roughness: .35, clearcoat: .5 }), 244, 4.2, 210);
+    const bread = mesh(new THREE.CapsuleGeometry(3, 26, 6, 12), new THREE.MeshStandardMaterial({ color: 0xd59a52, roughness: .8 }), 256, 3, 186); bread.rotation.z = Math.PI / 2; bread.rotation.y = .6; }
+  // the delivery box in the living room, on its side, open towards the sofa
+  { const cb = new THREE.MeshStandardMaterial({ color: 0xb88f5c, roughness: .95 }), x0 = 450, x1 = 494, z0 = 40, z1 = 74, h = 30;
+    plate(x0, x1, .6, z0, z1, cb); box(x0, x1, h - 1, h, z0, z1, cb); box(x0, x0 + 1, 1, h - 1, z0, z1, cb); box(x1 - 1, x1, 1, h - 1, z0, z1, cb); box(x0, x1, 1, h - 1, z0, z0 + 1, cb);
+    box(x0 + 18, x0 + 26, h, h + .08, z0, z1, new THREE.MeshStandardMaterial({ color: 0xd8c9a0, roughness: .4 }), { col: false, cast: false });   // tape
+    const flap = new THREE.Group(); flap.position.set(x0, h, z1); flap.rotation.x = 1.25; LV.add(flap); mesh(new THREE.BoxGeometry(44, 15, .8), cb, 22, 7.5, 0, { parent: flap }); LIVED.flap = flap;
+    box(x0 + 4, x0 + 20, 12, 22, z0 - .1, z0, new THREE.MeshStandardMaterial({ color: 0xf2efe6, roughness: .6 }), { col: false, cast: false }); }   // the label
+  // magazines and books by the sofa's back: three piles, a step each
+  { const cols3 = [0xd9563f, 0x3e6fb0, 0xe8c25a, 0x5f9a6e, 0xf2efe6, 0x8a5ad0, 0x2a2a2a];
+    [[520, 532, 20], [532, 544, 40], [544, 556, 62]].forEach(([x0, x1, h], j) => { cols.push({ t: 'b', x0, x1, y0: 0, y1: h, z0: 94, z1: 120 });
+      for (let y = 0, i = 0; y < h; i++) { const t = Math.min(h - y, 2.4 + ((i * 7 + j * 3) % 4) * .9), o = ((i * 13 + j * 5) % 5) - 2; box(x0 + .3 + Math.max(0, o) * .2, x1 - .3 + Math.min(0, o) * .2, y, y + t, 94.4 + Math.max(0, o) * .3, 119.6 + Math.min(0, o) * .3, new THREE.MeshStandardMaterial({ color: cols3[(i + j * 2) % cols3.length], roughness: .7 }), { col: false }); y += t; } }); }
+  // bunny slippers in front of the sofa: a toe you can crawl under, and ears
+  const fluff = new THREE.MeshPhysicalMaterial({ color: 0xf7f1f4, roughness: 1, sheen: 1, sheenColor: 0xffd8e6 });
+  for (const [x, z, r] of [[668, 44, 0], [684, 60, 0]]) {
+    plate(x - 4.5, x + 4.5, .9, z - 11, z + 11, fluff); box(x - 4.5, x - 3.5, .9, 5.6, z - 2, z + 11, fluff); box(x + 3.5, x + 4.5, .9, 5.6, z - 2, z + 11, fluff); box(x - 4.5, x + 4.5, 5.6, 7.2, z - 2, z + 11, fluff);
+    for (const s of [-1, 1]) { const ear = mesh(new THREE.CapsuleGeometry(1.1, 5, 4, 10), fluff, x + s * 2, 9.5, z + 7); ear.rotation.z = s * .3; ear.rotation.x = -.4; }
+    mesh(new THREE.SphereGeometry(.7, 10, 8), new THREE.MeshStandardMaterial({ color: 0x2a2a2a }), x - 1.6, 7.4, z + 9.6, { cast: false }); mesh(new THREE.SphereGeometry(.7, 10, 8), new THREE.MeshStandardMaterial({ color: 0x2a2a2a }), x + 1.6, 7.4, z + 9.6, { cast: false });
+  }
+  // her toy piano: a rainbow of keys on the floor (each one plays when you land on it)
+  { const x0 = 730, z0 = -66, base = new THREE.MeshPhysicalMaterial({ color: 0xe8423a, roughness: .35, clearcoat: .6 });
+    box(x0 - 4, x0 + 64, 0, 5, z0 - 8, z0 + 18, base); box(x0 - 4, x0 + 64, 5, 12, z0 - 8, z0 - 1, base);   // the raised back (speaker grille side) faces the wall; the keys face the room
+    for (let i = 0; i < 9; i++) mesh(new THREE.CylinderGeometry(1.1, 1.1, .3, 14), new THREE.MeshStandardMaterial({ color: 0x8a1f1a, roughness: .5 }), x0 + 4 + i * 6.2, 12.05, z0 - 4.5, { cast: false });
+    const rainbow = [0xff5a5a, 0xffa84a, 0xffd84a, 0x7ad46a, 0x4ac0e0, 0x5a7aff, 0xb46aff, 0xff7ac8], notes = [523, 587, 659, 784, 880, 1047, 1175, 1319];
+    for (let i = 0; i < 8; i++) { const kx = x0 + i * 7.5, m = mesh(new THREE.BoxGeometry(7, 1.6, 15), new THREE.MeshPhysicalMaterial({ color: rainbow[i], roughness: .3, clearcoat: .8 }), kx + 3.5, 5.8, z0 + 7.5);
+      const c = { t: 'b', x0: kx, x1: kx + 7, y0: 5, y1: 6.6, z0, z1: z0 + 15 }; cols.push(c); LIVED.keys.push({ m, c, f: notes[i], x: kx + 3.5, z: z0 + 7.5, on: false }); }
+    LIVED.piano = V3(x0 + 30, 6, z0 + 8); }
+}
+// landing on a key plays it (and makes a noise the family hears)
+function livedTick(dt) {
+  if (!LIVED.keys.length) return; LIVED.keyCd -= dt;
+  for (const K of LIVED.keys) {
+    const on = party.some(C => !C.frozen && C.pos.y > 5.5 && C.pos.y < 8 && C.pos.x > K.c.x0 - .3 && C.pos.x < K.c.x1 + .3 && C.pos.z > K.c.z0 && C.pos.z < K.c.z1);
+    if (on && !K.on) { tone(K.f, K.f * 1.003, .55, .09, 'triangle'); tone(K.f * 2, K.f * 2, .25, .03, 'sine'); if (LIVED.keyCd <= 0) { LIVED.keyCd = 1.4; noise(V3(K.x, 6, K.z), .55); } }
+    K.on = on; K.m.position.y = damp(K.m.position.y, on ? 5.2 : 5.8, 18, dt);
+  }
+}
+
 
 // =====================================================================
 //  LEVEL SYSTEM  (序章 basement → 第一章 wall hub → kitchen)
@@ -6293,7 +6361,7 @@ LEVELS.kitchen = {
   build() {
     buildKitchen(); buildKid(); buildCat(); buildToyBin(); LEVELS.kitchen.updrafts = [{ x: 57, z: -205, r: 11, y0: 88.5, y1: 178, fx: 14, all: true, hot: true }, buildVent()];
     addVial(-128, 13, -200); addVial(170, 184, -168); addVial(70, 88.5, -215); for (const p of [[-120, 0, 70], [-70, 0, 100], [20, 0, -146], [-30, 91.8, -182], [246, 1.2, 122]]) addCrumb(...p);
-    buildLivingRoom(kitchenMats()); buildPassages(kitchenMats()); buildMouseWar(kitchenMats()); buildHouseSwitches(kitchenMats()); buildUpstairs(kitchenMats());
+    buildLivingRoom(kitchenMats()); buildPassages(kitchenMats()); buildMouseWar(kitchenMats()); buildLivedIn(kitchenMats()); buildHouseSwitches(kitchenMats()); buildUpstairs(kitchenMats());
     // online co-op: the three machine parts
     addPart(44, 88.5, -212, 'spring'); addPart(205, 110, -464, 'lens'); addPart(-112, 13, -186, 'cap');
   },
@@ -8912,7 +8980,7 @@ function hxTick(dt) {
   if (HX.bfan) HX.bfan.g.rotation.y += dt * (bl.on ? 22 : 0);
   // up the vent shaft over the fish tank: pull yourself over its lip into the duct
   for (const C of party) if (C.climbing && !C.mantle && C.climbDir > 0 && C.pos.y > 257 && C.pos.y < 270 && C.pos.x > 648 && C.pos.x < 668 && C.pos.z > -246 && C.pos.z < -230) { C.climbing = false; C.leap = null; C.mantle = { from: C.pos.clone(), to: V3(658, 270.1, -225), t: 0, dur: .55 }; if (C === leader) toast(TR('入咗天花風槽'), 1.8); }
-  fridgeTick(dt); glueTick(dt);
+  fridgeTick(dt); glueTick(dt); livedTick(dt);
   if (HX.heat) { HX.heat.material.map.offset.y -= dt * .55; HX.heat.material.map.offset.x = Math.sin(T * .7) * .04; }
   if (HX.bcord) for (const C of party) {
     if (!C.climbing || C.climbC !== HX.bcord) { C.bcordPull = false; continue; }
@@ -11432,7 +11500,7 @@ function portalResumeLand(S) {
 // who joined or dropped, how good each link is, frame rate, rescues and errors. One tap copies it as
 // plain text that a player can paste into a chat and send in.
 const NLOG = { t0: performance.now(), lines: [], fps: 0, sumT: 0, mode: '', lv: '', peer: {} };
-const NLOG_BUILD = '20261126-2052';
+const NLOG_BUILD = '20261126-2124';
 function nlog(s) {
   const d = new Date(), p2 = n => String(n).padStart(2, '0');   // the clock time, so "it broke around 9:30" can be matched
   NLOG.lines.push(`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}  ${s}`); if (NLOG.lines.length > 500) NLOG.lines.splice(0, NLOG.lines.length - 500);
