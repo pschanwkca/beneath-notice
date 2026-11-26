@@ -1,0 +1,5 @@
+[ {"eval": "window.__bn.startChapter2(); 1"}, {"wait": 6000},
+  {"eval": "(() => { const B = window.__bn, HX = B.HX; B.toyUnfreezeAll(); B.state = 'play'; window.__NODET = true; B.TEST.on = true; B.TEST.nodet = true; for (const [id, on] of [['klight', false], ['tap', true], ['flush', true], ['tv', true], ['lamp', false], ['blight', true]]) { B.hxSet(HX.id[id], on, 'dad'); B.step(2); } return { sus: +B.HB.sus.toFixed(2), belief: +B.HB.belief.toFixed(3) }; })()"},
+  {"eval": "(() => { const B = window.__bn, HX = B.HX, g = () => Array.from({ length: 8 }, (_, i) => HX.id['glue' + i].on ? 1 : 0).join(''); const log = []; for (let t = 0; t < 60 * 240; t++) { B.step(1); if (t % (60 * 30) === 0) log.push([t / 60, +B.HB.sus.toFixed(2), +B.HB.belief.toFixed(2), g(), document.getElementById('susFill').style.width, document.getElementById('susBase').style.width]); } return log; })()"},
+  {"frame": 1}, {"wait": 500}, {"frame": 1}, {"shot": "sus_bar"}
+]
