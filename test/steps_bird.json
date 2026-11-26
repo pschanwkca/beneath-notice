@@ -1,0 +1,10 @@
+[{"evalFile":"shothelp.js"},{"evalFile":"roof_h.js"},
+ {"eval":"window.__R.start()"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; b.setQuest(2); R.put(300, b.RFH.R + 4, 1); b.step(5); b.CINE.manual = true; window.__ft = (n) => { for (let i=0;i<n;i++){ b.CINE.t += 1/60; b.step(1); } return [b.state, +b.CINE.t.toFixed(1)]; }; return [b.state, b.quest]; })()"},
+ {"eval":"window.__ft(780)"},{"eval":"(()=>{ window.__S.hud(true); return window.__ft(120) })()"},{"frame":1},{"frame":1,"shot":"rf_bird_film"},
+ {"eval":"(()=>{ const b=window.__bn; const r = window.__ft(200); return [r, b.state, b.quest, b.RF.bird.state, b.RF.bird.pos.toArray().map(Math.round)]; })()"},
+ {"eval":"(()=>{ const b=window.__bn; delete window.__NODET; const out=[]; for (let i=0;i<80;i++){ b.step(15); out.push([b.RF.bird.state[0]+b.RF.bird.state[1], +b.birdSees().toFixed(2), b.info().meter, b.leader.pos.y|0]); if (b.RF.bird.state==='carry' && !window.__shot) { window.__shot=1; } } return out; })()"},
+ {"eval":"(()=>{ const b=window.__bn; return [b.RF.bird.state, b.info().pos, b.cp]; })()"},
+ {"eval":"(()=>{ window.__S.rel(20, 10, 25, 0, 0, 0); return 1 })()"},{"frame":1},{"frame":1,"shot":"rf_nest"},
+ {"eval":"(()=>{ window.__S.game(); const R=window.__R, b=window.__bn; window.__NODET=true; const a=R.walk(1,0,200,'KeyW',20); return [a, b.info().pos]; })()"}
+]

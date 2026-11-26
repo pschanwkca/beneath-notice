@@ -1,0 +1,8 @@
+[{"evalFile":"shothelp.js"},{"evalFile":"roof_h.js"},
+ {"eval":"window.__R.start()"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; b.setQuest(3); R.put(300, b.RFH.R + 4, 1); const B=b.RF.bird; B.on=true; B.state='swoop'; B.st=0; B.pos.set(380, b.RFH.R + 90, 100); const out=[]; for (let i=0;i<60;i++){ b.step(5); out.push(B.state[0]+B.state[1]); if (B.state==='carry') break; } return out.join(','); })()"},
+ {"eval":"(()=>{ const b=window.__bn; b.step(40); window.__S.hud(false); window.__S.rel(-30, 8, 30, 0, 4, 0); return [b.RF.bird.state, b.info().pos]; })()"},{"frame":1},{"frame":1,"shot":"rf_carry"},
+ {"eval":"(()=>{ const b=window.__bn; const B=b.RF.bird; for (let i=0;i<400 && B.state==='carry';i++) b.step(2); b.step(30); return [B.state, b.info().pos, b.cp, b.party.map(c=>c.pos.toArray().map(v=>v|0).join(','))]; })()"},
+ {"eval":"(()=>{ window.__S.rel(26, 14, 26, 0, 0, 0); return 1 })()"},{"frame":1},{"frame":1,"shot":"rf_nest"},
+ {"eval":"(()=>{ window.__S.game(); const R=window.__R, b=window.__bn; window.__NODET=true; const a=R.walk(1,0,300,'KeyW',20); return [a, b.info().pos]; })()"}
+]

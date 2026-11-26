@@ -4,12 +4,13 @@
 //  · the attic: rafters, pink insulation, Dad's old boxes; sunset light falls in through the roof vent
 //  · out of the vent onto the hipped roof, up to the ridge: the street, the park and the city beyond,
 //    the sun going down behind the towers (the title screen sits the whole crew up here)
-//  · an Origin Dynamics drone sweeps the roofs with a searchlight
+//  · a magpie circles over the roofs: if it spots you out in the open it swoops, grabs you and carries you
+//    off to its nest on the old TV aerial (full of shiny things) — climb out and try again
 //  · down onto the garage roof (jump, or climb down the ivy trellis), in through its roof vent, along the
 //    garage attic into the old duct, and down through the grille onto the shelf in the garage
 //  Roofs are sloped slabs ('h' colliders: a top that follows the roof, so you can walk up and down it).
 // =====================================================================
-const RF = { p: Math.tan(26 * Math.PI / 180), open: false, cord: null, lid: null, skyG: null, rings: [], sun: null, hemi: null, drone: null, said: {}, attic: 0, fallT: 0 };
+const RF = { p: Math.tan(26 * Math.PI / 180), open: false, cord: null, lid: null, skyG: null, rings: [], sun: null, hemi: null, bird: null, said: {}, attic: 0, fallT: 0 };
 const RFH = { a0: -358, a1: 940, b0: -290, b1: 290, W: 552, r0: -68, r1: 650, th: 12 }; RFH.E = RFH.W - 28 * RF.p; RFH.R = RFH.W + 262 * RF.p;
 const RFG = { x0: 914, x1: 1478, z0: -290, z1: 332, zm: 21, W: 270, th: 10 }; RFG.E = RFG.W - 20 * RF.p; RFG.R = RFG.W + 291 * RF.p;
 const RF_VENT = { x0: 546, x1: 582, z0: -162, z1: -138, top: 622 };    // the house's roof vent: its curb (outside faces) and the top of the curb
@@ -105,9 +106,9 @@ function buildRoof() {
   // ---- light: the low sun, a lavender sky over warm ground ----
   RF.hemi = new THREE.HemisphereLight(0x9a90c8, 0x6a4436, 1.45); LV.add(RF.hemi);
   const tgt = V3(420, 560, 0); RF.sun = spotL(0xffb070, 24000000, tgt.clone().addScaledVector(SUNSET, 2600), tgt, .44, .5, 2048, 1700, 3700); RF.sun.userData.prio = 1;
-  buildDrone(M);
+  buildNest(M); buildBird(M);
   flushDeco();
-  // everything up here has the colliders it was given (rafters overhead, the moving lid, cord and drone must not be made solid)
+  // everything up here has the colliders it was given (rafters overhead, the moving lid, cord and bird must not be made solid)
   for (const ch of LV.children) ch.userData.noSolid = true;
 }
 // the ivy trellis: a white lattice on stand-offs, thick with leaves, between the two windows
@@ -288,46 +289,103 @@ function buildSkyline() {
   ring(2900, 300, 1060, a0, 1.9, city, 1);
 }
 
-// ---------- the drone ----------
-function buildDrone(M) {
+// ---------- the magpie and its nest ----------
+const RF_NEST = V3(-160, 0, -24);   // (y set once the roof is known: it sits on the aerial's lowest rods)
+function buildNest(M) {
+  const N = RF_NEST; N.y = RFH.R + 150; const y0 = N.y + 1;
+  const stick = new THREE.MeshStandardMaterial({ color: 0x5a4632, roughness: .95 }), stick2 = new THREE.MeshStandardMaterial({ color: 0x7a6044, roughness: .95 });
+  // a bowl of twigs: a mat underneath, rings of sticks laid round and round
+  const bowl = new THREE.Mesh(new THREE.SphereGeometry(15, 20, 10, 0, 6.28, Math.PI * .55, Math.PI * .45), stick); bowl.scale.set(1, .5, 1); bowl.position.set(N.x, y0 + 7, N.z); bowl.castShadow = true; LV.add(bowl);
+  const g = new THREE.CylinderGeometry(.26, .3, 1, 5), N2 = 170, im = new THREE.InstancedMesh(g, stick2, N2), o = new THREE.Object3D();
+  // (laid round the rim, woven in and out: mostly along the ring, a few poking out)
+  for (let i = 0; i < N2; i++) { const a = i / N2 * Math.PI * 2 * 4 + R(-.2, .2), r = R(10.5, 16.5), h = y0 + R(.3, 7.5), L = R(7, 13), wild = rnd() < .12 ? R(-.9, .9) : R(-.2, .2);
+    o.position.set(N.x + Math.cos(a) * r, h, N.z + Math.sin(a) * r); o.rotation.set(R(-.25, .25), Math.PI / 2 - a + wild, Math.PI / 2 + R(-.18, .18)); o.scale.set(1, L, 1); o.updateMatrix(); im.setMatrixAt(i, o.matrix); }
+  im.castShadow = true; im.receiveShadow = true; LV.add(im);
+  // the treasure: a bottle cap, a ring, a twist of foil
+  cyl(N.x - 4, N.z + 3, 2.4, y0 + 1.2, y0 + 2, new THREE.MeshStandardMaterial({ color: 0xc83a30, metalness: .7, roughness: .3 }), { col: false, seg: 20 });
+  { const r = new THREE.Mesh(new THREE.TorusGeometry(1.6, .35, 8, 20), new THREE.MeshStandardMaterial({ color: 0xffd060, metalness: 1, roughness: .2 })); r.position.set(N.x + 4, y0 + 1.6, N.z - 2); r.rotation.x = 1.2; LV.add(r); }
+  { const f = new THREE.Mesh(new THREE.IcosahedronGeometry(1.6, 0), new THREE.MeshStandardMaterial({ color: 0xd8dce0, metalness: 1, roughness: .25 })); f.position.set(N.x + 1, y0 + 1.6, N.z + 5); LV.add(f); }
+  // colliders: the floor of the bowl, and a rim to climb out over
+  cols.push({ t: 'c', x: N.x, z: N.z, r: 13, y0: N.y - 3, y1: y0 + 1 });
+  for (let i = 0; i < 14; i++) { const a = i / 14 * Math.PI * 2, cx = N.x + Math.cos(a) * 14.5, cz = N.z + Math.sin(a) * 14.5; cols.push({ t: 'b', x0: cx - 3.4, x1: cx + 3.4, y0: y0, y1: y0 + 7, z0: cz - 3.4, z1: cz + 3.4, grip: true }); }
+}
+function buildBird(M) {
   const g = new THREE.Group(); LV.add(g); g.visible = false;
-  const body = new THREE.Mesh(new THREE.BoxGeometry(14, 4, 10), M.dark); g.add(body);
-  const top = new THREE.Mesh(new THREE.SphereGeometry(5, 16, 10, 0, 6.28, 0, 1.4), M.dark); top.position.y = 1.5; g.add(top);
-  const rot = []; for (const [x, z] of [[-12, -10], [12, -10], [-12, 10], [12, 10]]) { const a = new THREE.Mesh(new THREE.BoxGeometry(Math.hypot(x, z), 1.4, 1.6), M.dark); a.position.set(x / 2, 0, z / 2); a.rotation.y = -Math.atan2(z, x); g.add(a);
-    const m = new THREE.Mesh(new THREE.CylinderGeometry(2, 2, 3, 12), M.dark); m.position.set(x, 1, z); g.add(m);
-    const pr = new THREE.Mesh(new THREE.CylinderGeometry(9, 9, .3, 24), new THREE.MeshBasicMaterial({ color: 0x9aa0a8, transparent: true, opacity: .25, depthWrite: false })); pr.position.set(x, 2.8, z); g.add(pr); rot.push(pr); }
-  const led = (c, x, z) => { const m = new THREE.Mesh(new THREE.SphereGeometry(1, 8, 6), new THREE.MeshBasicMaterial({ color: new THREE.Color(c).multiplyScalar(3) })); m.position.set(x, -1, z); g.add(m); return m; };
-  const leds = [led(0xff2a1a, -12, 10), led(0x2aff5a, 12, 10), led(0xffffff, 0, -6)];
-  const cam = new THREE.Mesh(new THREE.SphereGeometry(3, 14, 10), new THREE.MeshStandardMaterial({ color: 0x111418, metalness: .6, roughness: .2 })); cam.position.set(0, -4, 3); g.add(cam);
-  const lens = new THREE.Mesh(new THREE.CircleGeometry(1.6, 16), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xdfe8ff).multiplyScalar(4) })); lens.position.set(0, -4, 6.1); g.add(lens);
-  // a printed logo on its back: O.D.
-  const lg = new THREE.Mesh(new THREE.PlaneGeometry(10, 5), new THREE.MeshBasicMaterial({ map: C2tex(128, 64, (x) => { x.fillStyle = '#e8eef4'; x.font = '700 40px sans-serif'; x.textAlign = 'center'; x.fillText('O·D', 64, 46); }), transparent: true })); lg.rotation.x = -Math.PI / 2; lg.position.y = 2.05; g.add(lg);
-  const L = new THREE.SpotLight(0xe8f0ff, 0, 0, .2, .35, 2); L.castShadow = true; L.shadow.mapSize.setScalar(TOUCH ? 512 : 1024); L.shadow.camera.near = 20; L.shadow.camera.far = 1200; L.shadow.bias = -.0005; L.shadow.normalBias = .04; L.userData.prio = 1; LV.add(L, L.target);
-  const beam = beamMesh(0xdfe8ff, 100, .2, .32); beam.visible = false;
-  RF.drone = { g, rot, leds, L, beam, on: false, t: 0, pos: V3(300, 820, 600), aim: V3(300, 640, 0), lock: 0, see: 0 };
+  const black = new THREE.MeshStandardMaterial({ color: 0x121418, roughness: .38, metalness: .25 }), white = new THREE.MeshStandardMaterial({ color: 0xf2f2ee, roughness: .7 });
+  const sheen = new THREE.MeshStandardMaterial({ color: 0x163a48, roughness: .3, metalness: .5 }), beakM = new THREE.MeshStandardMaterial({ color: 0x1e1f22, roughness: .5 });
+  const P = (geo, mat, x, y, z, parent = g) => { const m = new THREE.Mesh(geo, mat); m.position.set(x, y, z); m.castShadow = true; parent.add(m); return m; };
+  const body = P(new THREE.SphereGeometry(1, 20, 14), black, 0, 0, 0); body.scale.set(6.5, 6.5, 11);
+  const belly = P(new THREE.SphereGeometry(1, 18, 12), white, 0, -1.6, -.5); belly.scale.set(5.6, 5, 8.4);
+  const head = new THREE.Group(); head.position.set(0, 3.2, 10.5); g.add(head);
+  P(new THREE.SphereGeometry(4.3, 18, 14), black, 0, 0, 0, head);
+  const bk = P(new THREE.ConeGeometry(1.25, 6, 10), beakM, 0, -.4, 6, head); bk.rotation.x = Math.PI / 2;
+  for (const s of [-1, 1]) { P(new THREE.SphereGeometry(.85, 10, 8), new THREE.MeshStandardMaterial({ color: 0x050505, roughness: .1 }), s * 2.9, 1, 2.6, head); P(new THREE.SphereGeometry(.25, 6, 5), new THREE.MeshBasicMaterial({ color: 0xffffff }), s * 3.2, 1.4, 3.2, head); }
+  const tail = new THREE.Group(); tail.position.set(0, 1, -9); g.add(tail);
+  P(new THREE.BoxGeometry(3.4, .6, 22), sheen, 0, 0, -11, tail);
+  const wings = []; for (const s of [-1, 1]) {
+    const w = new THREE.Group(); w.position.set(s * 4.8, 2, 1.5); g.add(w);
+    P(new THREE.BoxGeometry(14, .8, 9), black, s * 7, 0, 0, w);
+    P(new THREE.BoxGeometry(7, .9, 6), white, s * 9, .05, .4, w);
+    for (let k = 0; k < 4; k++) { const f = P(new THREE.BoxGeometry(12, .5, 2.6), black, s * (18 + k * .6), 0, 3 - k * 2.6, w); f.rotation.y = s * (k * .12); }
+    wings.push(w);
+  }
+  const legs = []; for (const s of [-1, 1]) { const l = P(new THREE.CylinderGeometry(.35, .35, 6, 6), beakM, s * 2, -6.5, 2); legs.push(l); }
+  RF.bird = { g, head, tail, wings, legs, on: false, state: 'off', t: 0, st: 0, pos: V3(300, 800, 300), vel: V3(), yaw: 0, roll: 0, held: null, cool: 0, perchT: 0, loopA: 0, said: {} };
 }
-// where it flies (a slow loop round the house, bobbing) and where its light points (sweeping the roofs)
-function droneTick(dt) {
-  const D = RF.drone; if (!D) return; const show = D.on && ZONES.roof.near; D.g.visible = show; D.beam.visible = show; D.L.intensity = show ? 120000 : 0; if (!D.on) return;
-  D.t += dt; const t = D.t;
-  const want = V3(330 + Math.sin(t * .11) * 720, 790 + Math.sin(t * .7) * 8, Math.cos(t * .11) * 460);
-  D.pos.lerp(want, 1 - Math.exp(-1.5 * dt));
-  let aim = V3(300 + Math.sin(t * .37) * 440, 0, Math.sin(t * .53 + 1) * 200); aim.y = Math.max(rfTopAt(aim.x, aim.z), GY);
-  if (D.lock > 0 && leader) { aim = V3(leader.pos.x, leader.pos.y + 2, leader.pos.z); }
-  D.aim.lerp(aim, 1 - Math.exp(-(D.lock > 0 ? 4 : 1.2) * dt));
-  D.g.position.copy(D.pos); D.g.rotation.set(Math.sin(t * .9) * .05, Math.atan2(D.aim.x - D.pos.x, D.aim.z - D.pos.z), Math.sin(t * .7) * .06);
-  for (const r of D.rot) r.rotation.y += dt * 40;
-  D.leds[0].visible = D.leds[1].visible = (t % 1.2) < .6; D.leds[2].visible = (t % .9) < .12;
-  D.L.position.copy(D.pos).add(V3(0, -5, 0)); D.L.target.position.copy(D.aim); D.L.target.updateMatrixWorld();
-  const from = D.L.position, len = from.distanceTo(D.aim); aimBeam(D.beam, from, D.aim); D.beam.scale.setScalar(len / 100);
+// a flapping, banking flight toward a point at a given speed (returns the distance left)
+function birdFly(B, to, sp, dt, turn = 2.2) {
+  const d = V3().subVectors(to, B.pos), dist = d.length(); if (dist < 1e-3) return 0;
+  const want = d.multiplyScalar(Math.min(sp, dist / Math.max(dt, 1e-3)) / dist); B.vel.lerp(want, 1 - Math.exp(-turn * dt)); B.pos.addScaledVector(B.vel, dt);
+  return dist;
 }
-// can its light see the leader? (inside the cone, nothing in the way)
-function droneSees() {
-  const D = RF.drone; if (!D || !D.on || !leader) return 0; const L = leader;
-  const eye = D.L.position, tp = V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z), d = V3().subVectors(tp, eye), dist = d.length(); d.divideScalar(dist);
-  const ax = V3().subVectors(D.aim, eye).normalize(); const c = d.dot(ax); if (c < Math.cos(.24) || dist > 1100) return 0;
+function birdTick(dt) {
+  const B = RF.bird; if (!B) return; const show = B.on && ZONES.roof.near; B.g.visible = show; if (!B.on) return;
+  B.t += dt; B.st += dt; B.cool = Math.max(0, B.cool - dt); const H = RFH, N = RF_NEST, perchP = V3(N.x, N.y + 9.5, N.z);
+  const L = leader;
+  if (B.state === 'circle') {
+    // loops over the house, low enough to see everything on the roof; now and then back to the nest for a look round
+    B.loopA += dt * .4; const c = V3(300 + Math.sin(B.loopA * .5) * 60, H.R + 95 + Math.sin(B.t * .6) * 14, 0), tgt = V3(c.x + Math.cos(B.loopA) * 470, c.y, c.z + Math.sin(B.loopA) * 250);
+    birdFly(B, tgt, 150, dt, 1.4); if (B.st > 24) { B.state = 'home'; B.st = 0; }
+  } else if (B.state === 'home') { if (birdFly(B, perchP, 150, dt, 2.5) < 4) { B.state = 'perch'; B.st = 0; B.perchT = 6 + R(0, 3); B.vel.set(0, 0, 0); } }
+  else if (B.state === 'perch') { B.pos.lerp(perchP, 1 - Math.exp(-6 * dt)); B.vel.set(0, 0, 0); B.yaw += Math.sin(B.t * .7) * dt * .8; if (B.st > B.perchT) { B.state = 'circle'; B.st = 0; birdCall(); } }
+  else if (B.state === 'swoop') {
+    // dive at whoever it saw; if they get under something before it arrives, it pulls up
+    const tp = V3(L.pos.x, L.pos.y + L.h * .6 + 6.5, L.pos.z), dist = birdFly(B, tp, 270, dt, 5);
+    if (coverK(L, B.pos.y) < 1 || L.frozen) { B.state = 'circle'; B.st = 0; B.cool = 4; }
+    else if (dist < 7 || B.st > 6) { if (dist < 12) birdGrab(L); else { B.state = 'circle'; B.st = 0; B.cool = 3; } }
+  } else if (B.state === 'carry') { if (birdFly(B, perchP.clone().add(V3(0, 6, 0)), 170, dt, 3) < 6) birdDrop(); }
+  // facing, banking, flapping
+  const hs = Math.hypot(B.vel.x, B.vel.z); if (hs > 5) { const y2 = Math.atan2(B.vel.x, B.vel.z), dy = Math.atan2(Math.sin(y2 - B.yaw), Math.cos(y2 - B.yaw)); B.yaw += dy * Math.min(1, dt * 5); B.roll = damp(B.roll, clamp(-dy * 2.5, -.6, .6), 4, dt); } else B.roll = damp(B.roll, 0, 4, dt);
+  const pitch = hs > 5 ? clamp(-B.vel.y / Math.max(hs, 1) * .6, -.7, .7) : 0;
+  B.g.position.copy(B.pos); B.g.rotation.set(pitch, B.yaw, B.roll, 'YXZ');
+  const flying = B.state !== 'perch', glide = B.state === 'circle' && (B.t % 5) > 2.6, fl = flying && !glide ? Math.sin(B.t * (B.state === 'swoop' ? 9 : B.state === 'carry' ? 16 : 11)) : 0;
+  B.wings.forEach((w, i) => { const s = i ? 1 : -1; w.rotation.set(0, flying ? 0 : s * 1.5, flying ? s * (.15 + fl * .75) : s * -.5); w.scale.set(flying ? 1 : .62, 1, flying ? 1 : .6); w.position.y = flying ? 2 : 1.2; });
+  B.tail.rotation.x = flying ? -.05 + Math.sin(B.t * 3) * .05 : .35; B.head.rotation.y = B.state === 'perch' ? Math.sin(B.t * 1.3) * .8 : 0;
+  for (const l of B.legs) l.visible = !flying || B.state === 'carry' || B.state === 'swoop';
+  // the one it's carrying dangles under it
+  if (B.held) { const C = B.held; C.pos.copy(B.pos).add(V3(0, -9.5 - C.h * .6, 1.5)); C.vel.set(0, 0, 0); C.grounded = false; C.climbing = false; C.mantle = null; C.state = 'air'; C.crouch = false; if (C.disp) C.disp.copy(C.pos); trail = []; for (const F of party) if (F !== C) F.queue = []; }
+}
+function birdCall() { for (let i = 0; i < 4; i++) tone(1500 - i * 60, 1100, .05, .03, 'square', i * .09); }
+function birdGrab(C) {
+  const B = RF.bird; B.held = C; B.state = 'carry'; B.st = 0; meter = 0; birdCall(); SND.swish(); cam.shake = .4;
+  toastW(`${C.S.name}俾喜鵲捉咗！`, 2.6); if (!B.said.grab) { B.said.grab = 1; const o = party.find(F => F !== C && !F.frozen); if (o) setTimeout(() => say(o.S.name, `${C.S.name}！……佢擔咗返佢個竇！`, o.S.col, 2.6), 700); }
+}
+function birdDrop() {
+  const B = RF.bird, C = B.held; B.held = null; B.state = 'perch'; B.st = 0; B.perchT = 3.5; B.cool = 9; B.vel.set(0, 0, 0); if (!C) return;
+  const N = RF_NEST; C.pos.set(N.x + 3, N.y + 2.4, N.z - 2); C.vel.set(0, 0, 0); C.grounded = false; if (C.disp) C.disp.copy(C.pos);
+  // the others hurry over to the foot of the chimney to wait
+  const bx = -128, bz = -8; party.forEach((F, i) => { if (F === C || F.frozen) return; F.pos.set(bx + (i % 2) * 5, rfHip(bx, bz + i * 4) + .3, bz + i * 4); F.vel.set(0, 0, 0); F.climbing = false; F.mantle = null; F.queue = []; if (F.disp) F.disp.copy(F.pos); });
+  trail = []; C.lastTrail.copy(C.pos); cp = 6; SND.land(.5);
+  if (!B.said.drop) { B.said.drop = 1; setTimeout(() => say(C.S.name, '佢個竇……全部都係閃閃嘅嘢。快啲爬出去！', C.S.col, 3.2), 900); setTimeout(() => toast('爬出鳥竇，跳落煙囱頂，再落返屋頂', 3.4), 4200); }
+}
+// can it see the leader? (looking ahead and down as it flies; all round from the nest)
+function birdSees() {
+  const B = RF.bird; if (!B || !B.on || !leader || B.held || B.cool > 0 || B.state === 'swoop' || B.state === 'carry' || B.state === 'film') return 0; const L = leader;
+  const eye = V3(0, 3.2, 10.5).applyEuler(B.g.rotation).add(B.pos), tp = V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z), d = V3().subVectors(tp, eye), dist = d.length(); d.divideScalar(dist);
+  const perched = B.state === 'perch', f = perched ? V3(Math.sin(B.yaw + B.head.rotation.y), -.35, Math.cos(B.yaw + B.head.rotation.y)).normalize() : V3(Math.sin(B.yaw), -.9, Math.cos(B.yaw)).normalize();
+  const fc = perched ? .45 : .3, c = d.dot(f); if (c < fc || dist > (perched ? 420 : 650)) return 0;
   if (rayBlocked(eye, d, dist - 1.5, false)) return 0;
-  return sstep(Math.cos(.24), Math.cos(.1), c);
+  return clamp(1.25 - dist / 650, .25, 1) * sstep(fc, 1, c) * coverK(L, eye.y);
 }
 
 // ---------- per frame (runs everywhere, after the other places' world ticks) ----------
@@ -343,7 +401,7 @@ function roofTick(dt) {
   if (RF.hemi) RF.hemi.intensity = lerp(1.45, .32, k); D.envI = lerp(.85, .25, k); D.expo = lerp(.98, 1.55, k); D.fog[1] = lerp(.00016, .0006, k);
   // up the cord to the hatch: pull yourself over its edge onto the attic floor beside it
   if (RF.open) for (const C of party) if (C.climbing && C.climbC === RF.cord && C.pos.y > 545 && !C.mantle) { C.climbing = false; C.mantle = { from: C.pos.clone(), to: V3(clamp(C.pos.x - 8, 806, 846), RFH.W, RF_HATCH.z0 - 5), t: 0, dur: .55 }; C.yaw = Math.PI; }
-  droneTick(dt);
+  birdTick(dt);
 }
 
 // ---------- chapter one, on top of the house ----------
@@ -351,7 +409,7 @@ const RQ = [
   { t: '穿過閣樓，去有光嘅地方', s: '屋頂通風口透入夕陽。爬上爸爸啲舊紙箱，就夠得着通風口嘅鐵框' },
   { t: '由通風口爬出屋頂', s: '爬上鐵框頂，喺罩下面嘅空隙鑽出去' },
   { t: '上屋脊', s: '沿住瓦面向上行。屋脊最高，望得最遠' },
-  { t: '避開無人機，去屋頂東邊', s: 'Origin Dynamics 嘅無人機用射燈搜緊屋頂。躲喺煙囱、通風口後面，或者屋脊另一邊' },
+  { t: '避開喜鵲，去屋頂東邊', s: '喜鵲喺屋頂上空兜圈。俾佢見到太耐，佢會衝落嚟捉你返佢喺天線頂嘅竇。等佢飛遠或者返竇先郁；佢衝落嚟就躲入通風口個罩底' },
   { t: '落去車房屋頂', s: '屋頂東邊下面就係車房屋頂。跳落去，或者沿長春藤架爬落去' },
   { t: '由車房屋頂嘅通風口入車房', s: '爬上通風口嘅鐵框，跳入去。車房閣樓有條舊風槽，風槽底嘅鐵網通落車房' }
 ];
@@ -360,18 +418,18 @@ LEVELS.roof = {
   chapter: '第一章', title: '屋企', room: '閣樓', house: true, env: 'dusk', envI: .85, fog: [0xc8805e, .00016], expo: .98, bloom: [.34, 1.7],
   dust: { N: 900, box: [300, 900, 552, 660, -230, 230], beamFrac: .5, door: false },
   toys: true, npcNear: false, build: buildRoof,
-  cps: [[820, 552, 30], [565, 584, -150], [560, 651, -60], [300, RFH.R + 3.5, 0], [880, 568, 0], [1100, 393, 60]],
+  cps: [[820, 552, 30], [565, 584, -150], [560, 651, -60], [300, RFH.R + 3.5, 0], [880, 568, 0], [1100, 393, 60], [-128, 670, -8]],
   quests: RQ,
   // started from the chapter list: the crew has just climbed up through her ceiling into the attic
   spawn() {
-    spawnSP(this.cps[0], .96, 5); rfHatch(true); RF.drone.on = false; RF.said = {};
+    spawnSP(this.cps[0], .96, 5); rfHatch(true); RF.bird.on = false; RF.bird.state = 'off'; RF.bird.held = null; RF.said = {};
     KS.coreGot = true; KS.carried = false; KS.coreDrop = null; KS.home = true; KS.ch2 = true; KS.ch3 = true; LIV.remoteGot = true;
     if (KS.core) KS.core.position.set(-306, 1.6, -100);
     ZONES.kitchen.save = { qs: SP_Q2B, q: 1, cp: 6, lvT: 0 };
   },
   enter(prev, again) {
     rfHatch(true); if (again || NET.on) return;
-    RF.drone.on = false; RF.said = {};
+    RF.bird.on = false; RF.bird.state = 'off'; RF.bird.held = null; RF.said = {};
     if (prev === 'kitchen') { setTimeout(() => say('爸爸', '閣樓……我啲舊嘢都擺喺度。', '#f5f0e6', 3), 900); setTimeout(() => say('爸爸', '通風口嗰邊有光——由嗰度出得去屋頂。', '#f5f0e6', 3.4), 4400); }
   },
   keep(id) { return id === 'yard' || id === 'road'; },   // falling off the edge doesn't start the next chapter: you're put back on the roof
@@ -395,8 +453,8 @@ LEVELS.roof = {
     if (quest === 3) return V3(820, rfHip(820, 0) + 3, 0); if (quest === 4) return V3(1060, rfGab(1060, 40) + 3, 40);
     return V3(968, RF_GVENT.top + 2, 120);
   },
-  reset() { if (RF.drone) RF.drone.lock = 0; },
-  eyeText: () => RF.drone && RF.drone.on ? (meter > .3 ? '無人機嘅射燈照到你！快啲躲' : 'Origin Dynamics 嘅無人機喺上面巡緊') : '',
+  reset() { const B = RF.bird; if (B && B.on) { B.held = null; B.state = 'circle'; B.cool = 4; } },
+  eyeText: () => { const B = RF.bird; if (!B || !B.on) return ''; if (B.state === 'swoop') return '佢衝落嚟喇！躲入通風口個罩底！'; if (B.held) return '俾喜鵲擔走緊……'; return meter > .3 ? '喜鵲望緊你！快啲躲' : B.state === 'perch' ? '喜鵲喺佢個竇度四圍望' : '喜鵲喺上面兜圈——唔好俾佢見到'; },
   hint(L) { if (quest === 4 && Math.abs(L.pos.x - 924) < 30 && Math.abs(L.pos.z) < 50) return '長春藤架可以爬上爬落'; return ''; },
   onSwitch() { }
 };
@@ -405,38 +463,40 @@ function rfPutBack() {
   trail = []; leader.lastTrail.copy(leader.pos); cam.tgt.set(leader.pos.x, leader.pos.y + leader.h * .8, leader.pos.z);
 }
 function detectRoof(dt) {
-  if (STATE !== 'play') return; if (window.__NODET) { meter = 0; return; } const D = RF.drone;
-  if (TOY.grace > 0) { meter = Math.max(0, meter - dt * .5); return; }
-  const L = leader; if (L.frozen || !mine(L) || !D || !D.on) { meter = Math.max(0, meter - dt * .5); KS.watch = null; return; }
-  const s = droneSees();
-  if (D.grace > 0) { D.grace -= dt; meter = Math.max(0, meter - dt * .5); KS.watch = null; return; }
-  if (s > 0) { meter += s * (L.crouch ? .6 : 1) * (L.spd > 1.5 ? 1.2 : .85) * hideK(L) * .7 * dt; if (meter > .22) D.lock = Math.max(D.lock, 1.6); KS.watch = { p: D.pos.clone(), s, who: 'drone' }; if (meter > .3) netSeen(V3(L.pos.x, L.pos.y + 2, L.pos.z), 'drone'); }
-  else { meter -= dt * .28; KS.watch = null; }
-  D.lock -= dt; meter = clamp(meter, 0, 1); if (meter >= 1) { D.lock = 0; toyFreeze('drone'); }
+  if (STATE !== 'play') return; if (window.__NODET) { meter = 0; return; } const B = RF.bird;
+  const L = leader; if (L.frozen || !mine(L) || !B || !B.on || B.held) { meter = Math.max(0, meter - dt * .5); KS.watch = null; return; }
+  const s = birdSees();
+  if (s > 0) { meter += s * (L.crouch ? .6 : 1) * (L.spd > 1.5 ? 1.15 : .7) * hideK(L) * .55 * dt; KS.watch = { p: B.pos.clone(), s, who: 'bird' }; }
+  else { meter -= dt * .3; KS.watch = null; }
+  meter = clamp(meter, 0, 1);
+  // seen for long enough: it folds its wings and dives
+  if (meter >= 1 && B.state !== 'swoop') { B.state = 'swoop'; B.st = 0; birdCall(); toast('喜鵲衝落嚟喇！', 1.6); }
 }
-// the sunset on the ridge: everyone sits down for a moment, then the drone comes up from the street
+// the sunset on the ridge: everyone sits down for a moment, then a magpie comes in and lands on its nest on the aerial
 function rfSeat(x0) {
   const ids = party.filter(C => !C.frozen); RF.rx = x0;
   ids.forEach((C, i) => { const x = x0 + (i - (ids.length - 1) / 2) * 7.5; C.pos.set(x, RFH.R + 3.5, 0); if (C.disp) C.disp.copy(C.pos); C.yaw = .15 - (i - ids.length / 2) * .04; C.state = 'sit'; C.spd = 0; C.vel.set(0, 0, 0); C.climbing = false; C.mantle = null; C.wave = false; C.root.visible = true; C.look = 0; });
 }
 const FILM_RIDGE = { id: 'ridge', len: 17.5, mus: .55,
-  begin() { rfSeat(clamp(leader.pos.x, RFH.r0 + 60, RFH.r1 - 60)); const D = RF.drone; D.on = false; D.pos.set(RF.rx + 160, 470, 760); D.t = 0; },
+  begin() { rfSeat(clamp(leader.pos.x, RFH.r0 + 60, RFH.r1 - 60)); const B = RF.bird; B.on = false; B.state = 'off'; B.held = null; B.t = 0; },
   end() {
-    const D = RF.drone; party.forEach(C => { if (C.state === 'sit') C.state = 'idle'; C.grounded = true; C.queue = []; }); trail = []; leader.lastTrail.copy(leader.pos);
-    D.on = true; D.lock = 0; D.t = 9; D.grace = 3.5; D.pos.set(RF.rx + 120, 760, 520); setQuest(3); cp = 3;
-    setTimeout(() => { if (STATE === 'play') say('爸爸', '躲喺屋脊後面，唔好俾個射燈照到！去東邊。', '#f5f0e6', 3.6); }, 600);
+    const B = RF.bird; party.forEach(C => { if (C.state === 'sit') C.state = 'idle'; C.grounded = true; C.queue = []; }); trail = []; leader.lastTrail.copy(leader.pos);
+    B.on = true; B.state = 'perch'; B.st = 0; B.perchT = 4; B.cool = 4; B.pos.set(RF_NEST.x, RF_NEST.y + 9.5, RF_NEST.z); B.vel.set(0, 0, 0); setQuest(3); cp = 3;
+    setTimeout(() => { if (STATE === 'play') say('爸爸', '佢飛走或者返竇嗰陣先郁。俾佢見到，就躲入通風口個罩底！', '#f5f0e6', 3.8); }, 600);
   },
   shots: [
     // behind them, rising slowly: their backs on the ridge, the street, the park and the towers, the sun going down
     { t0: 0, fov: 42, set() { }, run(u) { rfSitTick(u); const k = sstep(0, 6.5, u), c = V3(RF.rx, RFH.R + 3.5, 0); return [V3(c.x + 22 - k * 8, c.y + 7 + k * 5, c.z - 36 + k * 6), V3(c.x - 40, c.y - 12, c.z + 200), c]; } },
     // side-on, close: their faces in the last of the sun
     { t0: 6.5, fov: 30, set() { }, run(u) { rfSitTick(u + 6.5); const c = V3(RF.rx, RFH.R + 3.5, 0); return [V3(c.x - 30 + u * 1.5, c.y + 4.2, c.z + 13), V3(c.x + 6, c.y + 3.2, c.z), c]; } },
-    // something comes up from the street: the drone, its light snapping on
-    { t0: 11.5, fov: 40, set() { const D = RF.drone; D.on = true; D.pos.set(RF.rx + 160, 470, 760); }, run(u, dt) { rfSitTick(u + 11.5); const D = RF.drone; D.pos.lerp(V3(RF.rx + 90, 740, 300), 1 - Math.exp(-1.1 * dt)); D.aim.lerp(V3(RF.rx, RFH.R, 20), 1 - Math.exp(-2 * dt)); D.lock = 0;
-      const c = V3(RF.rx, RFH.R + 3.5, 0); return [V3(c.x - 16, c.y + 6, c.z - 26), D.pos.clone(), c]; } }
+    // a big black-and-white bird sweeps in over their heads and lands on the old aerial — on a nest full of shiny things
+    { t0: 11.5, fov: 40, set() { const B = RF.bird; B.on = true; B.state = 'film'; B.pos.set(RF.rx + 260, RFH.R + 160, 260); B.vel.set(-120, 0, -100); B.t = 0; },
+      run(u, dt) { rfSitTick(u + 11.5); const B = RF.bird, N = V3(RF_NEST.x, RF_NEST.y + 9.5, RF_NEST.z); const k = clamp(u / 4.2, 0, 1), mid = V3(RF.rx - 40, RFH.R + 40, 40);
+        const p = k < .5 ? V3().lerpVectors(V3(RF.rx + 260, RFH.R + 160, 260), mid, k * 2) : V3().lerpVectors(mid, N, (k - .5) * 2); B.vel.subVectors(p, B.pos).divideScalar(Math.max(dt, 1e-3)); B.pos.copy(p); if (k >= 1) { B.state = 'perch'; B.vel.set(0, 0, 0); }
+        const c = V3(RF.rx, RFH.R + 3.5, 0); return [V3(c.x + 10, c.y + 7, c.z + 26), V3().lerpVectors(B.pos, N, .3), c]; } }
   ],
   ev: [[1, () => cineSay('爸爸', '……好耐冇咁樣睇過日落。', '#f5f0e6', 3)], [4.2, () => cineSay('助手', '教授，嗰邊就係市中心？', '#e8c9a8', 2.6)], [7, () => cineSay('爸爸', '嗯。Origin Dynamics 嘅大樓就喺嗰度。', '#f5f0e6', 2.8)],
-    [9.8, () => cineSay('老友', '咁我哋早晚都要去一轉。', '#d9a675', 2.4)], [12.2, () => cineSay('小彩', '……有嘢飛緊上嚟！', '#9fd86b', 2)], [15, () => cineSay('爸爸', '無人機！散開！', '#f5f0e6', 2.2)]]
+    [9.8, () => cineSay('老友', '咁我哋早晚都要去一轉。', '#d9a675', 2.4)], [12, () => { birdCall(); cineSay('小彩', '……上面！好大隻雀！', '#9fd86b', 2); }], [14.6, () => cineSay('爸爸', '喜鵲……佢最鍾意擔閃閃嘅嘢返竇。唔好俾佢見到！', '#f5f0e6', 3)]]
 };
 // little movements while they sit: heads turning, a kick of the legs, someone points
 function rfSitTick(t) {
