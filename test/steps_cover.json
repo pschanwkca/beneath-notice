@@ -1,0 +1,5 @@
+[{"evalFile":"roof_h.js"},
+ {"eval":"(async()=>{ const b=window.__bn; document.getElementById('chaps').hidden=true; b.startGame(1); for (let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(5); return [b.LEVEL]; })()"},
+ {"eval":"(()=>{ const b=window.__bn, R=window.__R; R.put(-120, .2, 90); b.step(10); const L=b.leader; const ey=new b.THREE.Vector3(); b.mom.head.getWorldPosition(ey); return { under: b.ceilAtX ? 1 : 0, pos: b.info().pos, momEye: ey.toArray().map(v=>v|0) }; })()"},
+ {"eval":"(()=>{ const b=window.__bn, R=window.__R; R.put(-260, .2, 200); b.step(10); return b.info().pos; })()"}
+]

@@ -697,8 +697,12 @@ function eyeSee(head, fovCos, range) {
   const tp = V3(L.pos.x, L.pos.y + L.h * .55, L.pos.z); const d = V3().subVectors(tp, eye); const dist = d.length(); d.divideScalar(dist);
   const c = d.dot(fwd); if (dist > range || c < fovCos) return 0;
   if (rayBlocked(eye, d, dist - 1.2, false)) return 0;
-  return clamp(1.25 - dist / range, .2, 1) * (.5 + .5 * sstep(fovCos, 1, c));
+  return clamp(1.25 - dist / range, .2, 1) * (.5 + .5 * sstep(fovCos, 1, c)) * coverK(L, eye.y);
 }
+// tucked in under something (a table, a chair, a shelf): in its shade, and the edge hides you from anyone
+// looking down from above it — only someone at your level (the cat, a dog) sees you properly under there
+function underCover(L) { const [cy] = ceilAt(L.pos.x, L.pos.z, L.pos.y + L.h * .9); return cy < L.pos.y + 95 ? cy : 0; }
+function coverK(L, eyeY) { const cy = underCover(L); return cy && eyeY > cy + 3 ? .2 : 1; }
 function litAt(p) { for (const l of KS.lights) { if (l.on === false) continue; const d = V3().subVectors(p, l.p); const dist = d.length(); if (dist > l.range) continue; d.divideScalar(dist); if (l.cos && d.dot(l.dir) < l.cos) continue; if (!rayBlocked(l.p, d, dist - 1, false)) return 1; } return .3; }
 function detectKitchen(dt) {
   if (STATE !== 'play') return;
@@ -709,7 +713,7 @@ function detectKitchen(dt) {
   const s1 = eyeSee(mom.head, .55, 440); if (s1 > seen) { seen = s1; who = 'mom'; }
   const s2 = eyeSee(KID.head, .5, 360); if (s2 > seen) { seen = s2; who = 'kid'; }
   KS.watch = seen > 0 ? { p: (who === 'kid' ? KID.head : mom.head).getWorldPosition(V3()), s: seen, who } : null;
-  const kd = Math.hypot(L.pos.x - KID.root.position.x, L.pos.z - KID.root.position.z); if (kd < 45 && Math.abs(L.pos.y - KID.root.position.y) < 40 && L.spd > 2 && !L.crouch && KID.mode !== 'read') { seen = Math.max(seen, .3); who = who || 'kid'; }
+  const kd = Math.hypot(L.pos.x - KID.root.position.x, L.pos.z - KID.root.position.z); if (kd < 45 && Math.abs(L.pos.y - KID.root.position.y) < 40 && L.spd > 2 && !L.crouch && KID.mode !== 'read' && !underCover(L)) { seen = Math.max(seen, .3); who = who || 'kid'; }
   if (seen > 0) {
     const lit = litAt(V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z)) * (inDark(L.pos) ? .6 : 1); const mv = L.spd > 1.5 ? 1 : .5; const cr = L.crouch ? .55 : 1; const glow = KS.carried && (!NET.on || KS.carrier === L.id) ? 1.35 : 1;
     const k = seen * lit * mv * cr * glow * hideK(L) * HB.eye; meter += k * dt * 1.0;
@@ -811,6 +815,8 @@ LEVELS.kitchen = {
   reset() { if (KS.coreGot && !KS.carried) KS.coreDrop = KS.home ? null : coreGround(KS.coreDrop || KS.core.position); else KS.coreDrop = null; KS.carrier = null; KM.mode = 'goto'; KM.pt = 'stove'; KS.doorTarget = 0; KS.closeT = 0; CAT.mode = 'home'; KID.mode = 'read'; KID.t = 6; if (HB.m) { HB.m.q = []; HB.m.cur = null; HB.m.seat = null; HB.m.react = 0; } HB.search = 0; if (KS.carried) { const C = leader; KS.core.position.set(C.pos.x, C.pos.y + 6, C.pos.z); } },
   eyeText: () => brainEyeText(),
   hint(L) {
+    // the vent to the garage (single player): rusted shut — say so, and where the way on is
+    if (!KS.mp && !LIV.ventOpen && Math.hypot(L.pos.x - 896, L.pos.z + 200) < 26 && L.pos.y < 40) return KS.ch3 ? '通風口個蓋鏽死咗。行樓上：女兒房衣櫃頂有條拉繩通去閣樓' : '通風口個蓋鏽死咗，推唔開——車房要第二條路先去到';
     if (TOUCH) return '';
     if (L.id === 'bear' && !KS.said.bearhint && L.pos.y > 80) { return '熊可以把檯面上的瓶子推下去，製造聲音引開別人'; }
     return '';

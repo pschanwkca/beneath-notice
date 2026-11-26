@@ -1,0 +1,3 @@
+[{"evalFile":"roof_h.js"},
+ {"eval":"(async()=>{ const b=window.__bn; document.getElementById('chaps').hidden=true; await b.startChapter2(); for (let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); window.__NODET=true; const R=window.__R; R.put(885, 1, -200); b.step(30); return [b.LEVEL, document.getElementById('hint') ? document.getElementById('hint').textContent : '?']; })()"}
+]

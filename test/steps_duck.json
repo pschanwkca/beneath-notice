@@ -1,0 +1,5 @@
+[{"evalFile":"roof_h.js"},
+ {"eval":"(async()=>{ const b=window.__bn; document.getElementById('chaps').hidden=true; b.startGame(1); for (let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); window.__NODET=true; b.step(5); return [b.LEVEL]; })()"},
+ {"eval":"(()=>{ const b=window.__bn, R=window.__R; b.switchTo(b.chars.bear); b.step(3); R.put(195, 0.2, -120); b.step(20); const a=R.walk(0,-1,300,'KeyW',20); return [a.map(p=>p.join(' ')), b.leader.crouch, b.info().pos, b.LEVEL]; })()"},
+ {"eval":"(()=>{ const b=window.__bn, R=window.__R; const a=R.walk(0,1,200,'KeyW',20); return [a.map(p=>p.join(' ')), b.leader.crouch, b.info().pos]; })()"}
+]

@@ -17,7 +17,7 @@ function noRay() { cols[cols.length - 1].noRay = true; }
 function seeFrom(eye, fwd, fovCos, range) {
   const L = leader; const tp = V3(L.pos.x, L.pos.y + L.h * .55, L.pos.z); const d = V3().subVectors(tp, eye); const dist = d.length(); d.divideScalar(dist);
   const c = d.dot(fwd); if (dist > range || c < fovCos) return 0; if (rayBlocked(eye, d, dist - 1.2, false)) return 0;
-  return clamp(1.25 - dist / range, .2, 1) * (.5 + .5 * sstep(fovCos, 1, c));
+  return clamp(1.25 - dist / range, .2, 1) * (.5 + .5 * sstep(fovCos, 1, c)) * coverK(L, eye.y);
 }
 function litAtList(p, list, dark) { for (const l of list) { if (l.on === false || (l.I && l.I() <= 0)) continue; const d = V3().subVectors(p, l.p); const dist = d.length(); if (dist > l.range) continue; d.divideScalar(dist); if (l.cos && d.dot(l.dir) < l.cos) continue; if (!rayBlocked(l.p, d, dist - 1, false)) return 1; } return dark ?? .3; }
 

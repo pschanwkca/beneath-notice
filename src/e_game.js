@@ -89,12 +89,14 @@ const G = 250, TERM = -175, STEP = .95;
 const _h = { nx: 0, nz: 0, pen: 0 };
 
 // ---------- character physics ----------
+// how tall a character is for bumping into things: a tower counts as the whole tower; ducking down makes you lower
+function bodyH(C) { return C.colH || (C.crouch ? C.h * .8 : C.h); }
 function supportAt(x, z, r, yMax) { let s = -1e9, sc = null; for (const c of colsNear(x, yMax, z)) { if (c.t === 'h') { const top = hTop(c, x, z); if (top <= yMax && top > s) { s = top; sc = c; } continue; } if (c.y1 > yMax || c.y1 < s) continue; if (!xzHit(c, x, z, r, _h)) continue; s = c.y1; sc = c; } return [s, sc]; }
 // walking on (or into) a sloped slab: step up onto it while it's low enough (a roof is walked up, not climbed);
 // stuck in it from above: slide off downhill; poking up into it from underneath (the attic): back out to where there's headroom
 function slopePush(C, c, allowStep) {
   const x = C.pos.x, z = C.pos.z, top = hTop(c, x, z); if (top < -1e8) return false;
-  const bot = top - c.th, h = C.colH || C.h; if (top <= C.pos.y + .001 || bot >= C.pos.y + h) return false;
+  const bot = top - c.th, h = bodyH(C); if (top <= C.pos.y + .001 || bot >= C.pos.y + h) return false;
   const rise = top - C.pos.y; if (rise <= (C.grounded && allowStep ? 2.2 : .45)) { C.pos.y = top; return false; }
   const gx = (hTop(c, x + 1, z) - hTop(c, x - 1, z)) / 2, gz = (hTop(c, x, z + 1) - hTop(c, x, z - 1)) / 2, gl = Math.hypot(gx, gz);
   if (!(gl > 1e-3 && gl < 5)) { if (C.pos.y + h * .5 > (top + bot) / 2) { C.pos.y = top; return false; } return false; }
@@ -107,7 +109,9 @@ function resolveH(C, allowStep) {
     let any = false;
     for (const c of colsNear(C.pos.x, C.pos.y + 1, C.pos.z)) {
       if (c.t === 'h') { if (slopePush(C, c, allowStep)) any = true; continue; }
-      if (c.y1 <= C.pos.y + .001 || c.y0 >= C.pos.y + (C.colH || C.h)) continue;   // a tower collides as tall as the whole tower
+      if (c.y1 <= C.pos.y + .001 || c.y0 >= C.pos.y + bodyH(C)) continue;   // a tower collides as tall as the whole tower
+      // a gap a little lower than you are (under the fridge, a low shelf): duck down and squeeze in
+      if (!C.colH && !C.crouch && C.grounded && c.y0 >= C.pos.y + C.h * .8 && c.y0 - C.pos.y > 3.6 && xzHit(c, C.pos.x, C.pos.z, C.r, _h)) { C.crouch = true; C.autoCrouch = true; if (C === leader && !C.saidDuck) { C.saidDuck = 1; toast(`${C.S.name}縮低身鑽咗入去`); } continue; }
       if (!xzHit(c, C.pos.x, C.pos.z, C.r, _h)) continue;
       const rise = c.y1 - C.pos.y;
       if (allowStep && rise <= STEP && C.grounded) { C.pos.y = c.y1; continue; }
@@ -136,8 +140,8 @@ function moveVert(C, dt) {
   C.ceilHit = ceil(C);
 }
 function ceil(C) {
-  let hit = null;
-  for (const c of colsNear(C.pos.x, C.pos.y + 1, C.pos.z)) { if (c.t === 'h') { const b = hTop(c, C.pos.x, C.pos.z) - c.th; if (b > -1e8 && b >= C.pos.y + C.h * .55 && b < C.pos.y + C.h) { C.pos.y = b - C.h; if (C.vel.y > 0) C.vel.y = 0; hit = c; } continue; } if (c.y0 < C.pos.y + C.h * .55 || C.pos.y + C.h <= c.y0) continue; if (!xzHit(c, C.pos.x, C.pos.z, C.r * .7, _h)) continue; C.pos.y = c.y0 - C.h; if (C.vel.y > 0) C.vel.y = 0; hit = c; }
+  let hit = null; const H = bodyH(C);
+  for (const c of colsNear(C.pos.x, C.pos.y + 1, C.pos.z)) { if (c.t === 'h') { const b = hTop(c, C.pos.x, C.pos.z) - c.th; if (b > -1e8 && b >= C.pos.y + H * .55 && b < C.pos.y + H) { C.pos.y = b - H; if (C.vel.y > 0) C.vel.y = 0; hit = c; } continue; } if (c.y0 < C.pos.y + H * .55 || C.pos.y + H <= c.y0) continue; if (!xzHit(c, C.pos.x, C.pos.z, C.r * .7, _h)) continue; C.pos.y = c.y0 - H; if (C.vel.y > 0) C.vel.y = 0; hit = c; }
   return hit;
 }
 // climbing up into a thin overhang (a table top over its leg, a counter lip): reach round the edge and pull up onto it
@@ -196,7 +200,7 @@ function updLeader(C, dt) {
   const mv = ctl ? readMove() : { x: 0, y: 0, m: 0, run: false }; const inX = mv.x, inY = mv.y;
   const fx = -Math.sin(cam.yaw), fz = -Math.cos(cam.yaw), rx = Math.cos(cam.yaw), rz = -Math.sin(cam.yaw);
   let wx = fx * inY + rx * inX, wz = fz * inY + rz * inX; const wl = Math.hypot(wx, wz); if (wl > 0) { wx /= wl; wz /= wl; }
-  if (ctl && pressed.KeyC) C.crouch = !C.crouch;
+  if (ctl && pressed.KeyC) { if (C.crouch && ceilAt(C.pos.x, C.pos.z, C.pos.y + .1)[0] < C.pos.y + C.h) toast('上面太矮，企唔起身'); else { C.crouch = !C.crouch; C.autoCrouch = false; } }
   C.climbCD = Math.max(0, (C.climbCD || 0) - dt); if (C.rollT > 0) C.rollT -= dt; C.overhang = Math.max(0, (C.overhang || 0) - dt); C.pushing = false;
   if (C.tumble > 0) C.tumble -= dt;
   if (C.mantle) {
@@ -233,6 +237,8 @@ function updLeader(C, dt) {
   if (C.vel.y < TERM) C.vel.y = TERM;
   C.pos.x += C.vel.x * dt; C.pos.z += C.vel.z * dt;
   const hit = resolveH(C, true);
+  // ducked in under something on your own: stand back up once there's room again
+  if (C.autoCrouch && C.crouch && ceilAt(C.pos.x, C.pos.z, C.pos.y + .1)[0] >= C.pos.y + C.h + .2) { C.crouch = false; C.autoCrouch = false; }
   moveVert(C, dt);
   if (C.grounded) C.flaps = 0;
   if (C.id === 'bat' && ctl && !C.grounded && keys.Space && C.ceilHit && roostOn(C, C.ceilHit)) return;

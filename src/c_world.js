@@ -289,7 +289,9 @@ function buildRoom() {
   box(-310, 310, -10, 0, -260, 260, M.floor, { uv: 100, cast: false });
   box(-310, 40, 0, 260, -262, -250, M.wall, { uv: 120 }); box(140, 310, 0, 260, -262, -250, M.wall, { uv: 120 });
   box(40, 140, 0, 198, -262, -250, M.wall, { uv: 120 }); box(40, 140, 245, 260, -262, -250, M.wall, { uv: 120 });
-  box(-310, -300, 0, 470, -262, 146, M.wall, { uv: 120 }); box(-310, -300, 0, 470, 154, 262, M.wall, { uv: 120 }); box(-310, -300, 9, 470, 146, 154, M.wall, { uv: 120 });
+  // the west wall: only the stairwell's stretch rises past the ceiling (up to the hall door); the rest stops at the
+  // ceiling — taller, it stood up through the kitchen floor as an invisible wall in front of the mouse hole
+  box(-310, -300, 0, 470, -262, -20, M.wall, { uv: 120 }); box(-310, -300, 0, 270, -20, 146, M.wall, { uv: 120 }); box(-310, -300, 0, 270, 154, 262, M.wall, { uv: 120 }); box(-310, -300, 9, 270, 146, 154, M.wall, { uv: 120 });
   box(-340, -310, -10, 0, 132, 168, M.floor, { uv: 100, cast: false }); box(-340, -310, 0, 19, 132, 142, M.wall, { uv: 120 }); box(-340, -310, 0, 19, 158, 168, M.wall, { uv: 120 }); box(-340, -310, 16, 19, 142, 158, M.wall, { uv: 120 });
   const den = new THREE.PointLight(0xffb36b, 60, 0, 2); den.position.set(-322, 5, 150); LV.add(den);
   box(300, 310, 0, 260, -262, 262, M.wall, { uv: 120 });
