@@ -634,7 +634,7 @@ function updHUD(dt) {
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) $('toast').classList.remove('on'); }
   if (STATE !== 'play' && STATE !== 'fail') { hint(''); $('mk').classList.remove('on'); $('stam').classList.remove('on'); $('cross').classList.remove('on'); return; }
   const L = leader;
-  $('eye').classList.toggle('on', mom.active || meter > .01 || LEVEL === 'kitchen');
+  const sn = susNow(); $('eye').classList.toggle('on', mom.active || meter > .01 || LEVEL === 'kitchen' || !!(sn && sn.v > .05)); susHUD(dt);
   $('eyering').setAttribute('stroke-dashoffset', (175.9 * (1 - meter)).toFixed(1));
   $('eyering').setAttribute('stroke', meter > .6 ? '#ff8f9f' : '#bff6ff');
   $('eyepupil').setAttribute('r', (4 + meter * 5).toFixed(1));

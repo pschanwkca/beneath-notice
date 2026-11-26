@@ -109,7 +109,8 @@ function brainIncident(id, o, on, by) {
   if (NET.client || !HB.m) return;
   const add = { klight: .55, tap: .55, hood: .35, blight: .35, flush: .8, tv: .3, lamp: .4, ulight: .3, udesk: .25, ustar: .3, umusic: .45 }[id] || .3;
   const rep = HB.inc.filter(i => i.id === id && T - i.t < 60).length;
-  brainSus(add * (1 + rep * .6), o.p);
+  const why = { klight: on ? '廚房燈自己開咗' : '廚房燈熄咗', tap: '水龍頭開咗', hood: '抽油煙機自己郁', blight: on ? '廁所燈開咗' : '廁所燈熄咗', flush: '冇人沖廁', tv: on ? '電視自己開咗' : '電視熄咗', lamp: '落地燈熄咗', fridge: '雪櫃門開咗', ulight: '女兒房燈郁咗', udesk: '枱燈郁咗', ustar: '星星燈郁咗', umusic: '音樂盒響' }[id] || '有嘢變咗';
+  brainSus(add * (1 + rep * .6), o.p, why);
   HB.inc.push({ id, t: T, p: o.p.clone() }); if (HB.inc.length > 20) HB.inc.shift();
   const M = HB.m, K = HB.k, mr = agentRoom(M), kr = K ? agentRoom(K) : '';
   const look = [{ look: 1.5 + HB.sus * .8, at: [o.p.x, (o.p.y > 200 ? UPS.y : 0) + 40, o.p.z], low: HB.sus >= 2 }];
@@ -143,20 +144,40 @@ function brainHear(p, loud = 1) {
   if (NET.client || !HB.m) return; const M = HB.m;
   if (HX.id.hood && HX.id.hood.on && roomOf(p.x, p.z, p.y) === 'k' && (loud < .7 || rnd() < .4)) return;   // the hood drowns small noises out
   if (M.react >= 3 || (M.act === 'bath' && M.seat)) return;
-  brainSus(.3, p); const n = navNearest(p.x, p.z, p.y);
+  brainSus(.3, p, '聽到聲'); const n = navNearest(p.x, p.z, p.y);
   react(M, 2, [{ say: pick(['什麼聲音？', '咦？', '誰？']) }, { go: n }, { look: 2.8 + HB.sus * .7, at: [p.x, Math.max(p.y, 10), p.z], low: HB.sus >= 1.5 }, { fn: () => brainSay('mom', CAT.pos && CAT.pos.distanceTo(p) < 90 ? '小橘，又是你？' : pick(['……奇怪。', '是我聽錯了嗎……'])) }]);
 }
 // they caught a glimpse of someone
-function brainGlimpse(p) { if (NET.client || !HB.m || T - HB.glT < 4) return; HB.glT = T; brainSus(.28, p); }
-function brainSus(v, p) {
+function brainGlimpse(p) { if (NET.client || !HB.m || T - HB.glT < 4) return; HB.glT = T; brainSus(.28, p, '好似見到嘢郁'); }
+function brainSus(v, p, why) {
+  // done right beside the cat? they blame the cat — once in a while (not every time: that would be too easy)
+  if (p && CAT && CAT.pos && CAT.pos.distanceTo(p) < 90 && !(HB.catT && T - HB.catT < 25)) { HB.catT = T; v *= .3; why = '佢哋以為係小橘'; }
+  susWhy(why || '起疑');
   HB.sus = Math.min(3.4, HB.sus + v); HB.quiet = 0; if (p) { HB.mem.push({ p: p.clone(), t: T }); if (HB.mem.length > 6) HB.mem.shift(); }
   const st = HB.sus >= 3 ? 3 : HB.sus >= 2 ? 2 : HB.sus >= 1 ? 1 : 0;
   if (st > HB.stage) {
     HB.stage = st;
     if (st === 1) setTimeout(() => brainSay('mom', '今天家裡怪怪的……', 2.8), 2500);
-    if (st === 2) setTimeout(() => brainSay('mom', '好像有東西在家裡跑來跑去……', 3), 2500);
+    if (st === 2) { setTimeout(() => brainSay('mom', '好像有東西在家裡跑來跑去……', 3), 2500); setTimeout(brainGlue, 7000); }
     if (st === 3 && !HB.search) brainSearch();
   }
+}
+// she's sure: mice. Glue boards where odd things happened (two at a time, up to four)
+function brainGlue() {
+  const M = HB.m; if (NET.client || !M || !HX.list.length) return;
+  const placed = GLUE_SPOTS.filter((_, i) => HX.id['glue' + i] && HX.id['glue' + i].on).length; if (placed >= 4) return;
+  const near = HB.mem.length ? HB.mem.slice(-4).map(m => m.p) : [V3(190, 0, -130)];
+  const order = GLUE_SPOTS.map((q, i) => ({ i, d: Math.min(...near.map(p => Math.hypot(p.x - q[0], p.z - q[1]))) })).filter(c => !HX.id['glue' + c.i].on).sort((a, b) => a.d - b.d).slice(0, 2);
+  const steps = [{ say: pick(['一定有老鼠……放幾塊黐鼠膠先。', '我去拿黐鼠膠。']) }];
+  for (const c of order) { const [x, z] = GLUE_SPOTS[c.i]; steps.push({ go: navNearest(x, z, 0) }, { wait: 1.4, look: 1.4, at: [x, 2, z], low: true }, { fn: () => hxSet(HX.id['glue' + c.i], true, 'mom') }); }
+  later(M, steps);
+}
+// a search found nothing: block the mouse hole they seem to use most (there's always another way round)
+function brainSeal() {
+  const M = HB.m; if (NET.client || !M || !HX.list.length) return;
+  const use = HB.holeUse || {}, ids = Object.keys(SEALS).filter(id => !HX.id[id].on).sort((a, b) => (use[b] || 0) - (use[a] || 0)); if (!ids.length) return;
+  const id = ids[0];
+  later(M, [{ say: '一定係老鼠窿……今日先用紙皮封住，聽日買鋼絲球。' }, { go: 'bathIn' }, { go: 'bmid' }, { wait: 2, look: 2, at: [SEALS[id].x, 4, -244], low: true }, { fn: () => { hxSet(HX.id[id], true, 'mom'); brainSay('mom', '……咁就入唔到嚟喇。', 2.2); } }]);
 }
 function brainSearch() {
   HB.search = 38; const M = HB.m, K = HB.k;
@@ -306,7 +327,7 @@ function brainKid(dt) { if (!HB.k) brainReset(); brainNeeds(HB.k, dt); return br
 function brainTick(dt) {
   if (!HB.m) return;
   HB.quiet += dt; if (HB.quiet > 18 && HB.sus > 0) { HB.sus = Math.max(0, HB.sus - dt / 40); if (HB.sus < HB.stage - .6) { if (HB.stage >= 2 && HB.sus < 1.4) brainSay('mom', '……算了，大概是我太累了。', 2.6); HB.stage = Math.floor(HB.sus); } }
-  if (HB.search > 0) { HB.search -= dt; if (HB.search <= 0) { HB.sus = Math.min(HB.sus, 2.2); HB.stage = 2; brainSay('mom', '找不到……先吃飯吧。', 2.6); } }
+  if (HB.search > 0) { HB.search -= dt; if (HB.search <= 0) { HB.sus = Math.min(HB.sus, 2.2); HB.stage = 2; brainSay('mom', '找不到……先吃飯吧。', 2.6); setTimeout(brainSeal, 4000); } }
   HB.eye = 1 + HB.sus * .13;
 }
 function bathOccupant() { for (const A of [HB.m, HB.k]) if (A && agentRoom(A) === 'b' && A.act === 'bath') return A; return null; }
@@ -317,8 +338,32 @@ function brainEyeText() {
   if (HB.search > 0 || HB.netSearch) return '她們在搜屋！先躲好';
   const s = NET.client ? (HB.netSus || 0) : HB.sus;
   const where = (A, n) => { const P = A === 'm' ? mom.pos : KID.root.position; return `${n}在${ROOM_NAME[roomOf(P.x, P.z, P.y)]}`; };
-  const pre = s >= 2 ? '太太起了疑心 · ' : s >= 1 ? '太太覺得家裡怪怪的 · ' : '';
-  return pre + where('m', '太太') + ' · ' + where('k', '女兒');
+  return where('m', '太太') + ' · ' + where('k', '女兒');
+}
+// ---------- 警覺度: the household's suspicion, shown under the eye ----------
+//  three segments fill up (怪怪地 → 起疑心 → 搜屋); each rise flashes its reason ("＋ 冇人沖廁"); it ebbs when
+//  things stay quiet. The garage man and 陳伯 next door have their own.
+const SUSV = { why: '', whyT: 0, last: 0, st: -1, drop: 0 };
+const SUS_NAMES = { kitchen: ['平靜', '怪怪地', '起疑心', '搜屋中'], garage: ['例行', '留意', '起疑心', '搜查中'], yard: ['平靜', '留意', '起疑心', '搵緊'] };
+function susWhy(t) { SUSV.why = t; SUSV.whyT = 2.6; }
+function susNow() {
+  if (LEVEL === 'kitchen' && HB.m) return { v: NET.client ? (HB.netSus || 0) : HB.sus, search: HB.search > 0 || !!HB.netSearch };
+  if (LEVEL === 'garage') return { v: NET.client ? (AGB.netSus || 0) : AGB.sus, search: AGB.search > 0 };
+  if (LEVEL === 'yard') return { v: OLDB.sus, search: false };
+  return null;
+}
+function susHUD(dt) {
+  const row = $('susRow'); if (!row) return; const S = susNow();
+  if (!S) { if (!row.hidden) row.hidden = true; return; } if (row.hidden) row.hidden = false;
+  const v = clamp(S.v, 0, 3), st = S.search ? 3 : v >= 3 ? 3 : v >= 2 ? 2 : v >= 1 ? 1 : 0, names = SUS_NAMES[LEVEL];
+  if (NET.client && S.v > SUSV.last + .12) susWhy('起疑');   // (clients see the rise, not its reason)
+  if (st < SUSV.st && SUSV.st >= 0) { SUSV.why = '靜咗落嚟'; SUSV.whyT = 2.2; SUSV.drop = 1; }
+  SUSV.last = S.v;
+  if (st !== SUSV.st) { SUSV.st = st; row.className = 'susrow s' + st; }
+  for (let i = 0; i < 3; i++) { const f = clamp(v - i, 0, 1), el = row.children[0].children[i].firstChild; const w = (S.search ? 100 : f * 100).toFixed(0) + '%'; if (el.style.width !== w) el.style.width = w; }
+  if (SUSV.whyT > 0) SUSV.whyT -= dt;
+  const lbl = SUSV.whyT > 0 ? (SUSV.drop ? SUSV.why : '＋ ' + SUSV.why) : names[st]; if (SUSV.whyT <= 0) SUSV.drop = 0;
+  const L2 = $('susLbl'); if (L2.textContent !== lbl) { L2.textContent = lbl; L2.classList.toggle('why', SUSV.whyT > 0 && !SUSV.drop); }
 }
 // network: the daughter's body and the household mood
 function brainNet() { return [+HB.sus.toFixed(2), HB.search > 0 ? 1 : 0, +AGB.sus.toFixed(2) + (AGB.search > 0 ? 10 : 0)]; }

@@ -253,11 +253,55 @@ function buildPassages(K) {
     mesh(new THREE.PlaneGeometry(16, 30), new THREE.MeshBasicMaterial({ color: 0x0b0806, transparent: true, opacity: .6, depthWrite: false }), 658, 215, -239.9, { cast: false }); }   // the shaft's depths   // a little warm light falls down the shaft from the duct
 }
 // the passages' own switches (only players use them; the family doesn't notice) — added with the house's switches
+// ---------- what the family does once they're sure there are mice ----------
+//  · stage 2 (起疑心): Mom puts down glue boards near where odd things happened. Step on one and you're stuck:
+//    struggle free (Jump, costs stamina) or a teammate beside you pulls you off
+//  · after a search finds nothing: she blocks the mouse hole she thinks they use with cardboard and tape —
+//    only ever one with another way round. The bear can barge through it
+const GLUE_SPOTS = [[-276, -100], [192, -128], [262, -268], [352, -268], [338, -212], [330, -20], [70, -120], [-120, -60]];
+const SEALS = { seal_fh: { x: 201, hole: [196, 206] }, seal_lh: { x: 335, hole: [330, 340] } };
+function buildMouseWar(K) {
+  HX.glue = GLUE_SPOTS.map(([x, z]) => {
+    const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = (x * 7 + z * 3) % 6.28; g.visible = false; LV.add(g);
+    mesh(new THREE.BoxGeometry(16, .5, 11), new THREE.MeshStandardMaterial({ color: 0xe8d9b0, roughness: .8 }), 0, .25, 0, { parent: g, cast: false });
+    mesh(new THREE.BoxGeometry(14.4, .25, 9.4), new THREE.MeshPhysicalMaterial({ color: 0xf2c93a, roughness: .08, clearcoat: 1, clearcoatRoughness: .02, transparent: true, opacity: .9 }), 0, .62, 0, { parent: g, cast: false });
+    return { g, x, z };
+  });
+  for (const id in SEALS) { const S = SEALS[id], g = new THREE.Group(); g.position.set(S.x, 0, -244.9); g.visible = false; LV.add(g);
+    mesh(new THREE.BoxGeometry(15, 11.5, 1.2), new THREE.MeshStandardMaterial({ color: 0xb08a5a, roughness: .95 }), 0, 5.6, 0, { parent: g });
+    for (const [x, r] of [[-4.5, .25], [4.2, -.3]]) { const t = mesh(new THREE.BoxGeometry(2.6, 14, .3), new THREE.MeshStandardMaterial({ color: 0xcfc6a8, roughness: .5, transparent: true, opacity: .85 }), x, 5.5, -.72, { parent: g, cast: false }); t.rotation.z = r; }
+    S.g = g; S.col = { t: 'b', x0: S.hole[0] - 1.5, x1: S.hole[1] + 1.5, y0: -999, y1: -998, z0: -245.6, z1: -244, slick: true }; cols.push(S.col); }
+}
 function hxPassageSwitches() {
+  // the family's own counter-measures: not for players to switch (glue), or only the bear can undo (seals)
+  GLUE_SPOTS.forEach(([x, z], i) => hxAdd({ id: 'glue' + i, name: '黐鼠膠', kind: 'trap', noUse: true, quiet: true, p: V3(x, 1, z), r: 0, on: false, verb: ['', ''] }));
+  for (const id in SEALS) hxAdd({ id, name: '封住老鼠窿嘅紙皮', kind: 'seal', who: 'bear', seal: true, quiet: true, p: V3(SEALS[id].x, 5, -248), r: 9, on: false, verb: ['撞開紙皮', '撞開紙皮'] });
   // the fridge: its seal is strong — only the bear can pull the door open (and the family will notice it's open)
   hxAdd({ id: 'fridge', name: '雪櫃門', kind: 'door', who: 'bear', p: V3(152, 8, -142), r: 10, on: false, verb: ['閂雪櫃門', '用力拉開雪櫃門'] });
   hxAdd({ id: 'mhcover', name: '踢腳線蓋', kind: 'cover', p: V3(335, 4, -226), r: 7, once: true, quiet: true, verb: ['拆開踢腳線蓋', '拆開踢腳線蓋'] });
   hxAdd({ id: 'gvent', name: '通風口蓋（由呢邊推開）', kind: 'cover', lv: 'any', sp: true, p: V3(903, 12, -200), r: 8, once: true, quiet: true, verb: ['推開通風口蓋', '推開通風口蓋'] });
+}
+function glueTick(dt) {
+  if (!HX.glue) return;
+  for (const C of party) {
+    if (C.frozen) { C.glued = null; continue; }
+    // which mouse hole they use (the one Mom will block): counted on the host as anyone passes through
+    if (!NET.client && C.pos.y < 8 && C.pos.z > -244 && C.pos.z < -232) for (const id in SEALS) { const S = SEALS[id]; if (C.pos.x > S.hole[0] && C.pos.x < S.hole[1] && C.holeT !== id) { C.holeT = id; HB.holeUse = HB.holeUse || {}; HB.holeUse[id] = (HB.holeUse[id] || 0) + 1; } }
+    if (C.pos.z < -246 || C.pos.z > -230) C.holeT = null;
+    if (!mine(C)) continue;
+    if (C.glued) {
+      const G = C.glued; C.pos.x = G.x; C.pos.z = G.z; C.vel.x = C.vel.z = 0; if (C.pos.y > .9) C.pos.y = .9; C.climbing = false; C.leap = null;
+      if (C.vel.y > 20) { C.vel.y = 0; G.k -= .22; C.stamina = Math.max(0, C.stamina - 7); SND.swish && SND.swish(); for (let i = 0; i < 4; i++) emit(V3(C.pos.x, .8, C.pos.z), V3(R(-6, 6), R(3, 8), R(-6, 6)), new THREE.Color(1.1, .9, .3), R(.12, .22), R(.3, .5), 120, 1); }   // a jump is a struggle
+      if (C !== leader) G.k -= dt * .3;   // AI teammates wriggle free in time
+      if (party.some(F => F !== C && !F.frozen && !F.glued && F.pos.distanceTo(C.pos) < 6)) G.k -= dt * .9;   // a teammate pulls you off
+      if (G.k <= 0) { C.glued = null; C.glueOff = T; C.pos.x += Math.sin(C.yaw + Math.PI) * 9; C.pos.z += Math.cos(C.yaw + Math.PI) * 9; if (C === leader) toast('甩開咗！', 1.2); }
+      continue;
+    }
+    if (C.pos.y > 1.2 || (C.glueOff && T - C.glueOff < 1.5)) continue;
+    for (let i = 0; i < HX.glue.length; i++) { const o = HX.id['glue' + i], G = HX.glue[i]; if (!o || !o.on) continue;
+      const dx = C.pos.x - G.x, dz = C.pos.z - G.z, a = -G.g.rotation.y, lx = dx * Math.cos(a) - dz * Math.sin(a), lz = dx * Math.sin(a) + dz * Math.cos(a);
+      if (Math.abs(lx) < 7.6 && Math.abs(lz) < 5 ) { C.glued = { x: C.pos.x, z: C.pos.z, k: 1 }; C.squash = .6; if (C === leader) toast('黐住咗！撳「跳」用力掙扎，或者等隊友過嚟拉你', 3); break; } }
+  }
 }
 // ---------- the fridge's cold ----------
 //  · inside, the cold creeps in (twice as fast with the door shut): stay too long and you freeze stiff —
@@ -317,6 +361,8 @@ function hxApply(o, quiet) {
   if (o.id === 'gstrip' && !o.on && !quiet && !NET.client) toastW('監視鏡頭斷了電——它現在甚麼都看不到', 3);
   if (o.id === 'blight' && HX.bfan) HX.bfan.col.y0 = o.on ? HX.bfan.y[0] : -999, HX.bfan.col.y1 = o.on ? HX.bfan.y[1] : -998;
   if (o.id === 'mhcover' && HX.mhc) { const g = HX.mhc.g; if (o.on) { g.position.set(346, .4, -225); g.rotation.set(-Math.PI / 2, 0, .4); HX.mhc.col.y0 = -999; HX.mhc.col.y1 = -998; if (!quiet) toastW('踢腳線蓋拆開咗——後面個老鼠窿通去廁所', 2.6); } }
+  if (o.kind === 'trap' && HX.glue) { const G = HX.glue[+o.id.slice(4)]; if (G) G.g.visible = o.on; }
+  if (o.seal && SEALS[o.id] && SEALS[o.id].g) { const S = SEALS[o.id]; S.g.visible = o.on; S.col.y0 = o.on ? 0 : -999; S.col.y1 = o.on ? 11.5 : -998; if (!o.on && !quiet) { toastW('紙皮俾老友撞爛咗——條老鼠窿又通返', 2.4); for (let i = 0; i < 16; i++) emit(V3(S.x, 5, -245), V3(R(-12, 12), R(2, 14), R(-14, -2)), new THREE.Color(.7, .55, .36), R(.3, .6), R(.5, .9), 200, 1); } }
   if (o.id === 'gvent' && o.on && !LIV.ventOpen) { ventOpen(); if (!quiet) toastW('通風口蓋推開咗——客廳同車房而家打通咗', 2.6); }
   if (!quiet) { SND.snap && SND.snap(); if (o.kind === 'flush') hxFlushSnd(o.p); }
 }
@@ -338,7 +384,7 @@ function hxState() { return HX.list.map(o => o.on ? 1 : 0).join('') + '|' + HX.w
 function hxRecvState(s) { if (!s) return; const [f, w, d] = s.split('|'); [...f].forEach((c, i) => { const o = HX.list[i]; if (o && !o.oneShot && o.on !== (c === '1')) { o.on = c === '1'; hxApply(o, true); } }); HX.water = +w; HX.bd.tgt = +d; }
 function hxNear(C) {
   if (!C || !HX.list.length) return null; const cx = C.pos.x, cy = C.pos.y + C.h * .5, cz = C.pos.z; let best = null, bd = 1e9;
-  for (const o of HX.list) { if (o.lv !== 'any' && (o.lv || 'kitchen') !== LEVEL) continue; if (o.once && o.on) continue; if (o.who && C.id !== o.who) continue; if (o.sp && (NET.on || (o.id === 'gvent' && LIV.ventOpen))) continue; const d = Math.hypot(o.p.x - cx, o.p.y - cy, o.p.z - cz); if (d < o.r && d < bd) { bd = d; best = o; } }
+  for (const o of HX.list) { if (o.lv !== 'any' && (o.lv || 'kitchen') !== LEVEL) continue; if (o.once && o.on) continue; if (o.who && C.id !== o.who) continue; if (o.noUse || (o.seal && !o.on)) continue; if (o.sp && (NET.on || (o.id === 'gvent' && LIV.ventOpen))) continue; const d = Math.hypot(o.p.x - cx, o.p.y - cy, o.p.z - cz); if (d < o.r && d < bd) { bd = d; best = o; } }
   return best;
 }
 function hxInput(L, ctl) { if (!ctl || !pressed.KeyE || STATE !== 'play') return false; const o = hxNear(L); if (!o) return false; hxRequest(o, L); return true; }
@@ -395,7 +441,7 @@ function hxTick(dt) {
   if (HX.bfan) HX.bfan.g.rotation.y += dt * (bl.on ? 22 : 0);
   // up the vent shaft over the fish tank: pull yourself over its lip into the duct
   for (const C of party) if (C.climbing && !C.mantle && C.climbDir > 0 && C.pos.y > 257 && C.pos.y < 270 && C.pos.x > 648 && C.pos.x < 668 && C.pos.z > -246 && C.pos.z < -230) { C.climbing = false; C.leap = null; C.mantle = { from: C.pos.clone(), to: V3(658, 270.1, -225), t: 0, dur: .55 }; if (C === leader) toast('入咗天花風槽', 1.8); }
-  fridgeTick(dt);
+  fridgeTick(dt); glueTick(dt);
   if (HX.heat) { HX.heat.material.map.offset.y -= dt * .55; HX.heat.material.map.offset.x = Math.sin(T * .7) * .04; }
   if (HX.bcord) for (const C of party) {
     if (!C.climbing || C.climbC !== HX.bcord) { C.bcordPull = false; continue; }

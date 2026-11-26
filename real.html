@@ -359,6 +359,16 @@ body.paused #chap{opacity:0!important}
 .ptt button{margin-left:auto}
 .testchip{position:fixed;left:50%;bottom:14px;transform:translateX(-50%);z-index:6;font:600 11px "Noto Sans TC";letter-spacing:.14em;color:var(--cyan);padding:3px 12px;border-radius:99px;border:1px solid rgba(110,220,230,.5);background:rgba(8,12,16,.55);pointer-events:none}
 .testchip[hidden]{display:none}
+.susrow{display:flex;align-items:center;gap:8px;height:15px;--c:#9fd8d0}
+.susrow[hidden]{display:none}
+.susrow.s1{--c:#f2d38a}.susrow.s2{--c:#f4a65c}.susrow.s3{--c:#ff7a7a;animation:susPulse 1.1s ease-in-out infinite}
+.susbar{display:flex;gap:3px;padding:3px;border-radius:99px;background:rgba(10,13,18,.55);border:1px solid rgba(245,240,230,.12)}
+.susbar i{position:relative;width:24px;height:5px;border-radius:3px;background:rgba(245,240,230,.14);overflow:hidden}
+.susbar b{position:absolute;left:0;top:0;bottom:0;width:0;border-radius:3px;background:var(--c);transition:width .45s ease,background .45s}
+#susLbl{font:600 11px "Noto Sans TC",sans-serif;font-style:normal;letter-spacing:.08em;color:var(--c);min-width:44px;text-shadow:0 1px 4px rgba(0,0,0,.7);transition:color .3s}
+#susLbl.why{color:#ffe2b8}
+@keyframes susPulse{50%{opacity:.6}}
+html.touch .susbar i{width:16px;height:4px}html.touch #susLbl{font-size:9.5px;min-width:36px}html.touch .susrow{gap:5px;height:12px}
 .frost{position:fixed;inset:0;pointer-events:none;opacity:0;transition:opacity .4s;z-index:2;background:radial-gradient(ellipse at center,rgba(220,240,255,0) 48%,rgba(210,235,255,.35) 72%,rgba(235,248,255,.85) 100%);box-shadow:inset 0 0 80px rgba(190,225,255,.6)}
 body.paused .testchip{display:none}
 html.touch .testchip{top:auto;bottom:calc(8px + env(safe-area-inset-bottom));left:calc(14px + env(safe-area-inset-left));transform:none;font-size:10px;padding:2px 10px}
@@ -865,6 +875,7 @@ html.touch .chap.room .logo{font-size:13px}
       <path id="eyelid" d="M14 32 Q32 16 50 32 Q32 48 14 32Z" fill="none" stroke="#f5f0e6" stroke-width="2.4"/>
       <circle id="eyepupil" cx="32" cy="32" r="5.5" fill="#f5f0e6"/>
     </svg>
+    <div class="susrow s0" id="susRow" hidden><div class="susbar"><i><b></b></i><i><b></b></i><i><b></b></i></div><em id="susLbl">平靜</em></div>
     <span id="eyet">太太在地庫</span>
   </div>
   <div class="frost" id="frost"></div>
@@ -1079,6 +1090,8 @@ Object.assign(I18N_EN, {"體力唔夠彈上去，慢慢爬或者搵位企穩先"
 Object.assign(I18N_EN, {"跳／攀爬時彈上去（S＋Space 跳開）": "Jump / leap up while climbing (S+Space lets go)"});
 Object.assign(I18N_EN, {"踢腳線蓋拆開咗——後面個老鼠窿通去廁所": "The skirting vent cover's off — the mouse hole behind it leads to the bathroom", "通風口蓋推開咗——客廳同車房而家打通咗": "The vent cover's pushed open — the living room and the garage are connected now", "另一邊有塊踢腳線蓋擋住——要由客廳嗰邊拆開": "A skirting vent cover blocks the other end — it has to be unclipped from the living-room side", "牆上個通風口個蓋甩咗——爬上去，入面條槽通上天花風槽": "The cover of the vent on the wall has come loose — climb up: the shaft inside leads to the ceiling duct", "踢腳線蓋": "Skirting vent cover", "通風口蓋（由呢邊推開）": "Vent cover (push it open from this side)", "拆開踢腳線蓋": "Unclip the skirting vent cover", "推開通風口蓋": "Push the vent cover open"});
 Object.assign(I18N_EN, {"雪櫃門": "Fridge door", "閂雪櫃門": "Shut the fridge", "用力拉開雪櫃門": "Heave the fridge door open", "雪櫃門點解開咗？": "Why's the fridge open?", "邊個打開咗雪櫃……冷氣都走晒。": "Who left the fridge open… all the cold's getting out.", "好凍……門閂咗！搵雪櫃底嘅排水口滑出去": "So cold… the door's shut! Find the drain hole in the floor of the fridge and slide out", "好凍……再留落去會凍僵變玩具！快啲出去": "So cold… stay much longer and you'll freeze stiff into a toy! Get out", "雪櫃入面": "In the fridge", "……好凍……身體凍到硬晒，變咗一件玩具": "…so cold… frozen stiff — just a toy now", "老友：撳「用」用力拉開雪櫃門": "Buddy: press Use to heave the fridge door open", "雪櫃門好實——換老友（熊）嚟拉開": "The fridge door's sealed tight — switch to Buddy (the bear) to pull it open"});
+Object.assign(I18N_EN, {"佢哋以為係小橘": "they think it was the cat", "起疑": "suspicious", "廚房燈自己開咗": "kitchen light came on", "廚房燈熄咗": "kitchen light went off", "水龍頭開咗": "tap left running", "抽油煙機自己郁": "the hood switched itself", "廁所燈開咗": "bathroom light on", "廁所燈熄咗": "bathroom light off", "冇人沖廁": "a flush with nobody there", "電視自己開咗": "TV came on by itself", "電視熄咗": "TV went off", "落地燈熄咗": "lamp went off", "雪櫃門開咗": "fridge left open", "女兒房燈郁咗": "her light changed", "枱燈郁咗": "desk lamp changed", "星星燈郁咗": "star lamp changed", "音樂盒響": "the music box", "有嘢變咗": "something changed", "聽到聲": "heard a noise", "好似見到嘢郁": "glimpsed something move", "有古怪": "something's off", "靜咗落嚟": "calming down", "平靜": "Calm", "怪怪地": "Uneasy", "起疑心": "Suspicious", "搜屋中": "Searching", "例行": "Routine", "留意": "Wary", "搜查中": "Searching", "搵緊": "Looking"});
+Object.assign(I18N_EN, {"黐鼠膠": "Glue trap", "封住老鼠窿嘅紙皮": "Cardboard over the mouse hole", "撞開紙皮": "Barge through the cardboard", "紙皮俾老友撞爛咗——條老鼠窿又通返": "Buddy barged through the cardboard — the mouse hole's open again", "甩開咗！": "Free!", "黐住咗！撳「跳」用力掙扎，或者等隊友過嚟拉你": "Stuck! Press Jump to struggle, or wait for a teammate to pull you off", "一定有老鼠……放幾塊黐鼠膠先。": "There must be mice… I'll put down some glue traps.", "我去拿黐鼠膠。": "I'll get the glue traps.", "一定係老鼠窿……今日先用紙皮封住，聽日買鋼絲球。": "It's a mouse hole… I'll cover it with cardboard today and get steel wool tomorrow.", "……咁就入唔到嚟喇。": "…That'll keep them out."});
 
 // =====================================================================
 //  Language: 中文 (default) or English.  ?lang=en / ?lang=zh in the address, or the button on the title
@@ -3672,7 +3685,7 @@ function updHUD(dt) {
   if (toastT > 0) { toastT -= dt; if (toastT <= 0) $('toast').classList.remove('on'); }
   if (STATE !== 'play' && STATE !== 'fail') { hint(''); $('mk').classList.remove('on'); $('stam').classList.remove('on'); $('cross').classList.remove('on'); return; }
   const L = leader;
-  $('eye').classList.toggle('on', mom.active || meter > .01 || LEVEL === 'kitchen');
+  const sn = susNow(); $('eye').classList.toggle('on', mom.active || meter > .01 || LEVEL === 'kitchen' || !!(sn && sn.v > .05)); susHUD(dt);
   $('eyering').setAttribute('stroke-dashoffset', (175.9 * (1 - meter)).toFixed(1));
   $('eyering').setAttribute('stroke', meter > .6 ? '#ff8f9f' : '#bff6ff');
   $('eyepupil').setAttribute('r', (4 + meter * 5).toFixed(1));
@@ -6278,7 +6291,7 @@ LEVELS.kitchen = {
   build() {
     buildKitchen(); buildKid(); buildCat(); buildToyBin(); LEVELS.kitchen.updrafts = [{ x: 57, z: -205, r: 11, y0: 88.5, y1: 178, fx: 14, all: true, hot: true }, buildVent()];
     addVial(-128, 13, -200); addVial(170, 184, -168); addVial(70, 88.5, -215); for (const p of [[-120, 0, 70], [-70, 0, 100], [20, 0, -146], [-30, 91.8, -182], [246, 1.2, 122]]) addCrumb(...p);
-    buildLivingRoom(kitchenMats()); buildPassages(kitchenMats()); buildHouseSwitches(kitchenMats()); buildUpstairs(kitchenMats());
+    buildLivingRoom(kitchenMats()); buildPassages(kitchenMats()); buildMouseWar(kitchenMats()); buildHouseSwitches(kitchenMats()); buildUpstairs(kitchenMats());
     // online co-op: the three machine parts
     addPart(44, 88.5, -212, 'spring'); addPart(205, 110, -464, 'lens'); addPart(-112, 13, -186, 'cap');
   },
@@ -8709,11 +8722,55 @@ function buildPassages(K) {
     mesh(new THREE.PlaneGeometry(16, 30), new THREE.MeshBasicMaterial({ color: 0x0b0806, transparent: true, opacity: .6, depthWrite: false }), 658, 215, -239.9, { cast: false }); }   // the shaft's depths   // a little warm light falls down the shaft from the duct
 }
 // the passages' own switches (only players use them; the family doesn't notice) — added with the house's switches
+// ---------- what the family does once they're sure there are mice ----------
+//  · stage 2 (起疑心): Mom puts down glue boards near where odd things happened. Step on one and you're stuck:
+//    struggle free (Jump, costs stamina) or a teammate beside you pulls you off
+//  · after a search finds nothing: she blocks the mouse hole she thinks they use with cardboard and tape —
+//    only ever one with another way round. The bear can barge through it
+const GLUE_SPOTS = [[-276, -100], [192, -128], [262, -268], [352, -268], [338, -212], [330, -20], [70, -120], [-120, -60]];
+const SEALS = { seal_fh: { x: 201, hole: [196, 206] }, seal_lh: { x: 335, hole: [330, 340] } };
+function buildMouseWar(K) {
+  HX.glue = GLUE_SPOTS.map(([x, z]) => {
+    const g = new THREE.Group(); g.position.set(x, 0, z); g.rotation.y = (x * 7 + z * 3) % 6.28; g.visible = false; LV.add(g);
+    mesh(new THREE.BoxGeometry(16, .5, 11), new THREE.MeshStandardMaterial({ color: 0xe8d9b0, roughness: .8 }), 0, .25, 0, { parent: g, cast: false });
+    mesh(new THREE.BoxGeometry(14.4, .25, 9.4), new THREE.MeshPhysicalMaterial({ color: 0xf2c93a, roughness: .08, clearcoat: 1, clearcoatRoughness: .02, transparent: true, opacity: .9 }), 0, .62, 0, { parent: g, cast: false });
+    return { g, x, z };
+  });
+  for (const id in SEALS) { const S = SEALS[id], g = new THREE.Group(); g.position.set(S.x, 0, -244.9); g.visible = false; LV.add(g);
+    mesh(new THREE.BoxGeometry(15, 11.5, 1.2), new THREE.MeshStandardMaterial({ color: 0xb08a5a, roughness: .95 }), 0, 5.6, 0, { parent: g });
+    for (const [x, r] of [[-4.5, .25], [4.2, -.3]]) { const t = mesh(new THREE.BoxGeometry(2.6, 14, .3), new THREE.MeshStandardMaterial({ color: 0xcfc6a8, roughness: .5, transparent: true, opacity: .85 }), x, 5.5, -.72, { parent: g, cast: false }); t.rotation.z = r; }
+    S.g = g; S.col = { t: 'b', x0: S.hole[0] - 1.5, x1: S.hole[1] + 1.5, y0: -999, y1: -998, z0: -245.6, z1: -244, slick: true }; cols.push(S.col); }
+}
 function hxPassageSwitches() {
+  // the family's own counter-measures: not for players to switch (glue), or only the bear can undo (seals)
+  GLUE_SPOTS.forEach(([x, z], i) => hxAdd({ id: 'glue' + i, name: TR('黐鼠膠'), kind: 'trap', noUse: true, quiet: true, p: V3(x, 1, z), r: 0, on: false, verb: ['', ''] }));
+  for (const id in SEALS) hxAdd({ id, name: TR('封住老鼠窿嘅紙皮'), kind: 'seal', who: 'bear', seal: true, quiet: true, p: V3(SEALS[id].x, 5, -248), r: 9, on: false, verb: [TR('撞開紙皮'), TR('撞開紙皮')] });
   // the fridge: its seal is strong — only the bear can pull the door open (and the family will notice it's open)
   hxAdd({ id: 'fridge', name: TR('雪櫃門'), kind: 'door', who: 'bear', p: V3(152, 8, -142), r: 10, on: false, verb: [TR('閂雪櫃門'), TR('用力拉開雪櫃門')] });
   hxAdd({ id: 'mhcover', name: TR('踢腳線蓋'), kind: 'cover', p: V3(335, 4, -226), r: 7, once: true, quiet: true, verb: [TR('拆開踢腳線蓋'), TR('拆開踢腳線蓋')] });
   hxAdd({ id: 'gvent', name: TR('通風口蓋（由呢邊推開）'), kind: 'cover', lv: 'any', sp: true, p: V3(903, 12, -200), r: 8, once: true, quiet: true, verb: [TR('推開通風口蓋'), TR('推開通風口蓋')] });
+}
+function glueTick(dt) {
+  if (!HX.glue) return;
+  for (const C of party) {
+    if (C.frozen) { C.glued = null; continue; }
+    // which mouse hole they use (the one Mom will block): counted on the host as anyone passes through
+    if (!NET.client && C.pos.y < 8 && C.pos.z > -244 && C.pos.z < -232) for (const id in SEALS) { const S = SEALS[id]; if (C.pos.x > S.hole[0] && C.pos.x < S.hole[1] && C.holeT !== id) { C.holeT = id; HB.holeUse = HB.holeUse || {}; HB.holeUse[id] = (HB.holeUse[id] || 0) + 1; } }
+    if (C.pos.z < -246 || C.pos.z > -230) C.holeT = null;
+    if (!mine(C)) continue;
+    if (C.glued) {
+      const G = C.glued; C.pos.x = G.x; C.pos.z = G.z; C.vel.x = C.vel.z = 0; if (C.pos.y > .9) C.pos.y = .9; C.climbing = false; C.leap = null;
+      if (C.vel.y > 20) { C.vel.y = 0; G.k -= .22; C.stamina = Math.max(0, C.stamina - 7); SND.swish && SND.swish(); for (let i = 0; i < 4; i++) emit(V3(C.pos.x, .8, C.pos.z), V3(R(-6, 6), R(3, 8), R(-6, 6)), new THREE.Color(1.1, .9, .3), R(.12, .22), R(.3, .5), 120, 1); }   // a jump is a struggle
+      if (C !== leader) G.k -= dt * .3;   // AI teammates wriggle free in time
+      if (party.some(F => F !== C && !F.frozen && !F.glued && F.pos.distanceTo(C.pos) < 6)) G.k -= dt * .9;   // a teammate pulls you off
+      if (G.k <= 0) { C.glued = null; C.glueOff = T; C.pos.x += Math.sin(C.yaw + Math.PI) * 9; C.pos.z += Math.cos(C.yaw + Math.PI) * 9; if (C === leader) toast(TR('甩開咗！'), 1.2); }
+      continue;
+    }
+    if (C.pos.y > 1.2 || (C.glueOff && T - C.glueOff < 1.5)) continue;
+    for (let i = 0; i < HX.glue.length; i++) { const o = HX.id['glue' + i], G = HX.glue[i]; if (!o || !o.on) continue;
+      const dx = C.pos.x - G.x, dz = C.pos.z - G.z, a = -G.g.rotation.y, lx = dx * Math.cos(a) - dz * Math.sin(a), lz = dx * Math.sin(a) + dz * Math.cos(a);
+      if (Math.abs(lx) < 7.6 && Math.abs(lz) < 5 ) { C.glued = { x: C.pos.x, z: C.pos.z, k: 1 }; C.squash = .6; if (C === leader) toast(TR('黐住咗！撳「跳」用力掙扎，或者等隊友過嚟拉你'), 3); break; } }
+  }
 }
 // ---------- the fridge's cold ----------
 //  · inside, the cold creeps in (twice as fast with the door shut): stay too long and you freeze stiff —
@@ -8773,6 +8830,8 @@ function hxApply(o, quiet) {
   if (o.id === 'gstrip' && !o.on && !quiet && !NET.client) toastW(TR('監視鏡頭斷了電——它現在甚麼都看不到'), 3);
   if (o.id === 'blight' && HX.bfan) HX.bfan.col.y0 = o.on ? HX.bfan.y[0] : -999, HX.bfan.col.y1 = o.on ? HX.bfan.y[1] : -998;
   if (o.id === 'mhcover' && HX.mhc) { const g = HX.mhc.g; if (o.on) { g.position.set(346, .4, -225); g.rotation.set(-Math.PI / 2, 0, .4); HX.mhc.col.y0 = -999; HX.mhc.col.y1 = -998; if (!quiet) toastW(TR('踢腳線蓋拆開咗——後面個老鼠窿通去廁所'), 2.6); } }
+  if (o.kind === 'trap' && HX.glue) { const G = HX.glue[+o.id.slice(4)]; if (G) G.g.visible = o.on; }
+  if (o.seal && SEALS[o.id] && SEALS[o.id].g) { const S = SEALS[o.id]; S.g.visible = o.on; S.col.y0 = o.on ? 0 : -999; S.col.y1 = o.on ? 11.5 : -998; if (!o.on && !quiet) { toastW(TR('紙皮俾老友撞爛咗——條老鼠窿又通返'), 2.4); for (let i = 0; i < 16; i++) emit(V3(S.x, 5, -245), V3(R(-12, 12), R(2, 14), R(-14, -2)), new THREE.Color(.7, .55, .36), R(.3, .6), R(.5, .9), 200, 1); } }
   if (o.id === 'gvent' && o.on && !LIV.ventOpen) { ventOpen(); if (!quiet) toastW(TR('通風口蓋推開咗——客廳同車房而家打通咗'), 2.6); }
   if (!quiet) { SND.snap && SND.snap(); if (o.kind === 'flush') hxFlushSnd(o.p); }
 }
@@ -8794,7 +8853,7 @@ function hxState() { return HX.list.map(o => o.on ? 1 : 0).join('') + '|' + HX.w
 function hxRecvState(s) { if (!s) return; const [f, w, d] = s.split('|'); [...f].forEach((c, i) => { const o = HX.list[i]; if (o && !o.oneShot && o.on !== (c === '1')) { o.on = c === '1'; hxApply(o, true); } }); HX.water = +w; HX.bd.tgt = +d; }
 function hxNear(C) {
   if (!C || !HX.list.length) return null; const cx = C.pos.x, cy = C.pos.y + C.h * .5, cz = C.pos.z; let best = null, bd = 1e9;
-  for (const o of HX.list) { if (o.lv !== 'any' && (o.lv || 'kitchen') !== LEVEL) continue; if (o.once && o.on) continue; if (o.who && C.id !== o.who) continue; if (o.sp && (NET.on || (o.id === 'gvent' && LIV.ventOpen))) continue; const d = Math.hypot(o.p.x - cx, o.p.y - cy, o.p.z - cz); if (d < o.r && d < bd) { bd = d; best = o; } }
+  for (const o of HX.list) { if (o.lv !== 'any' && (o.lv || 'kitchen') !== LEVEL) continue; if (o.once && o.on) continue; if (o.who && C.id !== o.who) continue; if (o.noUse || (o.seal && !o.on)) continue; if (o.sp && (NET.on || (o.id === 'gvent' && LIV.ventOpen))) continue; const d = Math.hypot(o.p.x - cx, o.p.y - cy, o.p.z - cz); if (d < o.r && d < bd) { bd = d; best = o; } }
   return best;
 }
 function hxInput(L, ctl) { if (!ctl || !pressed.KeyE || STATE !== 'play') return false; const o = hxNear(L); if (!o) return false; hxRequest(o, L); return true; }
@@ -8851,7 +8910,7 @@ function hxTick(dt) {
   if (HX.bfan) HX.bfan.g.rotation.y += dt * (bl.on ? 22 : 0);
   // up the vent shaft over the fish tank: pull yourself over its lip into the duct
   for (const C of party) if (C.climbing && !C.mantle && C.climbDir > 0 && C.pos.y > 257 && C.pos.y < 270 && C.pos.x > 648 && C.pos.x < 668 && C.pos.z > -246 && C.pos.z < -230) { C.climbing = false; C.leap = null; C.mantle = { from: C.pos.clone(), to: V3(658, 270.1, -225), t: 0, dur: .55 }; if (C === leader) toast(TR('入咗天花風槽'), 1.8); }
-  fridgeTick(dt);
+  fridgeTick(dt); glueTick(dt);
   if (HX.heat) { HX.heat.material.map.offset.y -= dt * .55; HX.heat.material.map.offset.x = Math.sin(T * .7) * .04; }
   if (HX.bcord) for (const C of party) {
     if (!C.climbing || C.climbC !== HX.bcord) { C.bcordPull = false; continue; }
@@ -9000,7 +9059,8 @@ function brainIncident(id, o, on, by) {
   if (NET.client || !HB.m) return;
   const add = { klight: .55, tap: .55, hood: .35, blight: .35, flush: .8, tv: .3, lamp: .4, ulight: .3, udesk: .25, ustar: .3, umusic: .45 }[id] || .3;
   const rep = HB.inc.filter(i => i.id === id && T - i.t < 60).length;
-  brainSus(add * (1 + rep * .6), o.p);
+  const why = { klight: on ? TR('廚房燈自己開咗') : TR('廚房燈熄咗'), tap: TR('水龍頭開咗'), hood: TR('抽油煙機自己郁'), blight: on ? TR('廁所燈開咗') : TR('廁所燈熄咗'), flush: TR('冇人沖廁'), tv: on ? TR('電視自己開咗') : TR('電視熄咗'), lamp: TR('落地燈熄咗'), fridge: TR('雪櫃門開咗'), ulight: TR('女兒房燈郁咗'), udesk: TR('枱燈郁咗'), ustar: TR('星星燈郁咗'), umusic: TR('音樂盒響') }[id] || TR('有嘢變咗');
+  brainSus(add * (1 + rep * .6), o.p, why);
   HB.inc.push({ id, t: T, p: o.p.clone() }); if (HB.inc.length > 20) HB.inc.shift();
   const M = HB.m, K = HB.k, mr = agentRoom(M), kr = K ? agentRoom(K) : '';
   const look = [{ look: 1.5 + HB.sus * .8, at: [o.p.x, (o.p.y > 200 ? UPS.y : 0) + 40, o.p.z], low: HB.sus >= 2 }];
@@ -9034,20 +9094,40 @@ function brainHear(p, loud = 1) {
   if (NET.client || !HB.m) return; const M = HB.m;
   if (HX.id.hood && HX.id.hood.on && roomOf(p.x, p.z, p.y) === 'k' && (loud < .7 || rnd() < .4)) return;   // the hood drowns small noises out
   if (M.react >= 3 || (M.act === 'bath' && M.seat)) return;
-  brainSus(.3, p); const n = navNearest(p.x, p.z, p.y);
+  brainSus(.3, p, TR('聽到聲')); const n = navNearest(p.x, p.z, p.y);
   react(M, 2, [{ say: pick([TR('什麼聲音？'), TR('咦？'), TR('誰？')]) }, { go: n }, { look: 2.8 + HB.sus * .7, at: [p.x, Math.max(p.y, 10), p.z], low: HB.sus >= 1.5 }, { fn: () => brainSay('mom', CAT.pos && CAT.pos.distanceTo(p) < 90 ? TR('小橘，又是你？') : pick([TR('……奇怪。'), TR('是我聽錯了嗎……')])) }]);
 }
 // they caught a glimpse of someone
-function brainGlimpse(p) { if (NET.client || !HB.m || T - HB.glT < 4) return; HB.glT = T; brainSus(.28, p); }
-function brainSus(v, p) {
+function brainGlimpse(p) { if (NET.client || !HB.m || T - HB.glT < 4) return; HB.glT = T; brainSus(.28, p, TR('好似見到嘢郁')); }
+function brainSus(v, p, why) {
+  // done right beside the cat? they blame the cat — once in a while (not every time: that would be too easy)
+  if (p && CAT && CAT.pos && CAT.pos.distanceTo(p) < 90 && !(HB.catT && T - HB.catT < 25)) { HB.catT = T; v *= .3; why = TR('佢哋以為係小橘'); }
+  susWhy(why || TR('起疑'));
   HB.sus = Math.min(3.4, HB.sus + v); HB.quiet = 0; if (p) { HB.mem.push({ p: p.clone(), t: T }); if (HB.mem.length > 6) HB.mem.shift(); }
   const st = HB.sus >= 3 ? 3 : HB.sus >= 2 ? 2 : HB.sus >= 1 ? 1 : 0;
   if (st > HB.stage) {
     HB.stage = st;
     if (st === 1) setTimeout(() => brainSay('mom', TR('今天家裡怪怪的……'), 2.8), 2500);
-    if (st === 2) setTimeout(() => brainSay('mom', TR('好像有東西在家裡跑來跑去……'), 3), 2500);
+    if (st === 2) { setTimeout(() => brainSay('mom', TR('好像有東西在家裡跑來跑去……'), 3), 2500); setTimeout(brainGlue, 7000); }
     if (st === 3 && !HB.search) brainSearch();
   }
+}
+// she's sure: mice. Glue boards where odd things happened (two at a time, up to four)
+function brainGlue() {
+  const M = HB.m; if (NET.client || !M || !HX.list.length) return;
+  const placed = GLUE_SPOTS.filter((_, i) => HX.id['glue' + i] && HX.id['glue' + i].on).length; if (placed >= 4) return;
+  const near = HB.mem.length ? HB.mem.slice(-4).map(m => m.p) : [V3(190, 0, -130)];
+  const order = GLUE_SPOTS.map((q, i) => ({ i, d: Math.min(...near.map(p => Math.hypot(p.x - q[0], p.z - q[1]))) })).filter(c => !HX.id['glue' + c.i].on).sort((a, b) => a.d - b.d).slice(0, 2);
+  const steps = [{ say: pick([TR('一定有老鼠……放幾塊黐鼠膠先。'), TR('我去拿黐鼠膠。')]) }];
+  for (const c of order) { const [x, z] = GLUE_SPOTS[c.i]; steps.push({ go: navNearest(x, z, 0) }, { wait: 1.4, look: 1.4, at: [x, 2, z], low: true }, { fn: () => hxSet(HX.id['glue' + c.i], true, 'mom') }); }
+  later(M, steps);
+}
+// a search found nothing: block the mouse hole they seem to use most (there's always another way round)
+function brainSeal() {
+  const M = HB.m; if (NET.client || !M || !HX.list.length) return;
+  const use = HB.holeUse || {}, ids = Object.keys(SEALS).filter(id => !HX.id[id].on).sort((a, b) => (use[b] || 0) - (use[a] || 0)); if (!ids.length) return;
+  const id = ids[0];
+  later(M, [{ say: TR('一定係老鼠窿……今日先用紙皮封住，聽日買鋼絲球。') }, { go: 'bathIn' }, { go: 'bmid' }, { wait: 2, look: 2, at: [SEALS[id].x, 4, -244], low: true }, { fn: () => { hxSet(HX.id[id], true, 'mom'); brainSay('mom', TR('……咁就入唔到嚟喇。'), 2.2); } }]);
 }
 function brainSearch() {
   HB.search = 38; const M = HB.m, K = HB.k;
@@ -9197,7 +9277,7 @@ function brainKid(dt) { if (!HB.k) brainReset(); brainNeeds(HB.k, dt); return br
 function brainTick(dt) {
   if (!HB.m) return;
   HB.quiet += dt; if (HB.quiet > 18 && HB.sus > 0) { HB.sus = Math.max(0, HB.sus - dt / 40); if (HB.sus < HB.stage - .6) { if (HB.stage >= 2 && HB.sus < 1.4) brainSay('mom', TR('……算了，大概是我太累了。'), 2.6); HB.stage = Math.floor(HB.sus); } }
-  if (HB.search > 0) { HB.search -= dt; if (HB.search <= 0) { HB.sus = Math.min(HB.sus, 2.2); HB.stage = 2; brainSay('mom', TR('找不到……先吃飯吧。'), 2.6); } }
+  if (HB.search > 0) { HB.search -= dt; if (HB.search <= 0) { HB.sus = Math.min(HB.sus, 2.2); HB.stage = 2; brainSay('mom', TR('找不到……先吃飯吧。'), 2.6); setTimeout(brainSeal, 4000); } }
   HB.eye = 1 + HB.sus * .13;
 }
 function bathOccupant() { for (const A of [HB.m, HB.k]) if (A && agentRoom(A) === 'b' && A.act === 'bath') return A; return null; }
@@ -9208,8 +9288,32 @@ function brainEyeText() {
   if (HB.search > 0 || HB.netSearch) return TR('她們在搜屋！先躲好');
   const s = NET.client ? (HB.netSus || 0) : HB.sus;
   const where = (A, n) => { const P = A === 'm' ? mom.pos : KID.root.position; return TRT`${n}在${ROOM_NAME[roomOf(P.x, P.z, P.y)]}`; };
-  const pre = s >= 2 ? TR('太太起了疑心 · ') : s >= 1 ? TR('太太覺得家裡怪怪的 · ') : '';
-  return pre + where('m', TR('太太')) + ' · ' + where('k', TR('女兒'));
+  return where('m', TR('太太')) + ' · ' + where('k', TR('女兒'));
+}
+// ---------- 警覺度: the household's suspicion, shown under the eye ----------
+//  three segments fill up (怪怪地 → 起疑心 → 搜屋); each rise flashes its reason ("＋ 冇人沖廁"); it ebbs when
+//  things stay quiet. The garage man and 陳伯 next door have their own.
+const SUSV = { why: '', whyT: 0, last: 0, st: -1, drop: 0 };
+const SUS_NAMES = { kitchen: [TR('平靜'), TR('怪怪地'), TR('起疑心'), TR('搜屋中')], garage: [TR('例行'), TR('留意'), TR('起疑心'), TR('搜查中')], yard: [TR('平靜'), TR('留意'), TR('起疑心'), TR('搵緊')] };
+function susWhy(t) { SUSV.why = t; SUSV.whyT = 2.6; }
+function susNow() {
+  if (LEVEL === 'kitchen' && HB.m) return { v: NET.client ? (HB.netSus || 0) : HB.sus, search: HB.search > 0 || !!HB.netSearch };
+  if (LEVEL === 'garage') return { v: NET.client ? (AGB.netSus || 0) : AGB.sus, search: AGB.search > 0 };
+  if (LEVEL === 'yard') return { v: OLDB.sus, search: false };
+  return null;
+}
+function susHUD(dt) {
+  const row = $('susRow'); if (!row) return; const S = susNow();
+  if (!S) { if (!row.hidden) row.hidden = true; return; } if (row.hidden) row.hidden = false;
+  const v = clamp(S.v, 0, 3), st = S.search ? 3 : v >= 3 ? 3 : v >= 2 ? 2 : v >= 1 ? 1 : 0, names = SUS_NAMES[LEVEL];
+  if (NET.client && S.v > SUSV.last + .12) susWhy(TR('起疑'));   // (clients see the rise, not its reason)
+  if (st < SUSV.st && SUSV.st >= 0) { SUSV.why = TR('靜咗落嚟'); SUSV.whyT = 2.2; SUSV.drop = 1; }
+  SUSV.last = S.v;
+  if (st !== SUSV.st) { SUSV.st = st; row.className = 'susrow s' + st; }
+  for (let i = 0; i < 3; i++) { const f = clamp(v - i, 0, 1), el = row.children[0].children[i].firstChild; const w = (S.search ? 100 : f * 100).toFixed(0) + '%'; if (el.style.width !== w) el.style.width = w; }
+  if (SUSV.whyT > 0) SUSV.whyT -= dt;
+  const lbl = SUSV.whyT > 0 ? (SUSV.drop ? SUSV.why : '＋ ' + SUSV.why) : names[st]; if (SUSV.whyT <= 0) SUSV.drop = 0;
+  const L2 = $('susLbl'); if (L2.textContent !== lbl) { L2.textContent = lbl; L2.classList.toggle('why', SUSV.whyT > 0 && !SUSV.drop); }
 }
 // network: the daughter's body and the household mood
 function brainNet() { return [+HB.sus.toFixed(2), HB.search > 0 ? 1 : 0, +AGB.sus.toFixed(2) + (AGB.search > 0 ? 10 : 0)]; }
@@ -9366,8 +9470,8 @@ function agentIncident(id, on) {
   const H = GS.agent; AGB.act = null; GS.mode = 'patrol'; agentChoose(H);   // drop what he's doing and deal with it
   if (id === 'gpanel' && !on) agentSayB(TR('嗯？停電了？'));
 }
-function agentSus(v, p) {
-  AGB.sus = Math.min(3.4, AGB.sus + v); AGB.quiet = 0;
+function agentSus(v, p, why) {
+  if (LEVEL === 'garage') susWhy(why || TR('有古怪')); AGB.sus = Math.min(3.4, AGB.sus + v); AGB.quiet = 0;
   const st = AGB.sus >= 3 ? 3 : AGB.sus >= 2 ? 2 : AGB.sus >= 1 ? 1 : 0;
   if (st > AGB.stage) { AGB.stage = st;
     if (st === 2) setTimeout(() => agentSayB(TR('（對講機）這間屋有古怪……好像有東西在動。')), 1800);
@@ -9421,7 +9525,7 @@ function oldIncident(id, on) {
   if (id === 'oradio' && !on && O.mode === 'listen') { O.mode = 'alert'; O.t = 4; O.look.set(2616, 60, 110); oldSay(TR('咦？怎麼停了？')); oldSus(.45); }
 }
 function oldSay(t) { if (OLDB.sayT && T - OLDB.sayT < 3) return; OLDB.sayT = T; sayW(TR('陳伯'), t, '#c8b8a0', 2.8); }
-function oldSus(v) { OLDB.sus = Math.min(3.4, OLDB.sus + v); OLDB.quiet = 0; const st = Math.floor(Math.min(3, OLDB.sus)); if (st > OLDB.stage) { OLDB.stage = st; if (st === 2) oldSay(TR('……是不是有小偷？')); if (st === 3) { oldSay(TR('出來！我報警了！')); } } }
+function oldSus(v, why) { if (LEVEL === 'yard') susWhy(why || TR('有古怪')); OLDB.sus = Math.min(3.4, OLDB.sus + v); OLDB.quiet = 0; const st = Math.floor(Math.min(3, OLDB.sus)); if (st > OLDB.stage) { OLDB.stage = st; if (st === 2) oldSay(TR('……是不是有小偷？')); if (st === 3) { oldSay(TR('出來！我報警了！')); } } }
 // choose what to do next (runs on the host)
 function oldChoose(O) {
   const lampOn = !HX.id.olamp || HX.id.olamp.on, radioOn = HX.id.oradio && HX.id.oradio.on;
@@ -11310,7 +11414,7 @@ function portalResumeLand(S) {
 // who joined or dropped, how good each link is, frame rate, rescues and errors. One tap copies it as
 // plain text that a player can paste into a chat and send in.
 const NLOG = { t0: performance.now(), lines: [], fps: 0, sumT: 0, mode: '', lv: '', peer: {} };
-const NLOG_BUILD = '20261126-1942';
+const NLOG_BUILD = '20261126-2033';
 function nlog(s) {
   const d = new Date(), p2 = n => String(n).padStart(2, '0');   // the clock time, so "it broke around 9:30" can be matched
   NLOG.lines.push(`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}  ${s}`); if (NLOG.lines.length > 500) NLOG.lines.splice(0, NLOG.lines.length - 500);

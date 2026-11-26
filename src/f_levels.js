@@ -756,7 +756,7 @@ LEVELS.kitchen = {
   build() {
     buildKitchen(); buildKid(); buildCat(); buildToyBin(); LEVELS.kitchen.updrafts = [{ x: 57, z: -205, r: 11, y0: 88.5, y1: 178, fx: 14, all: true, hot: true }, buildVent()];
     addVial(-128, 13, -200); addVial(170, 184, -168); addVial(70, 88.5, -215); for (const p of [[-120, 0, 70], [-70, 0, 100], [20, 0, -146], [-30, 91.8, -182], [246, 1.2, 122]]) addCrumb(...p);
-    buildLivingRoom(kitchenMats()); buildPassages(kitchenMats()); buildHouseSwitches(kitchenMats()); buildUpstairs(kitchenMats());
+    buildLivingRoom(kitchenMats()); buildPassages(kitchenMats()); buildMouseWar(kitchenMats()); buildHouseSwitches(kitchenMats()); buildUpstairs(kitchenMats());
     // online co-op: the three machine parts
     addPart(44, 88.5, -212, 'spring'); addPart(205, 110, -464, 'lens'); addPart(-112, 13, -186, 'cap');
   },

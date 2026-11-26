@@ -1,0 +1,4 @@
+[ {"eval": "window.__bn.startChapter2(); 1"}, {"wait": 6000},
+  {"eval": "(() => { const B = window.__bn, HX = B.HX, L = B.leader; window.__NODET = true; B.toyUnfreezeAll(); B.state = 'play'; B.hxSet(HX.id.glue3, true, 'mom'); B.hxSet(HX.id.seal_lh, true, 'mom'); B.hxSet(HX.id.blight, true, 'mom'); L.pos.set(352, 0.3, -296); L.vel.set(0,0,0); B.cam.yaw = Math.atan2(-(340 - 352), -(-244 + 296)); B.cam.pitch = .25; B.step(30); return B.info().pos; })()"},
+  {"frame": 1}, {"wait": 900}, {"frame": 1}, {"shot": "war"}
+]
