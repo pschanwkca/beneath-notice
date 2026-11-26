@@ -64,9 +64,16 @@ log('A hears ping', await until(A, () => /我喺度/.test(document.getElementByI
 await ev(A, () => { const b = window.__bn, C = b.chars.bear; b.cam.yaw = Math.atan2(b.leader.pos.x - C.pos.x, b.leader.pos.z - C.pos.z); });
 await shot(A, 'gh_' + tag + '_seen');
 // watching a teammate, then back
-await ev(B, () => window.__bn.watchCycle(1));
-log('watching', await ev(B, () => [window.__bn.WATCH.id, document.getElementById('specT').textContent]));
-await ev(B, () => window.__bn.watchCycle(1));
+await wait(600); await shot(B, 'gh_' + tag + '_row');
+// tap A's portrait in the row
+await ev(B, () => { const b = document.querySelector('#specRow .sw[data-id="dad"]'); b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); });
+await wait(1200);
+log('watching', await ev(B, () => [window.__bn.WATCH.id, [...document.querySelectorAll('#specRow .sw')].map(b => b.dataset.id + (b.classList.contains('on') ? '*' : ''))]));
+await shot(B, 'gh_' + tag + '_watch');
+// tap yourself: back to the soul
+await ev(B, () => { const b = document.querySelector('#specRow .sw.me'); b.dispatchEvent(new PointerEvent('pointerdown', { bubbles: true })); });
+await wait(600);
+log('back', await ev(B, () => [window.__bn.WATCH.id, [...document.querySelectorAll('#specRow .sw')].map(b => b.dataset.id + (b.classList.contains('on') ? '*' : ''))]));
 // rescue: the soul drops back in
 for (let i = 0; i < 20; i++) { await ev(A, () => { const b = window.__bn, C = b.chars.bear; b.leader.pos.set(C.pos.x + 2.5, C.pos.y, C.pos.z); b.leader.vel.set(0, 0, 0); }); await wait(250); if (!(await ev(A, () => window.__bn.chars.bear.frozen))) break; }
 log('rescued', [await until(B, () => !window.__bn.chars.bear.frozen, 12000), await until(B, () => !window.__bn.GHOST.on, 4000), await ev(B, () => +window.__bn.grade.uniforms.uGhost.value.toFixed(2))]);

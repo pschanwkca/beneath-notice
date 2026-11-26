@@ -32,13 +32,13 @@ function ghostTick(dt) {
 }
 function ghostStart() {
   GHOST.on = true; GHOST.t = 0; GHOST.p.copy(ghostHome(leader)); GHOST.v.set(0, 0, 0);
-  $('touch').classList.add('ghost'); tbLabel('tbJump', '上升'); tbLabel('tbCrouch', '下降');
+  $('touch').classList.add('ghost'); document.documentElement.classList.add('soul'); tbLabel('tbJump', '上升'); tbLabel('tbCrouch', '下降');
   // a soft rising chord as it leaves
   tone(392, 784, 1.2, .035, 'sine'); setTimeout(() => tone(587, 1175, 1.1, .03, 'sine'), 160); nz(.9, 5200, 1, .02, 'highpass');
 }
 function ghostEnd() {
   GHOST.on = false; WATCH.id = null;
-  $('touch').classList.remove('ghost'); tbLabel('tbJump', '跳'); tbLabel('tbCrouch', '潛行');
+  $('touch').classList.remove('ghost'); document.documentElement.classList.remove('soul'); tbLabel('tbJump', '跳'); tbLabel('tbCrouch', '潛行');
   if (leader) { cam.tgt.set(leader.pos.x, leader.pos.y + leader.h * .8, leader.pos.z); }
   tone(1175, 587, .5, .03, 'sine');
 }

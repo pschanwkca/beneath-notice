@@ -599,7 +599,7 @@ function updHUD(dt) {
   $('cells').innerHTML = Array.from({ length: cellMax }, (_, i) => `<i class="${i < cells ? 'f' : ''}"></i>`).join('');
   let h = '';
   const ph = L.id === 'bear' && !STK ? pushTarget(L) : null;
-  if (NET.on && L.frozen) h = L.toyAt === 'box' ? `你被收在${L.toyPlace || '某處'}裡——要隊友帶 Prototype 走過來救你` : L.toyAt === 'hand' ? '你正被拿走……' : '你變成了玩具！趁還沒被收走，隊友走到你旁邊就能搖醒你';
+  if (NET.on && L.frozen) h = L.toyAt === 'box' ? `你被收在${L.toyPlace || '某處'}裡——要隊友帶 Prototype 走過來救你` : L.toyAt === 'hand' ? '你正被拿走……' : (TOUCH ? '靈魂出竅：搖桿飄 · 「我喺度」叫隊友 · 撳上面頭像換鏡頭' : '靈魂出竅：WASD 飄 · Space／C 上落 · F 叫隊友 · 撳上面頭像或 Tab 換鏡頭');
   else if (NET.on && !mine(L)) h = '隊友正在帶着你行動……';
   else if (stackHintK && stackHintText()) h = stackHintText();
   else if (TOY.rescuing) h = `正在搖醒${TOY.rescuing.S.name}…… ${Math.min(99, Math.round(TOY.rescuing.rescueT / 1.4 * 100))}%`;

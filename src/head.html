@@ -619,7 +619,6 @@ html.touch .sub{left:47%;bottom:calc(36px + env(safe-area-inset-bottom));max-wid
 html.touch .sub b{font-size:10.5px;margin-bottom:1px}
 html.touch .hint{left:47%;bottom:calc(8px + env(safe-area-inset-bottom));max-width:44vw;font-size:11px;padding:4px 12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
 html.touch .sub.on~.hint.on{opacity:.75}
-html.touch .spec{bottom:auto;top:calc(64px + env(safe-area-inset-top))}
 /* the team, top-right: smaller, the one you're playing a touch brighter */
 html.touch .party{right:calc(62px + env(safe-area-inset-right));top:calc(8px + env(safe-area-inset-top));gap:5px}
 html.touch .pm,html.touch .pm .ph{width:40px}html.touch .pm .ph{height:40px}
@@ -669,13 +668,36 @@ html.touch #tbPing{right:82px;bottom:82px;width:58px;height:58px}
 html.touch .touchui.ghost .tb{border-color:rgba(159,238,244,.55);color:#dffbfd}
 html.touch .touchui.ghost .joyhint{opacity:.35}
 #specT small{color:#9feef4}
-html.touch .spec{max-width:40vw}html.touch #specT{overflow:hidden;text-overflow:ellipsis}
+/* as a soul: the team as a row of round portraits (Wild Rift style) — tap one to look through their camera; yours brings you back */
+.spec{top:calc(20px + env(safe-area-inset-top));bottom:auto;flex-direction:column;gap:5px;padding:0;background:none;border:0;box-shadow:none;backdrop-filter:none;-webkit-backdrop-filter:none}
+html.soul .eye{opacity:0!important}
+.sw-cap{display:block;font:600 10.5px 'Noto Sans TC',sans-serif;letter-spacing:.28em;color:#9feef4;text-shadow:0 1px 6px rgba(0,0,0,.9);padding:0;white-space:nowrap}
+.sw-row{display:flex;align-items:flex-start;gap:10px}
+.spec .sw{position:relative;width:42px;height:auto;padding:0;border:0;border-radius:0;background:none;box-shadow:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;pointer-events:auto;transition:transform .16s cubic-bezier(.3,1.5,.5,1)}
+.spec .sw:hover{background:none}
+.sw-ph{position:relative;display:block;width:42px;height:42px;border-radius:50%;overflow:hidden;background:radial-gradient(circle at 50% 35%,#2b3442,#121820);border:2px solid rgba(245,240,230,.38);box-shadow:0 3px 12px rgba(0,0,0,.5);transition:border-color .15s,box-shadow .15s}
+.sw-ph img{width:100%;height:100%;object-fit:cover;display:block}
+.spec .sw:hover .sw-ph{border-color:rgba(245,240,230,.7)}
+.sw em{font:600 10px/1 'Noto Sans TC',sans-serif;font-style:normal;color:var(--ink);white-space:nowrap;text-shadow:0 1px 4px #000;opacity:0;transition:opacity .15s}
+.spec .sw.on{transform:scale(1.14)}
+.sw.on .sw-ph{border-color:#6ff6ee;box-shadow:0 0 0 3px rgba(111,246,238,.22),0 0 16px rgba(111,246,238,.55)}
+.sw.on em{opacity:1;color:#bff6fa}
+/* you, as a soul: pale and cool, a dashed ring, a little wisp badge */
+.sw.me .sw-ph img{filter:grayscale(.75) brightness(1.18) sepia(.25) hue-rotate(140deg)}
+.sw.me .sw-ph{border-style:dashed}
+.sw-g{position:absolute;right:-3px;top:28px;width:17px;height:17px;border-radius:50%;background:#0d1117;border:1.5px solid #6ff6ee;display:grid;place-items:center}
+.sw-g svg{width:11px;height:11px;fill:#bff6fa}
+/* a teammate who's a toy too: nothing to see through */
+.spec .sw.off{cursor:default}.sw.off .sw-ph img{filter:grayscale(1) brightness(.55)}.sw.off .sw-ph{border-color:rgba(255,255,255,.14);box-shadow:none}
+.spec kbd.sw-k{align-self:center;margin-left:2px;font:600 10px 'Fredoka';color:var(--dim);background:rgba(10,13,18,.6);border:1px solid var(--faint);border-bottom-width:2px;border-radius:6px;padding:2px 6px}
+html.touch .spec{top:calc(8px + env(safe-area-inset-top));max-width:none;padding:0}
+html.touch .sw-row{gap:8px}html.touch .spec .sw{width:36px}html.touch .sw-ph{width:36px;height:36px}html.touch .sw-g{top:23px;width:15px;height:15px}html.touch .sw em{font-size:9px}
+html.touch .sw-cap{font-size:9.5px;letter-spacing:.24em}
 html.touch .q{max-width:min(30vw,250px)}html.touch .qck{flex-wrap:wrap}
 html.touch .q:not(.open) .qck{display:none}   /* the checklist opens with a tap, so the panel never grows down into the buttons */
 html.touch .q::after{content:'';position:absolute;right:10px;top:12px;width:6px;height:6px;border-right:1.5px solid var(--dim);border-bottom:1.5px solid var(--dim);transform:rotate(45deg);opacity:.7}
 html.touch .q.open::after{transform:rotate(225deg);top:15px}
 html.touch .pm.nomic::after{top:-3px;right:-3px;width:15px;height:15px;background-size:10px}html.touch .party.many .pm.nomic::after{top:-3px}
-html.touch .spec{top:calc(54px + env(safe-area-inset-top));padding:4px 6px}html.touch .spec button{width:30px;height:30px;font-size:17px}html.touch #specT b{font-size:13px}html.touch #specT small{font-size:10px}
 @keyframes tbcall{0%,100%{box-shadow:0 0 0 0 rgba(130,236,230,.0),0 4px 14px rgba(0,0,0,.22)}50%{box-shadow:0 0 0 6px rgba(130,236,230,.16),0 4px 14px rgba(0,0,0,.22)}}
 html.touch #tbCrouch.dn{background:rgba(244,187,114,.24);border-color:var(--amber);color:var(--amber)}
 html.touch #tbPull.on{background:rgba(217,166,117,.35)}
@@ -765,7 +787,7 @@ html.touch .joy i{width:48px;height:48px;margin:-24px;background:radial-gradient
   <div class="cross" id="cross"></div>
   <div class="hint" id="hint"></div>
   <button class="unstk" id="unstk" hidden></button>
-  <div class="spec" id="spec" hidden><button id="specL" aria-label="上一個隊友">‹</button><div id="specT"></div><button id="specR" aria-label="下一個隊友">›</button></div>
+  <div class="spec" id="spec" hidden><div class="sw-cap" id="specT">靈魂出竅 · 等隊友搖醒你</div><div class="sw-row" id="specRow" role="group" aria-label="換鏡頭"></div></div>
   <div class="sub" id="sub"><b id="subn"></b><span id="subt"></span></div>
   <div class="toast panel" id="toast"></div>
   <div class="fps" id="fps"></div>
