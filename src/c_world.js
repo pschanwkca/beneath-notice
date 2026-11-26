@@ -155,10 +155,14 @@ function cyl(x, z, r, y0, y1, mat, o = {}) {
   if (o.col !== false) cols.push({ t: 'c', x, z, r: Math.max(r, o.rt ?? r), y0, y1, m, small: Math.max(r * 2, y1 - y0) < 4 });
   return m;
 }
-function colBounds(c) { return c.t === 'b' ? [c.x0, c.x1, c.y0, c.y1, c.z0, c.z1] : [c.x - c.r, c.x + c.r, c.y0, c.y1, c.z - c.r, c.z + c.r]; }
+function colBounds(c) { return c.t === 'b' || c.t === 'h' ? [c.x0, c.x1, c.y0, c.y1, c.z0, c.z1] : [c.x - c.r, c.x + c.r, c.y0, c.y1, c.z - c.r, c.z + c.r]; }
+// ---------- sloped surfaces (roofs): a slab whose top follows c.top(x, z), c.th thick, over the box x0…x1 × z0…z1 ----------
+// (c.y0 / c.y1 are the lowest bottom and the highest top, for the broad checks)
+function hTop(c, x, z) { return x < c.x0 || x > c.x1 || z < c.z0 || z > c.z1 ? -1e9 : c.top(x, z); }
+function slopeCol(o) { const c = Object.assign({ t: 'h', th: 8 }, o); cols.push(c); return c; }
 // XZ overlap of a disc against a collider: returns penetration & push normal
 function xzHit(c, px, pz, r, out) {
-  if (c.t === 'b') {
+  if (c.t === 'b' || c.t === 'h') {
     const qx = clamp(px, c.x0, c.x1), qz = clamp(pz, c.z0, c.z1); const dx = px - qx, dz = pz - qz; const d2 = dx * dx + dz * dz;
     if (d2 >= r * r) return false;
     if (d2 > 1e-8) { const d = Math.sqrt(d2); out.nx = dx / d; out.nz = dz / d; out.pen = r - d; return true; }
@@ -171,6 +175,7 @@ function xzHit(c, px, pz, r, out) {
   out.pen = c.r + r - d; return true;
 }
 function rayT(o, d, maxT, c) {
+  if (c.t === 'h') return rayTH(o, d, maxT, c);
   const b = colBounds(c); let t0 = 0, t1 = maxT;
   for (let a = 0; a < 3; a++) {
     const oo = a === 0 ? o.x : a === 1 ? o.y : o.z, dd = a === 0 ? d.x : a === 1 ? d.y : d.z, mn = b[a * 2], mx = b[a * 2 + 1];
@@ -180,12 +185,22 @@ function rayT(o, d, maxT, c) {
   }
   return t0;
 }
+// a ray through a sloped slab: clip to its box, then march in short steps (roofs are smooth; 3 cm steps are plenty)
+function rayTH(o, d, maxT, c) {
+  let t0 = 0, t1 = maxT; const b = colBounds(c);
+  for (let a = 0; a < 3; a++) { const oo = a === 0 ? o.x : a === 1 ? o.y : o.z, dd = a === 0 ? d.x : a === 1 ? d.y : d.z, mn = b[a * 2], mx = b[a * 2 + 1];
+    if (Math.abs(dd) < 1e-9) { if (oo < mn || oo > mx) return Infinity; continue; } let ta = (mn - oo) / dd, tb = (mx - oo) / dd; if (ta > tb) { const s = ta; ta = tb; tb = s; } if (ta > t0) t0 = ta; if (tb < t1) t1 = tb; if (t1 < t0) return Infinity; }
+  const inside = t => { const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t, top = hTop(c, x, z); return y <= top && y >= top - c.th; };
+  const step = 3; let prev = t0, pin = inside(t0); if (pin) return t0;
+  for (let t = t0 + step; t <= t1 + 1e-6; t += step) { if (inside(t)) { let lo = prev, hi = t; for (let k = 0; k < 6; k++) { const m = (lo + hi) / 2; if (inside(m)) hi = m; else lo = m; } return hi; } prev = t; }
+  return inside(t1) ? t1 : Infinity;
+}
 function rayBlocked(o, d, maxT, skipSmall = true) {
   for (const c of colsNear(o.x, o.y, o.z)) { if (c.noRay || (skipSmall && c.small)) continue; const t = rayT(o, d, maxT, c); if (t > 0.01 && t < maxT) return true; }
   return false;
 }
 function rayFirst(o, d, maxT) { let best = maxT; for (const c of colsNear(o.x, o.y, o.z)) { if (c.small || c.noCam) continue; const t = rayT(o, d, maxT, c); if (t > 0.001 && t < best) best = t; } return best; }
-function solidAt(x, y, z) { for (const c of colsNear(x, y, z)) { if (y < c.y0 || y > c.y1) continue; if (c.t === 'b') { if (x > c.x0 && x < c.x1 && z > c.z0 && z < c.z1) return c; } else if (Math.hypot(x - c.x, z - c.z) < c.r) return c; } return null; }
+function solidAt(x, y, z) { for (const c of colsNear(x, y, z)) { if (y < c.y0 || y > c.y1) continue; if (c.t === 'h') { const top = hTop(c, x, z); if (y <= top && y >= top - c.th) return c; continue; } if (c.t === 'b') { if (x > c.x0 && x < c.x1 && z > c.z0 && z < c.z1) return c; } else if (Math.hypot(x - c.x, z - c.z) < c.r) return c; } return null; }
 
 // ---------- materials ----------
 let MAT = {};

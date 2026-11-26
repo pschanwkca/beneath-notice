@@ -89,12 +89,23 @@ const G = 250, TERM = -175, STEP = .95;
 const _h = { nx: 0, nz: 0, pen: 0 };
 
 // ---------- character physics ----------
-function supportAt(x, z, r, yMax) { let s = -1e9, sc = null; for (const c of colsNear(x, yMax, z)) { if (c.y1 > yMax || c.y1 < s) continue; if (!xzHit(c, x, z, r, _h)) continue; s = c.y1; sc = c; } return [s, sc]; }
+function supportAt(x, z, r, yMax) { let s = -1e9, sc = null; for (const c of colsNear(x, yMax, z)) { if (c.t === 'h') { const top = hTop(c, x, z); if (top <= yMax && top > s) { s = top; sc = c; } continue; } if (c.y1 > yMax || c.y1 < s) continue; if (!xzHit(c, x, z, r, _h)) continue; s = c.y1; sc = c; } return [s, sc]; }
+// walking on (or into) a sloped slab: step up onto it if it's low enough, otherwise slide off it downhill
+function slopePush(C, c, allowStep) {
+  const x = C.pos.x, z = C.pos.z, top = hTop(c, x, z); if (top < -1e8) return false;
+  const bot = top - c.th, h = C.colH || C.h; if (top <= C.pos.y + .001 || bot >= C.pos.y + h) return false;
+  const rise = top - C.pos.y; if (rise <= STEP && (allowStep && C.grounded || rise <= .35)) { C.pos.y = top; return false; }
+  // inside the slab: out along the slope's downhill direction (or straight out of whichever side is nearest)
+  let gx = hTop(c, x + 1, z) - hTop(c, x - 1, z), gz = hTop(c, x, z + 1) - hTop(c, x, z - 1); const gl = Math.hypot(gx, gz);
+  if (gl > 1e-4 && gl < 50) { C.pos.x -= gx / gl * 1.2; C.pos.z -= gz / gl * 1.2; } else if (xzHit(c, x, z, C.r, _h)) { C.pos.x += _h.nx * _h.pen; C.pos.z += _h.nz * _h.pen; }
+  return true;
+}
 function resolveH(C, allowStep) {
   let best = null;
   for (let it = 0; it < 3; it++) {
     let any = false;
     for (const c of colsNear(C.pos.x, C.pos.y + 1, C.pos.z)) {
+      if (c.t === 'h') { if (slopePush(C, c, allowStep)) any = true; continue; }
       if (c.y1 <= C.pos.y + .001 || c.y0 >= C.pos.y + (C.colH || C.h)) continue;   // a tower collides as tall as the whole tower
       if (!xzHit(c, C.pos.x, C.pos.z, C.r, _h)) continue;
       const rise = c.y1 - C.pos.y;

@@ -638,7 +638,7 @@ function catSee(L = leader) {
   for (const c of colsNear(eye.x, eye.y, eye.z)) { if (c.cat || c.small) continue; const t = rayT(eye, v, dl - 1, c); if (t > .5 && t < dl - 1) return false; }
   return true;
 }
-function ceilAt(x, z, y) { let m = 1e9, mc = null; for (const c of colsNear(x, y, z)) { if (c.y0 < y + .5 || c.y0 > m) continue; if (!xzHit(c, x, z, .6, _h)) continue; m = c.y0; mc = c; } return [m, mc]; }
+function ceilAt(x, z, y) { let m = 1e9, mc = null; for (const c of colsNear(x, y, z)) { if (c.t === 'h') { const b = hTop(c, x, z) - c.th; if (b >= y + .5 && b < m) { m = b; mc = c; } continue; } if (c.y0 < y + .5 || c.y0 > m) continue; if (!xzHit(c, x, z, .6, _h)) continue; m = c.y0; mc = c; } return [m, mc]; }
 function updCat(dt) {
   const C = CAT; let sp = 0, ty = null; C.cool = Math.max(0, (C.cool || 0) - dt);
   if (NET.client) { const w = NET.npc; if (w && w.c) { const ox = C.pos.x, oz = C.pos.z; const k = 1 - Math.exp(-10 * dt); C.pos.x += (w.c[0] - C.pos.x) * k; C.pos.z += (w.c[1] - C.pos.z) * k; sp = Math.hypot(C.pos.x - ox, C.pos.z - oz) / Math.max(dt, 1e-4); ty = w.c[2]; C.mode = w.c[3]; C.jump = w.c[4]; } const L = leader; catAnim(dt, sp, ty, L.pos.x - C.pos.x, L.pos.z - C.pos.z); return; }

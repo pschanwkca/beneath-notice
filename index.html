@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
-<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#07090c"><link rel="manifest" href="manifest.webmanifest">
+<meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"><meta name="theme-color" content="#07090c"><link rel="manifest" href="manifest.webmanifest"><link rel="apple-touch-icon" href="icon-180.png"><link rel="icon" type="image/png" href="icon-64.png">
 <title>BENEATH NOTICE</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1818,10 +1818,14 @@ function cyl(x, z, r, y0, y1, mat, o = {}) {
   if (o.col !== false) cols.push({ t: 'c', x, z, r: Math.max(r, o.rt ?? r), y0, y1, m, small: Math.max(r * 2, y1 - y0) < 4 });
   return m;
 }
-function colBounds(c) { return c.t === 'b' ? [c.x0, c.x1, c.y0, c.y1, c.z0, c.z1] : [c.x - c.r, c.x + c.r, c.y0, c.y1, c.z - c.r, c.z + c.r]; }
+function colBounds(c) { return c.t === 'b' || c.t === 'h' ? [c.x0, c.x1, c.y0, c.y1, c.z0, c.z1] : [c.x - c.r, c.x + c.r, c.y0, c.y1, c.z - c.r, c.z + c.r]; }
+// ---------- sloped surfaces (roofs): a slab whose top follows c.top(x, z), c.th thick, over the box x0…x1 × z0…z1 ----------
+// (c.y0 / c.y1 are the lowest bottom and the highest top, for the broad checks)
+function hTop(c, x, z) { return x < c.x0 || x > c.x1 || z < c.z0 || z > c.z1 ? -1e9 : c.top(x, z); }
+function slopeCol(o) { const c = Object.assign({ t: 'h', th: 8 }, o); cols.push(c); return c; }
 // XZ overlap of a disc against a collider: returns penetration & push normal
 function xzHit(c, px, pz, r, out) {
-  if (c.t === 'b') {
+  if (c.t === 'b' || c.t === 'h') {
     const qx = clamp(px, c.x0, c.x1), qz = clamp(pz, c.z0, c.z1); const dx = px - qx, dz = pz - qz; const d2 = dx * dx + dz * dz;
     if (d2 >= r * r) return false;
     if (d2 > 1e-8) { const d = Math.sqrt(d2); out.nx = dx / d; out.nz = dz / d; out.pen = r - d; return true; }
@@ -1834,6 +1838,7 @@ function xzHit(c, px, pz, r, out) {
   out.pen = c.r + r - d; return true;
 }
 function rayT(o, d, maxT, c) {
+  if (c.t === 'h') return rayTH(o, d, maxT, c);
   const b = colBounds(c); let t0 = 0, t1 = maxT;
   for (let a = 0; a < 3; a++) {
     const oo = a === 0 ? o.x : a === 1 ? o.y : o.z, dd = a === 0 ? d.x : a === 1 ? d.y : d.z, mn = b[a * 2], mx = b[a * 2 + 1];
@@ -1843,12 +1848,22 @@ function rayT(o, d, maxT, c) {
   }
   return t0;
 }
+// a ray through a sloped slab: clip to its box, then march in short steps (roofs are smooth; 3 cm steps are plenty)
+function rayTH(o, d, maxT, c) {
+  let t0 = 0, t1 = maxT; const b = colBounds(c);
+  for (let a = 0; a < 3; a++) { const oo = a === 0 ? o.x : a === 1 ? o.y : o.z, dd = a === 0 ? d.x : a === 1 ? d.y : d.z, mn = b[a * 2], mx = b[a * 2 + 1];
+    if (Math.abs(dd) < 1e-9) { if (oo < mn || oo > mx) return Infinity; continue; } let ta = (mn - oo) / dd, tb = (mx - oo) / dd; if (ta > tb) { const s = ta; ta = tb; tb = s; } if (ta > t0) t0 = ta; if (tb < t1) t1 = tb; if (t1 < t0) return Infinity; }
+  const inside = t => { const x = o.x + d.x * t, y = o.y + d.y * t, z = o.z + d.z * t, top = hTop(c, x, z); return y <= top && y >= top - c.th; };
+  const step = 3; let prev = t0, pin = inside(t0); if (pin) return t0;
+  for (let t = t0 + step; t <= t1 + 1e-6; t += step) { if (inside(t)) { let lo = prev, hi = t; for (let k = 0; k < 6; k++) { const m = (lo + hi) / 2; if (inside(m)) hi = m; else lo = m; } return hi; } prev = t; }
+  return inside(t1) ? t1 : Infinity;
+}
 function rayBlocked(o, d, maxT, skipSmall = true) {
   for (const c of colsNear(o.x, o.y, o.z)) { if (c.noRay || (skipSmall && c.small)) continue; const t = rayT(o, d, maxT, c); if (t > 0.01 && t < maxT) return true; }
   return false;
 }
 function rayFirst(o, d, maxT) { let best = maxT; for (const c of colsNear(o.x, o.y, o.z)) { if (c.small || c.noCam) continue; const t = rayT(o, d, maxT, c); if (t > 0.001 && t < best) best = t; } return best; }
-function solidAt(x, y, z) { for (const c of colsNear(x, y, z)) { if (y < c.y0 || y > c.y1) continue; if (c.t === 'b') { if (x > c.x0 && x < c.x1 && z > c.z0 && z < c.z1) return c; } else if (Math.hypot(x - c.x, z - c.z) < c.r) return c; } return null; }
+function solidAt(x, y, z) { for (const c of colsNear(x, y, z)) { if (y < c.y0 || y > c.y1) continue; if (c.t === 'h') { const top = hTop(c, x, z); if (y <= top && y >= top - c.th) return c; continue; } if (c.t === 'b') { if (x > c.x0 && x < c.x1 && z > c.z0 && z < c.z1) return c; } else if (Math.hypot(x - c.x, z - c.z) < c.r) return c; } return null; }
 
 // ---------- materials ----------
 let MAT = {};
@@ -3094,12 +3109,23 @@ const G = 250, TERM = -175, STEP = .95;
 const _h = { nx: 0, nz: 0, pen: 0 };
 
 // ---------- character physics ----------
-function supportAt(x, z, r, yMax) { let s = -1e9, sc = null; for (const c of colsNear(x, yMax, z)) { if (c.y1 > yMax || c.y1 < s) continue; if (!xzHit(c, x, z, r, _h)) continue; s = c.y1; sc = c; } return [s, sc]; }
+function supportAt(x, z, r, yMax) { let s = -1e9, sc = null; for (const c of colsNear(x, yMax, z)) { if (c.t === 'h') { const top = hTop(c, x, z); if (top <= yMax && top > s) { s = top; sc = c; } continue; } if (c.y1 > yMax || c.y1 < s) continue; if (!xzHit(c, x, z, r, _h)) continue; s = c.y1; sc = c; } return [s, sc]; }
+// walking on (or into) a sloped slab: step up onto it if it's low enough, otherwise slide off it downhill
+function slopePush(C, c, allowStep) {
+  const x = C.pos.x, z = C.pos.z, top = hTop(c, x, z); if (top < -1e8) return false;
+  const bot = top - c.th, h = C.colH || C.h; if (top <= C.pos.y + .001 || bot >= C.pos.y + h) return false;
+  const rise = top - C.pos.y; if (rise <= STEP && (allowStep && C.grounded || rise <= .35)) { C.pos.y = top; return false; }
+  // inside the slab: out along the slope's downhill direction (or straight out of whichever side is nearest)
+  let gx = hTop(c, x + 1, z) - hTop(c, x - 1, z), gz = hTop(c, x, z + 1) - hTop(c, x, z - 1); const gl = Math.hypot(gx, gz);
+  if (gl > 1e-4 && gl < 50) { C.pos.x -= gx / gl * 1.2; C.pos.z -= gz / gl * 1.2; } else if (xzHit(c, x, z, C.r, _h)) { C.pos.x += _h.nx * _h.pen; C.pos.z += _h.nz * _h.pen; }
+  return true;
+}
 function resolveH(C, allowStep) {
   let best = null;
   for (let it = 0; it < 3; it++) {
     let any = false;
     for (const c of colsNear(C.pos.x, C.pos.y + 1, C.pos.z)) {
+      if (c.t === 'h') { if (slopePush(C, c, allowStep)) any = true; continue; }
       if (c.y1 <= C.pos.y + .001 || c.y0 >= C.pos.y + (C.colH || C.h)) continue;   // a tower collides as tall as the whole tower
       if (!xzHit(c, C.pos.x, C.pos.z, C.r, _h)) continue;
       const rise = c.y1 - C.pos.y;
@@ -6063,7 +6089,7 @@ function catSee(L = leader) {
   for (const c of colsNear(eye.x, eye.y, eye.z)) { if (c.cat || c.small) continue; const t = rayT(eye, v, dl - 1, c); if (t > .5 && t < dl - 1) return false; }
   return true;
 }
-function ceilAt(x, z, y) { let m = 1e9, mc = null; for (const c of colsNear(x, y, z)) { if (c.y0 < y + .5 || c.y0 > m) continue; if (!xzHit(c, x, z, .6, _h)) continue; m = c.y0; mc = c; } return [m, mc]; }
+function ceilAt(x, z, y) { let m = 1e9, mc = null; for (const c of colsNear(x, y, z)) { if (c.t === 'h') { const b = hTop(c, x, z) - c.th; if (b >= y + .5 && b < m) { m = b; mc = c; } continue; } if (c.y0 < y + .5 || c.y0 > m) continue; if (!xzHit(c, x, z, .6, _h)) continue; m = c.y0; mc = c; } return [m, mc]; }
 function updCat(dt) {
   const C = CAT; let sp = 0, ty = null; C.cool = Math.max(0, (C.cool || 0) - dt);
   if (NET.client) { const w = NET.npc; if (w && w.c) { const ox = C.pos.x, oz = C.pos.z; const k = 1 - Math.exp(-10 * dt); C.pos.x += (w.c[0] - C.pos.x) * k; C.pos.z += (w.c[1] - C.pos.z) * k; sp = Math.hypot(C.pos.x - ox, C.pos.z - oz) / Math.max(dt, 1e-4); ty = w.c[2]; C.mode = w.c[3]; C.jump = w.c[4]; } const L = leader; catAnim(dt, sp, ty, L.pos.x - C.pos.x, L.pos.z - C.pos.z); return; }
@@ -11107,7 +11133,7 @@ function portalResumeLand(S) {
 // who joined or dropped, how good each link is, frame rate, rescues and errors. One tap copies it as
 // plain text that a player can paste into a chat and send in.
 const NLOG = { t0: performance.now(), lines: [], fps: 0, sumT: 0, mode: '', lv: '', peer: {} };
-const NLOG_BUILD = '20261126-1625';
+const NLOG_BUILD = '20261126-1655';
 function nlog(s) {
   const d = new Date(), p2 = n => String(n).padStart(2, '0');   // the clock time, so "it broke around 9:30" can be matched
   NLOG.lines.push(`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}  ${s}`); if (NLOG.lines.length > 500) NLOG.lines.splice(0, NLOG.lines.length - 500);
