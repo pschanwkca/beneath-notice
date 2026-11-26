@@ -347,6 +347,7 @@ function netMsg(d, from) {
     case 'shv': if (NET.host) { const r = resizables[d.i]; if (r && !r.gone) { shoveRes(r, d.vx, d.vz); SND.push(); } } break;
     case 'peb': launchPebble(V3(...d.a), V3(...d.b), d.d); break;
     case 'pch': pouchRecv(d); break;
+    case 'loose': looseRecv(d); break;
     case 'swr': if (NET.host) hostSwitch(d.i, d.id); break;
     case 'swo': if (!NET.host) swOn(d.i, d.d); break;
     case 'get': if (NET.host) hostGet(d); break;

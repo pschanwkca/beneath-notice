@@ -242,6 +242,7 @@ function buildSwitches() {
 function crewInput(L, ctl) {
   if (!L || !ctl) return;
   if (hxInput(L, ctl)) return;
+  if (pressed.KeyE && looseInput(L)) return;
   if (pressed.KeyE && L.id === 'frog') frogSwitch();
 }
 function crewHint(L) {

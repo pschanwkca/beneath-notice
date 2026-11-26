@@ -295,6 +295,7 @@ function buildLivedIn(K) {
     for (let i = 0; i < 8; i++) { const kx = x0 + i * 7.5, m = mesh(new THREE.BoxGeometry(7, 1.6, 15), new THREE.MeshPhysicalMaterial({ color: rainbow[i], roughness: .3, clearcoat: .8 }), kx + 3.5, 5.8, z0 + 7.5);
       const c = { t: 'b', x0: kx, x1: kx + 7, y0: 5, y1: 6.6, z0, z1: z0 + 15 }; cols.push(c); LIVED.keys.push({ m, c, f: notes[i], x: kx + 3.5, z: z0 + 7.5, on: false }); }
     LIVED.piano = V3(x0 + 30, 6, z0 + 8); }
+  buildLoose();
 }
 // landing on a key plays it (and makes a noise the family hears)
 function livedTick(dt) {

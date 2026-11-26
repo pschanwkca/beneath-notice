@@ -76,7 +76,7 @@ canvas.addEventListener('mousedown', e => {
   mbtn = e.button; dragDist = 0;
 });
 addEventListener('mouseup', e => { if (e.button === 0) keys.Mouse0 = false; if (e.button === 2) keys.Mouse2 = false; if (dragMode && mbtn >= 0 && dragDist < 6 && STATE === 'play') { primaryDown(mbtn); keys.Mouse0 = false; } mbtn = -1; });
-function primaryDown(btn) { const L = leader; if (!L) return; if (L.id === 'bear') { if (btn === 0) { keys.Mouse0 = true; bearShove(); } else if (btn === 2) keys.Mouse2 = true; return; } if (L.id === 'cham') { if (btn === 0) chamTongue(); return; } if (L.id === 'sq') { if (btn === 0) sqCarry(); else if (btn === 2) sqScout(); return; } if (L.id === 'hog') { if (btn === 0) hogRoll(); return; } if (L.id === 'coon') { if (btn === 0) coonThrow(); return; } if (L.id === 'rab' || L.id === 'frog') { if (btn === 0) { if (!POUCH.open) keys.Mouse0 = true; } else if (btn === 2 && L.id === 'frog') frogSwitch(); else if (btn === 2) pouchDown(); return; } if (L.id === 'bat') { if (btn === 0) batPing(); return; } if (L.id === 'tort') { if (btn === 0) tortShell(); return; } if (L.id === 'mole') { if (btn === 0) moleDig(); return; } fireGun(btn === 0); }
+function primaryDown(btn) { const L = leader; if (!L) return; if (btn === 0 && looseHeld(L)) { useHeld(L); return; } if (L.id === 'bear') { if (btn === 0) { keys.Mouse0 = true; bearShove(); } else if (btn === 2) keys.Mouse2 = true; return; } if (L.id === 'cham') { if (btn === 0) chamTongue(); return; } if (L.id === 'sq') { if (btn === 0) sqCarry(); else if (btn === 2) sqScout(); return; } if (L.id === 'hog') { if (btn === 0) hogRoll(); return; } if (L.id === 'coon') { if (btn === 0) coonThrow(); return; } if (L.id === 'rab' || L.id === 'frog') { if (btn === 0) { if (!POUCH.open) keys.Mouse0 = true; } else if (btn === 2 && L.id === 'frog') frogSwitch(); else if (btn === 2) pouchDown(); return; } if (L.id === 'bat') { if (btn === 0) batPing(); return; } if (L.id === 'tort') { if (btn === 0) tortShell(); return; } if (L.id === 'mole') { if (btn === 0) moleDig(); return; } fireGun(btn === 0); }
 canvas.addEventListener('contextmenu', e => e.preventDefault());
 addEventListener('wheel', e => { cam.dist = clamp(cam.dist + e.deltaY * .012, 8, 42); }, { passive: true });
 
@@ -464,7 +464,7 @@ function cdHUD() {
   const tu = $('touch'); if (tu && !tu.hidden) { const v = k.toFixed(3); if (tu.style.getPropertyValue('--cd') !== v) tu.style.setProperty('--cd', v); tu.classList.toggle('cdOn', on); }
 }
 function fireGun(grow) {
-  if (!leader || leader.id !== 'dad') return;
+  if (!leader || leader.id !== 'dad') return; if (looseHeld(leader)) { toast('手揸住嘢，開唔到槍——E 放低先'); return; }
   if (!aimRes) { toast('瞄準可以改變大小的東西（會發光）再開槍'); return; }
   if (cells < 1) { toast('尺寸槍能量不足，等一下會慢慢充回'); return; }
   if (ACD.gun > T) return;
@@ -842,7 +842,7 @@ function update(dt) {
     if (!lockL) pushTrail(leader); for (const F of party) if (F !== leader && !F.on && !F.hop && !F.drop && !F.frozen && !F.carried && !F.ptw && mine(F) && !isBase(F)) updFollower(F, leader, dt);
     updCarry(dt); updTongueAim(); updVentFx(dt);
     stackScan(dt);
-    updAim(); LVL.detect(dt); if (!NET.client) updCheckpoints(); LVL.update(dt); if (!NET.client) LVL.win();
+    updAim(); LVL.detect(dt); if (!NET.client) updCheckpoints(); LVL.update(dt); looseTick(dt); if (!NET.client) LVL.win();
     cellT += dt; if (cells < cellMax && cellT > 10) { cells++; cellT = 0; } if (cells >= cellMax) cellT = 0;
     updCam(dt); hideOccluders();
     if (meter > .4 && Math.floor((T - dt) * (1 + meter * 1.5)) !== Math.floor(T * (1 + meter * 1.5))) SND.heart(meter);
@@ -959,7 +959,7 @@ function setupTouch() {
   hold('tbStack', () => { pressed.KeyF = true; });
   hold('tbProto', () => { pressed.KeyR = true; });
   hold('tbUse', () => { pressed.KeyE = true; });
-  hold('tbAct', () => { const id = leader.id; if (id === 'cham') chamTongue(); else if (id === 'sq') sqCarry(); else if (id === 'hog') hogRoll(); else if (id === 'coon') coonThrow(); else if (id === 'rab' || id === 'frog') keys.Mouse0 = true; else if (id === 'bat') batPing(); else if (id === 'tort') tortShell(); else if (id === 'mole') moleDig(); }, () => { keys.Mouse0 = false; });
+  hold('tbAct', () => { if (looseHeld(leader)) { useHeld(leader); return; } const id = leader.id; if (id === 'cham') chamTongue(); else if (id === 'sq') sqCarry(); else if (id === 'hog') hogRoll(); else if (id === 'coon') coonThrow(); else if (id === 'rab' || id === 'frog') keys.Mouse0 = true; else if (id === 'bat') batPing(); else if (id === 'tort') tortShell(); else if (id === 'mole') moleDig(); }, () => { keys.Mouse0 = false; });
   hold('tbScout', () => { if (leader.id === 'frog') frogSwitch(); else sqScout(); });
   hold('tbPush', () => { keys.TPush = true; bearShove(); }, () => { keys.TPush = false; });
   hold('tbPull', () => { keys.TPull = !keys.TPull; $('tbPull').classList.toggle('on', keys.TPull); }, () => { });
