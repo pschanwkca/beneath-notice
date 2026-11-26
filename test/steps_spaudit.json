@@ -1,0 +1,1 @@
+[{"eval":"(async()=>{const b=window.__bn; const out={}; for (const ch of ['basement','kitchen','garage','yard','road','park']) { await b.startChapter(ch); for(let i=0;i<120 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(30); out[ch]={party:b.party.map(c=>c.id), lead:b.leader.id, level:b.level||b.LEVEL}; } return out; })()"}]

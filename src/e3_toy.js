@@ -28,7 +28,7 @@ function toyReachable(C) {
 }
 function toyFreeze(who) {
   if (NET.on) { const L = leader; if (L.frozen || (NET.pend.frz && T - NET.pend.frz < 2)) return; NET.pend.frz = T; meter = 0; if (NET.host) hostFreeze(L, who); else nsend({ t: 'frz', id: L.id, who, p: [L.pos.x, L.pos.y, L.pos.z], y: L.yaw }, NET.hostId); return; }
-  const L = leader; const left = party.filter(C => !C.frozen && C !== L);
+  const L = leader; const left = party.filter(C => !C.frozen && C !== L); TOY.lastWho = who;
   if (!left.length || !LVL.toys) { fail(); return; }
   L.on = null; L.hop = null;
   if (LEVEL === 'kitchen' && KS.carried) { KS.carried = false; KS.coreDrop = coreGround(L.pos); }
@@ -39,15 +39,23 @@ function toyFreeze(who) {
   const zk = zoneAt(L.pos, 4); if (!zk || zk.id === 'kitchen') { if (KM.mode === 'sus') KM.mode = 'goto'; if (toyReachable(L)) TOY.fetchQ.push(L); } else takeQueue(L);
   refreshPartyHUD();
 }
-// what whoever saw it says when a teammate turns into a toy
-function toySay(who, fn) {
-  if (who === 'kid') fn('女兒', '媽媽！那裡有隻玩具！', '#e8a0c0', 2.6);
-  else if (who === 'agent' || who === 'cam') fn('Origin Dynamics 職員', '……一隻玩具？剛才明明在動。', '#9fb3c8', 2.6);
-  else if (who === 'dog') fn('鄰居的狗', '汪！（叼着玩具搖尾巴）', '#d8a45a', 2.2);
-  else if (who === 'old') fn('陳伯', '咦，誰把玩具留在這裡？', '#c8b8a0', 2.4);
-  else if (who === 'walker' || who === 'wdog') fn('行人', '……誰把玩具丟在行人路上？', '#9ec4e8', 2.4);
-  else fn('太太', '咦？……哪來的玩具？', '#f4bb72', 2.4);
+// what whoever saw it says when a teammate turns into a toy (park watchers come numbered: kid0, dog1, owner2…)
+function toyWho(who) {
+  const w = String(who || ''), park = LEVEL === 'park';
+  if (w === 'kid' && !park) return ['女兒', '媽媽！那裡有隻玩具！', '#e8a0c0'];
+  if (w === 'agent' || w === 'cam') return ['Origin Dynamics 職員', '……一隻玩具？剛才明明在動。', '#9fb3c8'];
+  if (w === 'dog' && !park) return ['鄰居的狗', '汪！（叼着玩具搖尾巴）', '#d8a45a'];
+  if (w === 'old') return ['陳伯', '咦，誰把玩具留在這裡？', '#c8b8a0'];
+  if (w === 'walker' || w === 'wdog') return ['行人', '……誰把玩具丟在行人路上？', '#9ec4e8'];
+  if (w.startsWith('kid')) return ['公園的小朋友', '哇！有隻玩具老鼠！我撿到的！', '#f0c070'];
+  if (w.startsWith('dog')) return ['公園的狗', '汪汪！（叼着玩具跑回主人身邊）', '#d8a45a'];
+  if (w.startsWith('owner') || w === 'par') return ['公園的家長', '咦？誰家小朋友的玩具掉了？', '#b8c8a0'];
+  if (w === 'jog') return ['跑步的人', '……（停下來，撿起玩具放到長椅上）', '#a8c8e0'];
+  if (w === 'sk') return ['滑板少年', '哈，誰的玩具？差點輾到。', '#e0a8c0'];
+  if (w === 'phone') return ['講電話的人', '等等……地上有隻玩具。', '#c0b0d8'];
+  return ['太太', '咦？……哪來的玩具？', '#f4bb72'];
 }
+function toySay(who, fn) { const [n, t, c] = toyWho(who); fn(n, t, c, 2.6); TOY.lastWho = who; }
 function toyHandOff() {
   const F = TOY.focus; const cand = party.filter(C => !C.frozen).sort((a, b) => a.pos.distanceTo(F.pos) - b.pos.distanceTo(F.pos)); const N = cand[0];
   if (!N) { fail(); return; }

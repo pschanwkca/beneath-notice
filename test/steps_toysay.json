@@ -1,0 +1,5 @@
+[{"eval":"window.__bn.startChapter2()","wait":5000},
+ {"evalFile":"shothelp.js"},
+ {"eval":"(()=>__S.warp('公園廣場', 60))()"},
+ {"eval":"(()=>{const b=window.__bn; b.step(30); b.toyFreeze('kid1'); b.step(5); const a=document.getElementById('subn').textContent+'|'+document.getElementById('subt').textContent; b.step(200); b.toyFreeze('jog'); b.step(5); const c=document.getElementById('subn').textContent+'|'+document.getElementById('subt').textContent; return [a,c,b.state]})()"}
+]

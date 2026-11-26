@@ -530,7 +530,7 @@ function updDetect(dt) {
 }
 function fail() {
   STATE = 'fail'; failT = 0; fails++; SND.heart(1); tone(1800, 600, .8, .08, 'triangle'); nz(1.2, 4200, 1, .08, 'highpass');
-  say('太太', '……！', '#f4bb72', 2);
+  const [n, , c] = toyWho(TOY.lastWho || (LEVEL === 'basement' || LEVEL === 'kitchen' ? 'mom' : '')); say(n, '……！', c, 2);   // whoever caught the last of you
 }
 function respawn() {
   stkClear(); toyUnfreezeAll();
