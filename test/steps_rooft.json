@@ -1,0 +1,5 @@
+[{"evalFile":"shothelp.js"},
+ {"eval":"window.__bn.step(60)"},
+ {"frame":1},{"frame":1,"shot":"rf_title_ui"},
+ {"resize":[420,860]},{"eval":"window.__bn.step(10)"},{"frame":1},{"frame":1,"shot":"rf_title_narrow"}
+]

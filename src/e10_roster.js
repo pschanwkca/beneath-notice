@@ -106,14 +106,13 @@ function openHelp() {
 
 // ---------- chapter list (title screen) ----------
 const CHAPS = [
-  { n: '第一章', t: '屋企', d: '縮小實驗失控。由地庫爬出去，穿過牆內、廚房、客廳同車房，避開太太、女兒、貓同 Origin Dynamics 的人。', go: () => startGame(0),
-    starts: [{ t: '地庫', go: () => startGame(0) }, { t: '牆內與廚房', go: () => startGame(1) }, { t: '客廳', key: 'ch1', go: () => startChapter2() }, { t: '車房', key: 'ch2', go: () => startChapter('garage') }] },
+  { n: '第一章', t: '屋企', d: '縮小實驗失控。由地庫爬出去，穿過牆內、廚房、客廳、閣樓同屋頂，再落車房。避開太太、女兒、貓、無人機同 Origin Dynamics 的人。', go: () => startGame(0),
+    starts: [{ t: '地庫', go: () => startGame(0) }, { t: '牆內與廚房', go: () => startGame(1) }, { t: '客廳', key: 'ch1', go: () => startChapter2() }, { t: '閣樓與屋頂', key: 'ch2', go: () => startRoof() }, { t: '車房', key: 'ch2', go: () => startChapter('garage') }] },
   { n: '第二章', t: '後園與鄰居家', d: '穿過圍欄、避開陳伯的狗，到陽光房找控制晶片。', key: 'ch3', lock: '完成第一章解鎖', go: () => startChapter('yard') },
   { n: '第三章', t: '馬路', d: '從陳伯的前閘鑽出去，按過路燈，避開車輪，走到對面的公園。', key: 'ch4', lock: '完成第二章解鎖', go: () => startChapter('road') },
   { n: '第四章', t: '公園', d: '陽光下的楓林公園。避開狗、跑步的人和滑板少年，在滑梯塔頂用陽光替晶片充電。', key: 'ch5', lock: '完成第三章解鎖', go: () => startChapter('park') },
   { n: '第五章', t: '學校', d: '楓林小學。趁小息溜進課室，在女兒的儲物格找出備份密碼。', key: 'ch6', lock: '完成第四章解鎖', go: () => startChapter('school') },
-  { n: '第六章', t: '屋頂', d: '製作中', future: true },
-  { n: '第七章', t: 'Origin Dynamics', d: '製作中', future: true }
+  { n: '第六章', t: 'Origin Dynamics', d: '製作中', future: true }
 ];
 function startChapter(name, opt) { $('start').hidden = true; $('chaps').hidden = true; playT = 0; fails = 0; requestLock(); return loadLevel(name, opt); }
 // chapter two starts in the kitchen, with the core already back at the mouse hole

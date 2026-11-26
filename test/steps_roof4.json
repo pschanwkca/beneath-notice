@@ -1,0 +1,10 @@
+[{"evalFile":"shothelp.js"},{"evalFile":"roof_h.js"},
+ {"eval":"window.__R.start()"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; b.setQuest(2); R.put(300, b.RFH.R + 4, 1); b.step(5); b.CINE.manual = true; window.__ft = (n) => { for (let i=0;i<n;i++){ b.CINE.t += 1/60; b.step(1); } return [b.state, +b.CINE.t.toFixed(1)]; }; return [b.state, b.quest]; })()"},
+ {"eval":"window.__ft(150)"},{"frame":1},{"frame":1,"shot":"rf_film1"},
+ {"eval":"window.__ft(330)"},{"frame":1},{"frame":1,"shot":"rf_film2"},
+ {"eval":"window.__ft(330)"},{"frame":1},{"frame":1,"shot":"rf_film3"},
+ {"eval":"(()=>{ const b=window.__bn; const r = window.__ft(260); return [r, b.state, b.quest, b.RF.drone.on, b.RF.drone.pos.toArray().map(Math.round)]; })()"},
+ {"eval":"(()=>{ const b=window.__bn; b.step(240); return [b.state, b.info()]; })()"},{"frame":1},{"frame":1,"shot":"rf_drone"},
+ {"eval":"(()=>{ const b=window.__bn; const out=[]; delete window.__NODET; for (let i=0;i<60;i++){ b.step(15); out.push([+b.droneSees().toFixed(2), b.info().meter, b.state[0]]); } return out; })()"}
+]

@@ -1,0 +1,5 @@
+[{"evalFile":"shothelp.js"},{"evalFile":"roof_h.js"},
+ {"eval":"window.__bn.step(30)"},{"eval":"(()=>{ window.__S.hud(false); return 1 })()"},{"frame":1},{"frame":1,"shot":"rf_title"},
+ {"eval":"(async()=>{ const b=window.__bn; document.getElementById('chaps').hidden = true; await b.startChapter2(); for (let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(5); b.LIV.remoteGot = false; b.livingGet({k:'remote'}, b.leader); await new Promise(r=>setTimeout(r,3200)); b.step(2); return [b.LEVEL, b.quest, b.RF.open, b.KS.ch3, document.getElementById('qT') ? document.getElementById('qT').textContent : '', b.LIV.ventOpen]; })()"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; R.put(860, 301, -60); b.step(40); return [b.LEVEL, b.quest, b.info().pos]; })()"}
+]

@@ -351,6 +351,7 @@ LEVELS.garage = {
   },
   enter(prev, again) {
     if (again) return;
+    if (!NET.on && prev === 'roof') toast('由鐵網跌咗落鐵架頂……監視鏡頭就喺隔籬，小心', 3.4);
     if (!NET.on) { setTimeout(() => sayW('小彩', '有人在車房……灰色制服、帽上有標誌——是 Origin Dynamics 的人！', '#9fd86b', 3.6), 1200); setTimeout(() => say('爸爸', '工作枱上有我以前的機座。拿收音機的線圈裝上去，縮小機就可以重新啟動。', '#f5f0e6', 4.2), 5400); }
   },
   npc(dt) { if (STATE === 'play' || STATE === 'fail' || STATE === 'frozen' || STATE === 'end') updAgent(dt); },

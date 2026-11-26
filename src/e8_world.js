@@ -16,7 +16,7 @@
 const BO = V3(28, -336, -229), HO = V3(-400, -340, -94); let MP_CPS = null;
 const ZONES = {}, ZL = []; let WORLD = false;
 function zoneDef(id, o) { const Z = Object.assign({ id, off: V3(), core: [], lv: null, fx: null, cols: [], lights: [], beams: [], dust: null, env: null, near: false, prepped: false }, o); ZONES[id] = Z; ZL.push(Z); return Z; }
-zoneDef('kitchen', { floor: 0, core: [[-312, 912, -12, 300, -250, 250], [-432, -312, -2, 40, -126, -74], [140, 475, -12, 262, -485, -230], [10, 380, 255, 300, -336, -192], [306, 912, 255, 560, -250, 250], [736, 912, -12, 560, -512, -240]], peek: [[930, 1060, -40, 60, -260, -120]], env: 'kitchen' });
+zoneDef('kitchen', { floor: 0, core: [[-312, 912, -12, 300, -250, 250], [-432, -312, -2, 40, -126, -74], [140, 475, -12, 262, -485, -230], [10, 380, 255, 300, -336, -192], [306, 912, 255, 547, -250, 250], [736, 912, -12, 547, -512, -240]], peek: [[930, 1060, -40, 60, -260, -120]], env: 'kitchen' });
 // peek: spots in other places from which you can see in (through a mouse hole) — draw this place too
 zoneDef('wall', { floor: HO.y + 4, off: HO, core: [[-530, -312, -360, -2, -140, -52]], peek: [[-282, -140, -345, -250, -160, 10], [-312, -160, -12, 90, -200, 0]], env: 'hub' });
 zoneDef('garage', { floor: -20, core: [[912, 1460, -40, 300, -270, 312]], peek: [[820, 912, -10, 70, -240, -150], [1460, 1640, -40, 120, 20, 200]], env: 'garage' });
@@ -55,7 +55,7 @@ function buildZone(Z) {
 }
 async function buildWorld(prog) {
   if (WORLD) return;
-  for (const id of ['basement', 'wall', 'kitchen', 'garage', 'yard', 'road', 'park', 'school', 'portal']) { if (prog) await prog(id); buildZone(ZONES[id]); }
+  for (const id of ['basement', 'wall', 'kitchen', 'garage', 'yard', 'road', 'park', 'school', 'portal', 'roof']) { if (prog) await prog(id); buildZone(ZONES[id]); }
   ZONES.garage.prepped = ZONES.yard.prepped = ZONES.road.prepped = ZONES.park.prepped = ZONES.school.prepped = true;
   MP_CPS = [...LEVELS.kitchen.cps, ...LEVELS.garage.cps, ...LEVELS.yard.cps, ...LEVELS.road.cps, ...LEVELS.park.cps, ...LEVELS.school.cps];
   ncPlace();
@@ -177,9 +177,9 @@ function zoneTick(dt) {
   swTick(); lightTick(dt);
   // single player: the rules of the place the leader walks into take over
   if (leader && mine(leader) && (STATE === 'play' || STATE === 'frozen')) {
-    const cur = ZONES[LEVEL]; if (!cur || !inZone(cur, lp.x, lp.y, lp.z, 2)) { const nz = zoneAt(lp); if (nz && nz.id !== LEVEL) enterZone(nz.id); }
+    const cur = ZONES[LEVEL]; if (!cur || !inZone(cur, lp.x, lp.y, lp.z, 2)) { const nz = zoneAt(lp); if (nz && nz.id !== LEVEL && !(LVL && LVL.keep && LVL.keep(nz.id))) enterZone(nz.id); }
   }
-  updNpcWalk(dt); updBanner(dt); updSecCam(dt); updGarageWorld(dt); updYardWorld(dt); updRoadWorld(dt); updParkWorld(dt); ncTick(dt); testTick();
+  updNpcWalk(dt); updBanner(dt); updSecCam(dt); updGarageWorld(dt); updYardWorld(dt); updRoadWorld(dt); updParkWorld(dt); ncTick(dt); testTick(); roofTick(dt);
 }
 // a place's rules take over (no loading, nothing moves)
 function enterZone(id, quiet) {

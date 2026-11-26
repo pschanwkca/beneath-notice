@@ -1,0 +1,10 @@
+[{"evalFile":"shothelp.js"},{"evalFile":"roof_h.js"},
+ {"eval":"window.__R.start()"},
+ {"eval":"(()=>{ const b=window.__bn; return [b.LEVEL, b.quest, b.RF.open, b.camera.far]; })()"},
+ {"eval":"(()=>{ window.__S.hud(false); window.__S.rel(-14, 7, 16, 0, 2, 0); return 1 })()"},{"frame":1},{"frame":1,"shot":"rf_attic"},
+ {"eval":"(()=>{ window.__S.game(); const R=window.__R, b=window.__bn; R.put(560, b.rfHip(560,-120)+.3, -120); return R.walk(0, 1, 260, 'KeyW', 20); })()"},
+ {"eval":"(()=>{ window.__S.rel(-10, 5, -12, 0, 2, 0); return 1 })()"},{"frame":1},{"frame":1,"shot":"rf_slope"},
+ {"eval":"(()=>{ window.__S.game(); const R=window.__R, b=window.__bn; R.put(564, 584.2, -149); const a = R.walk(0, 1, 300, 'KeyW', 15); return a; })()"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; return [b.info().pos, b.quest, R.walk(0, 1, 90, 'KeyW', 10)]; })()"},
+ {"eval":"(()=>{ const b=window.__bn; return [b.quest, b.info().pos]; })()"}
+]

@@ -1,0 +1,9 @@
+[{"evalFile":"shothelp.js"},{"evalFile":"roof_h.js"},
+ {"eval":"window.__R.start()"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; b.setQuest(4); R.put(940, b.rfGab(940,0)+.3, 0); return [b.info().pos, R.walk(-1, 0, 900, 'KeyW', 30)]; })()"},
+ {"eval":"(()=>{ const b=window.__bn; return [b.info(), b.leader.climbing, b.leader.stamina|0]; })()"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; return R.walk(-1, 0, 120, 'KeyW', 20); })()"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; R.put(1010, b.rfGab(1010,120)+.3, 120); return [b.LEVEL, R.walk(-1, 0, 400, 'KeyW', 25)]; })()"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; const r = R.walk(-1, 0, 60, 'KeyW', 20); return [b.LEVEL, b.quest, r, b.info().pos]; })()"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; const r = R.walk(-1, 0, 200, 'KeyW', 20); return [b.LEVEL, b.quest, r, b.info().pos]; })()"}
+]

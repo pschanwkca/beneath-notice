@@ -72,6 +72,11 @@ function buildEnv(kind = 'basement') {
   else if (kind === 'yard') { room.material.color.setHex(0x0a1020); panel(0x3a5a9a, 1.6, 10, 10, 0, 2.48, 0); panel(0xb8c8ff, 3, 1, 1, 3, 2, -4); panel(0xffc890, 2.2, .6, .6, 4.9, .6, 0, Math.PI / 2); panel(0x14200f, 1, 10, 3, 0, -2.4, 0); }
   else if (kind === 'park') { room.material.color.setHex(0x0a101c); panel(0x2c3c64, 1.3, 10, 10, 0, 2.48, 0); panel(0xa8bcff, 1.6, 2.2, 2.2, 3.4, 2.3, -3.4); panel(0xffb466, 2.0, 1, 1, -3.4, 2.2, 2); panel(0x101a0e, 1, 10, 3, 0, -2.4, 0); }
   else if (kind === 'road') { room.material.color.setHex(0x0b111c); panel(0x2a3a60, 1.4, 10, 10, 0, 2.48, 0); panel(0xffb466, 2.6, 1.2, 1.2, 3, 2.2, -3); panel(0xffb466, 2.2, 1.2, 1.2, -3.4, 2.2, 2); panel(0x14180f, 1, 10, 3, 0, -2.4, 0); }
+  else if (kind === 'dusk') {   // sunset: lavender overhead, a hot orange low on the sun's side, warm haze all round
+    room.material.color.setHex(0x3a2a3c); const top = new THREE.Mesh(new THREE.PlaneGeometry(10, 10), new THREE.MeshBasicMaterial({ color: new THREE.Color(0x7a72b0).multiplyScalar(1.3), side: THREE.DoubleSide })); top.rotation.x = Math.PI / 2; top.position.y = 2.45; es.add(top);
+    panel(0xc88a8a, 1.4, 10, 1.2, 0, .1, 4.95); panel(0xc88a8a, 1.4, 10, 1.2, 0, .1, -4.95); panel(0xb08aa0, 1.2, 10, 1.2, 4.95, .1, 0, Math.PI / 2); panel(0xb08aa0, 1.2, 10, 1.2, -4.95, .1, 0, Math.PI / 2);
+    const sp = V3(-.6, .1, .79).normalize().multiplyScalar(4.6); const sn = new THREE.Mesh(new THREE.CircleGeometry(1.1, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffa860).multiplyScalar(9), side: THREE.DoubleSide })); sn.position.set(sp.x, sp.y + .3, sp.z); sn.lookAt(0, 0, 0); es.add(sn);
+    panel(0x3a2a24, 1, 10, 3, 0, -2.4, 0); }
   else if (kind === 'portal') { room.material.color.setHex(0x061419); panel(0x6ff6ee, 4.5, 4, 4, 0, 0, 4.9); panel(0x9fe8ff, 1.6, 10, 2, 0, 2.45, 0); panel(0xffc890, 1.4, 1.2, 1.2, -3, 1.2, -4.9); panel(0x0a1a20, 1, 10, 3, 0, -2.4, 0); }
   else if (kind === 'hub') { room.material.color.setHex(0x1a1410); panel(0xffb066, 4, .6, .6, -1, .2, 0); panel(0xffd0a0, 6, 1, 1, 0, 2.4, 0); panel(0x3a2a22, 1, 10, 3, 0, -2.4, 0); }
   else { panel(0x9db8ff, 3.2, 2, 1, 1, 2, -4.9); panel(0xffc27a, 6, .6, .6, -1, .5, -3); panel(0x5ff4ee, 3, .8, .8, -2, .3, -3.4);
@@ -123,9 +128,9 @@ const outPass = new OutputPass();
 const grade = new ShaderPass(GradeShader);
 composer.addPass(renderPass);
 // the dust and the sky dome (with its clouds) stay out of the depth passes: AO and focus blur would outline the clouds' planes
-composer.addPass(new FnPass(() => { fxGroup.visible = false; if (ST.sky) { ST.skyV = ST.sky.visible; ST.sky.visible = false; } }));
+composer.addPass(new FnPass(() => { fxGroup.visible = false; if (ST.sky) { ST.skyV = ST.sky.visible; ST.sky.visible = false; } if (RF.skyG) { RF.skyV = RF.skyG.visible; RF.skyG.visible = false; } }));
 composer.addPass(gtao); composer.addPass(bokeh);
-composer.addPass(new FnPass(() => { fxGroup.visible = true; if (ST.sky) ST.sky.visible = !!ST.skyV; }));
+composer.addPass(new FnPass(() => { fxGroup.visible = true; if (ST.sky) ST.sky.visible = !!ST.skyV; if (RF.skyG) RF.skyG.visible = !!RF.skyV; }));
 const sanitize = new ShaderPass({ uniforms: { tDiffuse: { value: null } }, vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
   fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv; void main(){ vec4 c=texture2D(tDiffuse,vUv); if(any(isnan(c))||any(isinf(c))) c=vec4(0.0,0.0,0.0,1.0); gl_FragColor=vec4(clamp(c.rgb,0.0,48.0),c.a); }` });
 // phones: no MSAA, a cheap FXAA pass instead; bloom can run at lower resolution

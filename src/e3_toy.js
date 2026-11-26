@@ -45,6 +45,7 @@ function toyWho(who) {
   if (w === 'kid' && !park) return ['女兒', '媽媽！那裡有隻玩具！', '#e8a0c0'];
   if (w === 'agent' || w === 'cam') return ['Origin Dynamics 職員', '……一隻玩具？剛才明明在動。', '#9fb3c8'];
   if (w === 'dog' && !park) return ['鄰居的狗', '汪！（叼着玩具搖尾巴）', '#d8a45a'];
+  if (w === 'drone') return ['Origin Dynamics 無人機', '（嗶——）目標……係一隻玩具？', '#9fb3c8'];
   if (w === 'old') return ['陳伯', '咦，誰把玩具留在這裡？', '#c8b8a0'];
   if (w === 'walker' || w === 'wdog') return ['行人', '……誰把玩具丟在行人路上？', '#9ec4e8'];
   if (w.startsWith('skid')) { const k = SC.kids[+w.slice(4)]; return [k ? k.name : '同學', rnd() < .5 ? '嘩！隻老鼠公仔識郁㗎！' : '老師！有隻玩具老鼠！', k ? k.col : '#f0c070']; }

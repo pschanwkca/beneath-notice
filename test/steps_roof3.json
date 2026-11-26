@@ -1,0 +1,7 @@
+[{"evalFile":"shothelp.js"},{"evalFile":"roof_h.js"},
+ {"eval":"window.__R.start()"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; R.put(875, 500.3, 90); b.step(30); return [b.LEVEL, b.quest, b.info().pos]; })()"},
+ {"eval":"(()=>{ window.__S.hud(false); window.__S.rel(24, 8, -18, -16, 12, 0); return 1 })()"},{"frame":1},{"frame":1,"shot":"rf_cord"},
+ {"eval":"(()=>{ window.__S.game(); const R=window.__R, b=window.__bn; const c = R.walk(-1, 0, 100, 'KeyW', 6); return [c, b.leader.climbing]; })()"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; const c = R.walk(-1, 0, 30, 'KeyW', 10); const d = R.walk(0, -1, 600, 'KeyW', 30); return [c, d, b.LEVEL, b.quest, b.info().pos]; })()"}
+]

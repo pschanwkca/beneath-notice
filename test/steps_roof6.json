@@ -1,0 +1,4 @@
+[{"evalFile":"shothelp.js"},
+ {"eval":"(()=>{ document.getElementById('goCh').click(); return 1 })()"},{"frame":1},{"frame":1,"shot":"rf_chaps"},
+ {"eval":"(()=>{ const chips=[...document.querySelectorAll('.chs')].map(e=>e.textContent+(e.classList.contains('lock')?'(lock)':'')); return chips; })()"}
+]

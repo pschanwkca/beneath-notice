@@ -104,7 +104,8 @@ function buildUpstairs(K) {
   wallB(300, 312, -244, 244); wallB(900, 912, -244, 244);
   wallB(312, 574, 232, 244); wallB(666, 900, 232, 244); wallB(574, 666, 232, 244, Y, Y + 40); wallB(574, 666, 232, 244, Y + 150, Yc);
   wallB(312, 836, -244, -232); wallB(896, 900, -244, -232); wallB(836, 896, -244, -232, Y + 205, Yc);
-  box(300, 912, Yc, Yc + 10, -244, 244, K.ceil, { cast: false });
+  // (with the attic hatch over the wardrobe end: x 800…856, z 66…114 — see e43_roof)
+  for (const [x0, x1, z0, z1] of [[300, 800, -244, 244], [856, 912, -244, 244], [800, 856, -244, 66], [800, 856, 114, 244]]) box(x0, x1, Yc, Yc + 12, z0, z1, K.ceil, { cast: false });
   // the lower band of wall in dusty rose, a chair rail, skirting
   const band = (x0, x1, z0, z1) => deco(x0, x1, Y, Y + 92, z0, z1, M.low);
   band(312, 312.5, -232, 232); band(899.5, 900, -232, 232); band(312, 574, 231.5, 232); band(666, 900, 231.5, 232); band(312, 836, -232, -231.5);

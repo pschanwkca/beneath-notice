@@ -90,15 +90,16 @@ const _h = { nx: 0, nz: 0, pen: 0 };
 
 // ---------- character physics ----------
 function supportAt(x, z, r, yMax) { let s = -1e9, sc = null; for (const c of colsNear(x, yMax, z)) { if (c.t === 'h') { const top = hTop(c, x, z); if (top <= yMax && top > s) { s = top; sc = c; } continue; } if (c.y1 > yMax || c.y1 < s) continue; if (!xzHit(c, x, z, r, _h)) continue; s = c.y1; sc = c; } return [s, sc]; }
-// walking on (or into) a sloped slab: step up onto it if it's low enough, otherwise slide off it downhill
+// walking on (or into) a sloped slab: step up onto it while it's low enough (a roof is walked up, not climbed);
+// stuck in it from above: slide off downhill; poking up into it from underneath (the attic): back out to where there's headroom
 function slopePush(C, c, allowStep) {
   const x = C.pos.x, z = C.pos.z, top = hTop(c, x, z); if (top < -1e8) return false;
   const bot = top - c.th, h = C.colH || C.h; if (top <= C.pos.y + .001 || bot >= C.pos.y + h) return false;
-  const rise = top - C.pos.y; if (rise <= STEP && (allowStep && C.grounded || rise <= .35)) { C.pos.y = top; return false; }
-  // inside the slab: out along the slope's downhill direction (or straight out of whichever side is nearest)
-  let gx = hTop(c, x + 1, z) - hTop(c, x - 1, z), gz = hTop(c, x, z + 1) - hTop(c, x, z - 1); const gl = Math.hypot(gx, gz);
-  if (gl > 1e-4 && gl < 50) { C.pos.x -= gx / gl * 1.2; C.pos.z -= gz / gl * 1.2; } else if (xzHit(c, x, z, C.r, _h)) { C.pos.x += _h.nx * _h.pen; C.pos.z += _h.nz * _h.pen; }
-  return true;
+  const rise = top - C.pos.y; if (rise <= (C.grounded && allowStep ? 2.2 : .45)) { C.pos.y = top; return false; }
+  const gx = (hTop(c, x + 1, z) - hTop(c, x - 1, z)) / 2, gz = (hTop(c, x, z + 1) - hTop(c, x, z - 1)) / 2, gl = Math.hypot(gx, gz);
+  if (!(gl > 1e-3 && gl < 5)) { if (C.pos.y + h * .5 > (top + bot) / 2) { C.pos.y = top; return false; } return false; }
+  const under = C.pos.y + h * .5 < (top + bot) / 2, need = under ? (C.pos.y + h - bot) : rise, d = clamp(need / gl, .05, 1.5) * (under ? 1 : -1);
+  C.pos.x += gx / gl * d; C.pos.z += gz / gl * d; return true;
 }
 function resolveH(C, allowStep) {
   let best = null;
@@ -131,12 +132,12 @@ function moveVert(C, dt) {
   const [sup, sc] = supportAt(C.pos.x, C.pos.z, C.r * .55, prevY + .05);
   const wasG = C.grounded; C.grounded = false;
   if (C.pos.y <= sup + .001) { const imp = -C.vel.y; C.pos.y = sup; if (C.vel.y < 0) C.vel.y = 0; C.grounded = true; C.ground = sc; if (!wasG) land(C, imp); if (sc && sc.bouncy && imp > 22 && !wasG) { C.vel.y = clamp(imp * .82, 45, 150); C.grounded = false; C.squash = -.6; tone(260, 520, .16, .05, 'sine'); } }
-  else if (wasG && C.vel.y <= 0 && C.pos.y - sup < .3) { C.pos.y = sup; C.vel.y = 0; C.grounded = true; C.ground = sc; }
+  else if (wasG && C.vel.y <= 0 && C.pos.y - sup < .3 + (sc && sc.t === 'h' ? Math.hypot(C.vel.x, C.vel.z) * dt * .75 : 0)) { C.pos.y = sup; C.vel.y = 0; C.grounded = true; C.ground = sc; }
   C.ceilHit = ceil(C);
 }
 function ceil(C) {
   let hit = null;
-  for (const c of colsNear(C.pos.x, C.pos.y + 1, C.pos.z)) { if (c.y0 < C.pos.y + C.h * .55 || C.pos.y + C.h <= c.y0) continue; if (!xzHit(c, C.pos.x, C.pos.z, C.r * .7, _h)) continue; C.pos.y = c.y0 - C.h; if (C.vel.y > 0) C.vel.y = 0; hit = c; }
+  for (const c of colsNear(C.pos.x, C.pos.y + 1, C.pos.z)) { if (c.t === 'h') { const b = hTop(c, C.pos.x, C.pos.z) - c.th; if (b > -1e8 && b >= C.pos.y + C.h * .55 && b < C.pos.y + C.h) { C.pos.y = b - C.h; if (C.vel.y > 0) C.vel.y = 0; hit = c; } continue; } if (c.y0 < C.pos.y + C.h * .55 || C.pos.y + C.h <= c.y0) continue; if (!xzHit(c, C.pos.x, C.pos.z, C.r * .7, _h)) continue; C.pos.y = c.y0 - C.h; if (C.vel.y > 0) C.vel.y = 0; hit = c; }
   return hit;
 }
 // climbing up into a thin overhang (a table top over its leg, a counter lip): reach round the edge and pull up onto it
@@ -249,7 +250,7 @@ function resolveClimb(C) {
   for (let it = 0; it < 2; it++) {
     let any = false;
     for (const c of colsNear(C.pos.x, C.pos.y + 1, C.pos.z)) {
-      if (c.y1 <= C.pos.y + .001 || c.y0 >= C.pos.y + C.h) continue;
+      if (c.t === 'h' || c.y1 <= C.pos.y + .001 || c.y0 >= C.pos.y + C.h) continue;
       if (!xzHit(c, C.pos.x, C.pos.z, C.r, _h)) continue;
       C.pos.x += _h.nx * _h.pen; C.pos.z += _h.nz * _h.pen; any = true;
       if (!best || _h.pen > best.pen) best = { nx: _h.nx, nz: _h.nz, pen: _h.pen, c };
@@ -665,10 +666,11 @@ function animChar(C, dt) {
   else if (st === 'top') { armX = -2.45 + Math.sin(C.t * 3) * .14; armZ = .25; legZ = .12; lean = -.14; }
   else if (st === 'pull') { armX = -.9 + Math.sin(C.t * 9) * .08; lean = .95; bob = -.4 * k; legZ = .32; }
   else if (st === 'hang') { armX = -2.95; legT = .12; legA = Math.sin(C.t * 11) * .38; lean = .04; }
+  else if (st === 'sit') { legT = 1.32 + (C.sitLeg || 0); legA = C.sitKick || 0; armX = .42; armZ = .05; lean = -.16; }   // sitting: legs out in front (down the slope), hands back on the roof
   const pushing = C.shoveT > 0 || (C.pushing && spd > .5);
   if (C.shoveT > 0) C.shoveT -= dt;
   if (pushing) { const s = C.shoveT > 0 ? Math.sin(clamp(1 - C.shoveT / .38, 0, 1) * Math.PI) : .85; armX = lerp(armX, -1.55, s); armA *= 1 - s; lean = Math.max(lean, .34 * s); armZ = -.1; }
-  b.position.y = .92 * k + bob - (C.crouch ? .3 * k : 0) + Math.sin(C.t * 2.1) * .018 * k;
+  b.position.y = .92 * k + bob - (C.crouch ? .3 * k : 0) + Math.sin(C.t * 2.1) * .018 * k; if (st === 'sit') b.position.y = .4 * k + Math.sin(C.t * 1.6) * .012 * k;
   C.lean = damp(C.lean, lean, 9, dt); C.roll = damp(C.roll, roll, 10, dt);
   let bx = C.lean, bz = C.roll;
   if (C.tumble > 0) { C.spin += dt * 13; bx = C.spin; } else if (st === 'roll') { C.spin += dt * 24; bx = C.spin; } else C.spin = 0;
@@ -925,7 +927,7 @@ async function init() {
   for (const id of ['hog', 'rab', 'coon', 'frog', 'bat', 'tort', 'mole']) { chars[id].root.visible = false; chars[id].pos.set(0, -900, 0); }
   party.push(chars.dad, chars.sq, chars.bear); buildMom();
   // the whole house is built now, once: walking from room to room never loads anything
-  const WL = { basement: [.42, '搭建地庫…'], wall: [.52, '搭建牆內…'], kitchen: [.58, '搭建廚房和客廳…'], garage: [.64, '搭建車房…'], yard: [.7, '搭建後園和陽光房…'] , road: [.72, '搭建馬路…'], park: [.75, '搭建公園…'], school: [.77, '搭建學校…'], portal: [.78, '打開縮小機的場域…'] };
+  const WL = { basement: [.42, '搭建地庫…'], wall: [.52, '搭建牆內…'], kitchen: [.58, '搭建廚房和客廳…'], garage: [.64, '搭建車房…'], yard: [.7, '搭建後園和陽光房…'] , road: [.72, '搭建馬路…'], park: [.75, '搭建公園…'], school: [.77, '搭建學校…'], portal: [.78, '打開縮小機的場域…'], roof: [.8, '搭建屋頂…'] };
   await buildWorld(async id => { setLoad(...WL[id]); await tick(); });
   buildParticles(); enterZone('basement', true); scene.environment = ZONES.basement.envTex; placeStart();
   for (const id in chars) animChar(chars[id], .016);

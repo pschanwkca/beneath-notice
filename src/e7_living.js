@@ -183,7 +183,10 @@ function livingGet(d, C) {
     else {
       say('爸爸', '兩粒電池……夠核心撐一陣子了。', '#f5f0e6', 3.2); unlockKey('ch2');
       // chapter two is done; the vent behind the TV cabinet leads on to the garage — no stopping
-      setTimeout(() => { roomBanner('核心又亮起來了'); ventOpen(); QUESTS = SP_Q2B; setQuest(0); KS.ch3 = true; say('爸爸', '客廳盡頭的通風口通去車房。我以前的工作枱在那裡——可以修好縮小機。', '#f5f0e6', 4.2); }, 2600);
+      // the vent to the garage is rusted shut: the way there is up through the house and over the roof
+      setTimeout(() => { roomBanner('核心又亮起來了'); rfHatch(true); QUESTS = SP_Q2B; setQuest(0); KS.ch3 = true; say('爸爸', '車房嘅工作枱可以修好縮小機……但通風口個蓋鏽死咗。', '#f5f0e6', 3.6);
+        setTimeout(() => say('爸爸', '樓上有條路：女兒房天花有個閣樓活門，閣樓出得去屋頂，由屋頂落車房。', '#f5f0e6', 4.6), 3900);
+        setTimeout(() => say('爸爸', '……順便，我想上去睇吓佢。', '#f5f0e6', 2.8), 8800); }, 2600);
     }
   }
 }
@@ -215,7 +218,10 @@ const MP_QUESTS = [
   { t: '全隊過馬路', s: '綠色公仔燈亮了才過。車輪會輾人，車身底下可以過；中間有安全島' },
   { t: '全隊到公園門口', s: '公園的鐵閘就在對面行人路' }
 ];
-const SP_Q2B = [{ t: '爬過通風口去車房', s: '爸爸：車房的工作枱有我以前的工具，可以修好縮小機' }];
+const SP_Q2B = [
+  { t: '上樓去女兒房', s: '客廳後面嘅門口有樓梯，每一級都要爬。太太同女兒都可能會上嚟' },
+  { t: '經天花活門上閣樓', s: '衣櫃頂旁邊吊住條拉繩：由衣櫃頂跳過去捉住佢，爬上閣樓。衣櫃隔籬啲收納箱可以幫你爬上衣櫃' }
+];
 function ventOpen() { if (LIV.ventOpen) return; LIV.ventOpen = true; LIV.ventCol.y0 = -999; LIV.ventCol.y1 = -998; SND.creak(); toastW('通風口的蓋打開了！', 2.6); }
 function livingHost() { }
 

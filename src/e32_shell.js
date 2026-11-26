@@ -33,6 +33,17 @@ function polyMesh(pts, mat, U, V, s, parent) {
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
   const m = new THREE.Mesh(g, mat); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m;
 }
+// the cap over a ridge or a hip: half a cylinder (9 cm across, 3.5 proud) laid from p to q, its overlapping cap shingles drawn on
+function capMesh(p, q, mat) {
+  const d = V3().subVectors(q, p), L = d.length(), g = new THREE.CylinderGeometry(4.6, 4.6, L, 14, 1, true, -Math.PI / 2, Math.PI);
+  const uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i), uv.getY(i) * L / 22);
+  g.rotateX(-Math.PI / 2); g.scale(1, .76, 1); const m = new THREE.Mesh(g, mat); m.position.copy(p).add(q).multiplyScalar(.5); m.lookAt(q); m.castShadow = true; m.receiveShadow = true; return m;
+}
+function genCapTex() {
+  const W = 128, H = 128, n = noiseField(W, H, 3, 8, 321);
+  const c = fromFn(W, H, (x, y, i, o) => { const v = y % 64, lip = v > 58, k = .85 + n[i] * .2 - (lip ? .25 : 0) + v / 64 * .08; o[0] = 92 * k; o[1] = 88 * k; o[2] = 84 * k; });
+  const t = tex(c); t.wrapS = t.wrapT = THREE.RepeatWrapping; return t;
+}
 function buildHouseShell() {
   if (SHELL.g) return; const P = new THREE.Group(); P.name = 'houseShell'; scene.add(P); SHELL.g = P;
   const pitch = Math.tan(26 * Math.PI / 180);
@@ -42,6 +53,7 @@ function buildHouseShell() {
   const gutM = new THREE.MeshStandardMaterial({ color: 0xe8e8e4, roughness: .45, metalness: .1 });
   const brick = new THREE.MeshStandardMaterial({ ...genBrick(), roughness: .9 });
   const o = { parent: P, col: false };
+  const capM = new THREE.MeshStandardMaterial({ map: genCapTex(), color: 0x8a8580, roughness: .9 });
   // ---------- the house: hipped roof (walls x -330…912, z -262…262, top 552) ----------
   { const a0 = -358, a1 = 940, b0 = -290, b1 = 290, W = 552, E = W - 28 * pitch, R = W + 262 * pitch, r0 = -330 + 262, r1 = 912 - 262;
     const A = (x, y, z) => V3(x, y, z);
@@ -50,8 +62,8 @@ function buildHouseShell() {
     polyMesh([A(a1, E, b1), A(a1, E, b0), A(r1, R, 0)], shM, V3(0, 0, 1), V3(-.899, .438, 0), 230, P);
     polyMesh([A(a0, E, b0), A(a0, E, b1), A(r0, R, 0)], shM, V3(0, 0, 1), V3(.899, .438, 0), 230, P);
     // ridge and hip caps
-    const cap = (p, q) => { const d = V3().subVectors(q, p), m = new THREE.Mesh(new THREE.BoxGeometry(9, 4, d.length()), shM); m.position.copy(p).add(q).multiplyScalar(.5); m.lookAt(q); m.castShadow = true; P.add(m); };
-    cap(A(r0, R + 1.5, 0), A(r1, R + 1.5, 0)); for (const [x, z, rx] of [[a0, b0, r0], [a0, b1, r0], [a1, b0, r1], [a1, b1, r1]]) cap(A(x, E + 1, z), A(rx, R + 1, 0));
+    const cap = (p, q) => { const m = capMesh(p, q, capM); P.add(m); };
+    cap(A(r0, R, 0), A(r1, R, 0)); for (const [x, z, rx] of [[a0, b0, r0], [a0, b1, r0], [a1, b0, r1], [a1, b1, r1]]) cap(A(x, E, z), A(rx, R, 0));
     // fascia round the eaves, soffit underneath
     box(a0, a1, E - 14, E, b1, b1 + 3, trim, o); box(a0, a1, E - 14, E, b0 - 3, b0, trim, o); box(a0 - 3, a0, E - 14, E, b0, b1, trim, o); box(a1, a1 + 3, E - 14, E, b0, b1, trim, o);
     box(a0, a1, E - 14, E - 12, 262, b1, soffit, o); box(a0, a1, E - 14, E - 12, b0, -262, soffit, o); box(912, a1, E - 14, E - 12, -262, 262, soffit, o);
@@ -71,7 +83,7 @@ function buildHouseShell() {
   { const x0 = 914, x1 = 1478, z0 = -290, z1 = 332, zm = 21, W = 270, E = W - 20 * pitch, R = W + 291 * pitch, A = (x, y, z) => V3(x, y, z);
     polyMesh([A(x0, E, z1), A(x1, E, z1), A(x1, R, zm), A(x0, R, zm)], shM, V3(1, 0, 0), V3(0, .438, -.899), 230, P);
     polyMesh([A(x1, E, z0), A(x0, E, z0), A(x0, R, zm), A(x1, R, zm)], shM, V3(1, 0, 0), V3(0, .438, .899), 230, P);
-    { const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, 4, 9), shM); m.position.set((x0 + x1) / 2, R + 1.5, zm); P.add(m); }
+    P.add(capMesh(A(x0, R, zm), A(x1, R, zm), capM));
     // the gable: siding triangle on the yard wall, with a round louvred attic vent
     { const pts = [A(1460, W, -270), A(1460, W, 312), A(1460, R - 6, zm)], pos = [], uv = [];
       for (const p of pts) { pos.push(p.x, p.y, p.z); uv.push(p.z / 120, p.y / 120); }
@@ -111,4 +123,4 @@ function garageBlindWindow() {
   box(1448, 1452, y1, y1 + 6, z0 - 8, z1 + 8, trim, { col: false }); box(1448, 1452, y0, y1, z0 - 8, z0, trim, { col: false }); box(1448, 1452, y0, y1, z1, z1 + 8, trim, { col: false });
   box(1449, 1451, y1 + 6, y1 + 10, z0 - 4, z1 + 4, new THREE.MeshStandardMaterial({ color: 0xd8d4cc, roughness: .5 }), { col: false });   // the blind's head rail
 }
-function houseShellTick() { if (SHELL.g) SHELL.g.visible = !!(ZONES.yard.near || ZONES.road.near); }
+function houseShellTick() { if (SHELL.g) SHELL.g.visible = !!(ZONES.yard.near || ZONES.road.near || (ZONES.roof && ZONES.roof.near)); }

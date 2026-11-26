@@ -783,6 +783,7 @@ LEVELS.kitchen = {
   detect: detectKitchen,
   update(dt) {
     lvT += dt; updKitchenPlayer(dt); updCookie(); hxTick(dt); upTick(dt); mpChecklist();
+    if (KS.ch3 && !KS.mp && QUESTS === SP_Q2B && quest === 0 && STATE === 'play' && leader.pos.y > UPS.y - 2 && leader.pos.x > 312 && leader.pos.x < 900 && Math.abs(leader.pos.z) < 232) { setQuest(1); roomBanner('女兒房'); setTimeout(() => say('爸爸', '衣櫃頂……天花嗰度就係閣樓活門。', '#f5f0e6', 3), 1200); }
     scheduleLines(KS.mp ? KLINES_MP : KLINES_SP, dt);
     if (rnd() < dt * .75) { emit(KS.tap, V3(0, -2, 0), new THREE.Color(.5, .62, .7), .35, .9, 300, 0); setTimeout(() => { if (ZONES.kitchen.near) { for (let i = 0; i < 4; i++) emit(V3(-100, 68.9, -193), V3(R(-6, 6), R(5, 12), R(-6, 6)), new THREE.Color(.5, .62, .72), .2, .35, 200, 1); if (leader.pos.distanceTo(V3(-100, 68, -193)) < 120) SND.drip(); } }, 420); }
   },
@@ -803,7 +804,7 @@ LEVELS.kitchen = {
   marker() {
     const t = toyMarker(); if (t) return t;
     if (KS.mp) return mpMarker();
-    if (KS.ch3) return V3(896, 6, -200);
+    if (KS.ch3) { const L = leader; if (quest === 0) return L.pos.y < 150 ? V3(788, 2, -250) : V3(866, UPS.y + 2, -238); return L.pos.y < UPS.y + 195 ? V3(880, UPS.y + 202, 140) : RF.cordP.clone().add(V3(0, 4, 0)); }
     if (KS.ch2) return quest === 0 ? V3(LIV.wedge.cx, 4, LIV.wedge.cz) : (LIV.remoteGot ? null : V3(LIV.remote.cx, 46, LIV.remote.cz));
     if (KS.coreDrop) return KS.coreDrop; return quest >= 2 ? STATIC.home : (KS.coreGot ? null : V3(212, 2, -194));
   },
