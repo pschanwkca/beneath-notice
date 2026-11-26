@@ -111,12 +111,12 @@ function buildBathroom(K) {
   box(d0, d1, 0, .8, -244, -230, new THREE.MeshPhysicalMaterial({ color: 0xe9e6de, roughness: .25, clearcoat: .6 }), { cast: false });   // marble threshold
   box(x0 - 12, x1 + 12, 0, ceil + 10, z0 - 12, z0, M.paint, { uv: 120 });
   box(x0 - 12, x0, 0, ceil + 10, z0, -232, M.paint, { uv: 120 }); box(x1, x1 + 12, 0, ceil + 10, z0, -244, M.paint, { uv: 120 });
-  box(x0, d0, 0, ceil + 10, -244, -232, M.paint, { uv: 120 }); box(d1, 312, 0, ceil + 10, -244, -232, M.paint, { uv: 120 }); box(d0, d1, 205, ceil + 10, -244, -232, M.paint, { uv: 120 });
+  box(x0, 196, 0, ceil + 10, -244, -232, M.paint, { uv: 120 }); box(206, d0, 0, ceil + 10, -244, -232, M.paint, { uv: 120 }); box(196, 206, 8, ceil + 10, -244, -232, M.paint, { uv: 120 }); box(d1, 312, 0, ceil + 10, -244, -232, M.paint, { uv: 120 }); box(d0, d1, 205, ceil + 10, -244, -232, M.paint, { uv: 120 });
   box(x0 - 12, 348, ceil, ceil + 10, z0 - 12, -232, M.paint, { cast: false }); box(372, x1 + 12, ceil, ceil + 10, z0 - 12, -232, M.paint, { cast: false });
   box(348, 372, ceil, ceil + 10, z0 - 12, -330, M.paint, { cast: false }); box(348, 372, ceil, ceil + 10, -308, -232, M.paint, { cast: false });
   // white tiles up to shoulder height, a narrow trim on top
   const tl = (a0, a1, b, axis) => axis === 'z' ? box(a0, a1, 0, 140, b - .2, b + .2, M.tile, { col: false, uv: 32, cast: false }) : box(b - .2, b + .2, 0, 140, a0, a1, M.tile, { col: false, uv: 32, cast: false });
-  tl(x0, x1, z0 + .3, 'z'); tl(z0, -244, x0 + .3, 'x'); tl(z0, -244, x1 - .3, 'x'); tl(x0, d0, -244.3, 'z'); tl(d1, x1, -244.3, 'z');
+  tl(x0, x1, z0 + .3, 'z'); tl(z0, -244, x0 + .3, 'x'); tl(z0, -244, x1 - .3, 'x'); tl(x0, 196, -244.3, 'z'); tl(206, d0, -244.3, 'z'); tl(d1, 330, -244.3, 'z'); tl(340, x1, -244.3, 'z'); box(196, 206, 8, 140, -244.5, -244.1, M.tile, { col: false, cast: false }); box(330, 340, 8, 140, -244.5, -244.1, M.tile, { col: false, cast: false });
   box(x0, x1, 140, 142, z0, z0 + 1.2, M.porc, { col: false }); box(x0, x0 + 1.2, 140, 142, z0, -244, M.porc, { col: false }); box(x1 - 1.2, x1, 140, 142, z0, -244, M.porc, { col: false });
   // the door: hinged on the right, swings into the bathroom
   { const g = new THREE.Group(); g.position.set(d1 - 1, 0, -240); LV.add(g); HX.bd.g = g;
@@ -219,6 +219,44 @@ function buildDuct(K) {
   box(196, 204, 292.2, 292.6, -329, -309, new THREE.MeshStandardMaterial({ color: 0x000000, emissive: 0x9fc4ff, emissiveIntensity: 2.2 }), { col: false, cast: false });
 }
 
+// ---------- secret passages: mouse holes in the walls, and a vent up into the duct ----------
+//  · behind the fridge: a mouse hole through the back wall into the bathroom (open both ways)
+//  · bathroom → living room: a mouse hole whose living-room end is hidden behind a skirting vent cover;
+//    you can only unclip it from the living-room side — once open it's a shortcut both ways
+//  · over the fish tank: a vent in the living room's far wall, its cover hanging off one screw; climb
+//    into it from the tank's lid and up the shaft into the ceiling duct
+//  · single player: the rusted living-room vent can be pushed open from the garage end of its duct
+function mouseArch(x, y0, z, dir, mat, w = 10, h = 8) {
+  // the wall over the hole's top corners, so the hole reads as an arch
+  const r = w / 2, sh = new THREE.Shape(); sh.moveTo(-r, h - r); sh.absarc(0, h - r, r, Math.PI, 0, true); sh.lineTo(r, h); sh.lineTo(-r, h); sh.lineTo(-r, h - r);
+  const m = mesh(new THREE.ShapeGeometry(sh, 16), mat, x, y0, z + dir * .06, { cast: false }); if (dir < 0) m.rotation.y = Math.PI; m.material.side = THREE.DoubleSide;
+  // a dark mouth: the tunnel's back lies in shadow
+  const d = mesh(new THREE.PlaneGeometry(w - .2, h - .2), new THREE.MeshBasicMaterial({ color: 0x0b0806, transparent: true, opacity: .55, depthWrite: false }), x, y0 + (h - .2) / 2, z - dir * 2.5, { cast: false }); if (dir < 0) d.rotation.y = Math.PI;
+  return m;
+}
+function buildPassages(K) {
+  const bm = bathMats(K), wallM = new THREE.MeshStandardMaterial({ color: 0xd9cbb5, roughness: .95, map: K.wall.map || null });
+  // behind the fridge ↔ bathroom
+  mouseArch(201, 0, -220, 1, K.wall); mouseArch(201, 0, -244, -1, bm.tile);
+  // bathroom ↔ living room (the cover is on the living-room side)
+  mouseArch(335, 0, -244, -1, bm.tile); mouseArch(335, 0, -232, 1, wallM);
+  { const g = new THREE.Group(); g.position.set(335, 0, -231.2); LV.add(g); const wm = new THREE.MeshStandardMaterial({ color: 0xf1ede6, roughness: .5 });
+    mesh(new THREE.BoxGeometry(13, 9.5, .8), wm, 0, 4.75, 0, { parent: g }); for (let i = 0; i < 4; i++) mesh(new THREE.BoxGeometry(10, .7, .5), new THREE.MeshStandardMaterial({ color: 0x8a847a, roughness: .7 }), 0, 1.8 + i * 1.9, .45, { parent: g, cast: false });
+    HX.mhc = { g, col: { t: 'b', x0: 328.5, x1: 341.5, y0: 0, y1: 9.5, z0: -232, z1: -230.6, slick: true } }; cols.push(HX.mhc.col); }
+  // the vent over the fish tank
+  { const fm = new THREE.MeshStandardMaterial({ color: 0xe9e6e0, roughness: .45 });
+    box(648, 668, 198, 200, -232, -231, fm, { col: false }); box(648, 668, 224, 226, -232, -231, fm, { col: false }); box(648, 650, 198, 226, -232, -231, fm, { col: false }); box(666, 668, 198, 226, -232, -231, fm, { col: false });
+    const cg = new THREE.Group(); cg.position.set(649.5, 224.5, -230.6); cg.rotation.z = -.95; LV.add(cg); HX.ventCover = cg;   // hanging off its one remaining screw
+    mesh(new THREE.BoxGeometry(18, 25, .7), fm, 9, -12.5, 0, { parent: cg }); for (let i = 0; i < 7; i++) mesh(new THREE.BoxGeometry(15, .8, .6), new THREE.MeshStandardMaterial({ color: 0x9a948a, roughness: .6 }), 9, -3 - i * 3.2, .3, { parent: cg, cast: false });
+    mesh(new THREE.CylinderGeometry(.7, .7, .6, 8), new THREE.MeshStandardMaterial({ color: 0xb8b0a0, metalness: .7, roughness: .4 }), 649.5, 224.5, -230.4, { cast: false }).rotation.x = Math.PI / 2;
+    pointL(0xffc890, 14, 658, 248, -238);   // a little warm light falls down the shaft from the duct
+    mesh(new THREE.PlaneGeometry(16, 30), new THREE.MeshBasicMaterial({ color: 0x0b0806, transparent: true, opacity: .6, depthWrite: false }), 658, 215, -239.9, { cast: false }); }   // the shaft's depths   // a little warm light falls down the shaft from the duct
+}
+// the passages' own switches (only players use them; the family doesn't notice) — added with the house's switches
+function hxPassageSwitches() {
+  hxAdd({ id: 'mhcover', name: '踢腳線蓋', kind: 'cover', p: V3(335, 4, -226), r: 7, once: true, quiet: true, verb: ['拆開踢腳線蓋', '拆開踢腳線蓋'] });
+  hxAdd({ id: 'gvent', name: '通風口蓋（由呢邊推開）', kind: 'cover', lv: 'any', sp: true, p: V3(903, 12, -200), r: 8, once: true, quiet: true, verb: ['推開通風口蓋', '推開通風口蓋'] });
+}
 // ---------- switches, taps and fans ----------
 function hxAdd(o) { o.i = HX.list.length; o.on = !!o.on; o.def = o.on; o.r = o.r || 8; HX.list.push(o); HX.id[o.id] = o; return o; }
 function buildHouseSwitches(K) {
@@ -241,6 +279,7 @@ function buildHouseSwitches(K) {
   // the pulsing ring that shows a switch is in reach
   const rg = new THREE.Mesh(new THREE.RingGeometry(2.6, 3.2, 40), new THREE.MeshBasicMaterial({ color: new THREE.Color(0x82ece6).multiplyScalar(1.6), transparent: true, opacity: .8, side: THREE.DoubleSide, depthWrite: false, depthTest: false }));
   rg.renderOrder = 10; rg.visible = false; scene.add(rg); HX.ring = rg;
+  hxPassageSwitches();
   for (const o of HX.list) hxApply(o, true);
 }
 // what being on or off looks like (runs on everyone; quiet = no sound)
@@ -253,6 +292,8 @@ function hxApply(o, quiet) {
   if (o.id === 'hood' && HX.hood) HX.hood.col.y0 = o.on ? HX.hood.y[0] : -999, HX.hood.col.y1 = o.on ? HX.hood.y[1] : -998;
   if (o.id === 'gstrip' && !o.on && !quiet && !NET.client) toastW('監視鏡頭斷了電——它現在甚麼都看不到', 3);
   if (o.id === 'blight' && HX.bfan) HX.bfan.col.y0 = o.on ? HX.bfan.y[0] : -999, HX.bfan.col.y1 = o.on ? HX.bfan.y[1] : -998;
+  if (o.id === 'mhcover' && HX.mhc) { const g = HX.mhc.g; if (o.on) { g.position.set(346, .4, -225); g.rotation.set(-Math.PI / 2, 0, .4); HX.mhc.col.y0 = -999; HX.mhc.col.y1 = -998; if (!quiet) toastW('踢腳線蓋拆開咗——後面個老鼠窿通去廁所', 2.6); } }
+  if (o.id === 'gvent' && o.on && !LIV.ventOpen) { ventOpen(); if (!quiet) toastW('通風口蓋推開咗——客廳同車房而家打通咗', 2.6); }
   if (!quiet) { SND.snap && SND.snap(); if (o.kind === 'flush') hxFlushSnd(o.p); }
 }
 // someone pressed it: players ask the host; the family calls this directly on the host
@@ -260,7 +301,7 @@ function hxSet(o, on, by) {
   if (!o) return; if (o.oneShot) { HX.flushT = 3.6; hxApply(o); if (!NET.client) hxFlushed(); }
   else { if (o.on === on) return; o.on = on; hxApply(o); }
   if (NET.on && NET.host) nsend({ t: 'hxs', i: o.i, on: o.on ? 1 : 0, f: o.oneShot ? 1 : 0 });
-  if (!NET.client && isPlayerId(by)) { if (o.lv === 'garage') agentIncident(o.id, o.on); else if (o.lv === 'yard') oldIncident(o.id, o.on); else brainIncident(o.id, o, on, by); }
+  if (!NET.client && isPlayerId(by) && !o.quiet) { if (o.lv === 'garage') agentIncident(o.id, o.on); else if (o.lv === 'yard') oldIncident(o.id, o.on); else brainIncident(o.id, o, on, by); }
 }
 function isPlayerId(by) { return !!(by && chars[by]); }
 function hxRequest(o, C) {
@@ -273,7 +314,7 @@ function hxState() { return HX.list.map(o => o.on ? 1 : 0).join('') + '|' + HX.w
 function hxRecvState(s) { if (!s) return; const [f, w, d] = s.split('|'); [...f].forEach((c, i) => { const o = HX.list[i]; if (o && !o.oneShot && o.on !== (c === '1')) { o.on = c === '1'; hxApply(o, true); } }); HX.water = +w; HX.bd.tgt = +d; }
 function hxNear(C) {
   if (!C || !HX.list.length) return null; const cx = C.pos.x, cy = C.pos.y + C.h * .5, cz = C.pos.z; let best = null, bd = 1e9;
-  for (const o of HX.list) { if ((o.lv || 'kitchen') !== LEVEL) continue; const d = Math.hypot(o.p.x - cx, o.p.y - cy, o.p.z - cz); if (d < o.r && d < bd) { bd = d; best = o; } }
+  for (const o of HX.list) { if (o.lv !== 'any' && (o.lv || 'kitchen') !== LEVEL) continue; if (o.once && o.on) continue; if (o.sp && (NET.on || (o.id === 'gvent' && LIV.ventOpen))) continue; const d = Math.hypot(o.p.x - cx, o.p.y - cy, o.p.z - cz); if (d < o.r && d < bd) { bd = d; best = o; } }
   return best;
 }
 function hxInput(L, ctl) { if (!ctl || !pressed.KeyE || STATE !== 'play') return false; const o = hxNear(L); if (!o) return false; hxRequest(o, L); return true; }
@@ -328,6 +369,8 @@ function hxTick(dt) {
   const hood = HX.id.hood, bl = HX.id.blight, tap = HX.id.tap;
   if (HX.hood) HX.hood.g.rotation.y += dt * (hood.on ? 26 : 0);
   if (HX.bfan) HX.bfan.g.rotation.y += dt * (bl.on ? 22 : 0);
+  // up the vent shaft over the fish tank: pull yourself over its lip into the duct
+  for (const C of party) if (C.climbing && !C.mantle && C.climbDir > 0 && C.pos.y > 257 && C.pos.y < 270 && C.pos.x > 648 && C.pos.x < 668 && C.pos.z > -246 && C.pos.z < -230) { C.climbing = false; C.leap = null; C.mantle = { from: C.pos.clone(), to: V3(658, 270.1, -225), t: 0, dur: .55 }; if (C === leader) toast('入咗天花風槽', 1.8); }
   if (HX.heat) { HX.heat.material.map.offset.y -= dt * .55; HX.heat.material.map.offset.x = Math.sin(T * .7) * .04; }
   if (HX.bcord) for (const C of party) {
     if (!C.climbing || C.climbC !== HX.bcord) { C.bcordPull = false; continue; }

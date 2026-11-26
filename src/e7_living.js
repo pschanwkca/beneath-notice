@@ -13,12 +13,13 @@ function buildLivingRoom(K) {
   const wallM = new THREE.MeshStandardMaterial({ color: 0xd9cbb5, roughness: .95, map: K.wall.map || null });
   const floorM = new THREE.MeshStandardMaterial({ color: 0x8a5c3a, roughness: .7, map: K.floor.map || null });
   box(X0 - 2, X1 + 12, -10, 0, -240, 240, floorM, { uv: 140, cast: false });
-  box(X0 - 2, X1 + 12, 260, 270, -240, 240, K.ceil, { cast: false });
-  box(X0, 748, 0, 260, -244, -232, wallM, { uv: 120 }); box(828, X1 + 12, 0, 260, -244, -232, wallM, { uv: 120 }); box(748, 828, 205, 260, -244, -232, wallM, { uv: 120 }); // far wall (a doorway to the stairs); the vent near the floor leads through a duct into the garage
+  box(X0 - 2, 650, 260, 270, -240, 240, K.ceil, { cast: false }); box(666, X1 + 12, 260, 270, -240, 240, K.ceil, { cast: false }); box(650, 666, 260, 270, -232, 240, K.ceil, { cast: false });
+  box(X0, 330, 0, 260, -244, -232, wallM, { uv: 120 }); box(340, 650, 0, 260, -244, -232, wallM, { uv: 120 }); box(666, 748, 0, 260, -244, -232, wallM, { uv: 120 }); box(330, 340, 8, 260, -244, -232, wallM, { uv: 120 });
+  box(650, 666, 0, 200, -244, -232, wallM, { uv: 120 }); box(650, 666, 200, 270, -244, -240, wallM, { uv: 120 }); box(650, 666, 224, 260, -236, -232, wallM, { uv: 120 });   // the vent shaft over the fish tank, up into the duct box(828, X1 + 12, 0, 260, -244, -232, wallM, { uv: 120 }); box(748, 828, 205, 260, -244, -232, wallM, { uv: 120 }); // far wall (a doorway to the stairs); the vent near the floor leads through a duct into the garage
   box(X1, X1 + 12, 0, 260, -232, -214, wallM, { uv: 120 }); box(X1, X1 + 12, 0, 260, -186, 232, wallM, { uv: 120 }); box(X1, X1 + 12, 0, 4, -214, -186, wallM, { uv: 120 }); box(X1, X1 + 12, 24, 260, -214, -186, wallM, { uv: 120 });
   // front wall with the window opening (x 700–850, y 100–210)
   box(X0, 700, 0, 260, 232, 244, wallM, { uv: 120 }); box(850, X1 + 12, 0, 260, 232, 244, wallM, { uv: 120 }); box(700, 850, 0, 100, 232, 244, wallM, { uv: 120 }); box(700, 850, 210, 260, 232, 244, wallM, { uv: 120 });
-  box(X0, 744, 0, 9, -232, -230.5, M.white, { col: false }); box(832, X1, 0, 9, -232, -230.5, M.white, { col: false }); box(X0, X1, 0, 9, 230.5, 232, M.white, { col: false }); box(X1 - 1.5, X1, 0, 9, -230, 230, M.white, { col: false });
+  box(X0, 330, 0, 9, -232, -230.5, M.white, { col: false }); box(340, 744, 0, 9, -232, -230.5, M.white, { col: false }); box(832, X1, 0, 9, -232, -230.5, M.white, { col: false }); box(X0, X1, 0, 9, 230.5, 232, M.white, { col: false }); box(X1 - 1.5, X1, 0, 9, -230, 230, M.white, { col: false });
   // the door: hinged at z=40, closes towards z=-60, swings into the kitchen
   const dg = new THREE.Group(); dg.position.set(300, 0, 40); LV.add(dg); LIV.door = dg;
   const dm = new THREE.MeshPhysicalMaterial({ color: 0xf0ebe2, roughness: .55, clearcoat: .2 });

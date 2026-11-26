@@ -287,7 +287,7 @@ function updClimb(C, dt, inX, inY, ctl, run) {
     else { leaping = true; sp = 2 * L.d / LEAP.dur * (1 - k); inX = L.x; inY = L.y; } }   // fast at first, easing off: covers L.d in LEAP.dur
   let sx = n.z, sz = -n.x; if (sx * Math.cos(cam.yaw) + sz * -Math.sin(cam.yaw) < 0) { sx = -sx; sz = -sz; }
   if (leaping) { if (C.leap.sx === undefined) { C.leap.sx = sx; C.leap.sz = sz; } sx = C.leap.sx; sz = C.leap.sz; }   // a sideways leap keeps the side it started on
-  const moving = inX !== 0 || inY !== 0;
+  const moving = inX !== 0 || inY !== 0; C.climbDir = inY;
   if (C.id !== 'gecko' && !leaping) C.stamina -= (moving ? (run ? 11 : 5.4) : 1.8) * (grip ? .55 : 1) * dt;
   if (C.stamina <= 0) { C.stamina = 0; detach(C, .4, 0); toast('體力用完了，先找個地方站穩休息'); return; }
   const ox = C.pos.x, oz = C.pos.z;

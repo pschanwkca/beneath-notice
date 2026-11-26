@@ -341,7 +341,7 @@ function buildKitchen() {
   box(-312, 330, -10, 0, -240, 240, K.floor, { uv: 140, cast: false });
   // ceiling (with the hole the hood's chimney goes up through)
   box(-330, 16, 260, 270, -240, 240, K.ceil, { cast: false }); box(60, 330, 260, 270, -240, 240, K.ceil, { cast: false }); box(16, 60, 260, 270, -240, -218, K.ceil, { cast: false }); box(16, 60, 260, 270, -198, 240, K.ceil, { cast: false });
-  box(-312, -150, 0, 260, -232, -220, K.wall, { uv: 120 }); box(-50, 236, 0, 260, -232, -220, K.wall, { uv: 120 }); box(298, 312, 0, 260, -232, -220, K.wall, { uv: 120 }); box(236, 298, 205, 260, -232, -220, K.wall, { uv: 120 });
+  box(-312, -150, 0, 260, -232, -220, K.wall, { uv: 120 }); box(-50, 196, 0, 260, -232, -220, K.wall, { uv: 120 }); box(206, 236, 0, 260, -232, -220, K.wall, { uv: 120 }); box(196, 206, 8, 260, -232, -220, K.wall, { uv: 120 });   // (a mouse hole behind the fridge, through to the bathroom) box(298, 312, 0, 260, -232, -220, K.wall, { uv: 120 }); box(236, 298, 205, 260, -232, -220, K.wall, { uv: 120 });
   box(-150, -50, 0, 110, -232, -220, K.wall, { uv: 120 }); box(-150, -50, 190, 260, -232, -220, K.wall, { uv: 120 });
   // (the back wall has the bathroom door in it, between the fridge and the living-room wall)
   box(-312, 312, 0, 260, 220, 232, K.wall, { uv: 120 }); box(300, 312, 0, 260, -232, -62, K.wall, { uv: 120 }); box(300, 312, 0, 260, 44, 232, K.wall, { uv: 120 }); box(300, 312, 212, 260, -62, 44, K.wall, { uv: 120 });
@@ -754,7 +754,7 @@ LEVELS.kitchen = {
   build() {
     buildKitchen(); buildKid(); buildCat(); buildToyBin(); LEVELS.kitchen.updrafts = [{ x: 57, z: -205, r: 11, y0: 88.5, y1: 178, fx: 14, all: true, hot: true }, buildVent()];
     addVial(-128, 13, -200); addVial(170, 184, -168); addVial(70, 88.5, -215); for (const p of [[-120, 0, 70], [-70, 0, 100], [20, 0, -146], [-30, 91.8, -182], [246, 1.2, 122]]) addCrumb(...p);
-    buildLivingRoom(kitchenMats()); buildHouseSwitches(kitchenMats()); buildUpstairs(kitchenMats());
+    buildLivingRoom(kitchenMats()); buildPassages(kitchenMats()); buildHouseSwitches(kitchenMats()); buildUpstairs(kitchenMats());
     // online co-op: the three machine parts
     addPart(44, 88.5, -212, 'spring'); addPart(205, 110, -464, 'lens'); addPart(-112, 13, -186, 'cap');
   },
@@ -822,6 +822,9 @@ LEVELS.kitchen = {
     if (hood && L.pos.x > -2 && L.pos.x < 78 && L.pos.z > -220 && L.pos.z < -172 && L.pos.y > 157 && L.pos.y < 186) return hood.on ? '抽油煙機開住，風扇擋住煙囱。行去右邊撳「用」熄咗佢' : '貼住後面嘅牆向上爬，煙囱上面就係天花風槽';
     if (hood && !L.climbing && L.pos.y > 82 && L.pos.y < 100 && Math.hypot(L.pos.x - 57, L.pos.z + 205) < 55) return '後面著緊火嘅細爐頭有熱風：行入去，熱風會托你上抽油煙機';
     if (bl && L.pos.y < 120 && L.pos.x > 150 && L.pos.x < 460 && L.pos.z > -470 && L.pos.z < -244 && Math.hypot(L.pos.x - 366, L.pos.z + 312) < 60 && !L.climbing) return bl.on ? '抽氣扇轉緊。捉住條拉繩一拉，燈同扇都會熄' : '跳入洗衣籃，捉住抽氣扇條拉繩爬上天花風槽';
+    const mh = HX.id.mhcover;
+    if (mh && !mh.on && L.pos.y < 9 && L.pos.x > 326 && L.pos.x < 344 && L.pos.z > -248 && L.pos.z < -233) return '另一邊有塊踢腳線蓋擋住——要由客廳嗰邊拆開';
+    if (!L.climbing && L.pos.y > 140 && L.pos.y < 150 && L.pos.x > 618 && L.pos.x < 722 && L.pos.z > -232 && L.pos.z < -184) return '牆上個通風口個蓋甩咗——爬上去，入面條槽通上天花風槽';
     if (TOUCH) return '';
     if (L.id === 'bear' && !KS.said.bearhint && L.pos.y > 80) { return '熊可以把檯面上的瓶子推下去，製造聲音引開別人'; }
     return '';
