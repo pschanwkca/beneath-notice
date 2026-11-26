@@ -213,6 +213,7 @@ function updLeader(C, dt) {
     return;
   }
   if (C.zip) { updZip(C, dt); return; }
+  if (C.line) { lineRide(C, dt, ctl); return; }
   if (C.climbing) { updClimb(C, dt, inX, inY, ctl, mv.run); return; }
   if (C.roost) { updRoost(C, dt, wx, wz, wl, ctl); return; }
   if (C.dig) { moleDigUpd(C, dt, wx, wz, ctl); return; }
@@ -597,7 +598,7 @@ function fail() {
 function respawn() {
   stkClear(); toyUnfreezeAll();
   if (NET.on) for (const C of party) { C.owner = C.baseOwner; C.carried = false; C.carry = null; }
-  const p = CPS[cp] || CPS[0]; const L = leader; const off = NET.on ? IDS.indexOf(L.id) * 3 : 0; L.pos.set(p[0] + off, p[1], p[2]); L.vel.set(0, 0, 0); L.climbing = false; L.mantle = null; L.tumble = 0; L.grounded = true; L.crouch = false;
+  const p = CPS[cp] || CPS[0]; const L = leader; const off = NET.on ? IDS.indexOf(L.id) * 3 : 0; L.pos.set(p[0] + off, p[1], p[2]); L.vel.set(0, 0, 0); L.climbing = false; L.mantle = null; L.line = null; L.tumble = 0; L.grounded = true; L.crouch = false;
   let i = 0; for (const F of party) if (F !== L && mine(F)) { i = NET.on ? IDS.indexOf(F.id) : i + 1; F.pos.set(p[0] + i * (cp === 1 ? 3.4 : 2.6), p[1], p[2] + (cp === 1 ? 0 : i * 2.2)); F.queue = []; F.qst = 'idle'; F.state = 'idle'; F.disp.copy(F.pos); F.offK = 0; }
   trail = []; L.lastTrail.copy(L.pos); meter = 0; LVL.reset(); cam.tgt.copy(L.pos);
 }
@@ -842,7 +843,7 @@ function update(dt) {
     if (!lockL) pushTrail(leader); for (const F of party) if (F !== leader && !F.on && !F.hop && !F.drop && !F.frozen && !F.carried && !F.ptw && mine(F) && !isBase(F)) updFollower(F, leader, dt);
     updCarry(dt); updTongueAim(); updVentFx(dt);
     stackScan(dt);
-    updAim(); LVL.detect(dt); if (!NET.client) updCheckpoints(); LVL.update(dt); looseTick(dt); humanTick(dt); if (!NET.client) LVL.win();
+    updAim(); LVL.detect(dt); if (!NET.client) updCheckpoints(); LVL.update(dt); looseTick(dt); humanTick(dt); backTick(dt); if (!NET.client) LVL.win();
     cellT += dt; if (cells < cellMax && cellT > 10) { cells++; cellT = 0; } if (cells >= cellMax) cellT = 0;
     updCam(dt); hideOccluders();
     if (meter > .4 && Math.floor((T - dt) * (1 + meter * 1.5)) !== Math.floor(T * (1 + meter * 1.5))) SND.heart(meter);

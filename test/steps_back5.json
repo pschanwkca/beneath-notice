@@ -1,0 +1,6 @@
+[{"eval": "window.__bn.startChapter2(); 1"}, {"wait": 6000},
+ {"eval": "(()=>{const B=window.__bn,L=B.leader; window.__NODET=true; B.toyUnfreezeAll(); B.state='play'; const S=B.BK.store[0], o=B.LOOSE[S.i]; const t0=o.type; L.pos.set(o.p.x+1,0.05,o.p.z); B.step(5); B.looseInput(L); const held=!!B.looseHeld(L); B.useHeld(L); const st1=o.st; L.pos.set(100,0,-560); B.step(2800); return {t0, held, st1, st2:o.st, at:o.p.toArray().map(v=>+v.toFixed(0)), home:S.home.toArray()}; })()"},
+ {"eval": "(()=>{const B=window.__bn,L=B.leader; const o=B.LOOSE.find(q=>q.type==='marble'&&q.st==='ground'&&q.p.x>500); L.pos.set(o.p.x,0,o.p.z+2); L.vel.set(0,0,0); B.step(3); B.looseInput(L); const h=B.looseHeld(L); L.yaw=Math.PI; B.cam.yaw=0; B.cam.pitch=.1; const p0=L.pos.clone(); B.useHeld(L); let n=0; for(let i=0;i<300;i++){ B.step(1); } return {held:!!h, st:o.st, dist:+Math.hypot(o.p.x-p0.x,o.p.z-p0.z).toFixed(0), at:o.p.toArray().map(v=>+v.toFixed(0))}; })()"},
+ {"eval": "(()=>{const B=window.__bn,L=B.leader; const q0=B.quest; L.pos.set(578,0,-200); L.vel.set(0,0,0); B.step(20); return {q0, q1:B.quest, backLiv:B.KS.backLiv, open:B.W.LEVELS ? 1:0}; })()"},
+ {"eval": "(()=>{const B=window.__bn; const on=B.NET.on; B.NET.on=true; B.step(120); const r=+B.bDoor.rotation.y.toFixed(2); B.NET.on=on; return r; })()"}
+]

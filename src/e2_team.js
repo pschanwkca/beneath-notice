@@ -44,7 +44,7 @@ function towerSize(C) { let n = 1, t = towerBottom(C), g = 0, k; while ((k = isB
 function topPos(B) { return V3(B.pos.x, B.pos.y + B.h * STK_ON, B.pos.z); }
 function stkClear() { for (const C of party) { C.on = null; C.hop = null; C.drop = false; C.pullT = 0; } }
 function stackPress() {
-  const L = leader; if (STATE !== 'play' || L.frozen || !mine(L) || L.hop || L.mantle || L.zip || L.tumble > 0 || L.roost || L.shell) return;
+  const L = leader; if (STATE !== 'play' || L.frozen || !mine(L) || L.hop || L.mantle || L.zip || L.line || L.tumble > 0 || L.roost || L.shell) return;
   if (L.carry) sqDrop(L);
   if (L.on) { stackOff(L); return; }
   if (isBase(L)) { toast('有人企喺你頭上，要佢哋先落嚟'); return; }

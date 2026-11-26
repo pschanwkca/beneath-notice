@@ -274,7 +274,11 @@ const LOOSE_T = {
   button: { name: '鈕扣', desc: '掟出去：跌落地嗰度會響，引人過去', use: '掟', throw: true,
     svg: '<circle cx="20" cy="20" r="13"/><circle cx="20" cy="20" r="9"/><circle cx="16.5" cy="16.5" r="1.6"/><circle cx="23.5" cy="16.5" r="1.6"/><circle cx="16.5" cy="23.5" r="1.6"/><circle cx="23.5" cy="23.5" r="1.6"/>' },
   sugar: { name: '方糖', desc: '食咗：體力即刻滿返，上限都補返啲', use: '食', food: true,
-    svg: '<path d="M8 14l12-6 12 6v13l-12 6-12-6z"/><path d="M8 14l12 6 12-6M20 20v13"/>' }
+    svg: '<path d="M8 14l12-6 12 6v13l-12 6-12-6z"/><path d="M8 14l12 6 12-6M20 20v13"/>' },
+  raisin: { name: '提子乾', desc: '食咗：體力回返一半', use: '食', food: true, half: true,
+    svg: '<ellipse cx="20" cy="20" rx="12" ry="9"/><path d="M11 18c3 2 6-2 9 0s6 2 9-1M12 23c3 1 6-1 9 1s5 1 7-1"/>' },
+  marble: { name: '波子', desc: '掟出去：落地之後會一路碌、一路響，引人行遠啲', use: '掟', throw: true, roll: true,
+    svg: '<circle cx="20" cy="20" r="12"/><path d="M11 23c4-7 10 3 17-5M14 13c3 2 6 0 8 4"/>' }
 };
 const LOOSE = [];
 function looseMesh(type) {
@@ -284,6 +288,9 @@ function looseMesh(type) {
   else if (type === 'button') { const m = new THREE.MeshPhysicalMaterial({ color: [0xe8c25a, 0x6a3a2a, 0xf2efe6][LOOSE.length % 3], roughness: .35, clearcoat: .8 });
     const c = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.8, .6, 24), m); c.position.y = .3; g.add(c);
     for (const [x, z] of [[-.5, -.5], [.5, -.5], [-.5, .5], [.5, .5]]) { const h = new THREE.Mesh(new THREE.CircleGeometry(.22, 10), new THREE.MeshBasicMaterial({ color: 0x1a1410 })); h.rotation.x = -Math.PI / 2; h.position.set(x, .61, z); g.add(h); } }
+  else if (type === 'raisin') { const c = new THREE.Mesh(new THREE.DodecahedronGeometry(1.15, 1), new THREE.MeshPhysicalMaterial({ color: 0x4a2230, roughness: .55, clearcoat: .4 })); c.scale.set(1.25, .7, .95); c.position.y = .8; g.add(c); }
+  else if (type === 'marble') { const c = new THREE.Mesh(new THREE.SphereGeometry(1.35, 20, 14), new THREE.MeshPhysicalMaterial({ color: 0xdff2fb, roughness: .04, clearcoat: 1, transparent: true, opacity: .6 })); c.position.y = 1.35; g.add(c);
+    const s = new THREE.Mesh(new THREE.TorusGeometry(.6, .28, 8, 16), new THREE.MeshStandardMaterial({ color: [0x3a8ad8, 0xe85a4a, 0x4ab86a][LOOSE.length % 3], roughness: .3 })); s.position.y = 1.35; s.rotation.set(.7, .3, 0); g.add(s); }
   else { const c = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.4, 2.4), new THREE.MeshPhysicalMaterial({ color: 0xfbf8f2, roughness: .9, sheen: .4 })); c.position.y = 1.2; g.add(c); }
   g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.userData.noSolid = true; } });
   return g;
@@ -305,7 +312,8 @@ function looseDo(d, local) {
   else if (d.k === 'out') { o.st = 'held'; o.by = d.c; o.idle = 0; o.g.visible = true; if (local) POUCH.store = POUCH.store.filter(i => i !== o.i); }
   else if (d.k === 'drop') { o.st = 'ground'; o.by = null; o.p.fromArray(d.p); o.g.position.copy(o.p); o.g.visible = true; }
   else if (d.k === 'throw') { o.st = 'air'; o.by = null; o.p.fromArray(d.p); o.v.fromArray(d.v); o.g.visible = true; }
-  else if (d.k === 'eat') { o.st = 'gone'; o.by = null; o.g.visible = false; if (C && mine(C)) { C.stamMax = Math.min(100, (C.stamMax || 100) + 15); C.stamina = C.stamMax; } }
+  else if (d.k === 'eat') { o.st = 'gone'; o.by = null; o.g.visible = false; if (C && mine(C)) { if (LOOSE_T[o.type].half) C.stamina = Math.min(C.stamMax || 100, C.stamina + (C.stamMax || 100) * .5); else { C.stamMax = Math.min(100, (C.stamMax || 100) + 15); C.stamina = C.stamMax; } } }
+  else if (d.k === 'back') { o.st = 'ground'; o.by = null; o.v.set(0, 0, 0); o.rang = 0; o.p.fromArray(d.p); o.g.position.copy(o.p); o.g.rotation.set(0, R(0, 6.28), 0); o.g.visible = true; }
   if (local && NET.on) nsend(Object.assign({ t: 'loose' }, d));
   if (local) looseUI();
 }
@@ -331,7 +339,7 @@ function pouchTakeOut(type) {
 // your ability button while your paws are full
 function useHeld(L) {
   const h = looseHeld(L); if (!h) return false; const T2 = LOOSE_T[h.type];
-  if (T2.food) { looseDo({ k: 'eat', i: h.i, c: L.id }, true); SND.pick && SND.pick(); toast('食咗粒方糖——體力滿返', 1.8); return true; }
+  if (T2.food) { looseDo({ k: 'eat', i: h.i, c: L.id }, true); SND.pick && SND.pick(); toast(T2.half ? '食咗粒提子乾——體力回返一半' : '食咗粒方糖——體力滿返', 1.8); return true; }
   if (T2.throw) { ray.setFromCamera(_sc, camera); const d = ray.ray.direction.clone(); d.y = Math.max(d.y, -.1) + .45; d.normalize();
     const p = V3(L.pos.x + Math.sin(L.yaw) * (L.r + 1), L.pos.y + L.h * .8, L.pos.z + Math.cos(L.yaw) * (L.r + 1));
     looseDo({ k: 'throw', i: h.i, c: L.id, p: p.toArray().map(v => +v.toFixed(2)), v: d.multiplyScalar(70).toArray().map(v => +v.toFixed(2)) }, true);
@@ -346,13 +354,16 @@ function looseTick(dt) {
       if (isRoo(C) && C === leader && mine(C)) { o.idle += dt; if (o.idle > 12 && POUCH.store.length < 6) { looseDo({ k: 'pouch', i: o.i, c: C.id }, true); toast(`冇用到——${LOOSE_T[o.type].name}收返入育兒袋`, 1.8); } } }
     else if (o.st === 'air') {
       o.v.y -= 160 * dt; const nx = o.p.x + o.v.x * dt, ny = o.p.y + o.v.y * dt, nz = o.p.z + o.v.z * dt;
-      if (solidAt(nx, ny + .5, nz)) { o.v.x *= -.3; o.v.z *= -.3; }
+      if (solidAt(nx, Math.max(ny, o.p.y) + .6, nz)) { o.v.x *= -.3; o.v.z *= -.3; }   // (walls only: touching down on the floor isn't a wall)
       else { o.p.x = nx; o.p.z = nz; }
       const [sup] = supportAt(o.p.x, o.p.z, .4, o.p.y + 1); o.p.y = ny;
-      if (o.p.y <= sup) { o.p.y = sup; const hard = o.v.y < -25; o.v.y = hard ? -o.v.y * .3 : 0; o.v.x *= .5; o.v.z *= .5;
+      if (o.p.y <= sup) { o.p.y = sup; const hard = o.v.y < -25, roll = LOOSE_T[o.type].roll; o.v.y = hard ? -o.v.y * .3 : 0;
+        if (roll) { const k = hard ? .8 : Math.max(0, 1 - 1.1 * dt); o.v.x *= k; o.v.z *= k; o.rt = (o.rt || 0) + dt;   // a marble keeps rolling, ticking along the floor
+          if (o.rang && o.rt > .9 && Math.hypot(o.v.x, o.v.z) > 8) { o.rt = 0; tone(2600, 2400, .03, .03, 'triangle'); noise(o.p.clone(), .4, .2); } }
+        else { o.v.x *= .5; o.v.z *= .5; }
         if (hard || !o.rang) { tone(2200, 1800, .05, .05, 'square'); tone(1500, 1300, .07, .04, 'triangle'); }
-        if (!o.rang) { o.rang = 1; noise(o.p.clone(), .75, 1); }   // the first clatter is loud enough to be heard over the hood
-        if (Math.abs(o.v.y) < 6 && Math.hypot(o.v.x, o.v.z) < 4) { o.st = 'ground'; o.v.set(0, 0, 0); o.rang = 0; } }
+        if (!o.rang) { o.rang = 1; o.rt = 0; noise(o.p.clone(), .75, 1); }   // the first clatter is loud enough to be heard over the hood
+        if (Math.abs(o.v.y) < 6 && Math.hypot(o.v.x, o.v.z) < (roll ? 2 : 4)) { o.st = 'ground'; o.v.set(0, 0, 0); o.rang = 0; } }
       if (o.p.y < -400) { o.st = 'gone'; o.g.visible = false; }
       o.g.position.copy(o.p); o.g.rotation.x += dt * 9; }
     else if (o.st === 'ground') { o.g.rotation.x = 0; o.g.rotation.z = 0; }
@@ -362,6 +373,6 @@ function looseTick(dt) {
 // the touch buttons: 用 shows when there's something to pick up or put down; the ability button reads 掟 / 食 while holding
 function looseUI() {
   if (!TOUCH || !leader) return; const L = leader, h = looseHeld(L), tu = $('touch'); if (!tu) return;
-  const near = !h && !!looseNear(L); tu.classList.toggle('looseUse', near || !!h); tu.classList.toggle('hold', !!h);
+  const near = !h && (!!looseNear(L) || zipNear(L)); tu.classList.toggle('looseUse', near || !!h); tu.classList.toggle('hold', !!h);
   const lbl = h ? LOOSE_T[h.type].use : ''; if (tu.dataset.hold !== lbl) { tu.dataset.hold = lbl; if (h) tbLabel('tbAct', lbl); else if (typeof refreshTouchLabels === 'function') refreshTouchLabels(); }
 }

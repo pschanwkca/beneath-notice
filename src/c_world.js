@@ -304,9 +304,7 @@ function buildRoom() {
   // stairwell
   box(-205, -195, 260, 470, -262, -20, M.wall, { uv: 120 }); box(-310, -195, 260, 470, -30, -20, M.wall, { uv: 120 }); box(-310, -195, 466, 476, -262, -20, ceil);
   box(-310, -290, 260, 470, -262, -250, M.wall, { uv: 120 }); box(-215, -195, 260, 470, -262, -250, M.wall, { uv: 120 }); box(-290, -215, 455, 470, -262, -250, M.wall, { uv: 120 });
-  // upstairs hallway beyond door (warm)
-  const hall = new THREE.Mesh(new THREE.BoxGeometry(110, 220, 120), new THREE.MeshStandardMaterial({ color: 0xffd7a8, emissive: 0xffb36b, emissiveIntensity: .35, side: THREE.BackSide, roughness: 1 }));
-  hall.position.set(-252, 365, -322); LV.add(hall);
+  // (beyond the door: the landing and the back hallway, built with the kitchen — e44_back.js)
   door = new THREE.Group(); door.position.set(-290, 260, -251); LV.add(door);
   const dp = new THREE.Mesh(new THREE.BoxGeometry(75, 194, 3), new THREE.MeshStandardMaterial({ color: 0x8a7a66, roughness: .7 })); dp.position.set(37.5, 97, 0); dp.castShadow = true; door.add(dp);
   const knob = new THREE.Mesh(new THREE.SphereGeometry(2.6, 16, 12), M.brass); knob.position.set(68, 92, 3); door.add(knob);

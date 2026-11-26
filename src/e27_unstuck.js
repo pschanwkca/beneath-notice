@@ -26,7 +26,7 @@ function unRoomy(C) {     // a good place to come back to
   return true;
 }
 function unPlace(C, p) {
-  C.pos.copy(p); C.pos.y += .3; C.vel.set(0, 0, 0); C.climbing = false; C.mantle = null; C.zip = null; C.on = null; C.hop = null; C.drop = false; C.pullT = 0; C.tumble = 0; C.ptw = null;
+  C.pos.copy(p); C.pos.y += .3; C.vel.set(0, 0, 0); C.climbing = false; C.mantle = null; C.zip = null; C.line = null; C.on = null; C.hop = null; C.drop = false; C.pullT = 0; C.tumble = 0; C.ptw = null;
   C.grounded = false; C.queue = []; C.lastTrail = C.pos.clone(); if (C.disp) C.disp.copy(C.pos); UNSTK.inT[C.id] = 0;
 }
 function unPoof(p) { for (let i = 0; i < 14; i++) emit(V3(p.x, p.y + 2, p.z), V3(R(-14, 14), R(6, 22), R(-14, 14)), new THREE.Color(.55, .95, .92), R(.3, .7), R(.35, .7), 200, 1); tone(520, 880, .12, .04, 'sine'); }
@@ -62,7 +62,7 @@ function unstuck(how) {
 function unstuckTick(dt) {
   if (!WORLD || STATE !== 'play') { UNSTK.hold = 0; unChip(); return; }
   const L = leader; if (!L || !mine(L)) { unChip(); return; }
-  const free = C => !C.frozen && !C.carried && !C.climbing && !C.mantle && !C.zip && !C.on && !C.hop && !C.ptw && !C.roost && !(C.pullT > 0);
+  const free = C => !C.frozen && !C.carried && !C.climbing && !C.mantle && !C.zip && !C.line && !C.on && !C.hop && !C.ptw && !C.roost && !(C.pullT > 0);
   // remember good places to come back to
   UNSTK.t -= dt;
   if (UNSTK.t <= 0 && free(L) && L.grounded && !isBase(L) && LEVEL !== 'portal') {

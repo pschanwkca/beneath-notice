@@ -14,12 +14,12 @@ function buildLivingRoom(K) {
   const floorM = new THREE.MeshStandardMaterial({ color: 0x8a5c3a, roughness: .7, map: K.floor.map || null });
   box(X0 - 2, X1 + 12, -10, 0, -240, 240, floorM, { uv: 140, cast: false });
   box(X0 - 2, 650, 260, 270, -240, 240, K.ceil, { cast: false }); box(666, X1 + 12, 260, 270, -240, 240, K.ceil, { cast: false }); box(650, 666, 260, 270, -232, 240, K.ceil, { cast: false });
-  box(X0, 330, 0, 260, -244, -232, wallM, { uv: 120 }); box(340, 650, 0, 260, -244, -232, wallM, { uv: 120 }); box(666, 748, 0, 260, -244, -232, wallM, { uv: 120 }); box(330, 340, 8, 260, -244, -232, wallM, { uv: 120 });
+  box(X0, 330, 0, 260, -244, -232, wallM, { uv: 120 }); box(340, 540, 0, 260, -244, -232, wallM, { uv: 120 }); box(616, 650, 0, 260, -244, -232, wallM, { uv: 120 }); box(540, 616, 205, 260, -244, -232, wallM, { uv: 120 });   // (a doorway through to the utility room at the back) box(666, 748, 0, 260, -244, -232, wallM, { uv: 120 }); box(330, 340, 8, 260, -244, -232, wallM, { uv: 120 });
   box(650, 666, 0, 200, -244, -232, wallM, { uv: 120 }); box(650, 666, 200, 270, -244, -240, wallM, { uv: 120 }); box(650, 666, 224, 260, -236, -232, wallM, { uv: 120 });   // the vent shaft over the fish tank, up into the duct box(828, X1 + 12, 0, 260, -244, -232, wallM, { uv: 120 }); box(748, 828, 205, 260, -244, -232, wallM, { uv: 120 }); // far wall (a doorway to the stairs); the vent near the floor leads through a duct into the garage
   box(X1, X1 + 12, 0, 260, -232, -214, wallM, { uv: 120 }); box(X1, X1 + 12, 0, 260, -186, 232, wallM, { uv: 120 }); box(X1, X1 + 12, 0, 4, -214, -186, wallM, { uv: 120 }); box(X1, X1 + 12, 24, 260, -214, -186, wallM, { uv: 120 });
   // front wall with the window opening (x 700–850, y 100–210)
   box(X0, 700, 0, 260, 232, 244, wallM, { uv: 120 }); box(850, X1 + 12, 0, 260, 232, 244, wallM, { uv: 120 }); box(700, 850, 0, 100, 232, 244, wallM, { uv: 120 }); box(700, 850, 210, 260, 232, 244, wallM, { uv: 120 });
-  box(X0, 330, 0, 9, -232, -230.5, M.white, { col: false }); box(340, 744, 0, 9, -232, -230.5, M.white, { col: false }); box(832, X1, 0, 9, -232, -230.5, M.white, { col: false }); box(X0, X1, 0, 9, 230.5, 232, M.white, { col: false }); box(X1 - 1.5, X1, 0, 9, -230, 230, M.white, { col: false });
+  box(X0, 330, 0, 9, -232, -230.5, M.white, { col: false }); box(340, 536, 0, 9, -232, -230.5, M.white, { col: false }); box(620, 744, 0, 9, -232, -230.5, M.white, { col: false }); box(832, X1, 0, 9, -232, -230.5, M.white, { col: false }); box(X0, X1, 0, 9, 230.5, 232, M.white, { col: false }); box(X1 - 1.5, X1, 0, 9, -230, 230, M.white, { col: false });
   // the door: hinged at z=40, closes towards z=-60, swings into the kitchen
   const dg = new THREE.Group(); dg.position.set(300, 0, 40); LV.add(dg); LIV.door = dg;
   const dm = new THREE.MeshPhysicalMaterial({ color: 0xf0ebe2, roughness: .55, clearcoat: .2 });
@@ -44,9 +44,9 @@ function buildLivingRoom(K) {
   const fb = new THREE.MeshPhysicalMaterial({ color: 0xe8e2d6, roughness: .2, clearcoat: .6 });
   resGroup(cmGroup(26, 9, 26, ({ part }) => { part(new THREE.CylinderGeometry(13, 8, 9, 32, 1, true), fb, 0, 0, 0); part(new THREE.SphereGeometry(4.6, 16, 12), K.apple, -4, 2, 2); part(new THREE.SphereGeometry(4.2, 16, 12), new THREE.MeshStandardMaterial({ color: 0xf2a33a, roughness: .5 }), 4, 2.5, -2); part(new THREE.SphereGeometry(4, 16, 12), K.apple, 0, 4, 5); }, [fb]), 490, -130, 76, 26, 9, 26, .3, 4, '生果碗', true);
   // sideboard with drawers + family photos
-  const sb = new THREE.MeshStandardMaterial({ color: 0x3c2a1e, roughness: .6 }); box(360, 580, 0, 88, -230, -196, sb, { uv: 60 });
-  for (let i = 0; i < 4; i++) { const x = 368 + i * 53; box(x, x + 46, 52, 82, -196, -195, sb, { col: false }); box(x + 18, x + 28, 66, 68, -195, -192, K.brass); }
-  for (const [x, w, h, img] of [[385, 22, 28, 'photo'], [430, 18, 24, 'photo2'], [530, 26, 20, 'photo3']]) { box(x - w / 2, x + w / 2, 88, 88 + h, -224, -222, M.black); mesh(new THREE.PlaneGeometry(w - 3, h - 3), livingPhoto(img), x, 88 + h / 2, -221.8, { cast: false }); }
+  const sb = new THREE.MeshStandardMaterial({ color: 0x3c2a1e, roughness: .6 }); box(360, 530, 0, 88, -230, -196, sb, { uv: 60 });
+  for (let i = 0; i < 3; i++) { const x = 368 + i * 53; box(x, x + 46, 52, 82, -196, -195, sb, { col: false }); box(x + 18, x + 28, 66, 68, -195, -192, K.brass); }
+  for (const [x, w, h, img] of [[385, 22, 28, 'photo'], [430, 18, 24, 'photo2'], [500, 26, 20, 'photo3']]) { box(x - w / 2, x + w / 2, 88, 88 + h, -224, -222, M.black); mesh(new THREE.PlaneGeometry(w - 3, h - 3), livingPhoto(img), x, 88 + h / 2, -221.8, { cast: false }); }
   // fish tank on its stand (lid is walkable)
   const st = new THREE.MeshStandardMaterial({ color: 0x24201c, roughness: .5 }); box(620, 720, 0, 80, -228, -186, st);
   const glass = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: .02, transmission: .9, thickness: .5, transparent: true, opacity: .35, depthWrite: false });
@@ -148,12 +148,12 @@ function updLiving(dt) {
     if (STATE === 'play' && !L.frozen && mine(L) && Math.hypot(L.pos.x - p.x, L.pos.y + 1 - p.y - 2, L.pos.z - p.z) < 4) netGet('part', LIV.parts.indexOf(p)); }
   if (remoteOn() && !LIV.remoteGot && LIV.remote && !L.frozen && mine(L) && STATE === 'play') { const r = LIV.remote; if (Math.hypot(L.pos.x - r.cx, L.pos.z - r.cz) < 6 && Math.abs(L.pos.y - (r.y0 + 2)) < 5) netGet('remote'); }
 }
-function remoteOn() { return KS.mp ? LIV.open && quest <= 3 : (KS.ch2 && quest === 1); }
+function remoteOn() { return KS.mp ? (LIV.open || KS.backLiv) && quest <= 3 : (KS.ch2 && quest === 1); }
 // online chapter one: the objectives can be done in any order — skip whatever is already done
 function mpAdvance() {
   if (!KS.mp || NET.client) return;
   if (quest === 0 && LIV.partsGot >= 3) setQuest(1);
-  if (quest === 1 && LIV.open) setQuest(2);
+  if (quest === 1 && (LIV.open || KS.backLiv)) setQuest(2);
   if (quest === 3 && LIV.remoteGot) setQuest(4);
 }
 // the quest card shows what's done so far, so a split team can see where help is needed

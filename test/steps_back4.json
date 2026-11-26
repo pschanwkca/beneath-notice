@@ -1,0 +1,3 @@
+[{"eval": "window.__bn.startChapter('basement'); 1"}, {"wait": 5000},
+ {"eval": "(()=>{const B=window.__bn,L=B.leader; window.__NODET=true; B.state='play'; B.startMomVisit(); B.step(150); let k=0; for(const C of B.party){ C.pos.set(-215+(k++)*4,-76,-462); C.vel.set(0,0,0); C.queue=[]; C.lastTrail=C.pos.clone(); } B.cam.yaw=0; B.cam.pitch=.15; B.keys.KeyW=true; B.step(330); B.cam.yaw=Math.atan2(-1,0); B.step(1500); B.keys.KeyW=false; B.step(300); return {lv:B.LEVEL, door:+B.bDoor.rotation.y.toFixed(2), pos:B.party.map(C=>[C.id].concat(C.pos.toArray().map(v=>+v.toFixed(0))))}; })()"}
+]

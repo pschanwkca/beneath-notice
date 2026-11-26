@@ -53,6 +53,7 @@ function scheduleLines(list, dt = 1 / 60) { for (const L of list) if (lvT - dt <
 function noise(p, loud, clang) {
   noiseRing(p); if (NET.on && NET.host) nsend({ t: 'ring', p: [p.x, p.y, p.z], v: clang || 0 });
   if (NET.client) return; const Z = WORLD ? zoneAt(p, 4) : null;
+  if (backQuiet(p)) return;   // (the storeroom: nobody hears it)
   if (!Z || Z.id === 'kitchen') { momHear(p, loud); catHear(p, loud); kidHear(p); }
   else if (LEVELS[Z.id].hear) LEVELS[Z.id].hear(p, loud);
 }
@@ -297,8 +298,10 @@ LEVELS.wall = {
   },
   // walked in from the basement
   enter(prev, again) {
-    if (prev === 'basement' && !again) { if (STATE === 'play') unlockKey('prologue'); momReset(); chars.cham.root.visible = true; chars.cham.pos.set(-30, 4, 12).add(HO); chars.cham.yaw = -2.2; }
-    LEVELS.kitchen.prep();
+    if (prev === 'basement' && !again) { if (STATE === 'play') unlockKey('prologue'); momReset(); }
+    // (also when you climb down into it from the kitchen, having left the basement by its door)
+    if (!again && !party.includes(chars.cham)) { chars.cham.root.visible = true; chars.cham.pos.set(-30, 4, 12).add(HO); chars.cham.yaw = -2.2; }
+    KS.metWall = true; LEVELS.kitchen.prep();
   },
   leave() { },
   npc() { }, detect(dt) { meter = Math.max(0, meter - dt * .3); },
@@ -319,8 +322,9 @@ LEVELS.wall = {
 //  KITCHEN — 晚飯時間
 // =====================================================================
 const KS = { door: null, doorA: 0, doorT: 0, closeT: 0, doorCol: null, flight: null, core: null, coreGot: false, carried: false, said: {}, lights: [] };
-function cabinetRun(x0, x1, K) {
-  box(x0, x1, 0, 10, -220, -168, K.kick);
+function cabinetRun(x0, x1, K, gap) {
+  if (gap) { box(x0, gap[0], 0, 10, -220, -168, K.kick); box(gap[1], x1, 0, 10, -220, -168, K.kick); }   // (a broken-off bit of kickboard: a way under the cabinet)
+  else box(x0, x1, 0, 10, -220, -168, K.kick);
   box(x0, x1, 10, 86, -220, -162, K.cab, { uv: 60 });
   const n = Math.max(1, Math.round((x1 - x0) / 45)), w = (x1 - x0) / n;
   for (let i = 0; i < n; i++) {
@@ -341,7 +345,7 @@ function buildKitchen() {
   box(-312, 330, -10, 0, -240, 240, K.floor, { uv: 140, cast: false });
   // ceiling (with the hole the hood's chimney goes up through)
   box(-330, 16, 260, 270, -240, 240, K.ceil, { cast: false }); box(60, 330, 260, 270, -240, 240, K.ceil, { cast: false }); box(16, 60, 260, 270, -240, -218, K.ceil, { cast: false }); box(16, 60, 260, 270, -198, 240, K.ceil, { cast: false });
-  box(-312, -150, 0, 260, -232, -220, K.wall, { uv: 120 }); box(-50, 196, 0, 260, -232, -220, K.wall, { uv: 120 }); box(206, 236, 0, 260, -232, -220, K.wall, { uv: 120 }); box(196, 206, 8, 260, -232, -220, K.wall, { uv: 120 });   // (a mouse hole behind the fridge, through to the bathroom) box(298, 312, 0, 260, -232, -220, K.wall, { uv: 120 }); box(236, 298, 205, 260, -232, -220, K.wall, { uv: 120 });
+  box(-312, -150, 0, 260, -232, -220, K.wall, { uv: 120 }); box(-50, -36, 0, 260, -232, -220, K.wall, { uv: 120 }); box(-36, -24, 10, 260, -232, -220, K.wall, { uv: 120 }); box(-24, 196, 0, 260, -232, -220, K.wall, { uv: 120 });   // (a mouse-size hole behind the counter, through to the storeroom) box(206, 236, 0, 260, -232, -220, K.wall, { uv: 120 }); box(196, 206, 8, 260, -232, -220, K.wall, { uv: 120 });   // (a mouse hole behind the fridge, through to the bathroom) box(298, 312, 0, 260, -232, -220, K.wall, { uv: 120 }); box(236, 298, 205, 260, -232, -220, K.wall, { uv: 120 });
   box(-150, -50, 0, 110, -232, -220, K.wall, { uv: 120 }); box(-150, -50, 190, 260, -232, -220, K.wall, { uv: 120 });
   // (the back wall has the bathroom door in it, between the fridge and the living-room wall)
   box(-312, 312, 0, 260, 220, 232, K.wall, { uv: 120 }); box(300, 312, 0, 260, -232, -62, K.wall, { uv: 120 }); box(300, 312, 0, 260, 44, 232, K.wall, { uv: 120 }); box(300, 312, 212, 260, -62, 44, K.wall, { uv: 120 });
@@ -371,7 +375,7 @@ function buildKitchen() {
   cols.push({ t: 'b', x0: -150, x1: -50, y0: 110, y1: 190, z0: -229, z1: -227, noRay: true });
   // potted herb on the sill
   // base cabinets + under-sink cupboard (hollow, door open)
-  cabinetRun(-300, -140, K); cabinetRun(-60, 0, K); cabinetRun(76, 148, K);
+  cabinetRun(-300, -140, K); cabinetRun(-60, 0, K, [-36, -24]); cabinetRun(76, 148, K);
   box(-140, -60, 0, 10, -220, -168, K.kick);
   box(-140, -60, 10, 13, -220, -162, K.cab); box(-140, -138, 13, 62, -220, -162, K.cab); box(-62, -60, 13, 62, -220, -162, K.cab); box(-140, -60, 13, 62, -220, -218, K.cab);
   box(-140, -60, 62, 66, -220, -162, K.cab);
@@ -710,6 +714,7 @@ function detectKitchen(dt) {
   if (STATE !== 'play') return;
   if (window.__NODET) { meter = 0; return; }
   if (TOY.grace > 0) { meter = Math.max(0, meter - dt * .5); return; }
+  if (inStore(leader.pos)) { meter = Math.max(0, meter - dt * .5); KS.watch = null; return; }   // nobody looks into the storeroom
   const L = leader; let seen = 0, who = null;
   if (L.frozen || !mine(L)) { meter = Math.max(0, meter - dt * .5); KS.watch = null; return; }
   const s1 = eyeSee(mom.head, .55, 440); if (s1 > seen) { seen = s1; who = 'mom'; }
@@ -747,6 +752,7 @@ function updKitchenPlayer(dt) {
 const SP_Q1 = [{ t: '找回縮小機的核心', s: '它掉到雪櫃底下了，發着青光' }, { t: '貓睡在雪櫃前面', s: '潛行繞過牠、讓熊推跌東西把牠引開，或者趁太太開雪櫃時溜進去找排水口' }, { t: '把核心帶回牆腳的洞', s: '核心在發光，比平時更容易被看見' }];
 const SP_Q2 = [{ t: '打開通往客廳的門', s: '核心的光越來越弱。門被門擋卡住了——熊可以推開門擋，或者爸爸把它縮小' }, { t: '拿走遙控器的電池', s: '客廳咖啡枱上的遙控器有電池，可以幫核心充電' }];
 const KLINES_SP = [[1.2, '女兒', '媽，爸爸今晚會回來吃飯嗎？', '#e8a0c0', 3], [4.6, '太太', '……先吃吧，湯快好了。', '#f4bb72', 2.8], [8, '小彩', '雪櫃底下有青光——核心應該就在那裡。小心那隻貓，還有她們的視線。', '#9fd86b', 4]];
+const KLINES_SPD = KLINES_SP.map(l => l[1] === '小彩' ? [l[0], '爸爸', '雪櫃底下有青光——核心應該就在那裡。小心那隻貓，還有她們的視線。', '#f5f0e6', l[4]] : l);   // (小彩 isn't with you yet)
 const KLINES_MP = [[1.2, '女兒', '媽，爸爸今晚會回來吃飯嗎？', '#e8a0c0', 3], [4.6, '太太', '……先吃吧，湯快好了。', '#f4bb72', 2.8], [8, '爸爸', '聽好：縮小機少了三個零件——彈簧、鏡片、電容，全部都掉在這個廚房裡。', '#f5f0e6', 4.2], [12.6, '小彩', '找齊之後去客廳，從通風口出去。別讓她們看見！', '#9fd86b', 3.4]];
 let END_TXT = null;
 LEVELS.kitchen = {
@@ -756,7 +762,7 @@ LEVELS.kitchen = {
   build() {
     buildKitchen(); buildKid(); buildCat(); buildToyBin(); LEVELS.kitchen.updrafts = [{ x: 57, z: -205, r: 11, y0: 88.5, y1: 178, fx: 14, all: true, hot: true }, buildVent()];
     addVial(-128, 13, -200); addVial(170, 184, -168); addVial(70, 88.5, -215); for (const p of [[-120, 0, 70], [-70, 0, 100], [20, 0, -146], [-30, 91.8, -182], [246, 1.2, 122]]) addCrumb(...p);
-    buildLivingRoom(kitchenMats()); buildPassages(kitchenMats()); buildMouseWar(kitchenMats()); buildLivedIn(kitchenMats()); buildHouseSwitches(kitchenMats()); buildUpstairs(kitchenMats());
+    buildLivingRoom(kitchenMats()); buildPassages(kitchenMats()); buildMouseWar(kitchenMats()); buildLivedIn(kitchenMats()); buildBackHall(kitchenMats()); buildHouseSwitches(kitchenMats()); buildUpstairs(kitchenMats());
     // online co-op: the three machine parts
     addPart(44, 88.5, -212, 'spring'); addPart(205, 110, -464, 'lens'); addPart(-112, 13, -186, 'cap');
   },
@@ -782,15 +788,21 @@ LEVELS.kitchen = {
   },
   // climbed up out of the wall
   enter(prev, again) {
-    this.prep(); if (!party.includes(chars.cham)) joinCham(); PROTO = Math.max(PROTO, 1); kitchenMode();
-    if (!again) { chars.gecko.wave = false; toast('穿過老鼠洞就是廚房。這裡開始，太太、女兒和貓都可能看見你', 4); }
+    // out through the basement door instead of the wall: 小彩 is still in there, and the old partner has gone back in
+    const viaDoor = prev === 'basement' && !again && !NET.on && STATE === 'play' && leader && leader.pos.z < -470;
+    this.prep(); if (!party.includes(chars.cham) && prev !== 'basement') joinCham(); PROTO = Math.max(PROTO, 1); kitchenMode();
+    if (viaDoor) {
+      KS.viaDoor = true; if (STATE === 'play') unlockKey('prologue');
+      const g = chars.gecko; if (!mom.said.lead) { for (let i = NPCW.length - 1; i >= 0; i--) if (NPCW[i].C === g) NPCW.splice(i, 1); g.pos.set(-22, 4, -6).add(HO); g.yaw = .9; } g.wave = false;
+      toast('出咗地庫門！呢度係屋後走廊——太太返咗上廚房煮飯，唔會再落地庫', 4.2);
+    } else if (!again) { chars.gecko.wave = false; toast('穿過老鼠洞就是廚房。這裡開始，太太、女兒和貓都可能看見你', 4); }
   },
   npc(dt) { if (STATE === 'play' || STATE === 'fail' || STATE === 'end' || STATE === 'frozen') { updKitchenMom(dt); updKid(dt); updCat(dt); } },
   detect: detectKitchen,
   update(dt) {
     lvT += dt; updKitchenPlayer(dt); updCookie(); hxTick(dt); upTick(dt); mpChecklist();
     if (KS.ch3 && !KS.mp && QUESTS === SP_Q2B && quest === 0 && STATE === 'play' && leader.pos.y > UPS.y - 2 && leader.pos.x > 312 && leader.pos.x < 900 && Math.abs(leader.pos.z) < 232) { setQuest(1); roomBanner('女兒房'); setTimeout(() => say('爸爸', '衣櫃頂……天花嗰度就係閣樓活門。', '#f5f0e6', 3), 1200); }
-    scheduleLines(KS.mp ? KLINES_MP : KLINES_SP, dt);
+    scheduleLines(KS.mp ? KLINES_MP : party.includes(chars.cham) ? KLINES_SP : KLINES_SPD, dt);
     if (rnd() < dt * .75) { emit(KS.tap, V3(0, -2, 0), new THREE.Color(.5, .62, .7), .35, .9, 300, 0); setTimeout(() => { if (ZONES.kitchen.near) { for (let i = 0; i < 4; i++) emit(V3(-100, 68.9, -193), V3(R(-6, 6), R(5, 12), R(-6, 6)), new THREE.Color(.5, .62, .72), .2, .35, 200, 1); if (leader.pos.distanceTo(V3(-100, 68, -193)) < 120) SND.drip(); } }, 420); }
   },
   win() {
@@ -802,7 +814,8 @@ LEVELS.kitchen = {
       // chapter one is done — but nothing stops: the story just carries on into the living room
       KS.carried = false; KS.coreDrop = null; KS.home = true; KS.core.position.set(-306, 1.6, -100); KS.ch2 = true;
       QUESTS = SP_Q2; setQuest(0); roomBanner('核心找回來了'); unlockKey('ch1');
-      say('前拍檔', '（從牆裡）放在洞口就好，我看着它。……它的光越來越弱了。', '#b7d38a', 3.6);
+      if (KS.viaDoor && !KS.metWall) say('？？？', '（牆入面有把聲）……教授？係你？放喺洞口就得，我幫你睇住佢。', '#b7d38a', 3.8);
+      else say('前拍檔', '（從牆裡）放在洞口就好，我看着它。……它的光越來越弱了。', '#b7d38a', 3.6);
       setTimeout(() => say('爸爸', '客廳的遙控器裡有電池。去拿過來，幫核心充電。', '#f5f0e6', 3.4), 3800);
       setTimeout(() => roomBanner('客廳'), 7600);
     }
@@ -817,6 +830,7 @@ LEVELS.kitchen = {
   reset() { if (KS.coreGot && !KS.carried) KS.coreDrop = KS.home ? null : coreGround(KS.coreDrop || KS.core.position); else KS.coreDrop = null; KS.carrier = null; KM.mode = 'goto'; KM.pt = 'stove'; KS.doorTarget = 0; KS.closeT = 0; CAT.mode = 'home'; KID.mode = 'read'; KID.t = 6; if (HB.m) { HB.m.q = []; HB.m.cur = null; HB.m.seat = null; HB.m.react = 0; } HB.search = 0; if (KS.carried) { const C = leader; KS.core.position.set(C.pos.x, C.pos.y + 6, C.pos.z); } },
   eyeText: () => brainEyeText(),
   hint(L) {
+    const bh = backHint(L); if (bh) return bh;
     // the vent to the garage (single player): rusted shut — say so, and where the way on is
     if (!KS.mp && !LIV.ventOpen && Math.hypot(L.pos.x - 896, L.pos.z + 200) < 26 && L.pos.y < 40) return KS.ch3 ? '通風口個蓋鏽死咗。行樓上：女兒房衣櫃頂有條拉繩通去閣樓' : '通風口個蓋鏽死咗，推唔開——車房要第二條路先去到';
     // the ways up into the ceiling duct: the hot air over the burner, and the bathroom fan's pull cord

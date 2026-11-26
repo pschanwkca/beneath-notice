@@ -1108,6 +1108,7 @@ Object.assign(I18N_EN, {"冷卻中": "Cooling down", "充電": "Recharging", "�
 Object.assign(I18N_EN, {"樽蓋": "Bottle cap", "鈕扣": "Button", "方糖": "Sugar cube", "掟": "Throw", "食": "Eat", "掟出去：跌落地嗰度會響，引人過去": "Throw it: it clatters where it lands and draws people there", "食咗：體力即刻滿返，上限都補返啲": "Eat it: stamina back to full, and some of the cap restored", "（拎出嚟揸喺手）": " (taken out into your paws)", "食咗粒方糖——體力滿返": "Ate a sugar cube — stamina full", "手揸住嘢，開唔到槍——E 放低先": "Paws full — can't fire. Put it down first (E)", "點一下": "Tap one", "放手就揀": "Let go to pick"});
 Object.assign(I18N_EN, {"執起／放低細嘢（揸住時左鍵用）": "Pick up / put down small things (left click uses what you hold)"});
 Object.assign(I18N_EN, {"人類質疑度": "Human suspicion", "搜緊": "Searching"});
+Object.assign(I18N_EN, {"樓梯頂道門開住——趁太太喺下面，可以爬樓梯溜出去": "The door at the top of the stairs is open — while she's down here, climb the stairs and slip out", "捉實衣架！按「跳」可以中途鬆手": "Hold on to the hanger! Press Jump to let go on the way", "捉實衣架！撳 Space 可以中途鬆手": "Hold on to the hanger! Press Space to let go on the way", "儲物房：呢度冇人望到你，整出聲都冇人聽到。架上啲嘢拎得，拎完過一陣會補返": "The storeroom: nobody can see you in here, and nobody hears a thing. Take what's on the shelves — it comes back after a while", "由後面條走廊都入到客廳！遙控器應該喺沙發前面嘅咖啡枱。": "The back hallway gets you into the living room too! The remote should be on the coffee table by the sofa.", "滑緊……按「跳」可以中途鬆手": "Sliding… press Jump to let go", "滑緊……撳 Space 可以中途鬆手": "Sliding… press Space to let go", "按「用」捉住衣架，沿晾衫繩滑去走廊尾": "Press Use to grab the hanger and slide down the clothesline to the end of the hallway", "撳 E 捉住衣架，沿晾衫繩滑去走廊尾": "Press E to grab the hanger and slide down the clothesline to the end of the hallway", "爬上報紙、鞋櫃同鞋盒，捉住頂嗰個衣架就可以滑過成條走廊": "Climb the newspapers, the shoe cabinet and the shoe boxes — grab the hanger at the top and slide the whole hallway", "牆腳個窿通去廚房櫃底——一出去就係太太腳邊，小心": "The hole at the foot of the wall comes out under the kitchen counter — right by her feet. Careful", "櫃底條窿通去後面嘅儲物房（嗰度冇人望到你）": "The gap under the cabinet leads to the storeroom behind (nobody can see you in there)", "提子乾": "Raisin", "食咗：體力回返一半": "Eat it: half your stamina back", "波子": "Marble", "掟出去：落地之後會一路碌、一路響，引人行遠啲": "Throw it: it keeps rolling and ticking along the floor, leading people further away", "食咗粒提子乾——體力回返一半": "Ate a raisin — half your stamina back", "出咗地庫門！呢度係屋後走廊——太太返咗上廚房煮飯，唔會再落地庫": "Out through the basement door! This is the back hallway — she's gone back up to cook, and won't come down to the basement again", "（牆入面有把聲）……教授？係你？放喺洞口就得，我幫你睇住佢。": "(A voice from inside the wall) …Professor? Is that you? Leave it by the hole — I'll keep an eye on it."});
 
 // =====================================================================
 //  Language: 中文 (default) or English.  ?lang=en / ?lang=zh in the address, or the button on the title
@@ -1362,7 +1363,7 @@ function genScales() {
 const BO = V3(28, -336, -229), HO = V3(-400, -340, -94); let MP_CPS = null;
 const ZONES = {}, ZL = []; let WORLD = false;
 function zoneDef(id, o) { const Z = Object.assign({ id, off: V3(), core: [], lv: null, fx: null, cols: [], lights: [], beams: [], dust: null, env: null, near: false, prepped: false }, o); ZONES[id] = Z; ZL.push(Z); return Z; }
-zoneDef('kitchen', { floor: 0, core: [[-312, 912, -12, 300, -250, 250], [-432, -312, -2, 40, -126, -74], [140, 475, -12, 262, -485, -230], [10, 380, 255, 300, -336, -192], [306, 912, 255, 547, -250, 250], [736, 912, -12, 547, -512, -240]], peek: [[930, 1060, -40, 60, -260, -120]], env: 'kitchen' });
+zoneDef('kitchen', { floor: 0, core: [[-312, 912, -12, 300, -250, 250], [-432, -312, -2, 40, -126, -74], [140, 475, -12, 262, -485, -230], [10, 380, 255, 300, -336, -192], [306, 912, 255, 547, -250, 250], [736, 912, -12, 547, -512, -240], [-167, 748, -12, 266, -624, -232]], peek: [[930, 1060, -40, 60, -260, -120], [-300, -150, -90, 140, -492, -380], [-300, -150, -100, 262, -624, -479]], env: 'kitchen' });
 // peek: spots in other places from which you can see in (through a mouse hole) — draw this place too
 zoneDef('wall', { floor: HO.y + 4, off: HO, core: [[-530, -312, -360, -2, -140, -52]], peek: [[-282, -140, -345, -250, -160, 10], [-312, -160, -12, 90, -200, 0]], env: 'hub' });
 zoneDef('garage', { floor: -20, core: [[912, 1460, -40, 300, -270, 312]], peek: [[820, 912, -10, 70, -240, -150], [1460, 1640, -40, 120, 20, 200]], env: 'garage' });
@@ -1370,7 +1371,7 @@ zoneDef('yard', { floor: -20, core: [[1460, 2770, -40, 1000, -460, 660]], peek: 
 zoneDef('road', { floor: -35, core: [[-340, 3500, -80, 1000, 660, 1700], [-340, 1460, -80, 1000, 262, 660]], peek: [[1460, 2770, -40, 1000, 260, 660], [-340, 3500, -80, 1000, 1700, 2500]], env: 'road' });
 zoneDef('park', { floor: -20, core: [[-340, 3500, -80, 1000, 1700, 3760]], peek: [[-340, 3500, -80, 1000, 1180, 1700], [-340, 3500, -80, 1300, 3760, 4880]], env: 'park' });
 zoneDef('school', { floor: -20, core: [[-340, 3500, -80, 1300, 3760, 6300]], peek: [[-340, 3500, -80, 1300, 2500, 3760]], env: 'park' });
-zoneDef('basement', { floor: BO.y, off: BO, core: [[-312, 338, -360, -60, -549, 33], [-282, -160, -60, 150, -549, -245]], peek: [[-390, -312, -345, -295, -130, -50]], env: 'basement' });
+zoneDef('basement', { floor: BO.y, off: BO, core: [[-312, 338, -360, -60, -549, 33], [-282, -160, -60, 150, -549, -245], [-292, -60, -100, 40, -612, -479]], peek: [[-390, -312, -345, -295, -130, -50]], env: 'basement' });
 function inZone(Z, x, y, z, m = 0) { for (const b of Z.core) if (x > b[0] - m && x < b[1] + m && y > b[2] - m && y < b[3] + m && z > b[4] - m && z < b[5] + m) return true; return false; }
 // floor height of the place a point is in (the kitchen sits at 0, the basement and the wall far below)
 function zoneFloor(p) { if (!WORLD) return 0; const Z = zoneAt(p, 2) || ZONES[LEVEL]; return Z ? Z.floor : 0; }
@@ -2007,9 +2008,7 @@ function buildRoom() {
   // stairwell
   box(-205, -195, 260, 470, -262, -20, M.wall, { uv: 120 }); box(-310, -195, 260, 470, -30, -20, M.wall, { uv: 120 }); box(-310, -195, 466, 476, -262, -20, ceil);
   box(-310, -290, 260, 470, -262, -250, M.wall, { uv: 120 }); box(-215, -195, 260, 470, -262, -250, M.wall, { uv: 120 }); box(-290, -215, 455, 470, -262, -250, M.wall, { uv: 120 });
-  // upstairs hallway beyond door (warm)
-  const hall = new THREE.Mesh(new THREE.BoxGeometry(110, 220, 120), new THREE.MeshStandardMaterial({ color: 0xffd7a8, emissive: 0xffb36b, emissiveIntensity: .35, side: THREE.BackSide, roughness: 1 }));
-  hall.position.set(-252, 365, -322); LV.add(hall);
+  // (beyond the door: the landing and the back hallway, built with the kitchen — e44_back.js)
   door = new THREE.Group(); door.position.set(-290, 260, -251); LV.add(door);
   const dp = new THREE.Mesh(new THREE.BoxGeometry(75, 194, 3), new THREE.MeshStandardMaterial({ color: 0x8a7a66, roughness: .7 })); dp.position.set(37.5, 97, 0); dp.castShadow = true; door.add(dp);
   const knob = new THREE.Mesh(new THREE.SphereGeometry(2.6, 16, 12), M.brass); knob.position.set(68, 92, 3); door.add(knob);
@@ -3280,6 +3279,7 @@ function updLeader(C, dt) {
     return;
   }
   if (C.zip) { updZip(C, dt); return; }
+  if (C.line) { lineRide(C, dt, ctl); return; }
   if (C.climbing) { updClimb(C, dt, inX, inY, ctl, mv.run); return; }
   if (C.roost) { updRoost(C, dt, wx, wz, wl, ctl); return; }
   if (C.dig) { moleDigUpd(C, dt, wx, wz, ctl); return; }
@@ -3664,7 +3664,7 @@ function fail() {
 function respawn() {
   stkClear(); toyUnfreezeAll();
   if (NET.on) for (const C of party) { C.owner = C.baseOwner; C.carried = false; C.carry = null; }
-  const p = CPS[cp] || CPS[0]; const L = leader; const off = NET.on ? IDS.indexOf(L.id) * 3 : 0; L.pos.set(p[0] + off, p[1], p[2]); L.vel.set(0, 0, 0); L.climbing = false; L.mantle = null; L.tumble = 0; L.grounded = true; L.crouch = false;
+  const p = CPS[cp] || CPS[0]; const L = leader; const off = NET.on ? IDS.indexOf(L.id) * 3 : 0; L.pos.set(p[0] + off, p[1], p[2]); L.vel.set(0, 0, 0); L.climbing = false; L.mantle = null; L.line = null; L.tumble = 0; L.grounded = true; L.crouch = false;
   let i = 0; for (const F of party) if (F !== L && mine(F)) { i = NET.on ? IDS.indexOf(F.id) : i + 1; F.pos.set(p[0] + i * (cp === 1 ? 3.4 : 2.6), p[1], p[2] + (cp === 1 ? 0 : i * 2.2)); F.queue = []; F.qst = 'idle'; F.state = 'idle'; F.disp.copy(F.pos); F.offK = 0; }
   trail = []; L.lastTrail.copy(L.pos); meter = 0; LVL.reset(); cam.tgt.copy(L.pos);
 }
@@ -3909,7 +3909,7 @@ function update(dt) {
     if (!lockL) pushTrail(leader); for (const F of party) if (F !== leader && !F.on && !F.hop && !F.drop && !F.frozen && !F.carried && !F.ptw && mine(F) && !isBase(F)) updFollower(F, leader, dt);
     updCarry(dt); updTongueAim(); updVentFx(dt);
     stackScan(dt);
-    updAim(); LVL.detect(dt); if (!NET.client) updCheckpoints(); LVL.update(dt); looseTick(dt); humanTick(dt); if (!NET.client) LVL.win();
+    updAim(); LVL.detect(dt); if (!NET.client) updCheckpoints(); LVL.update(dt); looseTick(dt); humanTick(dt); backTick(dt); if (!NET.client) LVL.win();
     cellT += dt; if (cells < cellMax && cellT > 10) { cells++; cellT = 0; } if (cells >= cellMax) cellT = 0;
     updCam(dt); hideOccluders();
     if (meter > .4 && Math.floor((T - dt) * (1 + meter * 1.5)) !== Math.floor(T * (1 + meter * 1.5))) SND.heart(meter);
@@ -4120,7 +4120,7 @@ function towerSize(C) { let n = 1, t = towerBottom(C), g = 0, k; while ((k = isB
 function topPos(B) { return V3(B.pos.x, B.pos.y + B.h * STK_ON, B.pos.z); }
 function stkClear() { for (const C of party) { C.on = null; C.hop = null; C.drop = false; C.pullT = 0; } }
 function stackPress() {
-  const L = leader; if (STATE !== 'play' || L.frozen || !mine(L) || L.hop || L.mantle || L.zip || L.tumble > 0 || L.roost || L.shell) return;
+  const L = leader; if (STATE !== 'play' || L.frozen || !mine(L) || L.hop || L.mantle || L.zip || L.line || L.tumble > 0 || L.roost || L.shell) return;
   if (L.carry) sqDrop(L);
   if (L.on) { stackOff(L); return; }
   if (isBase(L)) { toast(TR('有人企喺你頭上，要佢哋先落嚟')); return; }
@@ -5085,6 +5085,7 @@ function buildSwitches() {
 function crewInput(L, ctl) {
   if (!L || !ctl) return;
   if (hxInput(L, ctl)) return;
+  if (pressed.KeyE && zipInput(L)) return;
   if (pressed.KeyE && looseInput(L)) return;
   if (pressed.KeyE && L.id === 'frog') frogSwitch();
 }
@@ -5351,12 +5352,12 @@ function buildLivingRoom(K) {
   const floorM = new THREE.MeshStandardMaterial({ color: 0x8a5c3a, roughness: .7, map: K.floor.map || null });
   box(X0 - 2, X1 + 12, -10, 0, -240, 240, floorM, { uv: 140, cast: false });
   box(X0 - 2, 650, 260, 270, -240, 240, K.ceil, { cast: false }); box(666, X1 + 12, 260, 270, -240, 240, K.ceil, { cast: false }); box(650, 666, 260, 270, -232, 240, K.ceil, { cast: false });
-  box(X0, 330, 0, 260, -244, -232, wallM, { uv: 120 }); box(340, 650, 0, 260, -244, -232, wallM, { uv: 120 }); box(666, 748, 0, 260, -244, -232, wallM, { uv: 120 }); box(330, 340, 8, 260, -244, -232, wallM, { uv: 120 });
+  box(X0, 330, 0, 260, -244, -232, wallM, { uv: 120 }); box(340, 540, 0, 260, -244, -232, wallM, { uv: 120 }); box(616, 650, 0, 260, -244, -232, wallM, { uv: 120 }); box(540, 616, 205, 260, -244, -232, wallM, { uv: 120 });   // (a doorway through to the utility room at the back) box(666, 748, 0, 260, -244, -232, wallM, { uv: 120 }); box(330, 340, 8, 260, -244, -232, wallM, { uv: 120 });
   box(650, 666, 0, 200, -244, -232, wallM, { uv: 120 }); box(650, 666, 200, 270, -244, -240, wallM, { uv: 120 }); box(650, 666, 224, 260, -236, -232, wallM, { uv: 120 });   // the vent shaft over the fish tank, up into the duct box(828, X1 + 12, 0, 260, -244, -232, wallM, { uv: 120 }); box(748, 828, 205, 260, -244, -232, wallM, { uv: 120 }); // far wall (a doorway to the stairs); the vent near the floor leads through a duct into the garage
   box(X1, X1 + 12, 0, 260, -232, -214, wallM, { uv: 120 }); box(X1, X1 + 12, 0, 260, -186, 232, wallM, { uv: 120 }); box(X1, X1 + 12, 0, 4, -214, -186, wallM, { uv: 120 }); box(X1, X1 + 12, 24, 260, -214, -186, wallM, { uv: 120 });
   // front wall with the window opening (x 700–850, y 100–210)
   box(X0, 700, 0, 260, 232, 244, wallM, { uv: 120 }); box(850, X1 + 12, 0, 260, 232, 244, wallM, { uv: 120 }); box(700, 850, 0, 100, 232, 244, wallM, { uv: 120 }); box(700, 850, 210, 260, 232, 244, wallM, { uv: 120 });
-  box(X0, 330, 0, 9, -232, -230.5, M.white, { col: false }); box(340, 744, 0, 9, -232, -230.5, M.white, { col: false }); box(832, X1, 0, 9, -232, -230.5, M.white, { col: false }); box(X0, X1, 0, 9, 230.5, 232, M.white, { col: false }); box(X1 - 1.5, X1, 0, 9, -230, 230, M.white, { col: false });
+  box(X0, 330, 0, 9, -232, -230.5, M.white, { col: false }); box(340, 536, 0, 9, -232, -230.5, M.white, { col: false }); box(620, 744, 0, 9, -232, -230.5, M.white, { col: false }); box(832, X1, 0, 9, -232, -230.5, M.white, { col: false }); box(X0, X1, 0, 9, 230.5, 232, M.white, { col: false }); box(X1 - 1.5, X1, 0, 9, -230, 230, M.white, { col: false });
   // the door: hinged at z=40, closes towards z=-60, swings into the kitchen
   const dg = new THREE.Group(); dg.position.set(300, 0, 40); LV.add(dg); LIV.door = dg;
   const dm = new THREE.MeshPhysicalMaterial({ color: 0xf0ebe2, roughness: .55, clearcoat: .2 });
@@ -5381,9 +5382,9 @@ function buildLivingRoom(K) {
   const fb = new THREE.MeshPhysicalMaterial({ color: 0xe8e2d6, roughness: .2, clearcoat: .6 });
   resGroup(cmGroup(26, 9, 26, ({ part }) => { part(new THREE.CylinderGeometry(13, 8, 9, 32, 1, true), fb, 0, 0, 0); part(new THREE.SphereGeometry(4.6, 16, 12), K.apple, -4, 2, 2); part(new THREE.SphereGeometry(4.2, 16, 12), new THREE.MeshStandardMaterial({ color: 0xf2a33a, roughness: .5 }), 4, 2.5, -2); part(new THREE.SphereGeometry(4, 16, 12), K.apple, 0, 4, 5); }, [fb]), 490, -130, 76, 26, 9, 26, .3, 4, TR('生果碗'), true);
   // sideboard with drawers + family photos
-  const sb = new THREE.MeshStandardMaterial({ color: 0x3c2a1e, roughness: .6 }); box(360, 580, 0, 88, -230, -196, sb, { uv: 60 });
-  for (let i = 0; i < 4; i++) { const x = 368 + i * 53; box(x, x + 46, 52, 82, -196, -195, sb, { col: false }); box(x + 18, x + 28, 66, 68, -195, -192, K.brass); }
-  for (const [x, w, h, img] of [[385, 22, 28, 'photo'], [430, 18, 24, 'photo2'], [530, 26, 20, 'photo3']]) { box(x - w / 2, x + w / 2, 88, 88 + h, -224, -222, M.black); mesh(new THREE.PlaneGeometry(w - 3, h - 3), livingPhoto(img), x, 88 + h / 2, -221.8, { cast: false }); }
+  const sb = new THREE.MeshStandardMaterial({ color: 0x3c2a1e, roughness: .6 }); box(360, 530, 0, 88, -230, -196, sb, { uv: 60 });
+  for (let i = 0; i < 3; i++) { const x = 368 + i * 53; box(x, x + 46, 52, 82, -196, -195, sb, { col: false }); box(x + 18, x + 28, 66, 68, -195, -192, K.brass); }
+  for (const [x, w, h, img] of [[385, 22, 28, 'photo'], [430, 18, 24, 'photo2'], [500, 26, 20, 'photo3']]) { box(x - w / 2, x + w / 2, 88, 88 + h, -224, -222, M.black); mesh(new THREE.PlaneGeometry(w - 3, h - 3), livingPhoto(img), x, 88 + h / 2, -221.8, { cast: false }); }
   // fish tank on its stand (lid is walkable)
   const st = new THREE.MeshStandardMaterial({ color: 0x24201c, roughness: .5 }); box(620, 720, 0, 80, -228, -186, st);
   const glass = new THREE.MeshPhysicalMaterial({ color: 0xffffff, roughness: .02, transmission: .9, thickness: .5, transparent: true, opacity: .35, depthWrite: false });
@@ -5485,12 +5486,12 @@ function updLiving(dt) {
     if (STATE === 'play' && !L.frozen && mine(L) && Math.hypot(L.pos.x - p.x, L.pos.y + 1 - p.y - 2, L.pos.z - p.z) < 4) netGet('part', LIV.parts.indexOf(p)); }
   if (remoteOn() && !LIV.remoteGot && LIV.remote && !L.frozen && mine(L) && STATE === 'play') { const r = LIV.remote; if (Math.hypot(L.pos.x - r.cx, L.pos.z - r.cz) < 6 && Math.abs(L.pos.y - (r.y0 + 2)) < 5) netGet('remote'); }
 }
-function remoteOn() { return KS.mp ? LIV.open && quest <= 3 : (KS.ch2 && quest === 1); }
+function remoteOn() { return KS.mp ? (LIV.open || KS.backLiv) && quest <= 3 : (KS.ch2 && quest === 1); }
 // online chapter one: the objectives can be done in any order — skip whatever is already done
 function mpAdvance() {
   if (!KS.mp || NET.client) return;
   if (quest === 0 && LIV.partsGot >= 3) setQuest(1);
-  if (quest === 1 && LIV.open) setQuest(2);
+  if (quest === 1 && (LIV.open || KS.backLiv)) setQuest(2);
   if (quest === 3 && LIV.remoteGot) setQuest(4);
 }
 // the quest card shows what's done so far, so a split team can see where help is needed
@@ -5699,6 +5700,7 @@ function scheduleLines(list, dt = 1 / 60) { for (const L of list) if (lvT - dt <
 function noise(p, loud, clang) {
   noiseRing(p); if (NET.on && NET.host) nsend({ t: 'ring', p: [p.x, p.y, p.z], v: clang || 0 });
   if (NET.client) return; const Z = WORLD ? zoneAt(p, 4) : null;
+  if (backQuiet(p)) return;   // (the storeroom: nobody hears it)
   if (!Z || Z.id === 'kitchen') { momHear(p, loud); catHear(p, loud); kidHear(p); }
   else if (LEVELS[Z.id].hear) LEVELS[Z.id].hear(p, loud);
 }
@@ -5943,8 +5945,10 @@ LEVELS.wall = {
   },
   // walked in from the basement
   enter(prev, again) {
-    if (prev === 'basement' && !again) { if (STATE === 'play') unlockKey('prologue'); momReset(); chars.cham.root.visible = true; chars.cham.pos.set(-30, 4, 12).add(HO); chars.cham.yaw = -2.2; }
-    LEVELS.kitchen.prep();
+    if (prev === 'basement' && !again) { if (STATE === 'play') unlockKey('prologue'); momReset(); }
+    // (also when you climb down into it from the kitchen, having left the basement by its door)
+    if (!again && !party.includes(chars.cham)) { chars.cham.root.visible = true; chars.cham.pos.set(-30, 4, 12).add(HO); chars.cham.yaw = -2.2; }
+    KS.metWall = true; LEVELS.kitchen.prep();
   },
   leave() { },
   npc() { }, detect(dt) { meter = Math.max(0, meter - dt * .3); },
@@ -5965,8 +5969,9 @@ LEVELS.wall = {
 //  KITCHEN — 晚飯時間
 // =====================================================================
 const KS = { door: null, doorA: 0, doorT: 0, closeT: 0, doorCol: null, flight: null, core: null, coreGot: false, carried: false, said: {}, lights: [] };
-function cabinetRun(x0, x1, K) {
-  box(x0, x1, 0, 10, -220, -168, K.kick);
+function cabinetRun(x0, x1, K, gap) {
+  if (gap) { box(x0, gap[0], 0, 10, -220, -168, K.kick); box(gap[1], x1, 0, 10, -220, -168, K.kick); }   // (a broken-off bit of kickboard: a way under the cabinet)
+  else box(x0, x1, 0, 10, -220, -168, K.kick);
   box(x0, x1, 10, 86, -220, -162, K.cab, { uv: 60 });
   const n = Math.max(1, Math.round((x1 - x0) / 45)), w = (x1 - x0) / n;
   for (let i = 0; i < n; i++) {
@@ -5987,7 +5992,7 @@ function buildKitchen() {
   box(-312, 330, -10, 0, -240, 240, K.floor, { uv: 140, cast: false });
   // ceiling (with the hole the hood's chimney goes up through)
   box(-330, 16, 260, 270, -240, 240, K.ceil, { cast: false }); box(60, 330, 260, 270, -240, 240, K.ceil, { cast: false }); box(16, 60, 260, 270, -240, -218, K.ceil, { cast: false }); box(16, 60, 260, 270, -198, 240, K.ceil, { cast: false });
-  box(-312, -150, 0, 260, -232, -220, K.wall, { uv: 120 }); box(-50, 196, 0, 260, -232, -220, K.wall, { uv: 120 }); box(206, 236, 0, 260, -232, -220, K.wall, { uv: 120 }); box(196, 206, 8, 260, -232, -220, K.wall, { uv: 120 });   // (a mouse hole behind the fridge, through to the bathroom) box(298, 312, 0, 260, -232, -220, K.wall, { uv: 120 }); box(236, 298, 205, 260, -232, -220, K.wall, { uv: 120 });
+  box(-312, -150, 0, 260, -232, -220, K.wall, { uv: 120 }); box(-50, -36, 0, 260, -232, -220, K.wall, { uv: 120 }); box(-36, -24, 10, 260, -232, -220, K.wall, { uv: 120 }); box(-24, 196, 0, 260, -232, -220, K.wall, { uv: 120 });   // (a mouse-size hole behind the counter, through to the storeroom) box(206, 236, 0, 260, -232, -220, K.wall, { uv: 120 }); box(196, 206, 8, 260, -232, -220, K.wall, { uv: 120 });   // (a mouse hole behind the fridge, through to the bathroom) box(298, 312, 0, 260, -232, -220, K.wall, { uv: 120 }); box(236, 298, 205, 260, -232, -220, K.wall, { uv: 120 });
   box(-150, -50, 0, 110, -232, -220, K.wall, { uv: 120 }); box(-150, -50, 190, 260, -232, -220, K.wall, { uv: 120 });
   // (the back wall has the bathroom door in it, between the fridge and the living-room wall)
   box(-312, 312, 0, 260, 220, 232, K.wall, { uv: 120 }); box(300, 312, 0, 260, -232, -62, K.wall, { uv: 120 }); box(300, 312, 0, 260, 44, 232, K.wall, { uv: 120 }); box(300, 312, 212, 260, -62, 44, K.wall, { uv: 120 });
@@ -6017,7 +6022,7 @@ function buildKitchen() {
   cols.push({ t: 'b', x0: -150, x1: -50, y0: 110, y1: 190, z0: -229, z1: -227, noRay: true });
   // potted herb on the sill
   // base cabinets + under-sink cupboard (hollow, door open)
-  cabinetRun(-300, -140, K); cabinetRun(-60, 0, K); cabinetRun(76, 148, K);
+  cabinetRun(-300, -140, K); cabinetRun(-60, 0, K, [-36, -24]); cabinetRun(76, 148, K);
   box(-140, -60, 0, 10, -220, -168, K.kick);
   box(-140, -60, 10, 13, -220, -162, K.cab); box(-140, -138, 13, 62, -220, -162, K.cab); box(-62, -60, 13, 62, -220, -162, K.cab); box(-140, -60, 13, 62, -220, -218, K.cab);
   box(-140, -60, 62, 66, -220, -162, K.cab);
@@ -6356,6 +6361,7 @@ function detectKitchen(dt) {
   if (STATE !== 'play') return;
   if (window.__NODET) { meter = 0; return; }
   if (TOY.grace > 0) { meter = Math.max(0, meter - dt * .5); return; }
+  if (inStore(leader.pos)) { meter = Math.max(0, meter - dt * .5); KS.watch = null; return; }   // nobody looks into the storeroom
   const L = leader; let seen = 0, who = null;
   if (L.frozen || !mine(L)) { meter = Math.max(0, meter - dt * .5); KS.watch = null; return; }
   const s1 = eyeSee(mom.head, .55, 440); if (s1 > seen) { seen = s1; who = 'mom'; }
@@ -6393,6 +6399,7 @@ function updKitchenPlayer(dt) {
 const SP_Q1 = [{ t: TR('找回縮小機的核心'), s: TR('它掉到雪櫃底下了，發着青光') }, { t: TR('貓睡在雪櫃前面'), s: TR('潛行繞過牠、讓熊推跌東西把牠引開，或者趁太太開雪櫃時溜進去找排水口') }, { t: TR('把核心帶回牆腳的洞'), s: TR('核心在發光，比平時更容易被看見') }];
 const SP_Q2 = [{ t: TR('打開通往客廳的門'), s: TR('核心的光越來越弱。門被門擋卡住了——熊可以推開門擋，或者爸爸把它縮小') }, { t: TR('拿走遙控器的電池'), s: TR('客廳咖啡枱上的遙控器有電池，可以幫核心充電') }];
 const KLINES_SP = [[1.2, TR('女兒'), TR('媽，爸爸今晚會回來吃飯嗎？'), '#e8a0c0', 3], [4.6, TR('太太'), TR('……先吃吧，湯快好了。'), '#f4bb72', 2.8], [8, TR('小彩'), TR('雪櫃底下有青光——核心應該就在那裡。小心那隻貓，還有她們的視線。'), '#9fd86b', 4]];
+const KLINES_SPD = KLINES_SP.map(l => l[1] === TR('小彩') ? [l[0], TR('爸爸'), TR('雪櫃底下有青光——核心應該就在那裡。小心那隻貓，還有她們的視線。'), '#f5f0e6', l[4]] : l);   // (小彩 isn't with you yet)
 const KLINES_MP = [[1.2, TR('女兒'), TR('媽，爸爸今晚會回來吃飯嗎？'), '#e8a0c0', 3], [4.6, TR('太太'), TR('……先吃吧，湯快好了。'), '#f4bb72', 2.8], [8, TR('爸爸'), TR('聽好：縮小機少了三個零件——彈簧、鏡片、電容，全部都掉在這個廚房裡。'), '#f5f0e6', 4.2], [12.6, TR('小彩'), TR('找齊之後去客廳，從通風口出去。別讓她們看見！'), '#9fd86b', 3.4]];
 let END_TXT = null;
 LEVELS.kitchen = {
@@ -6402,7 +6409,7 @@ LEVELS.kitchen = {
   build() {
     buildKitchen(); buildKid(); buildCat(); buildToyBin(); LEVELS.kitchen.updrafts = [{ x: 57, z: -205, r: 11, y0: 88.5, y1: 178, fx: 14, all: true, hot: true }, buildVent()];
     addVial(-128, 13, -200); addVial(170, 184, -168); addVial(70, 88.5, -215); for (const p of [[-120, 0, 70], [-70, 0, 100], [20, 0, -146], [-30, 91.8, -182], [246, 1.2, 122]]) addCrumb(...p);
-    buildLivingRoom(kitchenMats()); buildPassages(kitchenMats()); buildMouseWar(kitchenMats()); buildLivedIn(kitchenMats()); buildHouseSwitches(kitchenMats()); buildUpstairs(kitchenMats());
+    buildLivingRoom(kitchenMats()); buildPassages(kitchenMats()); buildMouseWar(kitchenMats()); buildLivedIn(kitchenMats()); buildBackHall(kitchenMats()); buildHouseSwitches(kitchenMats()); buildUpstairs(kitchenMats());
     // online co-op: the three machine parts
     addPart(44, 88.5, -212, 'spring'); addPart(205, 110, -464, 'lens'); addPart(-112, 13, -186, 'cap');
   },
@@ -6428,15 +6435,21 @@ LEVELS.kitchen = {
   },
   // climbed up out of the wall
   enter(prev, again) {
-    this.prep(); if (!party.includes(chars.cham)) joinCham(); PROTO = Math.max(PROTO, 1); kitchenMode();
-    if (!again) { chars.gecko.wave = false; toast(TR('穿過老鼠洞就是廚房。這裡開始，太太、女兒和貓都可能看見你'), 4); }
+    // out through the basement door instead of the wall: 小彩 is still in there, and the old partner has gone back in
+    const viaDoor = prev === 'basement' && !again && !NET.on && STATE === 'play' && leader && leader.pos.z < -470;
+    this.prep(); if (!party.includes(chars.cham) && prev !== 'basement') joinCham(); PROTO = Math.max(PROTO, 1); kitchenMode();
+    if (viaDoor) {
+      KS.viaDoor = true; if (STATE === 'play') unlockKey('prologue');
+      const g = chars.gecko; if (!mom.said.lead) { for (let i = NPCW.length - 1; i >= 0; i--) if (NPCW[i].C === g) NPCW.splice(i, 1); g.pos.set(-22, 4, -6).add(HO); g.yaw = .9; } g.wave = false;
+      toast(TR('出咗地庫門！呢度係屋後走廊——太太返咗上廚房煮飯，唔會再落地庫'), 4.2);
+    } else if (!again) { chars.gecko.wave = false; toast(TR('穿過老鼠洞就是廚房。這裡開始，太太、女兒和貓都可能看見你'), 4); }
   },
   npc(dt) { if (STATE === 'play' || STATE === 'fail' || STATE === 'end' || STATE === 'frozen') { updKitchenMom(dt); updKid(dt); updCat(dt); } },
   detect: detectKitchen,
   update(dt) {
     lvT += dt; updKitchenPlayer(dt); updCookie(); hxTick(dt); upTick(dt); mpChecklist();
     if (KS.ch3 && !KS.mp && QUESTS === SP_Q2B && quest === 0 && STATE === 'play' && leader.pos.y > UPS.y - 2 && leader.pos.x > 312 && leader.pos.x < 900 && Math.abs(leader.pos.z) < 232) { setQuest(1); roomBanner(TR('女兒房')); setTimeout(() => say(TR('爸爸'), TR('衣櫃頂……天花嗰度就係閣樓活門。'), '#f5f0e6', 3), 1200); }
-    scheduleLines(KS.mp ? KLINES_MP : KLINES_SP, dt);
+    scheduleLines(KS.mp ? KLINES_MP : party.includes(chars.cham) ? KLINES_SP : KLINES_SPD, dt);
     if (rnd() < dt * .75) { emit(KS.tap, V3(0, -2, 0), new THREE.Color(.5, .62, .7), .35, .9, 300, 0); setTimeout(() => { if (ZONES.kitchen.near) { for (let i = 0; i < 4; i++) emit(V3(-100, 68.9, -193), V3(R(-6, 6), R(5, 12), R(-6, 6)), new THREE.Color(.5, .62, .72), .2, .35, 200, 1); if (leader.pos.distanceTo(V3(-100, 68, -193)) < 120) SND.drip(); } }, 420); }
   },
   win() {
@@ -6448,7 +6461,8 @@ LEVELS.kitchen = {
       // chapter one is done — but nothing stops: the story just carries on into the living room
       KS.carried = false; KS.coreDrop = null; KS.home = true; KS.core.position.set(-306, 1.6, -100); KS.ch2 = true;
       QUESTS = SP_Q2; setQuest(0); roomBanner(TR('核心找回來了')); unlockKey('ch1');
-      say(TR('前拍檔'), TR('（從牆裡）放在洞口就好，我看着它。……它的光越來越弱了。'), '#b7d38a', 3.6);
+      if (KS.viaDoor && !KS.metWall) say('？？？', TR('（牆入面有把聲）……教授？係你？放喺洞口就得，我幫你睇住佢。'), '#b7d38a', 3.8);
+      else say(TR('前拍檔'), TR('（從牆裡）放在洞口就好，我看着它。……它的光越來越弱了。'), '#b7d38a', 3.6);
       setTimeout(() => say(TR('爸爸'), TR('客廳的遙控器裡有電池。去拿過來，幫核心充電。'), '#f5f0e6', 3.4), 3800);
       setTimeout(() => roomBanner(TR('客廳')), 7600);
     }
@@ -6463,6 +6477,7 @@ LEVELS.kitchen = {
   reset() { if (KS.coreGot && !KS.carried) KS.coreDrop = KS.home ? null : coreGround(KS.coreDrop || KS.core.position); else KS.coreDrop = null; KS.carrier = null; KM.mode = 'goto'; KM.pt = 'stove'; KS.doorTarget = 0; KS.closeT = 0; CAT.mode = 'home'; KID.mode = 'read'; KID.t = 6; if (HB.m) { HB.m.q = []; HB.m.cur = null; HB.m.seat = null; HB.m.react = 0; } HB.search = 0; if (KS.carried) { const C = leader; KS.core.position.set(C.pos.x, C.pos.y + 6, C.pos.z); } },
   eyeText: () => brainEyeText(),
   hint(L) {
+    const bh = backHint(L); if (bh) return bh;
     // the vent to the garage (single player): rusted shut — say so, and where the way on is
     if (!KS.mp && !LIV.ventOpen && Math.hypot(L.pos.x - 896, L.pos.z + 200) < 26 && L.pos.y < 40) return KS.ch3 ? TR('通風口個蓋鏽死咗。行樓上：女兒房衣櫃頂有條拉繩通去閣樓') : TR('通風口個蓋鏽死咗，推唔開——車房要第二條路先去到');
     // the ways up into the ceiling duct: the hot air over the burner, and the bathroom fan's pull cord
@@ -11279,7 +11294,7 @@ function unRoomy(C) {     // a good place to come back to
   return true;
 }
 function unPlace(C, p) {
-  C.pos.copy(p); C.pos.y += .3; C.vel.set(0, 0, 0); C.climbing = false; C.mantle = null; C.zip = null; C.on = null; C.hop = null; C.drop = false; C.pullT = 0; C.tumble = 0; C.ptw = null;
+  C.pos.copy(p); C.pos.y += .3; C.vel.set(0, 0, 0); C.climbing = false; C.mantle = null; C.zip = null; C.line = null; C.on = null; C.hop = null; C.drop = false; C.pullT = 0; C.tumble = 0; C.ptw = null;
   C.grounded = false; C.queue = []; C.lastTrail = C.pos.clone(); if (C.disp) C.disp.copy(C.pos); UNSTK.inT[C.id] = 0;
 }
 function unPoof(p) { for (let i = 0; i < 14; i++) emit(V3(p.x, p.y + 2, p.z), V3(R(-14, 14), R(6, 22), R(-14, 14)), new THREE.Color(.55, .95, .92), R(.3, .7), R(.35, .7), 200, 1); tone(520, 880, .12, .04, 'sine'); }
@@ -11315,7 +11330,7 @@ function unstuck(how) {
 function unstuckTick(dt) {
   if (!WORLD || STATE !== 'play') { UNSTK.hold = 0; unChip(); return; }
   const L = leader; if (!L || !mine(L)) { unChip(); return; }
-  const free = C => !C.frozen && !C.carried && !C.climbing && !C.mantle && !C.zip && !C.on && !C.hop && !C.ptw && !C.roost && !(C.pullT > 0);
+  const free = C => !C.frozen && !C.carried && !C.climbing && !C.mantle && !C.zip && !C.line && !C.on && !C.hop && !C.ptw && !C.roost && !(C.pullT > 0);
   // remember good places to come back to
   UNSTK.t -= dt;
   if (UNSTK.t <= 0 && free(L) && L.grounded && !isBase(L) && LEVEL !== 'portal') {
@@ -11550,7 +11565,7 @@ function portalResumeLand(S) {
 // who joined or dropped, how good each link is, frame rate, rescues and errors. One tap copies it as
 // plain text that a player can paste into a chat and send in.
 const NLOG = { t0: performance.now(), lines: [], fps: 0, sumT: 0, mode: '', lv: '', peer: {} };
-const NLOG_BUILD = '20261126-2143';
+const NLOG_BUILD = '20261126-2257';
 function nlog(s) {
   const d = new Date(), p2 = n => String(n).padStart(2, '0');   // the clock time, so "it broke around 9:30" can be matched
   NLOG.lines.push(`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}  ${s}`); if (NLOG.lines.length > 500) NLOG.lines.splice(0, NLOG.lines.length - 500);
@@ -13215,7 +13230,11 @@ const LOOSE_T = {
   button: { name: TR('鈕扣'), desc: TR('掟出去：跌落地嗰度會響，引人過去'), use: TR('掟'), throw: true,
     svg: '<circle cx="20" cy="20" r="13"/><circle cx="20" cy="20" r="9"/><circle cx="16.5" cy="16.5" r="1.6"/><circle cx="23.5" cy="16.5" r="1.6"/><circle cx="16.5" cy="23.5" r="1.6"/><circle cx="23.5" cy="23.5" r="1.6"/>' },
   sugar: { name: TR('方糖'), desc: TR('食咗：體力即刻滿返，上限都補返啲'), use: TR('食'), food: true,
-    svg: '<path d="M8 14l12-6 12 6v13l-12 6-12-6z"/><path d="M8 14l12 6 12-6M20 20v13"/>' }
+    svg: '<path d="M8 14l12-6 12 6v13l-12 6-12-6z"/><path d="M8 14l12 6 12-6M20 20v13"/>' },
+  raisin: { name: TR('提子乾'), desc: TR('食咗：體力回返一半'), use: TR('食'), food: true, half: true,
+    svg: '<ellipse cx="20" cy="20" rx="12" ry="9"/><path d="M11 18c3 2 6-2 9 0s6 2 9-1M12 23c3 1 6-1 9 1s5 1 7-1"/>' },
+  marble: { name: TR('波子'), desc: TR('掟出去：落地之後會一路碌、一路響，引人行遠啲'), use: TR('掟'), throw: true, roll: true,
+    svg: '<circle cx="20" cy="20" r="12"/><path d="M11 23c4-7 10 3 17-5M14 13c3 2 6 0 8 4"/>' }
 };
 const LOOSE = [];
 function looseMesh(type) {
@@ -13225,6 +13244,9 @@ function looseMesh(type) {
   else if (type === 'button') { const m = new THREE.MeshPhysicalMaterial({ color: [0xe8c25a, 0x6a3a2a, 0xf2efe6][LOOSE.length % 3], roughness: .35, clearcoat: .8 });
     const c = new THREE.Mesh(new THREE.CylinderGeometry(1.8, 1.8, .6, 24), m); c.position.y = .3; g.add(c);
     for (const [x, z] of [[-.5, -.5], [.5, -.5], [-.5, .5], [.5, .5]]) { const h = new THREE.Mesh(new THREE.CircleGeometry(.22, 10), new THREE.MeshBasicMaterial({ color: 0x1a1410 })); h.rotation.x = -Math.PI / 2; h.position.set(x, .61, z); g.add(h); } }
+  else if (type === 'raisin') { const c = new THREE.Mesh(new THREE.DodecahedronGeometry(1.15, 1), new THREE.MeshPhysicalMaterial({ color: 0x4a2230, roughness: .55, clearcoat: .4 })); c.scale.set(1.25, .7, .95); c.position.y = .8; g.add(c); }
+  else if (type === 'marble') { const c = new THREE.Mesh(new THREE.SphereGeometry(1.35, 20, 14), new THREE.MeshPhysicalMaterial({ color: 0xdff2fb, roughness: .04, clearcoat: 1, transparent: true, opacity: .6 })); c.position.y = 1.35; g.add(c);
+    const s = new THREE.Mesh(new THREE.TorusGeometry(.6, .28, 8, 16), new THREE.MeshStandardMaterial({ color: [0x3a8ad8, 0xe85a4a, 0x4ab86a][LOOSE.length % 3], roughness: .3 })); s.position.y = 1.35; s.rotation.set(.7, .3, 0); g.add(s); }
   else { const c = new THREE.Mesh(new THREE.BoxGeometry(2.4, 2.4, 2.4), new THREE.MeshPhysicalMaterial({ color: 0xfbf8f2, roughness: .9, sheen: .4 })); c.position.y = 1.2; g.add(c); }
   g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.userData.noSolid = true; } });
   return g;
@@ -13246,7 +13268,8 @@ function looseDo(d, local) {
   else if (d.k === 'out') { o.st = 'held'; o.by = d.c; o.idle = 0; o.g.visible = true; if (local) POUCH.store = POUCH.store.filter(i => i !== o.i); }
   else if (d.k === 'drop') { o.st = 'ground'; o.by = null; o.p.fromArray(d.p); o.g.position.copy(o.p); o.g.visible = true; }
   else if (d.k === 'throw') { o.st = 'air'; o.by = null; o.p.fromArray(d.p); o.v.fromArray(d.v); o.g.visible = true; }
-  else if (d.k === 'eat') { o.st = 'gone'; o.by = null; o.g.visible = false; if (C && mine(C)) { C.stamMax = Math.min(100, (C.stamMax || 100) + 15); C.stamina = C.stamMax; } }
+  else if (d.k === 'eat') { o.st = 'gone'; o.by = null; o.g.visible = false; if (C && mine(C)) { if (LOOSE_T[o.type].half) C.stamina = Math.min(C.stamMax || 100, C.stamina + (C.stamMax || 100) * .5); else { C.stamMax = Math.min(100, (C.stamMax || 100) + 15); C.stamina = C.stamMax; } } }
+  else if (d.k === 'back') { o.st = 'ground'; o.by = null; o.v.set(0, 0, 0); o.rang = 0; o.p.fromArray(d.p); o.g.position.copy(o.p); o.g.rotation.set(0, R(0, 6.28), 0); o.g.visible = true; }
   if (local && NET.on) nsend(Object.assign({ t: 'loose' }, d));
   if (local) looseUI();
 }
@@ -13272,7 +13295,7 @@ function pouchTakeOut(type) {
 // your ability button while your paws are full
 function useHeld(L) {
   const h = looseHeld(L); if (!h) return false; const T2 = LOOSE_T[h.type];
-  if (T2.food) { looseDo({ k: 'eat', i: h.i, c: L.id }, true); SND.pick && SND.pick(); toast(TR('食咗粒方糖——體力滿返'), 1.8); return true; }
+  if (T2.food) { looseDo({ k: 'eat', i: h.i, c: L.id }, true); SND.pick && SND.pick(); toast(T2.half ? TR('食咗粒提子乾——體力回返一半') : TR('食咗粒方糖——體力滿返'), 1.8); return true; }
   if (T2.throw) { ray.setFromCamera(_sc, camera); const d = ray.ray.direction.clone(); d.y = Math.max(d.y, -.1) + .45; d.normalize();
     const p = V3(L.pos.x + Math.sin(L.yaw) * (L.r + 1), L.pos.y + L.h * .8, L.pos.z + Math.cos(L.yaw) * (L.r + 1));
     looseDo({ k: 'throw', i: h.i, c: L.id, p: p.toArray().map(v => +v.toFixed(2)), v: d.multiplyScalar(70).toArray().map(v => +v.toFixed(2)) }, true);
@@ -13287,13 +13310,16 @@ function looseTick(dt) {
       if (isRoo(C) && C === leader && mine(C)) { o.idle += dt; if (o.idle > 12 && POUCH.store.length < 6) { looseDo({ k: 'pouch', i: o.i, c: C.id }, true); toast(TRT`冇用到——${LOOSE_T[o.type].name}收返入育兒袋`, 1.8); } } }
     else if (o.st === 'air') {
       o.v.y -= 160 * dt; const nx = o.p.x + o.v.x * dt, ny = o.p.y + o.v.y * dt, nz = o.p.z + o.v.z * dt;
-      if (solidAt(nx, ny + .5, nz)) { o.v.x *= -.3; o.v.z *= -.3; }
+      if (solidAt(nx, Math.max(ny, o.p.y) + .6, nz)) { o.v.x *= -.3; o.v.z *= -.3; }   // (walls only: touching down on the floor isn't a wall)
       else { o.p.x = nx; o.p.z = nz; }
       const [sup] = supportAt(o.p.x, o.p.z, .4, o.p.y + 1); o.p.y = ny;
-      if (o.p.y <= sup) { o.p.y = sup; const hard = o.v.y < -25; o.v.y = hard ? -o.v.y * .3 : 0; o.v.x *= .5; o.v.z *= .5;
+      if (o.p.y <= sup) { o.p.y = sup; const hard = o.v.y < -25, roll = LOOSE_T[o.type].roll; o.v.y = hard ? -o.v.y * .3 : 0;
+        if (roll) { const k = hard ? .8 : Math.max(0, 1 - 1.1 * dt); o.v.x *= k; o.v.z *= k; o.rt = (o.rt || 0) + dt;   // a marble keeps rolling, ticking along the floor
+          if (o.rang && o.rt > .9 && Math.hypot(o.v.x, o.v.z) > 8) { o.rt = 0; tone(2600, 2400, .03, .03, 'triangle'); noise(o.p.clone(), .4, .2); } }
+        else { o.v.x *= .5; o.v.z *= .5; }
         if (hard || !o.rang) { tone(2200, 1800, .05, .05, 'square'); tone(1500, 1300, .07, .04, 'triangle'); }
-        if (!o.rang) { o.rang = 1; noise(o.p.clone(), .75, 1); }   // the first clatter is loud enough to be heard over the hood
-        if (Math.abs(o.v.y) < 6 && Math.hypot(o.v.x, o.v.z) < 4) { o.st = 'ground'; o.v.set(0, 0, 0); o.rang = 0; } }
+        if (!o.rang) { o.rang = 1; o.rt = 0; noise(o.p.clone(), .75, 1); }   // the first clatter is loud enough to be heard over the hood
+        if (Math.abs(o.v.y) < 6 && Math.hypot(o.v.x, o.v.z) < (roll ? 2 : 4)) { o.st = 'ground'; o.v.set(0, 0, 0); o.rang = 0; } }
       if (o.p.y < -400) { o.st = 'gone'; o.g.visible = false; }
       o.g.position.copy(o.p); o.g.rotation.x += dt * 9; }
     else if (o.st === 'ground') { o.g.rotation.x = 0; o.g.rotation.z = 0; }
@@ -13303,7 +13329,7 @@ function looseTick(dt) {
 // the touch buttons: 用 shows when there's something to pick up or put down; the ability button reads 掟 / 食 while holding
 function looseUI() {
   if (!TOUCH || !leader) return; const L = leader, h = looseHeld(L), tu = $('touch'); if (!tu) return;
-  const near = !h && !!looseNear(L); tu.classList.toggle('looseUse', near || !!h); tu.classList.toggle('hold', !!h);
+  const near = !h && (!!looseNear(L) || zipNear(L)); tu.classList.toggle('looseUse', near || !!h); tu.classList.toggle('hold', !!h);
   const lbl = h ? LOOSE_T[h.type].use : ''; if (tu.dataset.hold !== lbl) { tu.dataset.hold = lbl; if (h) tbLabel('tbAct', lbl); else if (typeof refreshTouchLabels === 'function') refreshTouchLabels(); }
 }
 
@@ -15334,9 +15360,287 @@ function rfSitTick(t) {
 }
 function startRoof() { return startChapter('roof', { chapter: TR('第一章'), title: TR('屋企'), after() { setTimeout(() => roomBanner(TR('閣樓')), 900); } }); }
 
+// =====================================================================
+//  屋後：地庫門外嘅平台、屋後走廊、儲物房、洗衣間、晾衫繩
+//  Behind the house. The basement door opens onto a landing; four big steps up is the back hallway.
+//  Off the hallway: the storeroom (quiet, nobody looks in — supplies that come back), with a mouse-size
+//  hole under the kitchen counter; at the far end the utility room, with a doorway into the living room.
+//  A clothesline runs the length of the hallway: climb the shoe cabinet, grab a hanger, slide.
+// =====================================================================
+const BK = {
+  A: V3(-40, 182, -600), B: V3(606, 86, -600), len: 0, dir: V3(), s0: 5,
+  hangers: [], used: false, doorSegs: [], doorFixed: false, shut: false, said: {}, store: [], storeT: 0,
+  peekBox: [-60, 260, -10, 210, -624, -500]
+};
+BK.len = BK.A.distanceTo(BK.B); BK.dir.subVectors(BK.B, BK.A).normalize();
+const STORE = { x0: -157, x1: 138, z0: -500, z1: -232 };
+const LINE_V = 95;   // top speed on the line
+function inStore(p) { return p.x > STORE.x0 && p.x < STORE.x1 && p.z > STORE.z0 && p.z < STORE.z1 && p.y > -5 && p.y < 258; }
+function linePt(s) { return BK.A.clone().addScaledVector(BK.dir, clamp(s, 0, BK.len)); }
+
+// ---------- building (runs with the kitchen) ----------
+function hangerMesh(col) {
+  const g = new THREE.Group(), m = new THREE.MeshPhysicalMaterial({ color: col, roughness: .35, clearcoat: .7 });
+  const hook = new THREE.Mesh(new THREE.TorusGeometry(1.5, .28, 8, 18, Math.PI * 1.35), MAT.steel); hook.rotation.set(0, Math.PI / 2, Math.PI * .82); hook.position.y = -.9; g.add(hook);
+  const neck = new THREE.Mesh(new THREE.CylinderGeometry(.3, .3, 2.6, 8), MAT.steel); neck.position.y = -3.3; g.add(neck);
+  const bar = (a, b) => { const d = V3().subVectors(b, a), c = new THREE.Mesh(new THREE.CapsuleGeometry(.55, d.length(), 4, 10), m); c.position.copy(a).add(b).multiplyScalar(.5); c.quaternion.setFromUnitVectors(V3(0, 1, 0), d.normalize()); g.add(c); };
+  const top = V3(0, -4.6, 0), l = V3(-6.5, -11.5, 0), r = V3(6.5, -11.5, 0);
+  bar(top, l); bar(top, r); bar(l, r);
+  g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.userData.noSolid = true; } });
+  return g;
+}
+function buildBackHall(K) {
+  const W = MAT.white;
+  const wallM = new THREE.MeshStandardMaterial({ color: 0xdcd3c2, roughness: .95, map: K.wall.map || null });
+  const hallF = new THREE.MeshStandardMaterial({ color: 0x9c7a58, roughness: .75, map: K.floor.map || null });
+  const storeF = new THREE.MeshStandardMaterial({ color: 0x8e877b, roughness: 1 });
+  const utilF = new THREE.MeshStandardMaterial({ color: 0xc9c4b8, roughness: .6, map: K.tiles.map || null });
+  const ceilM = K.ceil, steelM = MAT.steel;
+  const cloth = c => new THREE.MeshStandardMaterial({ color: c, roughness: 1 });
+  const nc = { col: false }, ncs = { col: false, cast: false };
+
+  // ================= the landing outside the basement door, and four big steps up =================
+  box(-282, -170, -86, -76, -612, -491, MAT.stair, { uv: 60, cast: false });
+  const rise = 19, run = 25;
+  for (let i = 0; i < 4; i++) { const x0 = -170 + i * run, top = -76 + (i + 1) * rise; box(x0, x0 + run, -86, top, -612, -512, MAT.stair, { uv: 60 });
+    box(x0 - .4, x0 + 1.2, top - 1.2, top + .3, -612, -512, W, nc); }                       // white nosing
+  box(-294, 748, -86, 270, -624, -612, wallM, { uv: 120 });                                  // the long back wall
+  box(-294, -282, -86, 270, -612, -479, wallM, { uv: 120 });                                 // west end of the landing
+  box(-294, -157, 134, 270, -491, -479, wallM, { uv: 120 });                                 // over the stairwell's top
+  box(-170, -157, -86, 270, -512, -479, wallM, { uv: 120 });                                 // beside the steps
+  // the stairwell's door wall seen from out here: plaster, a white door frame
+  box(-282, -262, -76, 134, -492.4, -491, wallM, ncs); box(-187, -170, -76, 134, -492.4, -491, wallM, ncs); box(-262, -187, 122, 134, -492.4, -491, wallM, ncs);
+  box(-266, -262, -76, 122, -494, -491, W, nc); box(-187, -183, -76, 122, -494, -491, W, nc); box(-266, -183, 118.5, 122, -494, -491, W, nc);
+  // the basement door's colliders follow the door (see backDoorTick)
+  for (let i = 0; i < 5; i++) { const c = { t: 'b', x0: -262 + i * 15, x1: -262 + (i + 1) * 15, y0: -76, y1: 118, z0: -481.5, z1: -478.5, door: true }; cols.push(c); BK.doorSegs.push(c); }
+
+  // ================= the back hallway =================
+  box(-70, 472, -10, 0, -612, -500, hallF, { uv: 140, cast: false });
+  box(-170, -40, -86, 266, -512, -500, wallM, { uv: 120 }); box(40, 472, 0, 266, -512, -500, wallM, { uv: 120 }); box(-40, 40, 205, 266, -512, -500, wallM, { uv: 120 });
+  box(-294, 748, 260, 270, -624, -500, ceilM, { cast: false });
+  box(-70, 472, 0, 9, -611.9, -610.4, W, nc); box(-70, -40, 0, 9, -513.5, -512, W, nc); box(40, 472, 0, 9, -513.5, -512, W, nc);   // skirting
+  for (const [x0, x1] of [[-44, -40], [40, 44]]) box(x0, x1, 0, 209, -515, -497, W, nc); box(-44, 44, 205, 209, -515, -497, W, nc);   // storeroom door frame
+  // a runner rug, a dome light or two
+  box(60, 430, 0, .25, -590, -540, new THREE.MeshStandardMaterial({ color: 0x7a3e34, roughness: 1 }), ncs);
+  for (const x of [-220, 110, 390]) { mesh(new THREE.SphereGeometry(13, 24, 10, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xfff1da, emissive: 0xffd9a0, emissiveIntensity: .9 }), x, 260, -562, { cast: false }).rotation.x = Math.PI; }
+  pointL(0xffd2a0, 1500, 110, 236, -562);
+  // the landing is double height: a wall lamp lower down so its floor isn't in the dark
+  { const sc = mesh(new THREE.SphereGeometry(7, 18, 10, 0, Math.PI), new THREE.MeshStandardMaterial({ color: 0xfff1da, emissive: 0xffd9a0, emissiveIntensity: 1.1 }), -282, 96, -552, { cast: false }); sc.rotation.y = Math.PI / 2; sc.userData.noSolid = true;
+    pointL(0xffd2a0, 1600, -272, 92, -552); } pointL(0xffd2a0, 1400, 390, 236, -562);
+  // ---- the climb to the clothesline: newspapers → shoe cabinet → shoe boxes → tissue box ----
+  const cab = new THREE.MeshStandardMaterial({ color: 0xe6dccb, roughness: .55 });
+  box(-64, -4, 0, 90, -612, -578, cab, { uv: 60 }); box(-66, -2, 90, 93, -613, -576, new THREE.MeshStandardMaterial({ color: 0x8a6446, roughness: .5 }));
+  for (const x of [-62, -34]) { box(x, x + 26, 6, 86, -578, -577.3, cab, nc); box(x + 11, x + 15, 60, 62, -577.3, -575.6, K.brass, nc); }
+  box(-2, 30, 0, 34, -610, -584, new THREE.MeshStandardMaterial({ color: 0xdedad0, roughness: .95 }));             // a pile of newspapers
+  for (let y = 4; y < 34; y += 6) box(-2.3, 30.3, y, y + .6, -610.3, -583.7, new THREE.MeshStandardMaterial({ color: 0xb9b4a8, roughness: 1 }), ncs);
+  box(-60, -22, 93, 123, -610, -582, new THREE.MeshStandardMaterial({ color: 0xc9563c, roughness: .8 }));            // shoe boxes
+  box(-61, -21, 119, 123.6, -610.6, -581.4, new THREE.MeshStandardMaterial({ color: 0xb04a32, roughness: .8 }), nc);
+  box(-56, -30, 123.6, 141, -609, -588, new THREE.MeshStandardMaterial({ color: 0x2f5f8a, roughness: .8 }));
+  box(-52, -36, 141, 159, -608, -592, new THREE.MeshStandardMaterial({ color: 0xf3efe6, roughness: .9 }));            // tissue box on top
+  { const t = mesh(new THREE.SphereGeometry(3, 12, 8), new THREE.MeshStandardMaterial({ color: 0xffffff, roughness: 1 }), -44, 159.6, -600, { cast: false }); t.scale.set(1, .7, .6); t.userData.noSolid = true; }
+  // coat hooks on the other wall, a canvas tote bag hanging off one
+  for (const x of [164, 190, 216]) { box(x - 1.5, x + 1.5, 168, 172, -517, -512, K.brass, nc); }
+  { const bag = box(176, 204, 118, 150, -519, -512.5, cloth(0xd9c9a3), nc); bag.userData.noSolid = true;
+    box(184, 196, 128, 140, -519.3, -519, cloth(0x2f6a5a), ncs);
+    const h = mesh(new THREE.TorusGeometry(8, .7, 6, 20, Math.PI), cloth(0xb8a882), 190, 150, -516); h.userData.noSolid = true; }
+  // ---- the clothesline: brackets on the wall, a taut cord, plastic hangers ----
+  for (const P of [BK.A, BK.B]) { box(P.x - 1.5, P.x + 1.5, P.y - 1.5, P.y + 1.5, -612, -599, steelM, nc); box(P.x - 3, P.x + 3, P.y - 3, P.y + 3, -612, -611, steelM, nc); }
+  { const d = BK.B.clone().sub(BK.A), c = new THREE.Mesh(new THREE.CylinderGeometry(.32, .32, d.length(), 8), new THREE.MeshStandardMaterial({ color: 0xece6d8, roughness: .8 }));
+    c.position.copy(BK.A).add(BK.B).multiplyScalar(.5); c.quaternion.setFromUnitVectors(V3(0, 1, 0), d.normalize()); c.castShadow = true; c.userData.noSolid = true; LV.add(c); }
+  for (const col of [0x8fc8ea, 0xf4a6c0, 0xf2d26a, 0x9ed69a, 0x8fc8ea, 0xf4a6c0, 0xf2d26a, 0x9ed69a]) { const h = hangerMesh(col); h.visible = false; LV.add(h); BK.hangers.push(h); }
+  // a couple of things along the way
+  cyl(92, -598, 9, 0, 46, new THREE.MeshStandardMaterial({ color: 0x4a5560, roughness: .5, metalness: .4 }), { open: false });   // umbrella stand
+  for (const [dx, c] of [[-3, 0x23384f], [3.5, 0x7a1f2c]]) { const u = mesh(new THREE.CylinderGeometry(1.2, 2.6, 88, 10), new THREE.MeshStandardMaterial({ color: c, roughness: .7 }), 92 + dx, 52, -598); u.rotation.z = dx * .03; u.userData.noSolid = true;
+    const hd = mesh(new THREE.TorusGeometry(3, .9, 8, 16, Math.PI), new THREE.MeshStandardMaterial({ color: 0x3a2a1e, roughness: .5 }), 92 + dx, 97, -598); hd.userData.noSolid = true; }
+  { const vg = new THREE.MeshPhysicalMaterial({ color: 0xc8343c, roughness: .35, clearcoat: .6 });   // a vacuum cleaner by the wall
+    const v = mesh(new THREE.CapsuleGeometry(11, 20, 6, 16), vg, 270, 12, -526); v.rotation.z = Math.PI / 2;
+    for (const x of [258, 282]) cyl(x, -526, 5, 0, 4, MAT.black, { col: false });
+    tubeM([[250, 14, -526], [236, 30, -530], [226, 60, -534], [224, 100, -534]], 2.2, new THREE.MeshStandardMaterial({ color: 0x3a3a3c, roughness: .6 }), 30); }
+  box(400, 440, 0, 22, -610, -584, new THREE.MeshStandardMaterial({ color: 0xd6cfbf, roughness: 1 }));              // bundled newspapers
+  box(399.5, 440.5, 10, 11.2, -610.5, -583.5, new THREE.MeshStandardMaterial({ color: 0x9a7a50, roughness: 1 }), nc);
+
+  // ================= the utility room (washing machine, back door, the basket under the line) =================
+  box(472, 736, -10, 0, -612, -244, utilF, { uv: 80, cast: false });
+  box(460, 472, 0, 270, -500, -482, wallM, { uv: 120 }); box(736, 748, 0, 270, -624, -510, wallM, { uv: 120 });
+  box(472, 736, 260, 270, -500, -244, ceilM, { cast: false });
+  box(472, 736, 0, 9, -611.9, -610.4, W, nc);
+  pointL(0xfff0dc, 1700, 600, 238, -430);
+  mesh(new THREE.CylinderGeometry(14, 14, 3, 28), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff0dc, emissiveIntensity: 1 }), 600, 258.5, -430, { cast: false });
+  { const en = new THREE.MeshPhysicalMaterial({ color: 0xf4f4f0, roughness: .3, clearcoat: .8 });   // washing machine
+    box(474, 546, 0, 84, -474, -404, en); box(474, 546, 84, 86, -474, -404, new THREE.MeshStandardMaterial({ color: 0xd8d8d2, roughness: .4 }));
+    const dr = mesh(new THREE.TorusGeometry(15, 2.6, 10, 32), MAT.steel, 546.5, 40, -439); dr.rotation.y = Math.PI / 2; dr.userData.noSolid = true;
+    const gl = mesh(new THREE.CircleGeometry(13, 32), new THREE.MeshPhysicalMaterial({ color: 0x2e3e4a, roughness: .05, metalness: .2, clearcoat: 1 }), 546.3, 40, -439); gl.rotation.y = Math.PI / 2;
+    box(546, 547, 70, 78, -470, -446, MAT.black, nc); cyl(530, -416, 4.5, 86, 104, new THREE.MeshPhysicalMaterial({ color: 0x3a8ad8, roughness: .3, clearcoat: .6 })); }
+  { const bm = new THREE.MeshPhysicalMaterial({ color: 0x6fb0d8, roughness: .45, clearcoat: .3 });   // laundry basket
+    box(556, 608, 0, 28, -612, -609, bm); box(556, 608, 0, 28, -581, -578, bm); box(556, 559, 0, 28, -609, -581, bm); box(605, 608, 0, 28, -609, -581, bm);
+    for (let x = 562; x < 604; x += 7) box(x, x + 3, 6, 22, -578.2, -577.8, MAT.black, ncs);
+    const rim = (a, b) => { const d = V3().subVectors(b, a), c = mesh(new THREE.CapsuleGeometry(1.7, d.length(), 4, 10), bm, (a.x + b.x) / 2, (a.y + b.y) / 2, (a.z + b.z) / 2); c.quaternion.setFromUnitVectors(V3(0, 1, 0), d.normalize()); c.userData.noSolid = true; };
+    const k = [V3(557.5, 28.5, -610.5), V3(606.5, 28.5, -610.5), V3(606.5, 28.5, -579.5), V3(557.5, 28.5, -579.5)]; for (let i = 0; i < 4; i++) rim(k[i], k[(i + 1) % 4]);
+    for (const q of k) cyl(q.x, q.z, 1.9, 0, 28.5, bm, { col: false, seg: 14 });
+    box(559, 605, 0, 25, -609, -581, cloth(0xe8e2d4), nc); cols.push({ t: 'b', x0: 559, x1: 605, y0: 0, y1: 25, z0: -609, z1: -581, soft: true });
+    for (const [x, z, c, s] of [[570, -598, 0xd8665a, 9], [588, -590, 0x5a7ac8, 10], [596, -603, 0xf2d26a, 7], [575, -586, 0xffffff, 8]]) { const b = mesh(new THREE.SphereGeometry(s, 16, 10), cloth(c), x, 22, z); b.scale.y = .45; b.userData.noSolid = true; } }
+  { const dm = new THREE.MeshStandardMaterial({ color: 0x5a4434, roughness: .6 });   // the back door (to the garden — shut for now)
+    box(650, 730, 0, 205, -612, -609, dm); box(662, 718, 120, 190, -609.2, -608.6, new THREE.MeshPhysicalMaterial({ color: 0x9ab4c8, roughness: .1, transparent: true, opacity: .7 }), nc);
+    for (const [x0, x1] of [[646, 650], [730, 734]]) box(x0, x1, 0, 209, -612, -607, W, nc); box(646, 734, 205, 209, -612, -607, W, nc);
+    const kb = mesh(new THREE.SphereGeometry(2.4, 14, 10), K.brass, 722, 100, -607); kb.userData.noSolid = true;
+    box(652, 728, 0, .9, -607, -580, new THREE.MeshStandardMaterial({ color: 0x6a5a3a, roughness: 1 }), ncs); }
+  { const bm = new THREE.MeshStandardMaterial({ color: 0xb08a5a, roughness: .9 });   // a broom leaning in the corner
+    const st = mesh(new THREE.CylinderGeometry(1.1, 1.1, 120, 8), bm, 726, 70, -270); st.rotation.z = .12; st.userData.noSolid = true;
+    box(716, 734, 0, 14, -276, -264, new THREE.MeshStandardMaterial({ color: 0x3a6a3a, roughness: .9 })); }
+  // ---- the doorway into the living room ----
+  box(540, 616, 0, .8, -246, -232, new THREE.MeshPhysicalMaterial({ color: 0xe9e6de, roughness: .25, clearcoat: .6 }), { cast: false });
+  for (const [x0, x1] of [[536, 540], [616, 620]]) box(x0, x1, 0, 209, -248, -228, W, nc); box(536, 620, 205, 209, -248, -228, W, nc);
+
+  // ================= the storeroom =================
+  box(-157, 138, -10, .05, -500, -232, storeF, { cast: false });
+  box(-167, -157, 0, 266, -500, -232, wallM, { uv: 120 }); box(138, 150, 0, 266, -500, -482, wallM, { uv: 120 });
+  box(-167, 150, 258, 266, -500, -232, ceilM, { cast: false });
+  // the pantry door, standing open against the wall
+  { const dm = new THREE.MeshPhysicalMaterial({ color: 0xece6da, roughness: .55, clearcoat: .2 });
+    box(36, 40, 0, 203, -498, -420, dm); const kb = mesh(new THREE.SphereGeometry(2, 14, 10), K.brass, 34, 98, -426); kb.userData.noSolid = true; }
+  // a bare bulb on a cord
+  cyl(0, -370, .25, 226, 258, MAT.black, { col: false, seg: 6 });
+  mesh(new THREE.SphereGeometry(4.5, 18, 12), new THREE.MeshStandardMaterial({ color: 0xfff2d8, emissive: 0xffd49a, emissiveIntensity: 1.4 }), 0, 222, -370, { cast: false }).userData.noSolid = true;
+  pointL(0xffcf94, 1200, 0, 214, -370);
+  // metal shelving along the west wall
+  { const x0 = -155, x1 = -113, z0 = -492, z1 = -262;
+    for (const x of [x0, x1 - 2]) for (const z of [z0, z1 - 2, (z0 + z1) / 2]) box(x, x + 2, 0, 200, z, z + 2, steelM, nc);
+    for (const y of [40, 80, 120, 160, 198]) box(x0, x1, y - 2, y, z0, z1, new THREE.MeshStandardMaterial({ color: 0xb8bcc0, metalness: .5, roughness: .45 }));
+    const can = (x, z, y, c) => cyl(x, z, 4.2, y, y + 11, new THREE.MeshStandardMaterial({ color: c, metalness: .5, roughness: .35 }), { seg: 20 });
+    for (let i = 0; i < 6; i++) can(-140, -470 + i * 10, 40, [0xc8312a, 0xe8c25a, 0x2f8a4a][i % 3]);
+    for (let i = 0; i < 4; i++) can(-128, -340 + i * 10, 80, [0x3a6ad0, 0xc8312a][i % 2]);
+    for (const [z, c, h] of [[-470, 0xf2a33a, 32], [-452, 0xd84a3a, 30], [-432, 0x4a9ad8, 34]]) box(-150, -122, 120, 120 + h, z, z + 14, new THREE.MeshStandardMaterial({ color: c, roughness: .8 }));   // cereal boxes
+    // a big jar of marbles (a few have got out) and a jar of raisins on the bottom shelf
+    cyl(-134, -300, 9, 40, 62, new THREE.MeshPhysicalMaterial({ color: 0xdff0f6, roughness: .05, transparent: true, opacity: .45, clearcoat: 1 }), { seg: 28 });
+    for (let i = 0; i < 14; i++) { const b = mesh(new THREE.SphereGeometry(1.5, 10, 8), new THREE.MeshPhysicalMaterial({ color: [0x4a9ad8, 0xe85a4a, 0x5ac87a, 0xf2c23a][i % 4], roughness: .1, clearcoat: 1 }), -134 + R(-6, 6), 41.5 + (i % 5) * 2.6, -300 + R(-6, 6), { cast: false }); b.userData.noSolid = true; }
+    cyl(-134, -400, 8, 40, 58, new THREE.MeshPhysicalMaterial({ color: 0xeedfcf, roughness: .1, transparent: true, opacity: .55 }), { seg: 24 });
+    cyl(-134, -400, 8.3, 58, 61, new THREE.MeshStandardMaterial({ color: 0xc8312a, roughness: .5 }), { seg: 24 }); }
+  // a rice sack slumped on the floor, a torn bag of sugar, the sewing tin, cardboard boxes, a step stool
+  { const prof = [[0, 0], [15, 0], [18.5, 3], [19.5, 12], [19, 30], [16.5, 40], [11, 46], [5.5, 48.5], [4.6, 50], [6.5, 53.5], [5, 57], [0, 57.5]].map(([r, y]) => new THREE.Vector2(r, y));
+    const s = mesh(new THREE.LatheGeometry(prof, 28), cloth(0xe6dcc4), -82, 0, -455); s.scale.set(1, 1, .8); s.userData.noSolid = true;   // a rice sack, tied at the neck
+    const band = mesh(new THREE.CylinderGeometry(19.6, 19.6, 9, 28, 1, true), new THREE.MeshStandardMaterial({ color: 0xc8312a, roughness: .9, side: THREE.DoubleSide }), -82, 22, -455, { cast: false }); band.scale.set(1, 1, .8); band.userData.noSolid = true;
+    const tie = mesh(new THREE.TorusGeometry(5, .8, 6, 16), new THREE.MeshStandardMaterial({ color: 0x8a6a3a, roughness: 1 }), -82, 49.5, -455, { cast: false }); tie.rotation.x = Math.PI / 2; tie.userData.noSolid = true;
+    cols.push({ t: 'c', x: -82, z: -455, r: 15, y0: 0, y1: 38 }); }
+  { box(-40, -12, 0, 10, -470, -452, new THREE.MeshStandardMaterial({ color: 0xf6f2ea, roughness: .9 }));
+    box(-41, -11, 6, 8, -470.5, -451.5, new THREE.MeshStandardMaterial({ color: 0x3a6ad0, roughness: .9 }), ncs);
+    for (const [x, z] of [[-8, -455], [-4, -462]]) { const c = mesh(new THREE.BoxGeometry(2.4, 2.4, 2.4), new THREE.MeshPhysicalMaterial({ color: 0xfbf8f2, roughness: .9 }), x, 1.25, z, { cast: false }); c.rotation.y = x; c.userData.noSolid = true; } }
+  { cyl(64, -470, 12, 0, 8, new THREE.MeshStandardMaterial({ color: 0x2a4a8a, metalness: .6, roughness: .35 }), { seg: 36 }); cyl(80, -486, 12.4, 0, 2.2, new THREE.MeshStandardMaterial({ color: 0x2a4a8a, metalness: .6, roughness: .35 }), { seg: 36 }); }
+  box(90, 136, 0, 40, -440, -380, new THREE.MeshStandardMaterial({ color: 0xb89a6a, roughness: .95 })); box(96, 132, 40, 66, -432, -392, new THREE.MeshStandardMaterial({ color: 0xc4a676, roughness: .95 }));
+  box(89.5, 136.5, 18, 21, -440.5, -379.5, new THREE.MeshStandardMaterial({ color: 0xd8c9a8, roughness: .9 }), ncs);
+  box(60, 100, 0, 30, -300, -270, new THREE.MeshStandardMaterial({ color: 0x5a8ac0, roughness: .5 }));               // step stool
+  // the hole under the counter: storeroom side
+  mouseArch(-30, 0, -232, -1, wallM, 12, 10);
+  // supplies: they come back a while after they're used up or carried off
+  for (const [t, x, y, z] of [['sugar', -24, .05, -440], ['sugar', -50, .05, -432], ['raisin', -100, .05, -424], ['raisin', -134, 40, -386], ['marble', 18, .05, -318], ['button', 64, 8, -470], ['cap', 108, .05, -300]]) {
+    BK.store.push({ i: LOOSE.length, home: V3(x, y, z), t: 0 }); addLoose(t, x, y, z); }
+  // …and a few in the hallway and the utility room that don't
+  for (const [t, x, y, z] of [['raisin', -14, 93, -596], ['button', 130, 0, -560], ['cap', 330, 0, -540], ['marble', 520, 0, -360]]) addLoose(t, x, y, z);
+}
+
+// ---------- the basement door: colliders follow it; online it stands ajar; it shuts behind you ----------
+function backDoorTick(dt) {
+  if (!WORLD || !door) return;
+  if (!BK.doorFixed) {   // the old invisible plug and the door's own (fixed) collider: the moving ones replace them
+    BK.doorFixed = true;
+    for (const c of cols) if (c.t === 'b' && !c.door && c.x0 > -263 && c.x1 < -186 && c.z0 > -492.5 && c.z1 < -477 && c.y0 > -77 && c.y1 < 120.5) { c.y0 = -999; c.y1 = -998; }
+  }
+  // online nobody's home: the door was left ajar. Single player, once the kitchen has its dinner going, she's not coming down again: it swings shut when nobody's in the way
+  if (NET.on) door.rotation.y = damp(door.rotation.y, .45, 2, dt);
+  else if (ZONES.kitchen.prepped && door.rotation.y > .001) {
+    const inWay = party.some(C => C.pos.x > -275 && C.pos.x < -175 && C.pos.z > -560 && C.pos.z < -455 && C.pos.y < 130);
+    if (!inWay) { door.rotation.y = damp(door.rotation.y, 0, 3.2, dt); if (door.rotation.y < .015) { door.rotation.y = 0; if (!BK.shut) { BK.shut = true; SND.thud(.35); } } }
+    upLight.intensity = damp(upLight.intensity, 0, 3, dt); doorBeamRec.k = damp(doorBeamRec.k, 0, 3, dt); doorBeam.material.uniforms.uK.value = doorBeamRec.k;
+  }
+  const th = door.rotation.y, cs = Math.cos(th), sn = Math.sin(th), hx = door.position.x, hz = door.position.z;
+  BK.doorSegs.forEach((c, i) => { const a = i * 15, b = (i + 1) * 15, xa = hx + a * cs, za = hz - a * sn, xb = hx + b * cs, zb = hz - b * sn;
+    c.x0 = Math.min(xa, xb) - 1.5; c.x1 = Math.max(xa, xb) + 1.5; c.z0 = Math.min(za, zb) - 1.5; c.z1 = Math.max(za, zb) + 1.5; });
+  // seen through the open door from the hallway, the basement stairs need drawing too
+  const P = ZONES.basement.peek, has = P.includes(BK.peekBox);
+  if (th > .05 && !has) P.push(BK.peekBox); else if (th <= .05 && has) P.splice(P.indexOf(BK.peekBox), 1);
+  // a nudge, the second time she leaves it open
+  if (LEVEL === 'basement' && !NET.on && mom.active && mom.visits >= 2 && th > 1 && !BK.said.door && STATE === 'play') { BK.said.door = 1; toast(TR('樓梯頂道門開住——趁太太喺下面，可以爬樓梯溜出去'), 4.2); }
+}
+
+// ---------- the clothesline ----------
+function lineGrab(C) { const p = linePt(BK.s0); return V3(p.x, p.y - 15 - C.h, p.z); }
+function zipNear(L) {
+  if (!L || L.line || L.frozen || STATE !== 'play' || LEVEL !== 'kitchen') return false;
+  if (looseHeld(L)) return false;
+  const g = lineGrab(L); return Math.hypot(L.pos.x - g.x, L.pos.z - g.z) < 13 && L.pos.y > g.y - 7 && L.pos.y < g.y + 4 && (L.grounded || L.climbing);
+}
+function zipInput(L) {
+  if (!zipNear(L)) return false;
+  L.line = { s: BK.s0, v: 10 }; L.climbing = false; L.mantle = null; L.grounded = false; L.vel.set(0, 0, 0); L.crouch = false; SND.swish(); tone(520, 760, .18, .05, 'triangle');
+  if (!BK.said.ride) { BK.said.ride = 1; toast(TOUCH ? TR('捉實衣架！按「跳」可以中途鬆手') : TR('捉實衣架！撳 Space 可以中途鬆手'), 2.6); }
+  return true;
+}
+function lineOff(C, jumped) {
+  const R0 = C.line; if (!R0) return; C.line = null; BK.used = true;
+  const v = R0.v, d = BK.dir; C.vel.set(d.x * v * (jumped ? .7 : .2), jumped ? 24 : 0, d.z * v * (jumped ? .7 : .2)); C.grounded = false; C.state = 'air'; C.climbCD = .4;
+  if (jumped) SND.jump();
+}
+function lineRide(C, dt, ctl) {
+  const R0 = C.line, slope = (BK.A.y - BK.B.y) / BK.len;
+  R0.v = Math.min(LINE_V, R0.v + (G * slope - R0.v * .08) * dt); R0.s += R0.v * dt;
+  const p = linePt(R0.s); C.pos.set(p.x, p.y - 15 - C.h, p.z); C.vel.copy(BK.dir).multiplyScalar(R0.v);
+  C.yaw = angDamp(C.yaw, Math.atan2(BK.dir.x, BK.dir.z), 10, dt); C.state = 'climb'; C.spd = 6; C.grounded = false; C.climbing = false;
+  C.stamina = Math.min(C.stamMax || 100, C.stamina + 6 * dt);
+  if (ctl && pressed.Space) { lineOff(C, true); return; }
+  if (R0.s >= BK.len - 14) lineOff(C, false);
+}
+// a hanger over everyone who's hanging off the line (the leader, followers retracing the ride, other players)
+function hangerTick(dt) {
+  if (!BK.hangers.length) return; let n = 0;
+  const show = (s, tilt) => { const h = BK.hangers[n++]; if (!h) return; const p = linePt(s); h.position.copy(p); h.rotation.set(0, Math.atan2(BK.dir.x, BK.dir.z), 0); h.rotateX(tilt); h.visible = true; };
+  let startTaken = false;
+  for (const C of party) { if (C.frozen || !C.root.visible) continue; let s = null, tilt = 0;
+    if (C.line) { s = C.line.s; tilt = -clamp(C.line.v / LINE_V, 0, 1) * .25; }
+    else { const q = V3(C.pos.x, C.pos.y + 15 + C.h, C.pos.z), t = V3().subVectors(q, BK.A).dot(BK.dir); if (t > 2 && t < BK.len && linePt(t).distanceTo(q) < 2.6 && (C.state === 'climb' || C !== leader)) { s = t; tilt = -.12; } }
+    if (s !== null) { show(s, tilt); if (Math.abs(s - BK.s0) < 6) startTaken = true; } }
+  if (!startTaken) show(BK.s0, Math.sin(T * 1.3) * .04);
+  if (BK.used) show(BK.len - 6, Math.sin(T * 1.1 + 1) * .05);
+  for (; n < BK.hangers.length; n++) BK.hangers[n].visible = false;
+}
+
+// ---------- the storeroom: quiet, and its shelves fill up again ----------
+function storeTick(dt) {
+  if (NET.client || !BK.store.length) return;
+  for (const S of BK.store) { const o = LOOSE[S.i]; if (!o) continue;
+    const away = o.st === 'gone' || (o.st === 'ground' && o.p.distanceTo(S.home) > 30 && !party.some(C => C.pos.distanceTo(o.p) < 60));
+    if (!away) { S.t = 0; continue; }
+    S.t += dt; if (S.t > 45) { S.t = 0; looseDo({ k: 'back', i: S.i, c: 'dad', p: S.home.toArray() }, true); }
+  }
+}
+// noises in the storeroom don't carry; nobody looks in there
+function backQuiet(p) { return WORLD && inStore(p); }
+
+// ---------- per frame (with the kitchen) ----------
+function backTick(dt) {
+  if (!WORLD) return;
+  backDoorTick(dt); hangerTick(dt); storeTick(dt);
+  for (const C of party) if (C.line && C !== leader) lineOff(C, false);   // switched away mid-ride: let go
+  const L = leader; if (!L || STATE !== 'play') return;
+  if (LEVEL === 'kitchen' && mine(L)) {
+    if (inStore(L.pos) && !BK.said.store) { BK.said.store = 1; toast(TR('儲物房：呢度冇人望到你，整出聲都冇人聽到。架上啲嘢拎得，拎完過一陣會補返'), 4.2); }
+    // the living room reached round the back, before the door's open
+    if (!LIV.open && playerChars().some(C => C.pos.x > 314 && C.pos.x < 900 && C.pos.z > -230 && C.pos.z < 232 && C.pos.y < 60)) {
+      if (!KS.backLiv) { KS.backLiv = true; if (KS.mp) mpAdvance(); }
+      if (!KS.mp && KS.ch2 && QUESTS === SP_Q2 && quest === 0) { setQuest(1); say(TR('爸爸'), TR('由後面條走廊都入到客廳！遙控器應該喺沙發前面嘅咖啡枱。'), '#f5f0e6', 3.4); }
+    }
+  }
+}
+function backHint(L) {
+  if (L.line) return TOUCH ? TR('滑緊……按「跳」可以中途鬆手') : TR('滑緊……撳 Space 可以中途鬆手');
+  if (zipNear(L)) return TOUCH ? TR('按「用」捉住衣架，沿晾衫繩滑去走廊尾') : TR('撳 E 捉住衣架，沿晾衫繩滑去走廊尾');
+  if (!BK.used && !L.climbing && L.pos.y < 40 && L.pos.x > -70 && L.pos.x < 60 && L.pos.z < -540 && L.pos.z > -612) return TR('爬上報紙、鞋櫃同鞋盒，捉住頂嗰個衣架就可以滑過成條走廊');
+  if (inStore(L.pos) && L.pos.y < 9 && Math.hypot(L.pos.x + 30, L.pos.z + 238) < 18) return TR('牆腳個窿通去廚房櫃底——一出去就係太太腳邊，小心');
+  if (L.pos.y < 9 && L.pos.x > -40 && L.pos.x < -20 && L.pos.z > -232 && L.pos.z < -168) return TR('櫃底條窿通去後面嘅儲物房（嗰度冇人望到你）');
+  return '';
+}
+
 requestAnimationFrame(frame);
 init().catch(e => { console.error(e); $('err').textContent = TR('載入失敗：') + (e && e.stack || e); });
-if (location.hash === '#dev') window.__VC = () => VC; if (location.hash === '#dev') window.__bn = { ACD, abilCD, LOOSE, looseHeld, useHeld, primaryDown, pouchTakeOut, POUCH, looseInput, get T() { return T; }, CINE, cineStart, cineAt, cineSay, SC, scBell, filmPlay, filmEnd, FILM_RECESS, FILM_ESSAY, FILM_END, MPQ_SCHOOL, MPQ_PARK, scFilm, mpSchoolMarker, say, toast, chapterBanner, emoShow, GHOST, ghostPing, watchCycle, keys, grade, RL, REAL, ST, MAT, HUMANS, humanBody, humanAnim, humanGait, buildHuman, SOLID, POUCH, pouchUse, pouchOpen, pouchClose, PROPS, get party() { return party; }, get cols() { return cols; }, ZONES, ZL, STATIC, get LV() { return LV; }, dayCloudTex, camera, MOLE, moleDig, softAt, switchTo, LP, WARPS, PK, SLIDE, parkLit, moonShade, NLOG, netLogText, nlog, LOBBY, mpSaveLoad, mpApplySave, setMyName, hostFreeze, toyUnfreezeAll, UNSTK, unstuck, unInside, PORT, PRO, PO, portalOut, proSkip, prC, prPad, MP_PRO, WATCH, watchCycle, watchTarget, STICK, EMO, EMOTES, renderSticker, emoKit, emoKitDone, emoBuildAll, TTL, titleSetup, titleEnd, RoomEnvironment, livingGet, RF, RFH, RFG, rfHatch, rfTopAt, rfHip, rfGab, FILM_RIDGE, startRoof, birdSees, birdGrab, RF_NEST, get CPS() { return CPS; }, emoDo, emoShow, emoOpen, emoClose, UPS, humanFloor, roomOf, navNearest, ACTS, roomSteps, brainIncident, react, agentRoom, OLDB, YS, AGB, GS, camPowered, doorOpen, mpChecklist, HB, HX, hxSet, hxNear, navPath, NAVN, KM, KID, LIV, scene, THREE, MUS, ARR, BANK, AU, SET, toyFreeze, useProto, TAKE, protoTarget, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, ST, pressButton, LANES, pause, garageHear, TEST, testWarp, WARPS, testAll, startChapter2, NC, batPing, tortShell, crewJoin, hideK, startGame, startChapter, openChapters, step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT, GS, YS, DECK, GY, WC, ventOpen, latchOpen, mpMarker, zoneFloor, KS }; }, info: () => ({ fps: $('fps').textContent, state: STATE, lv: LEVEL, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
+if (location.hash === '#dev') window.__VC = () => VC; if (location.hash === '#dev') window.__bn = { BK, zipInput, zipNear, inStore, linePt, get bDoor() { return door; }, ACD, abilCD, LOOSE, looseHeld, useHeld, primaryDown, pouchTakeOut, POUCH, looseInput, get T() { return T; }, CINE, cineStart, cineAt, cineSay, SC, scBell, filmPlay, filmEnd, FILM_RECESS, FILM_ESSAY, FILM_END, MPQ_SCHOOL, MPQ_PARK, scFilm, mpSchoolMarker, say, toast, chapterBanner, emoShow, GHOST, ghostPing, watchCycle, keys, grade, RL, REAL, ST, MAT, HUMANS, humanBody, humanAnim, humanGait, buildHuman, SOLID, POUCH, pouchUse, pouchOpen, pouchClose, PROPS, get party() { return party; }, get cols() { return cols; }, ZONES, ZL, STATIC, get LV() { return LV; }, dayCloudTex, camera, MOLE, moleDig, softAt, switchTo, LP, WARPS, PK, SLIDE, parkLit, moonShade, NLOG, netLogText, nlog, LOBBY, mpSaveLoad, mpApplySave, setMyName, hostFreeze, toyUnfreezeAll, UNSTK, unstuck, unInside, PORT, PRO, PO, portalOut, proSkip, prC, prPad, MP_PRO, WATCH, watchCycle, watchTarget, STICK, EMO, EMOTES, renderSticker, emoKit, emoKitDone, emoBuildAll, TTL, titleSetup, titleEnd, RoomEnvironment, livingGet, RF, RFH, RFG, rfHatch, rfTopAt, rfHip, rfGab, FILM_RIDGE, startRoof, birdSees, birdGrab, RF_NEST, get CPS() { return CPS; }, emoDo, emoShow, emoOpen, emoClose, UPS, humanFloor, roomOf, navNearest, ACTS, roomSteps, brainIncident, react, agentRoom, OLDB, YS, AGB, GS, camPowered, doorOpen, mpChecklist, HB, HX, hxSet, hxNear, navPath, NAVN, KM, KID, LIV, scene, THREE, MUS, ARR, BANK, AU, SET, toyFreeze, useProto, TAKE, protoTarget, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, ST, pressButton, LANES, pause, garageHear, TEST, testWarp, WARPS, testAll, startChapter2, NC, batPing, tortShell, crewJoin, hideK, startGame, startChapter, openChapters, step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT, GS, YS, DECK, GY, WC, ventOpen, latchOpen, mpMarker, zoneFloor, KS }; }, info: () => ({ fps: $('fps').textContent, state: STATE, lv: LEVEL, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
 
 </script>
 </body>
