@@ -1,0 +1,9 @@
+[{"frame":1},{"wait":800},{"frame":1,"shot":"en_title"},
+ {"eval":"(()=>{document.getElementById('goCh').click(); return 1})()"},{"frame":1},{"wait":500},{"frame":1,"shot":"en_chaps"},
+ {"eval":"(()=>{document.getElementById('chaps').hidden=true; return 1})()"},
+ {"eval":"(async()=>{const b=window.__bn; await b.startChapter('kitchen'); for(let i=0;i<120 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(300); return b.state})()"},
+ {"frame":1},{"wait":600},{"frame":1,"shot":"en_kitchen"},
+ {"eval":"(()=>{const b=window.__bn; b.step(400); return 1})()"},
+ {"frame":1},{"wait":600},{"frame":1,"shot":"en_kitchen2"},
+ {"eval":"(()=>{document.dispatchEvent(new KeyboardEvent('keydown',{code:'Escape',key:'Escape'})); return 1})()"},{"frame":1},{"wait":400},{"frame":1,"shot":"en_pause"}
+]

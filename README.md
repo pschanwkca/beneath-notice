@@ -3,6 +3,7 @@
 一個 5 公分高的科學家爸爸和隊友，在屋企裡探險、互相幫忙通關的瀏覽器原型（Three.js）。
 最終會移到 Unreal Engine 5，這個版本用來試玩法和手感。
 
+- 英文版：https://pschanwkca.github.io/beneath-notice/?lang=en （標題畫面嘅「English／中文」掣可以隨時轉）
 - 超寫實版：https://pschanwkca.github.io/beneath-notice/real.html （同一隻 game，草、樹、光影全部寫實化）
 
 ## 一個連續的世界（無縫，不轉場）
@@ -213,6 +214,7 @@ bash build.sh            # 把 src/ 合併成 index.html
 - `src/e29_netlog.js` 連線紀錄：每部機記低連線事件、ping、fps、救返同錯誤，暫停選單一撳複製
 - `src/e33_solid.js` 物件：自動補碰撞（autoSolid）、散放細嘢變成可互動物件（autoProps）
 - `src/e34_roo.js` 跳跳（袋鼠）：外形、跳嘅動作、育兒袋輪盤同六樣道具
+- `src/i18n.js`、`src/i18n_en.js` 語言：中文（預設）或英文；build 會用 `tools/i18n_wrap.mjs` 將程式入面每句中文包住，英文由 `i18n_en.js` 提供（`node tools/i18n_wrap.mjs --list src/*.js` 列出未翻譯嘅句子）
 - `src/e36_real.js` 超寫實版（real.html）：GPU 草地（幾十萬條草，有風、會俾人踩開）、有枝有葉嘅樹同籬笆、地上落葉／石仔／三葉草／蒲公英／樹枝、跟住鏡頭嘅清晰陽光影、微距景深
 - `src/e35_human.js` 人類：全部大人同細路共用嘅身體（雕塑過嘅頭、眼皮、手指、鞋）、IK 行路／跑步、企定時重心轉換、呼吸同眨眼
 - `src/e32_shell.js` 屋企外殼：屋頂、車房人字頂、簷篷、水渠、屋東邊上層外牆、車房後園窗（由後園或者馬路附近先會顯示）

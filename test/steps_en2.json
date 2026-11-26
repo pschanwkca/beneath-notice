@@ -1,0 +1,7 @@
+[{"eval":"window.__bn.startChapter2()","wait":5000},
+ {"evalFile":"shothelp.js"},
+ {"eval":"(()=>{__S.hud(true); return __S.warp('公園廣場', 60)})()"},
+ {"frame":1},{"wait":800},{"frame":1,"shot":"en_park"},
+ {"eval":"(()=>{window.__CAMO={p:[1980,40,1580],t:[2060,30,1660]}; return 1})()"},
+ {"frame":1},{"wait":800},{"frame":1,"shot":"en_gate"}
+]
