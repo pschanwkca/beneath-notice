@@ -55,6 +55,8 @@ addEventListener('keyup', e => { keys[e.code] = false; });
 addEventListener('blur', () => { for (const k in keys) keys[k] = false; });
 function requestLock() {
   if (dragMode || TOUCH) return;
+  // the film ending on its own isn't a click: asking then would fail and switch the game to drag-to-look for good
+  if (STATE === 'cine' && !(navigator.userActivation && navigator.userActivation.isActive)) return;
   try { const p = canvas.requestPointerLock(); if (p && p.catch) p.catch(() => { dragMode = true; }); } catch (e) { dragMode = true; }
 }
 document.addEventListener('pointerlockchange', () => {
@@ -743,6 +745,7 @@ function update(dt) {
   if (rnd() < dt * 1.3) { const a = R(0, 6.28); const p = V3(machine.x + Math.cos(a) * 17, machine.y + Math.sin(a) * 17, machine.z + 1); for (let i = 0; i < 14; i++) emit(p, V3(R(-25, 25), R(5, 40), R(-10, 25)), rnd() < .5 ? new THREE.Color(3, 1.6, .5) : new THREE.Color(.8, 3, 2.8), R(.12, .25), R(.3, .9), 220, .5); if (leader) SND.crack(clamp(1 - leader.pos.distanceTo(V3(machine.x, machine.y, machine.z)) / 200, 0, 1)); } }
   updRings(dt); updPebbles(dt); pouchUpdate(dt); if (STATE === 'play') { bearHold(dt); if (!NET.client) { updSlides(dt); updPushFall(dt); } } updResizables(dt); if (LVL && LVL.toys && STATE !== 'loading') updToys(dt); updTongue(dt); updScout(dt); updWatch(); updBatteries(dt); updParticles(dt);
   if (STATE === 'title') updTitle(dt);
+  else if (STATE === 'cine') cineTick(dt);
   else if (STATE === 'intro') { updIntro(dt); for (const C of party) { C.state = 'idle'; C.spd = 0; } }
   else if (STATE === 'play') {
     playT += dt;
@@ -826,7 +829,7 @@ function applyQ(q) {
 function pause() { PAUSED = true; $('pause').hidden = false; document.body.classList.add('paused'); $('pauseMP').hidden = !NET.on; if (NET.on) $('pauseCode').textContent = NET.code; pauseRefresh(); }
 function resume() { PAUSED = false; $('pause').hidden = true; $('pause').classList.remove('covered'); document.body.classList.remove('paused'); $('help').hidden = true; $('roster').hidden = true; last = performance.now(); requestLock(); }
 document.querySelectorAll('.sel button[data-q]').forEach(b => b.addEventListener('click', () => applyQ(b.dataset.q)));
-$('go').addEventListener('click', () => { audioInit(); startGame(0); });
+$('go').addEventListener('click', () => { audioInit(); cineStart(); });   // the prologue opens with the short film (e37_cine)
 $('resume').addEventListener('click', () => { audioInit(); resume(); });
 $('again').addEventListener('click', () => location.reload());
 

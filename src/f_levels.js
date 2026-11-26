@@ -68,7 +68,7 @@ function updPushFall(dt) {
   const N = resizables.length, rr = new Set(); for (let k = 0; k < Math.min(N, 14); k++) rr.add((_pfI + k) % N); _pfI = (_pfI + 14) % Math.max(1, N);
   for (let ri = 0; ri < N; ri++) { const r = resizables[ri];
     if (!r.c.push) continue; if (!r.vy && !(r.wakeT > T) && !rr.has(ri)) continue;
-    const [sup] = supportAt(r.cx, r.cz, .4, r.y0 + .01);
+    const [sup] = supportAt(r.cx, r.cz, .4, r.y0 + .25);   // (a thing sunk a hair into its shelf is still standing on it)
     if (sup < r.y0 - .15 || r.vy) {
       r.vy = (r.vy || 0) - 620 * dt; r.y0 += r.vy * dt;
       if (r.y0 <= sup) { const imp = -r.vy; r.y0 = sup; r.vy = 0; if (imp > 80) { noise(V3(r.cx, sup, r.cz), clamp(imp / 260, .4, 1), clamp(imp / 300, .3, 1)); SND.clang(clamp(imp / 300, .3, 1)); for (let i = 0; i < 16; i++) emit(V3(r.cx, sup + 1, r.cz), V3(R(-30, 30), R(10, 40), R(-30, 30)), new THREE.Color(.5, .45, .4), R(.3, .8), R(.4, .9), 300, 1); if (r.name) toastW(`「${r.name}」掉到地上——發出了好大的聲音！`); } }
