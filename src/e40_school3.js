@@ -29,15 +29,18 @@ function scReset() {
   for (const d of [SC.doors.main, SC.doors.back]) if (d) { d.open = d.want = 0; }
   if (SC.bookLid) SC.bookLid.rotation.z = 0;
 }
+// the quest number in the chapter's own terms (online, the school's quests sit at the end of one long shared list)
+function scQ() { return NET.on ? quest - MPQ_SCHOOL : quest; }
 function scJoin(id) {
   const K = chars[id]; if (!K || party.includes(K) || NET.on) return;
   const L = leader; K.pos.set(L.pos.x + R(-12, 12), L.pos.y, L.pos.z - R(6, 14)); K.yaw = L.yaw; crewJoin(id, true); if (K.disp) K.disp.copy(K.pos);
 }
 
 LEVELS.school = {
-  chapter: '第七章', title: '學校', env: 'park', envI: 1, fog: [0xbcd0e2, .00012], expo: .95, bloom: [.3, 2.4],
+  chapter: '第七章', title: '學校', mpChapter: '第六章（多人）', env: 'park', envI: 1, fog: [0xbcd0e2, .00012], expo: .95, bloom: [.3, 2.4],
   dust: { N: 500, box: [1716, 2500, GY, GY + 300, 5196, 5820], beamFrac: 0, door: false },
-  toys: false, npcNear: true, build: buildSchool,
+  get toys() { return NET.on; },   // alone, being seen ends the try; online, teammates can shake you awake
+  npcNear: true, build: buildSchool,
   cps: [[2060, GY, 3800], [2060, GY, 4345], [1020, SC_DRAIN.y, 4875], [2380, GY, 5040], [2470, GY, 5240], [2400, GY + 91, 5810]],
   quests: SC_Q,
   spawn() {
@@ -59,17 +62,17 @@ LEVELS.school = {
     lvT += dt; if (NET.on) return; const L = leader, p = L.pos;
     if (quest === 0 && p.z > 4186) setQuest(1);
     if (quest <= 1 && p.z > 4330) setQuest(2);
-    if (quest === 2) { SC.yardT = (SC.yardT || 0) + dt; if ((p.z > 4440 || SC.yardT > 7) && !SC.films.recess) { SC.films.recess = 1; filmPlay(FILM_RECESS); } }
+    if (quest === 2) { SC.yardT = (SC.yardT || 0) + dt; if ((p.z > 4440 || SC.yardT > 7) && !SC.films.recess) { SC.films.recess = 1; scFilm(FILM_RECESS); } }
     if (quest === 3 && inCorr(p)) { setQuest(4); if (SC.phase === 'recess' && SC.pt < 60) SC.pt = 60; }   // once you're in, the bell isn't far off (no long wait)
     if (quest >= 2 && quest <= 4 && inClass(p) && SC.films.recess) setQuest(5);
-    if (quest === 5 && atCubby(L) && !SC.films.essay) { SC.films.essay = 1; filmPlay(FILM_ESSAY); }
-    if (quest === 6 && p.z > SC_WIN.z + 30 && p.y < GY + 30 && !SC.films.end) { SC.films.end = 1; filmPlay(FILM_END); }
+    if (quest === 5 && atCubby(L) && !SC.films.essay) { SC.films.essay = 1; scFilm(FILM_ESSAY); }
+    if (quest === 6 && p.z > SC_WIN.z + 30 && p.y < GY + 30 && !SC.films.end) { SC.films.end = 1; scFilm(FILM_END); }
     // the next break comes round; tell them when the class is about to go back in
     if (SC.phase === 'recess' && SC.pt > 70 && !SC.said['in' + SC.cycle] && quest <= 4) { SC.said['in' + SC.cycle] = 1; toast('小息快完了——同學很快會排隊回課室', 3); }
   },
   win() { },
   marker() {
-    const L = leader;
+    if (NET.on) return mpMarker(); const L = leader;
     if (quest === 0) return V3(2060, GY + 4, 4200); if (quest === 1) return V3(2060, GY + 4, 4310); if (quest === 2) return V3(2060, GY + 4, 4560);
     if (quest === 3) return V3(2060, GY + 4, 5012); if (quest === 4) return V3(2425, GY + 4, 5186);
     if (quest === 5) return V3(SC.cubby.x0 + 6, GY + 14, SC_CUBBY.z); if (quest === 6) return V3(2410, GY + 98, 5826); return null;
@@ -82,9 +85,11 @@ LEVELS.school = {
     if (h < .1) return '儲物櫃底下——很難被看見';
     if (h < .25) return '矮樹叢裡面——很難被看見';
     if (h < .5) return '書枱底下——比較難被看見';
-    if (quest === 4 && SC.phase === 'class') return `三年甲班的門鎖着——等下一個小息（約 ${Math.max(0, Math.ceil(100 - SC.pt))} 秒）`;
-    if (quest === 4 && SC.phase === 'recess') return `小息還有 ${Math.max(0, Math.ceil(80 - SC.pt))} 秒`;
-    if (quest === 4 && SC.phase === 'in' && SC.doors.back && SC.doors.back.open > .5) return '後門開着——跟着同學進去！';
+    const q = scQ(), wait = q === 4 || (NET.on && q >= 5 && inCorr(L.pos));   // (online, whoever missed the line waits in the corridor for the next one)
+    if (wait && SC.phase === 'class') return `三年甲班的門鎖着——等下一個小息（約 ${Math.max(0, Math.ceil(100 - SC.pt))} 秒）`;
+    if (wait && SC.phase === 'recess') return `小息還有 ${Math.max(0, Math.ceil(80 - SC.pt))} 秒`;
+    if (wait && SC.phase === 'in' && SC.doors.back && SC.doors.back.open > .5) return '後門開着——跟着同學進去！';
+    if (NET.on && q >= 5 && inCorr(L.pos) && SC.phase === 'out' && SC.doors.back && SC.doors.back.open > .5) return '後門開着——等同學走晒，閃入去！';
     return '';
   },
   onSwitch() { }
@@ -105,12 +110,14 @@ const RAB_RUN = [[2150, 4640], [2330, 4700], [2210, 4790], [2410, 4830], [2240, 
 const FILM_RECESS = { id: 'recess', len: 16, mus: .6,
   begin() { SC.fs = scHideCrew(['rab']); SC.rp = 0; scPut('rab', RAB_RUN[0][0], GY, RAB_RUN[0][1], 0); scBell('out'); for (const k of SC.kids) { k.wait = .15 + k.i * .2; k.v = 230; } if (SC.her) SC.her.wait = 3; },
   end() {
-    scShowCrew(SC.fs); scPut('rab', 2062, SC_DRAIN.y, 4875, Math.PI); chars.rab.queue = [];
+    scShowCrew(SC.fs);
+    if (NET.on && !party.includes(chars.rab)) { const C = chars.rab; C.root.visible = false; C.pos.set(0, -900, 0); }   // (online and nobody plays him: he stays down there, out of sight)
+    else { scPut('rab', 2062, SC_DRAIN.y, 4875, Math.PI); chars.rab.queue = []; }
     // everyone where break puts them
     for (const k of SC.kids) { k.mode = k.play[0]; k.wait = 0; k.v = 110; k.path = null; k.H.pos.set(k.play[1] + R(-10, 10), GY, k.play[2] + R(-10, 10)); }
     const S = SC.tch; S.mode = 'duty'; S.wait = 0; S.H.pos.set(1700, GY, 4940); S.t = 2;
     const H = SC.her; H.mode = 'bench'; H.wait = 0; SC.phase = 'recess'; SC.pt = 0; SC.doors.main.want = 1;
-    setQuest(3); setTimeout(() => { if (STATE === 'play') say('爸爸', '跳跳躲進了坑渠……好。大門開着——趁現在。', '#f5f0e6', 3.4); }, 900);
+    if (!NET.client) setQuest(NET.on ? MPQ_SCHOOL + 3 : 3); setTimeout(() => { if (STATE === 'play') say('爸爸', '跳跳躲進了坑渠……好。大門開着——趁現在。', '#f5f0e6', 3.4); }, 900);
   },
   shots: [
     { t0: 0, fov: 40, set() { }, run(u, dt) { scNPC(dt); const k = sstep(0, 5.5, u); return [V3(2010, GY + 26, 4700).lerp(V3(2030, GY + 30, 4740), k), V3(2060, GY + 90, 5000), V3(2060, GY + 60, 4990)]; } },
@@ -143,8 +150,8 @@ function scRabRun(u, dt) {
 // ---- her cubby: the essay above it, her at her desk, the notebook and the password ----
 const FILM_ESSAY = { id: 'essay', len: 29, mus: .35,
   begin() { SC.fs = scHideCrew(['dad']); scPut('dad', SC.cubby.x0 - 8, GY, SC_CUBBY.z, Math.PI / 2); },
-  end() { scShowCrew(SC.fs); const L = leader; L.pos.set(SC.cubby.x0 - 10, GY, SC_CUBBY.z); L.yaw = -Math.PI / 2; SC.gotBook = true; if (SC.bookLid) SC.bookLid.rotation.z = 0; if (SC.her) SC.her.lookOut = false;
-    setQuest(6); setTimeout(() => { if (STATE === 'play') toast('密碼記住了。從後面的窗口離開——窗邊的書架可以爬上去', 3.4); }, 700); },
+  end() { scShowCrew(SC.fs); if (!NET.on) { const L = leader; L.pos.set(SC.cubby.x0 - 10, GY, SC_CUBBY.z); L.yaw = -Math.PI / 2; } SC.gotBook = true; if (SC.bookLid) SC.bookLid.rotation.z = 0; if (SC.her) SC.her.lookOut = false;
+    if (!NET.client) setQuest(NET.on ? MPQ_SCHOOL + 6 : 6); setTimeout(() => { if (STATE === 'play') toast(NET.on ? '密碼記住了。全隊從後面的窗口離開——窗邊的書架可以爬上去' : '密碼記住了。從後面的窗口離開——窗邊的書架可以爬上去', 3.4); }, 700); },
   shots: [
     { t0: 0, fov: 44, set() { }, run(u, dt) { scNPC(dt); const D = chars.dad; D.yaw = angDamp(D.yaw, Math.PI / 2, 4, dt); const k = sstep(.6, 5, u);
         return [V3(2382, GY + 3, 5574).lerp(V3(2388, GY + 4, 5568), k), V3(2440, GY + lerp(7, 90, k), 5542), V3(2432, GY + 4, 5540)]; } },
@@ -195,7 +202,8 @@ const FILM_END = { id: 'end', len: 34, mus: .3,
     const A = SC_AGENT; A.H.root.visible = false; A.pool.visible = false;
     KS.core.position.copy(SC.endSave.core); KS.core.visible = SC.endSave.coreVis; KS.coreLight.intensity = 0; chars.gecko.root.visible = false;   // (she's gone; the core is dark)
     KS.coreDark = true;
-    unlockKey('ch7'); END_TXT = ['第七章 · 完', '學校', '備份密碼找到了。可是家裡的核心熄了，前拍檔也被 Origin Dynamics 帶走。（第八章：Origin Dynamics，製作中）'];
+    if (NET.on) { END_TXT = ['第六章（多人）· 完', '學校', '備份密碼找到了。可是家裡的核心熄了，前拍檔也被 Origin Dynamics 帶走。（下一章：Origin Dynamics，製作中）']; if (NET.host) nsend({ t: 'end', e: END_TXT }); }
+    else { unlockKey('ch7'); END_TXT = ['第七章 · 完', '學校', '備份密碼找到了。可是家裡的核心熄了，前拍檔也被 Origin Dynamics 帶走。（第八章：Origin Dynamics，製作中）']; }
     STATE = 'end'; endT = 2.6; const ov = $('cine'); ov.hidden = true;
   },
   shots: [

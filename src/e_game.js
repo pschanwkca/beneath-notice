@@ -781,7 +781,7 @@ function update(dt) {
     }
   }
   zoneTick(dt); if (WORLD && (ZONES.kitchen.near || LEVEL === 'kitchen')) updLiving(dt);
-  if (NET.client) netNPC(dt); else for (const Z of ZL) { const D = LEVELS[Z.id]; if (!D || !D.npc) continue; if (Z.id === LEVEL || (Z.near && Z.prepped && D.npcNear) || (NET.on && Z.prepped && D.npcNear && playerChars().some(C => inZone(Z, C.pos.x, C.pos.y, C.pos.z, 60)))) D.npc(dt); }
+  if (NET.client) { if (STATE !== 'cine') netNPC(dt); } else for (const Z of ZL) { const D = LEVELS[Z.id]; if (!D || !D.npc) continue; if (Z.id === LEVEL || (Z.near && Z.prepped && D.npcNear) || (NET.on && Z.prepped && D.npcNear && playerChars().some(C => inZone(Z, C.pos.x, C.pos.y, C.pos.z, 60)))) D.npc(dt); }
   mpObjectives(); portalTick(dt); mpProTick(dt); unstuckTick(dt);
   const cr = STATE === 'frozen' ? clamp(1 - failT / 2.3, 0, 1) * .8 : STATE === 'fail' ? clamp(failT / .7, 0, 1) * (failT < 2.4 ? 1 : clamp(1 - (failT - 2.4) / .8, 0, 1)) : meter * .55;
   grade.uniforms.uCrys.value = damp(grade.uniforms.uCrys.value, cr, 8, dt);

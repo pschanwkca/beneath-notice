@@ -721,7 +721,7 @@ function mpParkObjectives(P) {
   if (quest === MPQ_PARK + 1 && PK.chipOn) setQuest(MPQ_PARK + 2);
   if (quest === MPQ_PARK + 2 && PK.charged) setQuest(MPQ_PARK + 3);
   if (quest === MPQ_PARK + 3 && PK.chipGot) setQuest(MPQ_PARK + 4);
-  if (quest === MPQ_PARK + 4 && P.every(outBack) && STATE === 'play') { STATE = 'end'; endT = 0; END_TXT = ['第五章（多人）· 完', '公園', '晶片在陽光底下充滿了電。公園後門對面，就是楓林小學。（下一章：學校，製作中）']; nsend({ t: 'end', e: END_TXT }); }
+  if (quest === MPQ_PARK + 4 && P.every(outBack) && STATE === 'play') { mpSchoolStart(); setQuest(MPQ_SCHOOL); toastW('全隊出了公園！對面就是楓林小學', 2.8); }   // (no end card: the street and the school carry straight on — e41_school_mp)
 }
 function mpParkMarker() {
   const L = leader, q = quest - MPQ_PARK;

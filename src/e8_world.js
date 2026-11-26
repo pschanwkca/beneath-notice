@@ -57,7 +57,7 @@ async function buildWorld(prog) {
   if (WORLD) return;
   for (const id of ['basement', 'wall', 'kitchen', 'garage', 'yard', 'road', 'park', 'school', 'portal']) { if (prog) await prog(id); buildZone(ZONES[id]); }
   ZONES.garage.prepped = ZONES.yard.prepped = ZONES.road.prepped = ZONES.park.prepped = ZONES.school.prepped = true;
-  MP_CPS = [...LEVELS.kitchen.cps, ...LEVELS.garage.cps, ...LEVELS.yard.cps, ...LEVELS.road.cps, ...LEVELS.park.cps];
+  MP_CPS = [...LEVELS.kitchen.cps, ...LEVELS.garage.cps, ...LEVELS.yard.cps, ...LEVELS.road.cps, ...LEVELS.park.cps, ...LEVELS.school.cps];
   ncPlace();
   for (let i = furMeshes.length - 1; i >= 0; i--) if (!inScene(furMeshes[i])) furMeshes.splice(i, 1);
   buildHouseShell(); autoProps(); autoSolid(); if (PK.mergeLater) { PK.merged = mergeZoneStatic(...PK.mergeLater); PK.mergeLater = null; } flushDecoLater(); for (const r of resizables) r.init = [r.cx, r.cz, r.y0]; partitionCols(); setupLightPool(); WORLD = true; realSetup();

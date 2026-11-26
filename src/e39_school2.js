@@ -74,15 +74,16 @@ function scSendTeacher(ph) {
 }
 
 // ---------- each child ----------
+// (a route can be missing: online, a film can start when only the host knows where everyone was walking)
 function scKidTick(k, dt) {
   const H = k.H; k.t -= dt; let moveD = 0, run = 0, sit = false;
-  if (k.wait > 0) { k.wait -= dt; sit = k.mode === 'path' && SC.phase === 'out'; if (!sit) humanAnim(H, 0, dt); else scSit(k, dt); H.aim.lerp(H.aimT, 1 - Math.exp(-4 * dt)); humanAimArm(H, 0, dt); return; }
+  if (k.wait > 0) { k.wait -= dt; sit = k.mode === 'path' && SC.phase === 'out'; k.sit = sit; if (!sit) humanAnim(H, 0, dt); else scSit(k, dt); H.aim.lerp(H.aimT, 1 - Math.exp(-4 * dt)); humanAimArm(H, 0, dt); return; }
   switch (k.mode) {
     case 'seat': sit = true;
       if (k.glance > 0) { k.glance -= dt; H.aimT.set(H.pos.x + 200, GY + 40, H.pos.z + (k.i % 2 ? 160 : -160)); }
       else { H.aimT.set(1716, GY + 150 + Math.sin(T * .4 + k.i) * 30, 5500 + Math.sin(T * .3 + k.i * 2) * 60); if (k.t <= 0) { k.t = R(9, 22); if (SC.phase === 'class' && rnd() < .55) { k.glance = R(1.4, 2.4); } } }
       break;
-    case 'path': { const w = k.path[k.pi]; if (!w) { k.mode = k.next; k.t = R(3, 6); break; } const st = kidStep(H, w[0], w[1], k.v, dt); moveD = st; H.aimT.set(w[0] + (w[0] - H.pos.x) * 3, GY + 70, w[1] + (w[1] - H.pos.z) * 3); if (!st) k.pi++; break; }
+    case 'path': { const w = k.path && k.path[k.pi]; if (!w) { k.mode = k.next || (SC.phase === 'class' ? 'seat' : k.play[0]); k.t = R(3, 6); break; } const st = kidStep(H, w[0], w[1], k.v, dt); moveD = st; H.aimT.set(w[0] + (w[0] - H.pos.x) * 3, GY + 70, w[1] + (w[1] - H.pos.z) * 3); if (!st) k.pi++; break; }
     case 'tag': { run = 1; if (!k.tgt.x || Math.hypot(k.tgt.x - H.pos.x, k.tgt.z - H.pos.z) < 20 || k.t <= 0) { k.tgt.set(R(1900, 2700), GY, R(4400, 4820)); k.t = R(2, 4); } moveD = kidStep(H, k.tgt.x, k.tgt.z, 205, dt); H.aimT.set(k.tgt.x, GY + 50, k.tgt.z);
       if (STATE === 'play') for (const C of party) if (mine(C) && !C.frozen && C.pos.y < GY + 10 && Math.hypot(C.pos.x - H.pos.x, C.pos.z - H.pos.z) < 10) knock(C, V3(H.pos.x - Math.sin(H.yaw) * 16, GY, H.pos.z - Math.cos(H.yaw) * 16), C === leader ? '差點被同學踩到！' : null);
       break; }
@@ -92,6 +93,7 @@ function scKidTick(k, dt) {
     case 'chase': run = 1; moveD = kidStep(H, k.tgt.x, k.tgt.z, k.v, dt); H.aimT.set(k.tgt.x, GY, k.tgt.z); break;
     case 'alert': if (k.prev === 'seat') sit = true; else humanAnim(H, 0, dt); H.aimT.copy(k.look); if (k.t <= 0) k.mode = k.prev || (SC.phase === 'class' ? 'seat' : k.play[0]); break;
   }
+  k.sit = sit;
   if (k.mode === 'alert' && !sit) { }
   else if (sit) scSit(k, dt);
   else { H.pelvis.position.y = H.dim.pelN; const foot = humanAnim(H, moveD, dt, run); if (k.mode === 'hop') { H.root.position.y = GY + Math.abs(Math.sin(T * 6 + k.i)) * 6; } }
@@ -124,7 +126,7 @@ function scTeacherTick(dt) {
     case 'face': humanAnim(H, 0, dt); H.yaw = angDamp(H.yaw, Math.PI / 2, 4, dt); H.aimT.set(2350, GY + 40, 5500 + Math.sin(T * .5) * 240);
       if (S.t <= 0) { if (SC.pt > 30 && !S.walked && rnd() < .5) { S.walked = 1; S.mode = 'path'; S.pi = 0; S.path = [[1860, 5420], [2300, 5420], [2380, 5560], [2300, 5420], [1860, 5420], [1748, 5500]]; S.next = 'face'; sayW(S.name, rnd() < .5 ? '大家專心做作業。' : '我睇吓大家寫成點……', S.col, 2.4); }
         else { S.mode = 'write'; S.t = R(6, 10); } } break;
-    case 'path': { const w = S.path[S.pi]; if (!w) { S.mode = S.next; S.t = R(4, 7); break; } const st = kidStep(H, w[0], w[1], 95, dt); moveD = st; H.aimT.set(w[0] + (w[0] - H.pos.x) * 2, GY + 60, w[1] + (w[1] - H.pos.z) * 2); if (!st) S.pi++; break; }
+    case 'path': { const w = S.path && S.path[S.pi]; if (!w) { S.mode = S.next || 'face'; S.t = R(4, 7); break; } const st = kidStep(H, w[0], w[1], 95, dt); moveD = st; H.aimT.set(w[0] + (w[0] - H.pos.x) * 2, GY + 60, w[1] + (w[1] - H.pos.z) * 2); if (!st) S.pi++; break; }
     case 'duty': { const pts = [[1500, 4940], [2700, 4940], [2400, 4650], [1700, 4650]]; const w = pts[S.duty % pts.length]; const st = kidStep(H, w[0], w[1], 70, dt); moveD = st; if (!st && S.t <= 0) { S.duty++; S.t = R(3, 6); } H.aimT.set(H.pos.x + Math.sin(T * .6) * 300, GY + 30, H.pos.z - 300); break; }
     case 'alert': humanAnim(H, 0, dt); H.aimT.copy(S.look); if (S.t <= 0) S.mode = S.prev || 'face'; break;
   }
@@ -157,7 +159,7 @@ function scHerTick(dt) {
   const seat = SC.seats.find(s => s.ri === SC_HER[0] && s.ci === SC_HER[1]);
   H.root.visible = true; let moveD = 0;
   if (S.wait > 0) { S.wait -= dt; }
-  else if (S.mode === 'path') { const w = S.path[S.pi]; if (!w) { S.mode = S.next; } else { const P = H.root.position, d = V3(w[0] - P.x, 0, w[1] - P.z), L = d.length(); if (L < 4) S.pi++; else { const st = Math.min(L, 105 * dt); P.addScaledVector(d.normalize(), st); moveD = st; H.byaw = angDamp(H.byaw ?? 0, Math.atan2(d.x, d.z), 8, dt); } } }
+  else if (S.mode === 'path') { const w = S.path && S.path[S.pi]; if (!w) { S.mode = S.next || 'seat'; } else { const P = H.root.position, d = V3(w[0] - P.x, 0, w[1] - P.z), L = d.length(); if (L < 4) S.pi++; else { const st = Math.min(L, 105 * dt); P.addScaledVector(d.normalize(), st); moveD = st; H.byaw = angDamp(H.byaw ?? 0, Math.atan2(d.x, d.z), 8, dt); } } }
   const sitting = S.wait > 0 ? (S.mode !== 'path' || SC.phase === 'out') : S.mode === 'seat' || S.mode === 'bench';
   if (S.mode === 'seat' && !(S.wait > 0 && SC.phase === 'in')) { H.root.position.set(seat.x - 6, GY, seat.z); H.byaw = -Math.PI / 2; H.seatY = 40; }
   if (S.mode === 'bench') { H.root.position.set(SC.herBench.x, GY, SC.herBench.z + 10); H.byaw = Math.PI; H.seatY = 47; }
@@ -165,6 +167,7 @@ function scHerTick(dt) {
   kidBody(dt, moveD); H.root.position.y = GY;
   // head: down at her page, now and then out of the window (lessons) or up at the others playing (break)
   const up = S.lookOut || Math.sin(T * .23) > .55; H.head.rotation.x = damp(H.head.rotation.x, sitting ? (up ? .05 : .62) : .08, 3, dt); H.head.rotation.y = damp(H.head.rotation.y, sitting && up ? (S.mode === 'seat' ? .85 : .4) : 0, 3, dt);
+  H.pitch = H.head.rotation.x; H.yaw = H.head.rotation.y;   // (what an online host sends for her head)
 }
 
 // ---------- the day goes on ----------
@@ -178,6 +181,11 @@ function scDayTick(dt) {
   const inCorr = q => q.H.pos.z > 4980 && q.H.pos.z < 5290;
   const D = SC.doors; if (D.main) D.main.want = SC.phase !== 'class' ? 1 : 0;
   if (D.back) { const flow = (SC.phase === 'out' && SC.kids.some(k => k.mode === 'path' && k.H.pos.z > 5120)) || (SC.phase === 'in' && SC.kids.some(k => k.mode === 'path' && k.pi >= 2)); if (flow) SC.backHold = 16; else SC.backHold = Math.max(0, (SC.backHold || 0) - dt); D.back.want = SC.backHold > 0 ? 1 : 0; }
+  scDoorsTick(dt);
+}
+// the doors swing towards where they're wanted (online, the host says where)
+function scDoorsTick(dt) {
+  const D = SC.doors;
   for (const k of ['main', 'back']) { const d = D[k]; if (!d) continue; const was = d.open; d.open = damp(d.open, d.want, 3, dt); if (Math.abs(d.open - d.want) < .01) d.open = d.want;
     if (k === 'main') { d.L.rotation.y = -d.open * 1.45; d.R.rotation.y = d.open * 1.45; } else d.g.rotation.y = -d.open * 1.5;
     const solid = d.open < .2; if (solid) { d.col.y0 = GY; d.col.y1 = GY + 238; } else { d.col.y0 = d.col.y1 = -999; }
@@ -186,6 +194,10 @@ function scDayTick(dt) {
 function scNPC(dt) {
   if (!SC.kids.length) return;
   scDayTick(dt); for (const k of SC.kids) scKidTick(k, dt); scBallTick(dt); scTeacherTick(dt); scGuardTick(dt); scHerTick(dt);
+  scDecoTick(dt);
+}
+// the flag, the fan, the clock
+function scDecoTick(dt) {
   if (SC.flag) { const p = SC.flag.geometry.attributes.position; for (let i = 0; i < p.count; i++) { const x = p.getX(i) + 75; p.setZ(i, Math.sin(T * 3.4 + x * .08) * x * .05); } p.needsUpdate = true; }
   if (SC.fan) SC.fan.rotation.y += dt * 4.2;
   if (SC.clockM) { const a = T * .05; SC.clockM.rotation.x = a; SC.clockH.rotation.x = a / 12 + 1.2; }
@@ -217,7 +229,8 @@ function detectSchool(dt) {
     const mv = L.spd > 1.5 ? 1 : .5, cr = L.crouch ? .55 : 1;
     meter += seen * lit * mv * cr * hid * hideK(L) * dt * 1.1;
   } else meter -= dt * .24;
-  meter = clamp(meter, 0, 1); if (meter >= 1) toyFreeze(who);
+  meter = clamp(meter, 0, 1); if (meter > .3 && who) netSeen(V3(L.pos.x, L.pos.y + 2, L.pos.z), who);   // (they turn and look: "咦？嗰度有嘢郁……")
+  if (meter >= 1) toyFreeze(who);
 }
 function moonShadeSC(p) { for (const s of SC.shade) if (Math.hypot(p.x - s.x, p.z - s.z) < s.r) return true; return false; }
 function scHear(p, loud) {

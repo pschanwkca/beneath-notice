@@ -129,7 +129,7 @@ function mpInfoRender() {
 function mpSaveLoad() { try { const S = JSON.parse(localStorage.getItem(MPS_KEY) || 'null'); return S && S.v === 1 ? S : null; } catch (e) { return null; } }
 function mpSaveWhere(S) {
   const Q = S.pro ? MP_PRO : MP_QUESTS, q = Q[S.q] || Q[0];
-  const z = { portal: '準備區', basement: '序章 · 地庫', wall: '序章 · 牆內', kitchen: '第一章 · 廚房', garage: '第二章 · 車房', yard: '第三章 · 後園', road: '第四章 · 馬路', park: '第五章 · 公園' }[S.zone] || '';
+  const z = { portal: '準備區', basement: '序章 · 地庫', wall: '序章 · 牆內', kitchen: '第一章 · 廚房', garage: '第二章 · 車房', yard: '第三章 · 後園', road: '第四章 · 馬路', park: '第五章 · 公園', school: '第六章 · 學校' }[S.zone] || '';
   const ago = Math.max(1, Math.round((Date.now() - S.at) / 60000)), when = ago < 60 ? `${ago} 分鐘前` : ago < 1440 ? `${Math.round(ago / 60)} 小時前` : `${Math.round(ago / 1440)} 日前`;
   return `${z}${z ? '：' : ''}${q.t}（${when}）`;
 }

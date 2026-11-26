@@ -187,8 +187,8 @@ function applyUnlease(u) {
 // ---------- per-frame sync ----------
 function netUpdate(dt) {
   if (!NET.on || !NET.tx) return;
-  if (STATE === 'play' || STATE === 'fail' || STATE === 'end') {
-    NET.sendT -= dt; if (NET.sendT <= 0) { NET.sendT = 1 / 20; netSendChars(); }
+  if (STATE === 'play' || STATE === 'fail' || STATE === 'end' || STATE === 'cine') {
+    if (STATE !== 'cine') { NET.sendT -= dt; if (NET.sendT <= 0) { NET.sendT = 1 / 20; netSendChars(); } }   // (in a film our characters are actors: don't send where the film put them)
     if (NET.host) { NET.worldT -= dt; if (NET.worldT <= 0) { NET.worldT = .1; netSendWorld(); } }
   }
   netInterp(dt); netTags(); netWatch();
@@ -215,6 +215,7 @@ function netRecvChars(d, from) {
     C.net = { x: a[1], y: a[2], z: a[3], yaw: a[4], st: a[5], spd: a[6], fl: a[7], t: now, vx: v[0], vy: v[1], vz: v[2] }; C.stamina = a[8]; C.stamMax = a[9]; C.camo = a[10]; C.on = a[11] || null; }
 }
 function netInterp(dt) {
+  if (STATE === 'cine') return;   // (a film is placing everyone itself)
   const k = 1 - Math.exp(-12 * dt), now = performance.now();
   for (const C of party) {
     if (mine(C) || !C.net) continue; const n = C.net, age = Math.min(.2, (now - (n.t || now)) / 1000), still = C.frozen || C.on;
@@ -315,6 +316,7 @@ function netMsg(d, from) {
     case 'lease': for (const id of d.ids) chars[id].owner = d.to; break;
     case 'unl': for (const u of d.l) applyUnlease(u); break;
     case 'lvl': if (NET.on && !NET.host && !(d.n === LEVEL && STATE === 'loading')) loadLevel(d.n); break;
+    case 'film': if (NET.on && !NET.host) scFilmRecv(d.id); break;
     case 'end': if (NET.on && !NET.host && STATE === 'play') { if (d.e) END_TXT = d.e; STATE = 'end'; endT = 0; } break;
     case 'ban': chapterBanner(d.a, d.b); break;
     case 'xbtn': if (NET.host) pressButton(null); break;
@@ -391,6 +393,7 @@ function hostGet(d) {
   }
 }
 function hostSeen(tp, who) {
+  if (who && (who.startsWith('skid') || who === 'tch' || who === 'grd' || who === 'her')) { scSeen(tp, who); return; }
   if (who === 'agent' || who === 'cam') { garageSeen(tp, who); return; } if (who === 'dog' || who === 'old') { yardSeen(tp, who); return; } if (who === 'walker' || who === 'wdog') { roadSeen(tp, who); return; }
   if (who === 'mom' || who === 'kid') brainGlimpse(tp);
   if (who === 'mom' && KM.mode !== 'sus' && KM.mode !== 'fopen' && !TOY.fetch) { KM.prev = KM.mode; KM.mode = 'sus'; KM.susP = tp; KM.trackT = 2.2; if (!KS.said.sus) { KS.said.sus = 1; sayW('太太', '嗯？……什麼東西？', '#f4bb72', 2.2); } }

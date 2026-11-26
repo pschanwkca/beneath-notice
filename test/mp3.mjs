@@ -84,8 +84,6 @@ await ev(B, () => { const b = window.__bn; const L = b.leader; L.pos.copy(b.PK.c
 log('chip got', [await until(A, () => window.__bn.quest === 19, 8000), await until(B, () => window.__bn.PK.chipGot, 8000)]);
 log('save', await ev(A, () => { const s = JSON.parse(localStorage.getItem('bn_mpsave1') || '{}'); return [s.zone, s.q, s.f]; }));
 await tp(A, 2060, -20, 3745); await tp(B, 2066, -20, 3748);
-log('park/end', [await until(A, () => window.__bn.state === 'end', 8000), await until(B, () => window.__bn.state === 'end', 8000)]);
-await wait(4000);
-log('end card', await ev(B, () => [document.getElementById('endA').textContent, document.getElementById('end').hidden]));
+log('park → school', [await until(A, () => window.__bn.quest === window.__bn.MPQ_SCHOOL, 8000), await until(B, () => window.__bn.quest === window.__bn.MPQ_SCHOOL, 8000), await ev(B, () => window.__bn.state)]);   // (the school carries on: test/mp_school.mjs)
 console.log(logs.slice(0, 30).join('\n'));
 await browser.close();

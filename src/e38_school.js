@@ -12,7 +12,7 @@
 //  again. The classroom is locked at break; its back door opens only when the class goes back in.
 //  The way out is the classroom window at the back, open a little at the bottom.
 // =====================================================================
-const SC = { said: {}, lights: [], kids: [], doors: {}, lockers: [], bush: [], shade: [], phase: 'class', pt: 0, bell: 0, cycle: 0, gotBook: false, essay: false, near: false };
+const SC = { said: {}, lights: [], kids: [], doors: {}, lockers: [], bush: [], shade: [], phase: 'class', pt: 0, bell: 0, cycle: 0, gotBook: false, essay: false, near: false, films: {}, net: null };
 const SRY = GY - 12;   // the street's surface (a 12 cm kerb)
 const SC_YARD = { x0: 920, x1: 3200, z0: 4320, z1: 4868 };
 const SC_DRAIN = { x0: 920, x1: 3200, z0: 4868, z1: 4882, y: GY - 12, gaps: [[990, 1050], [2030, 2090], [3110, 3170]] };
