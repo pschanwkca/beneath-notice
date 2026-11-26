@@ -173,7 +173,7 @@ function vcUI() {
   const html = `${st === 'mute' || st === 'off' || st === 'none' ? MICX_SVG : MIC_SVG}<em>${txt}</em>`;
   for (const el of document.querySelectorAll('.vcmic')) { el.className = 'vcmic ' + st; el.innerHTML = html; }
   const lob = $('mpVc'); if (lob) lob.querySelector('.vct').textContent = { ask: '等待咪權限…（瀏覽器會問你）', off: '咪已關，隊友聽唔到你', none: VC.denied ? '冇咪權限：聽得到隊友，但佢哋聽唔到你' : '冇咪', mute: '已靜音', open: '咪已開：講嘢時下面條線會郁', ptt: '按住 V 講嘢' }[st];
-  const tb = $('tbMic'); if (tb) { tb.classList.toggle('dn', st === 'mute' || st === 'off' || st === 'none'); tb.textContent = st === 'ptt' ? '按住講' : st === 'open' ? '咪' : '靜音'; }
+  const tb = $('tbMic'); if (tb) { tb.classList.toggle('dn', st === 'mute' || st === 'off' || st === 'none'); tbLabel('tbMic', st === 'ptt' ? '按住講' : st === 'open' ? '咪' : '靜音', st === 'open' || st === 'ptt' ? TB_MIC : TB_MICOFF); }
   document.querySelectorAll('#micSel button').forEach(b => b.classList.toggle('on', b.dataset.m === vcMode()));
   for (const el of document.querySelectorAll('.vconly')) el.hidden = !NET.code;
 }

@@ -82,9 +82,9 @@ function buildEnv(kind = 'basement') {
 // ---------- post processing ----------
 class FnPass extends Pass { constructor(fn) { super(); this.fn = fn; this.needsSwap = false; } render() { this.fn(); } }
 const GradeShader = {
-  uniforms: { tDiffuse: { value: null }, uT: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) }, uCrys: { value: 0 }, uFlash: { value: 0 }, uVig: { value: 0.55 }, uGrain: { value: 0.035 }, uFade: { value: 0 } },
+  uniforms: { tDiffuse: { value: null }, uT: { value: 0 }, uRes: { value: new THREE.Vector2(1, 1) }, uCrys: { value: 0 }, uFlash: { value: 0 }, uVig: { value: 0.55 }, uGrain: { value: 0.035 }, uFade: { value: 0 }, uGhost: { value: 0 } },
   vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
-  fragmentShader: `uniform sampler2D tDiffuse; uniform float uT,uCrys,uFlash,uVig,uGrain,uFade; uniform vec2 uRes; varying vec2 vUv;
+  fragmentShader: `uniform sampler2D tDiffuse; uniform float uT,uCrys,uFlash,uVig,uGrain,uFade,uGhost; uniform vec2 uRes; varying vec2 vUv;
 vec2 h2(vec2 p){return fract(sin(vec2(dot(p,vec2(127.1,311.7)),dot(p,vec2(269.5,183.3))))*43758.5453);}
 void main(){
  vec2 uv=vUv; vec2 c=uv-0.5; float asp=uRes.x/uRes.y; float r=length(c*vec2(asp,1.0));
@@ -100,6 +100,7 @@ void main(){
  col=mix(col, col*0.55+ice*0.32, m*0.85); col+=ice*crack*m*0.85;
  float l=dot(col,vec3(0.299,0.587,0.114)); col=mix(col,vec3(l)*vec3(0.92,1.0,1.04),uCrys*0.45);
  col*=1.0-uVig*smoothstep(0.38,1.1,r);
+ float lg=dot(col,vec3(0.299,0.587,0.114)); col=mix(col,vec3(lg)*vec3(0.84,0.98,1.1)+vec3(0.015,0.03,0.045),uGhost*0.72); col*=1.0-uGhost*0.28*smoothstep(0.32,1.0,r);
  float gr=fract(sin(dot(uv*uRes+fract(uT)*61.0,vec2(12.9898,78.233)))*43758.5453);
  col+=(gr-0.5)*uGrain;
  col=mix(col,vec3(0.92,0.99,1.0),uFlash); col*=1.0-uFade;

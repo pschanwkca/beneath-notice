@@ -377,9 +377,9 @@ function updCam(dt) {
   if (POUCH.open) { POUCH.dx += mouseDX; POUCH.dy += mouseDY; mouseDX = mouseDY = 0; }
   if (STATE === 'play' && !PAUSED) { cam.yaw -= mouseDX * .0024 * SET.sens; cam.pitch = clamp(cam.pitch + mouseDY * .0022 * SET.sens * (SET.inv ? -1 : 1), -1.4, 1.35); }
   mouseDX = mouseDY = 0;
-  const L = watchTarget() || leader; const ty = L.pos.y + L.h * (L.crouch ? .62 : .8);
+  const L = watchTarget() || ghostCamTarget() || leader; const ty = L.pos.y + L.h * (L.crouch ? .62 : .8);
   cam.tgt.x = damp(cam.tgt.x, L.pos.x, 16, dt); cam.tgt.y = damp(cam.tgt.y, ty, 10, dt); cam.tgt.z = damp(cam.tgt.z, L.pos.z, 16, dt);
-  const d = cam.dist * (L.climbing ? 1.18 : 1) * (L.on || isBase(L) ? 1.3 : 1);
+  const d = cam.dist * (L.climbing ? 1.18 : 1) * (L.on || isBase(L) ? 1.3 : 1) * (L.id === '_ghost' ? 1.5 : 1);
   // the camera stays behind the head; tilting further only turns the view up (to the ceiling / sky)
   const pc = Math.max(cam.pitch, -.2);
   const dir = V3(Math.sin(cam.yaw) * Math.cos(pc), Math.sin(pc), Math.cos(cam.yaw) * Math.cos(pc));
@@ -548,7 +548,7 @@ function say(name, text, color, dur = 3) { $('subn').textContent = name; $('subn
 function toast(t, dur = 2.6) { $('toast').textContent = t; $('toast').classList.add('on'); toastT = dur; }
 function refreshPartyHUD() {
   for (const id of IDS) { const el = $('pm-' + id); if (!el) continue; const C = chars[id]; el.classList.toggle('on', leader && leader.id === id); el.classList.toggle('toy', !!C.frozen); const sm = el.querySelector('small'); if (sm && party.includes(C)) sm.textContent = C.frozen ? (C.toyAt === 'box' ? '在玩具箱' : C.toyAt === 'hand' ? '被拿走了' : '變成玩具') : NET.on ? playerLabel(id) + ((C.stamMax || 100) < 100 ? ` · ${C.stamMax}%` : '') : (C.stamMax || 100) < 100 ? `體力 ${C.stamMax}%` : SP[id].role; }
-  if (!leader) return; for (const id of IDS) $('touch').classList.toggle(id, leader.id === id); $('tbAct').textContent = ({ cham: '舌', sq: '抱', hog: '滾', coon: '彈', rab: '跳', frog: '跳', bat: '聲', tort: '殼', mole: '鑽' })[leader.id] || '抱'; $('tbScout').textContent = leader.id === 'frog' ? '電' : '偵察'; $('tbCrouch').classList.toggle('dn', !!leader.crouch); $('an').textContent = leader.S.abil; $('ad').textContent = leader.S.desc; $('cells').style.display = leader.id === 'dad' ? 'flex' : 'none';
+  if (!leader) return; for (const id of IDS) $('touch').classList.toggle(id, leader.id === id); tbLabel('tbAct', ({ cham: '舌', sq: '抱', hog: '滾', coon: '彈', rab: '跳', frog: '跳', bat: '聲', tort: '殼', mole: '鑽' })[leader.id] || '抱', TB_ACT[leader.id] || TB_ACT.sq); tbLabel('tbScout', leader.id === 'frog' ? '電' : '偵察', leader.id === 'frog' ? TB_ZAP : TB_EYE); $('tbCrouch').classList.toggle('dn', !!leader.crouch); $('an').textContent = leader.S.abil; $('ad').textContent = leader.S.desc; $('cells').style.display = leader.id === 'dad' ? 'flex' : 'none';
 }
 function buildPartyHUD() {
   const has = id => party.includes(chars[id]); const order = IDS.filter(has).map((id, i) => [id, i + 1]);
@@ -593,7 +593,7 @@ function updHUD(dt) {
   $('touch').classList.toggle('proto', !!ptg && PROTO > 0);
   $('stam').classList.toggle('on', showSt && L.id !== 'gecko'); $('stam').classList.toggle('low', L.stamina < 30);
   if (showSt) { project(V3(L.pos.x, L.pos.y + L.h * .9, L.pos.z), $('stam'), 46, -10); $('stc').style.strokeDashoffset = (94.25 * (1 - L.stamina / 100)).toFixed(1); }
-  const mkp = LVL.marker ? LVL.marker() : null;
+  const mkp = LVL.marker && !GHOST.on ? LVL.marker() : null;   // (a toy can't do the objective: no marker while you're a soul)
   if (mkp) { const on = project(mkp, $('mk'), 0, -18, true); $('mk').classList.add('on'); $('mkd').textContent = (Math.hypot(L.pos.x - mkp.x, L.pos.z - mkp.z) / 100).toFixed(1) + ' m'; } else $('mk').classList.remove('on');
   $('cross').classList.toggle('on', L.id === 'dad' || L.id === 'cham'); $('cross').classList.toggle('t', !!aimRes || !!tongueAim);
   $('cells').innerHTML = Array.from({ length: cellMax }, (_, i) => `<i class="${i < cells ? 'f' : ''}"></i>`).join('');
@@ -755,7 +755,7 @@ function update(dt) {
     if (!NET.on) for (const C of party) if (pressed['sw_' + C.id]) switchTo(C);
     if (pressed.KeyC || pressed.Tab) setTimeout(refreshPartyHUD, 30);
     if (pressed.KeyH) { hudOn = !hudOn; $('hud').classList.toggle('off', !hudOn); }
-    if (pressed.KeyF) stackPress(); crewInput(leader, !leader.frozen && mine(leader));
+    if (pressed.KeyF && !GHOST.on) stackPress(); crewInput(leader, !leader.frozen && mine(leader));
     const lockL = !mine(leader) || leader.frozen || !!leader.on || !!leader.hop || leader.pullT > 0 || !!leader.ptw;
     if (!lockL) { const sub = dt > 1 / 30 ? 2 : 1; for (let s = 0; s < sub; s++) updLeader(leader, dt / sub); bearDrag(dt); }
     updHops(dt); stackInput(); stackSolve(dt);
@@ -782,7 +782,7 @@ function update(dt) {
   }
   zoneTick(dt); if (WORLD && (ZONES.kitchen.near || LEVEL === 'kitchen')) updLiving(dt);
   if (NET.client) { if (STATE !== 'cine') netNPC(dt); } else for (const Z of ZL) { const D = LEVELS[Z.id]; if (!D || !D.npc) continue; if (Z.id === LEVEL || (Z.near && Z.prepped && D.npcNear) || (NET.on && Z.prepped && D.npcNear && playerChars().some(C => inZone(Z, C.pos.x, C.pos.y, C.pos.z, 60)))) D.npc(dt); }
-  mpObjectives(); portalTick(dt); mpProTick(dt); unstuckTick(dt);
+  mpObjectives(); portalTick(dt); mpProTick(dt); unstuckTick(dt); ghostTick(dt);
   const cr = STATE === 'frozen' ? clamp(1 - failT / 2.3, 0, 1) * .8 : STATE === 'fail' ? clamp(failT / .7, 0, 1) * (failT < 2.4 ? 1 : clamp(1 - (failT - 2.4) / .8, 0, 1)) : meter * .55;
   grade.uniforms.uCrys.value = damp(grade.uniforms.uCrys.value, cr, 8, dt);
   grade.uniforms.uFlash.value = STATE === 'fail' && failT > .6 && failT < 1.1 ? (1 - Math.abs(failT - .85) / .25) * .5 : 0;
@@ -835,13 +835,24 @@ $('again').addEventListener('click', () => location.reload());
 
 // ---------- phone controls: floating joystick (left), camera drag (right), buttons ----------
 let camTouch = null;
+// phone buttons: an icon and a small label (the character's own move changes both)
+const TB_ACT = {"sq": "<rect x=\"6\" y=\"10\" width=\"12\" height=\"9\" rx=\"1.6\"/><path d=\"M4 7.5l4 2.5M20 7.5L16 10\"/>", "cham": "<path d=\"M3 12h9.5a3.8 3.8 0 1 1 3.8 3.8\"/><circle cx=\"16.3\" cy=\"12\" r=\"1.1\"/>", "hog": "<circle cx=\"13.5\" cy=\"12\" r=\"6\"/><path d=\"M3.5 8.5h3M2.5 12.5h3M4 16.5h3\"/>", "coon": "<path d=\"M4 18.5C7 10 12.5 6.5 19.5 6\"/><circle cx=\"19\" cy=\"6\" r=\"2.2\"/><path d=\"M4 21h4\"/>", "rab": "<path d=\"M3.5 19.5c2-8 5-12 8.5-12s6.5 4 8.5 12\"/><path d=\"M12 3v2.5\"/>", "frog": "<path d=\"M3.5 19.5c2-8 5-12 8.5-12s6.5 4 8.5 12\"/><path d=\"M12 3v2.5\"/>", "bat": "<circle cx=\"5.5\" cy=\"12\" r=\"1.6\"/><path d=\"M9.5 8.6a4.8 4.8 0 0 1 0 6.8\"/><path d=\"M13 5.6a9 9 0 0 1 0 12.8\"/><path d=\"M16.6 2.8a13 13 0 0 1 0 18.4\"/>", "tort": "<path d=\"M3 16.5a9 9 0 0 1 18 0z\"/><path d=\"M8 16.5l1.6-5h4.8l1.6 5M12 7.6v3.9\"/>", "mole": "<path d=\"M3 14.5h18\"/><path d=\"M12 3v8.5\"/><path d=\"M8.6 8.2L12 11.6l3.4-3.4\"/><path d=\"M5.5 18.5h2.5M10.8 18.5h2.5M16 18.5h2.5\"/>"};
+const TB_EYE = "<path d=\"M2.5 12S6 5.5 12 5.5 21.5 12 21.5 12 18 18.5 12 18.5 2.5 12 2.5 12z\"/><circle cx=\"12\" cy=\"12\" r=\"2.8\"/>", TB_ZAP = "<path d=\"M13 2.5L5 13.5h6l-1 8 8-11h-6z\"/>";
+function tbLabel(id, label, icon) { const b = $(id); if (!b) return; const ti = b.querySelector('.ti'); if (!ti) { b.textContent = label; return; } const lb = ti.querySelector('b'); if (lb && lb.textContent !== TR(label)) lb.textContent = TR(label); const sv = ti.querySelector('svg'); if (sv && icon && sv.dataset.k !== icon.length + label) { sv.innerHTML = icon; sv.dataset.k = icon.length + label; } }
+// a short tick in the hand when a button goes down (Android; iPhones don't let web pages do this)
+function haptic(ms = 8) { if (!SET.haptic && SET.haptic !== undefined) return; try { navigator.vibrate && navigator.vibrate(ms); } catch (e) { } }
+// phones: play full-screen and sideways, like an installed game (Android; on iPhone, 'Add to Home Screen' does it)
+function goFull() { if (!TOUCH || document.fullscreenElement) return; const el = document.documentElement; try { const r = el.requestFullscreen ? el.requestFullscreen({ navigationUI: 'hide' }) : el.webkitRequestFullscreen && el.webkitRequestFullscreen(); if (r && r.then) r.then(() => { try { screen.orientation && screen.orientation.lock && screen.orientation.lock('landscape').catch(() => { }); } catch (e) { } }).catch(() => { }); } catch (e) { } }
+const TB_MIC = '<rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5.6 11a6.4 6.4 0 0 0 12.8 0"/><path d="M12 17.4V21"/>', TB_MICOFF = TB_MIC + '<path d="M4 4l16 16"/>';
+// any menu button on a phone: go full-screen (it has to come from a tap)
+document.addEventListener('click', e => { if (TOUCH && e.target.closest('.ov button, .ov .ch')) goFull(); }, true);
 function setupTouch() {
   const T = $('touch'); const base = $('joyBase'), knob = $('joyKnob'); const RAD = 54;
   const drawJoy = () => { base.style.left = joy.ox + 'px'; base.style.top = joy.oy + 'px'; knob.style.transform = `translate(${joy.x * RAD}px,${-joy.y * RAD}px)`; };
   T.addEventListener('pointerdown', e => {
     if (e.target.closest('.tb')) return; e.preventDefault();
     if (STATE !== 'play' || PAUSED) return;
-    if (e.clientX < innerWidth * .45 && joy.id === null) { joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY; joy.x = joy.y = 0; joy.on = true; base.classList.add('on'); drawJoy(); }
+    if (e.clientX < innerWidth * .45 && joy.id === null) { joy.id = e.pointerId; joy.ox = e.clientX; joy.oy = e.clientY; joy.x = joy.y = 0; joy.on = true; base.classList.add('on'); drawJoy(); T.classList.add('used'); }
     else if (!camTouch) camTouch = { id: e.pointerId, x: e.clientX, y: e.clientY };
     try { T.setPointerCapture(e.pointerId); } catch (er) { }
   });
@@ -856,12 +867,13 @@ function setupTouch() {
   T.addEventListener('pointerup', end); T.addEventListener('pointercancel', end);
   const hold = (id, on, off) => {
     const b = $(id);
-    b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (STATE !== 'play' && id !== 'tbPause' && !(STATE === 'intro' && id === 'tbJump')) return; b.classList.add('pr'); on(); try { b.setPointerCapture(e.pointerId); } catch (er) { } });
+    b.addEventListener('pointerdown', e => { e.preventDefault(); e.stopPropagation(); if (STATE !== 'play' && id !== 'tbPause' && !(STATE === 'intro' && id === 'tbJump')) return; b.classList.remove('pr'); void b.offsetWidth; b.classList.add('pr'); haptic(id === 'tbJump' ? 12 : 8); on(); try { b.setPointerCapture(e.pointerId); } catch (er) { } });
     const up = () => { b.classList.remove('pr'); off && off(); };
     b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up);
   };
   hold('tbJump', () => { pressed.Space = true; keys.Space = true; }, () => { keys.Space = false; });
-  hold('tbCrouch', () => { pressed.KeyC = true; });
+  hold('tbCrouch', () => { pressed.KeyC = true; keys.GDown = true; }, () => { keys.GDown = false; });
+  hold('tbPing', () => { pressed.GPing = true; });
   hold('tbSwap', () => { pressed.Tab = true; });
   hold('tbGrow', () => fireGun(true)); hold('tbShrink', () => fireGun(false));
   hold('tbStack', () => { pressed.KeyF = true; });

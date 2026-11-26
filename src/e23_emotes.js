@@ -189,12 +189,13 @@ function emoTick(dt) {
     const B = EMO.bubbles[i], C = B.C; B.t += dt;
     if (B.t > 2.8 || !C.root.visible || LEVEL === undefined) { B.el.remove(); EMO.bubbles.splice(i, 1); continue; }
     const p = C.root.position, d = camera.position.distanceTo(p);
-    _ev.set(p.x, p.y + C.h * 1.18 + 2.2 * C.k, p.z).project(camera);
+    _ev.set(p.x, p.y + C.h * .98 + .3 * C.k, p.z).project(camera);   // (just over the head, not floating off above it)
     const sx = (_ev.x * .5 + .5) * innerWidth, sy = (-_ev.y * .5 + .5) * innerHeight;
     const on = !hide && _ev.z < 1 && d < 700 && Math.abs(_ev.x) < 1.2 && Math.abs(_ev.y) < 1.2 && !(card && sx > card.left - 40 && sx < card.right + 50 && sy > card.top - 20 && sy < card.bottom + 120);
     B.el.style.display = on ? '' : 'none'; if (!on) continue;
-    const sz = clamp(2400 / Math.max(d, 1), 54, 104) * (STATE === 'title' ? 1.2 : 1), pop = B.t < .18 ? .4 + B.t / .18 * .75 : B.t < .3 ? 1.15 - (B.t - .18) / .12 * .15 : 1, fade = B.t > 2.4 ? 1 - (B.t - 2.4) / .4 : 1;
-    B.el.style.transform = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px) translate(-50%, -100%) scale(${pop.toFixed(3)})`;
+    const sz = clamp(1500 / Math.max(d, 1), 38, 66) * clamp(innerHeight / 720, .62, 1.2) * (STATE === 'title' ? 1.25 : 1),   // (about a face's size near you, smaller further off; a phone screen gets smaller ones)
+      pop = B.t < .18 ? .4 + B.t / .18 * .75 : B.t < .3 ? 1.15 - (B.t - .18) / .12 * .15 : 1, fade = B.t > 2.4 ? 1 - (B.t - 2.4) / .4 : 1;
+    B.el.style.transform = `translate(${sx.toFixed(1)}px, ${sy.toFixed(1)}px) translate(-50%, -86%) scale(${pop.toFixed(3)})`;
     B.el.style.width = B.el.style.height = sz.toFixed(0) + 'px'; B.el.style.opacity = fade.toFixed(3);
   }
 }

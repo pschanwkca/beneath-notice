@@ -317,6 +317,8 @@ function netMsg(d, from) {
     case 'unl': for (const u of d.l) applyUnlease(u); break;
     case 'lvl': if (NET.on && !NET.host && !(d.n === LEVEL && STATE === 'loading')) loadLevel(d.n); break;
     case 'film': if (NET.on && !NET.host) scFilmRecv(d.id); break;
+    case 'gh': if (NET.on) ghostRecv(d); break;
+    case 'gp': if (NET.on) ghostPingFx(d.id); break;
     case 'end': if (NET.on && !NET.host && STATE === 'play') { if (d.e) END_TXT = d.e; STATE = 'end'; endT = 0; } break;
     case 'ban': chapterBanner(d.a, d.b); break;
     case 'xbtn': if (NET.host) pressButton(null); break;

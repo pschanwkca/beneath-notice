@@ -1,0 +1,9 @@
+{
+  "name": "BENEATH NOTICE 視線之下",
+  "short_name": "BENEATH NOTICE",
+  "start_url": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#07090c",
+  "theme_color": "#07090c"
+}

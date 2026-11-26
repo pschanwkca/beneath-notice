@@ -29,7 +29,8 @@ function watchTick() {
   if (sig === WATCH.sig) return; WATCH.sig = sig;
   const key = TOUCH ? '' : '<kbd>Tab</kbd> ';
   $('specT').innerHTML = T0 ? `<small>正在看</small><b>${T0.S.name}</b><i>${playerLabel(T0.id)}</i>`
-    : n ? `<small>你變成了玩具</small><b>${key}看隊友的畫面</b>` : `<small>你變成了玩具</small><b>等隊友來救你</b>`;
+    : TOUCH ? `<small>靈魂出竅</small><b>「我喺度」叫隊友${n ? ' · ‹ › 看隊友' : ''}</b>`
+    : `<small>靈魂出竅 · 等隊友搖醒你</small><b><kbd>WASD</kbd> 飄 · <kbd>F</kbd> 叫隊友${n ? ` · ${key}看隊友` : ''}</b>`;
   $('specL').hidden = $('specR').hidden = !n;
 }
 addEventListener('keydown', e => {
