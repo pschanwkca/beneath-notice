@@ -20,8 +20,8 @@ zoneDef('kitchen', { floor: 0, core: [[-312, 912, -12, 300, -250, 250], [-432, -
 // peek: spots in other places from which you can see in (through a mouse hole) — draw this place too
 zoneDef('wall', { floor: HO.y + 4, off: HO, core: [[-530, -312, -360, -2, -140, -52]], peek: [[-282, -140, -345, -250, -160, 10], [-312, -160, -12, 90, -200, 0]], env: 'hub' });
 zoneDef('garage', { floor: -20, core: [[912, 1460, -40, 300, -270, 312]], peek: [[820, 912, -10, 70, -240, -150], [1460, 1640, -40, 120, 20, 200]], env: 'garage' });
-zoneDef('yard', { floor: -20, core: [[1460, 2770, -40, 1000, -460, 660]], peek: [[-400, 3500, -80, 1000, 660, 1700]], env: 'yard' });
-zoneDef('road', { floor: -35, core: [[-340, 3500, -80, 1000, 660, 1700], [-340, 1460, -80, 1000, 262, 660]], peek: [[1460, 2770, -40, 1000, 260, 660], [-340, 3500, -80, 1000, 1700, 2500]], env: 'road' });
+zoneDef('yard', { floor: -20, core: [[1460, 2770, -40, 1000, -460, 660]], peek: [[-400, 3500, -80, 1000, 660, 1700], [756, 1460, -80, 1000, -1600, -270], [-330, 756, -80, 1000, -1600, -640], [912, 1460, -80, 1000, 312, 660]], env: 'yard' });
+zoneDef('road', { floor: -35, core: [[-340, 3500, -80, 1000, 660, 1700]], peek: [[1460, 2770, -40, 1000, 260, 660], [-340, 3500, -80, 1000, 1700, 2500], [-1600, 1460, -80, 1000, 262, 660]], env: 'road' });   // (the front garden is the garden's now, e46_outside.js: you see the street from it)
 zoneDef('park', { floor: -20, core: [[-340, 3500, -80, 1000, 1700, 3760]], peek: [[-340, 3500, -80, 1000, 1180, 1700], [-340, 3500, -80, 1300, 3760, 4880]], env: 'park' });
 zoneDef('school', { floor: -20, core: [[-340, 3500, -80, 1300, 3760, 6300]], peek: [[-340, 3500, -80, 1300, 2500, 3760]], env: 'park' });
 zoneDef('basement', { floor: BO.y, off: BO, core: [[-312, 338, -360, -60, -549, 33], [-282, -160, -60, 150, -549, -245], [-292, -60, -100, 40, -612, -479]], peek: [[-390, -312, -345, -295, -130, -50]], env: 'basement' });
@@ -55,7 +55,7 @@ function buildZone(Z) {
 }
 async function buildWorld(prog) {
   if (WORLD) return;
-  for (const id of ['basement', 'wall', 'kitchen', 'garage', 'yard', 'road', 'park', 'school', 'portal', 'roof']) { if (prog) await prog(id); buildZone(ZONES[id]); }
+  for (const id of ['basement', 'wall', 'kitchen', 'garage', 'yard', 'road', 'park', 'school', 'portal', 'roof', 'garden']) { if (prog) await prog(id); buildZone(ZONES[id]); }
   ZONES.garage.prepped = ZONES.yard.prepped = ZONES.road.prepped = ZONES.park.prepped = ZONES.school.prepped = true;
   MP_CPS = [...LEVELS.kitchen.cps, ...LEVELS.garage.cps, ...LEVELS.yard.cps, ...LEVELS.road.cps, ...LEVELS.park.cps, ...LEVELS.school.cps];
   ncPlace();
@@ -170,7 +170,7 @@ function zoneTick(dt) {
   for (const Z of ZL) { Z.near = inZone(Z, cp.x, cp.y, cp.z, 45) || inZone(Z, lp.x, lp.y, lp.z, 45) || (!!Z.peek && Z.peek.some(b => cp.x > b[0] && cp.x < b[1] && cp.y > b[2] && cp.y < b[3] && cp.z > b[4] && cp.z < b[5]));
     if (Z.id === 'roof' && Z.near && gUnder(cp) && gUnder(lp)) Z.near = false;   // (under the garage's ceiling you don't see its attic, or the roofs)
     Z.lv.visible = Z.fx.visible = Z.near; if (Z.npcs) for (const o of Z.npcs) o.visible = Z.near; }
-  houseShellTick(); solidTick(); humanLifeTick(dt); realTick(dt);
+  houseShellTick(); solidTick(); humanLifeTick(dt); realTick(dt); outsideTick(dt);
   // atmosphere of the place the camera is in
   const cz = zoneAt(cp) || (leader && zoneAt(leader.pos)) || WC.cz || ZONES[LEVEL]; if (cz) WC.cz = cz;
   const D = backAtmo(LEVELS[WC.cz.id], cp); const k = LP.snap ? 1 : 1 - Math.exp(-2.5 * dt);

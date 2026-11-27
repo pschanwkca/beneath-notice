@@ -304,6 +304,6 @@ function backHint(L) {
   if (!BK.used && !L.climbing && L.pos.y < 40 && L.pos.x > -70 && L.pos.x < 60 && L.pos.z < -540 && L.pos.z > -612) return '爬上報紙、鞋櫃同鞋盒，捉住頂嗰個衣架就可以滑過成條走廊';
   if (inStore(L.pos) && L.pos.y < 9 && Math.hypot(L.pos.x + 30, L.pos.z + 238) < 18) return '牆腳個窿通去廚房櫃底——一出去就係太太腳邊，小心';
   if (L.pos.y < 9 && L.pos.x > -40 && L.pos.x < -20 && L.pos.z > -232 && L.pos.z < -168) return '櫃底條窿通去後面嘅儲物房（嗰度冇人望到你）';
-  if (PEST.st === 'off' && L.pos.y < 30 && L.pos.x > 630 && L.pos.x < 750 && L.pos.z < -580 && L.pos.z > -612) return '後門鎖咗——之後會通去後園';
+  if (PEST.st === 'off' && L.pos.y < 30 && L.pos.x > 630 && L.pos.x < 750 && L.pos.z < -580 && L.pos.z > -612) return '後門底有個貓門——鑽出去就係屋外花園';
   return '';
 }

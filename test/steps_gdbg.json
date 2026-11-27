@@ -1,0 +1,4 @@
+[{"evalFile":"roof_h.js"},{"evalFile":"vent_h.js"},
+ {"eval": "(async()=>{ const b=window.__bn; window.__NODET=true; document.getElementById('chaps').hidden=true; await b.startChapter2(); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(10); return [b.LEVEL, b.state]; })()"},
+ {"eval": "(()=>{ const R=window.__R, b=window.__bn; R.put(-150, -19, -722); b.step(10); const r = window.__V.go([[-412,-722]], 400, 20); const L=b.leader; const near = b.cols.filter(c=>(c.t==='b'||c.t==='c') && (c.t==='b' ? (c.x1>L.pos.x-12 && c.x0<L.pos.x+12 && c.z1>L.pos.z-12 && c.z0<L.pos.z+12) : Math.hypot(c.x-L.pos.x,c.z-L.pos.z)<c.r+12) && c.y1>L.pos.y-2 && c.y0<L.pos.y+8).map(c=>c.t==='b'?[c.x0,c.x1,c.y0,c.y1,c.z0,c.z1].map(v=>Math.round(v*10)/10):['c',c.x,c.z,c.r,c.y0,c.y1].map(v=>typeof v==='number'?Math.round(v*10)/10:v)); return [r.log.slice(0,8), r.end, near, b.party.map(C=>C.pos.toArray().map(Math.round))]; })()"}
+]

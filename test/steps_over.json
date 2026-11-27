@@ -1,0 +1,7 @@
+[{"evalFile":"shothelp.js"},
+ {"eval": "(async()=>{ const b=window.__bn; window.__NODET=true; await b.startChapter('yard'); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(10); window.__S.hud(false); return [b.LEVEL, b.state, b.info().pos]; })()"},
+ {"eval": "window.__S.abs([2400, 300, -300],[600, 150, 0])"},{"frame":1},{"frame":1},{"frame":1,"shot":"ov_yard"},
+ {"eval": "window.__S.abs([1500, 980, -1400],[500, 0, -100])"},{"frame":1},{"frame":1},{"frame":1,"shot":"ov_back"},
+ {"eval": "window.__S.abs([-900, 980, 1200],[500, 0, 0])"},{"frame":1},{"frame":1},{"frame":1,"shot":"ov_front"},
+ {"eval": "window.__S.abs([-1200, 900, -900],[400, 0, 0])"},{"frame":1},{"frame":1},{"frame":1,"shot":"ov_west"}
+]

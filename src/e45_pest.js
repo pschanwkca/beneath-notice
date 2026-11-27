@@ -43,14 +43,16 @@ function buildPest(K) {
   const lensM = new THREE.Mesh(new THREE.SphereGeometry(1.5, 12, 10), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xfff2e0).multiplyScalar(10) })); lensM.position.set(0, 8.4, 0); torchM.add(lensM); H.lens = lensM;
   H.pos.set(690, 0, -650); H.yaw = 0; H.root.visible = false; PEST.H = H; npcHome(H.root, H.pos, H.yaw, 'kitchen');
   const sp = new THREE.SpotLight(0xfff0dc, 0, 0, .36, .5, 2); sp.castShadow = false; LV.add(sp, sp.target); PEST.torch = sp;
-  // the back door swings in for him (the yard beyond is just dark for now)
+  // the back door swings in for him; a cat flap low in it (the garden's the other side: e46_outside.js)
   const g = new THREE.Group(); g.position.set(650, 0, -610.5); LV.add(g); PEST.door = g;
-  const dm = new THREE.MeshStandardMaterial({ color: 0x5a4434, roughness: .6 });
-  mesh(new THREE.BoxGeometry(80, 205, 3), dm, 40, 102.5, 0, { parent: g }); mesh(new THREE.BoxGeometry(56, 70, .6), new THREE.MeshPhysicalMaterial({ color: 0x9ab4c8, roughness: .1, transparent: true, opacity: .7 }), 40, 155, 1.7, { parent: g, cast: false });
-  mesh(new THREE.SphereGeometry(2.4, 14, 10), K.brass, 72, 100, 3, { parent: g }); g.traverse(o => { if (o.isMesh) o.userData.noSolid = true; });
-  box(640, 740, -10, 230, -662, -650, new THREE.MeshBasicMaterial({ color: 0x0b1018 }), { col: false, cast: false });   // night outside
-  box(640, 740, -10, 0, -650, -612, new THREE.MeshStandardMaterial({ color: 0x5a5a56, roughness: 1 }), { col: false, cast: false });   // the back step
-  cols.push({ t: 'b', x0: 650, x1: 730, y0: 0, y1: 205, z0: -624, z1: -611 });   // (nobody goes out this way yet)
+  const dm = new THREE.MeshStandardMaterial({ color: 0x5a4434, roughness: .6 }), pm = new THREE.MeshStandardMaterial({ color: 0x2c2e30, roughness: .5 });
+  mesh(new THREE.BoxGeometry(30, 205, 3), dm, 15, 102.5, 0, { parent: g }); mesh(new THREE.BoxGeometry(30, 205, 3), dm, 65, 102.5, 0, { parent: g }); mesh(new THREE.BoxGeometry(20, 187, 3), dm, 40, 111.5, 0, { parent: g });
+  mesh(new THREE.BoxGeometry(56, 70, .6), new THREE.MeshPhysicalMaterial({ color: 0x9ab4c8, roughness: .1, transparent: true, opacity: .7 }), 40, 155, 1.7, { parent: g, cast: false });
+  mesh(new THREE.SphereGeometry(2.4, 14, 10), K.brass, 72, 100, 3, { parent: g });
+  for (const [w, h, x, y] of [[26, 3, 40, 19.5], [3, 21, 28.5, 10], [3, 21, 51.5, 10]]) mesh(new THREE.BoxGeometry(w, h, 4.6), pm, x, y, 0, { parent: g });
+  { const pv = new THREE.Group(); pv.position.set(40, 18, 0); g.add(pv); mesh(new THREE.BoxGeometry(19.4, 17.4, .8), new THREE.MeshPhysicalMaterial({ color: 0x3a3a38, roughness: .2, transparent: true, opacity: .55, clearcoat: .6 }), 0, -8.8, 0, { parent: pv, cast: false }); OUT.flap = pv; }
+  g.traverse(o => { if (o.isMesh) o.userData.noSolid = true; });
+  for (const [x0, x1, y0] of [[650, 680, 0], [700, 730, 0], [680, 700, 18]]) cols.push({ t: 'b', x0, x1, y0, y1: 205, z0: -624, z1: -611 });   // (round the cat flap)
   // the cages, put away until he brings them
   CAGE_SPOTS.forEach((S, i) => CAGES.push(cageBuild(S, i)));
 }

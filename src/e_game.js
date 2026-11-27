@@ -993,7 +993,7 @@ async function init() {
   for (const id of ['hog', 'rab', 'coon', 'frog', 'bat', 'tort', 'mole']) { chars[id].root.visible = false; chars[id].pos.set(0, -900, 0); }
   party.push(chars.dad, chars.sq, chars.bear); buildMom();
   // the whole house is built now, once: walking from room to room never loads anything
-  const WL = { basement: [.42, '搭建地庫…'], wall: [.52, '搭建牆內…'], kitchen: [.58, '搭建廚房和客廳…'], garage: [.64, '搭建車房…'], yard: [.7, '搭建後園和陽光房…'] , road: [.72, '搭建馬路…'], park: [.75, '搭建公園…'], school: [.77, '搭建學校…'], portal: [.78, '打開縮小機的場域…'], roof: [.8, '搭建屋頂…'] };
+  const WL = { basement: [.42, '搭建地庫…'], wall: [.52, '搭建牆內…'], kitchen: [.58, '搭建廚房和客廳…'], garage: [.64, '搭建車房…'], yard: [.7, '搭建後園和陽光房…'] , road: [.72, '搭建馬路…'], park: [.75, '搭建公園…'], school: [.77, '搭建學校…'], portal: [.78, '打開縮小機的場域…'], roof: [.8, '搭建屋頂…'], garden: [.82, '搭建屋外花園…'] };
   await buildWorld(async id => { setLoad(...WL[id]); await tick(); });
   buildParticles(); enterZone('basement', true); scene.environment = ZONES.basement.envTex; placeStart();
   for (const id in chars) animChar(chars[id], .016);

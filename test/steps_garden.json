@@ -1,0 +1,10 @@
+[{"evalFile":"shothelp.js"},{"evalFile":"roof_h.js"},{"evalFile":"vent_h.js"},
+ {"eval": "(async()=>{ const b=window.__bn; window.__NODET=true; document.getElementById('chaps').hidden=true; await b.startChapter2(); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(10); return [b.LEVEL, b.state]; })()"},
+ {"eval": "(()=>{ const R=window.__R, b=window.__bn; R.put(690, 1, -585); b.step(10); const r = window.__V.go([[690,-600],[690,-640],[690,-700]], 900, 30); return [r, b.LEVEL, b.quest, b.W.WC.cz.id]; })()"},
+ {"eval": "window.__S.hud(false); 1"},{"frame":1},{"frame":1},{"frame":1,"shot":"gd_out"},
+ {"eval": "(()=>{ const R=window.__R, b=window.__bn; R.face(0,1); b.step(30); return b.info().pos; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"gd_door"},
+ {"eval": "(()=>{ const b=window.__bn; const r = window.__V.go([[600,-722],[-412,-722],[-412,0]], 4000, 200); return [r.reached, r.end, b.LEVEL, b.W.WC.cz.id]; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"gd_side"},
+ {"eval": "(()=>{ const b=window.__bn; const r = window.__V.go([[-412,400],[100,450]], 4000, 200); return [r.reached, r.end, b.LEVEL, b.W.WC.cz.id]; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"gd_front"},
+ {"eval": "(()=>{ const R=window.__R, b=window.__bn; R.face(0,-1); b.step(30); return b.info().pos; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"gd_facade"},
+ {"eval": "(()=>{ const R=window.__R, b=window.__bn; R.put(690, -20, -700); b.step(10); const L=b.leader; L.stamina=100; const r = window.__V.go([[690,-660],[690,-660,-1],[690,-620],[690,-590]], 1500, 40); return [r.reached, r.end, b.LEVEL, b.quest, b.W.WC.cz.id]; })()"}
+]

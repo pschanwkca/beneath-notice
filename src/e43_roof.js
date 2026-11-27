@@ -90,7 +90,7 @@ function buildRoof() {
   slopeCol({ x0: G.x0, x1: G.x1, z0: G.z0, z1: G.z1, y0: G.E - G.th - 1, y1: G.R + 3, th: G.th, top: (x, z) => rfIn(x, z, RF_GVENT) ? -1e9 : rfGab(x, z) });
   const solid = (x0, x1, y0, y1, z0, z1, o = {}) => { const c = { t: 'b', x0, x1, y0, y1, z0, z1, ...o }; cols.push(c); return c; };
   // eaves: fascia boards with the soffit behind them (ledges you can climb up onto), the front gutter
-  solid(912, 943, H.E - 14, H.E, -290, 290); solid(H.a0, H.a1, H.E - 14, H.E, 262, 293); solid(H.a0, H.a1, H.E - 14, H.E, -293, -262); solid(H.a0 - 3, -330, H.E - 14, H.E, -290, 290);
+  solid(912, 943, H.E - 14, H.E, -290, 290); solid(H.a0, H.a1, H.E - 14, H.E, 262, 293); solid(H.a0, 724, H.E - 14, H.E, -293, -262); solid(924, H.a1, H.E - 14, H.E, -293, -262); solid(H.a0 - 3, -330, H.E - 14, H.E, -290, 290);
   solid(H.a0, H.a1, H.E - 16, H.E - 6, 293, 301);
   solid(G.x0, G.x1, G.E - 14, G.E, G.z1, G.z1 + 3); solid(G.x0, G.x1, G.E - 14, G.E, G.z0 - 3, G.z0);
   solid(G.x0, G.x1, G.E - 16, G.E - 6, G.z1 + 3, G.z1 + 11); solid(G.x0, G.x1, G.E - 16, G.E - 6, G.z0 - 11, G.z0 - 3);
@@ -486,7 +486,7 @@ LEVELS.roof = {
     if (RF.via) { setQuest(1); cp = 5; setTimeout(() => { if (STATE === 'play' && LEVEL === 'roof') say('爸爸', '車房閣樓……通風口嗰度有光。爬上去就出到屋頂。', '#f5f0e6', 3.2); }, 500); }
     if (prev === 'kitchen') { setTimeout(() => say('爸爸', '閣樓……我啲舊嘢都擺喺度。', '#f5f0e6', 3), 900); setTimeout(() => say('爸爸', '通風口嗰邊有光——由嗰度出得去屋頂。', '#f5f0e6', 3.4), 4400); }
   },
-  keep(id) { return id === 'yard' || id === 'road'; },   // falling off the edge doesn't start the next chapter: you're put back on the roof
+  keep(id) { return id === 'yard' || id === 'road' || id === 'garden'; },   // falling off the edge doesn't start the next chapter: you're put back on the roof
   detect: detectRoof,
   update(dt) {
     lvT += dt; const L = leader; if (NET.on || STATE !== 'play') return;

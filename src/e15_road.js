@@ -193,19 +193,8 @@ function buildRoad() {
   if (DAY) { const tgt = V3(1900, RY, 1080); ST.sun = spotL(0xfff0dc, 26000000, sunFrom(tgt), tgt, .52, .5, 2048, 1200, 3800); ST.sun.userData.prio = 1; }
 
   // ---- the front of our house, the driveway and garage door ----
-  box(-330, 912, GY - 10, GY, 262, 646, grassM, { uv: 90, cast: false });
-  box(912, 1460, GY - 10, GY, 312, 646, pave, { uv: 160, cast: false });
-  box(-330, 912, GY, GY + 560, 250, 262, sidingU, { uv: 120 });
-  box(-340, 912, GY + 556, GY + 572, 240, 276, dark, { col: false });
-  for (const [x, y, lit] of [[-200, 90, 1], [60, 90, 1], [300, 90, 0], [560, 90, 1], [-120, 330, 0], [240, 330, 1], [620, 330, 0]]) {
-    box(x - 46, x + 46, GY + y, GY + y + 120, 262, 263.5, lit ? winM : winOff, { col: false }); box(x - 50, x + 50, GY + y - 4, GY + y, 262, 266, M.white, { col: false }); box(x - 2, x + 2, GY + y, GY + y + 120, 263, 264.5, M.white, { col: false });
-  }
-  box(420, 470, GY, GY + 200, 262, 264, new THREE.MeshStandardMaterial({ color: 0x3a2418, roughness: .6 }), { col: false });
-  box(400, 490, GY, GY + 14, 262, 296, kerbM); box(410, 480, GY + 14, GY + 28, 262, 280, kerbM);
-  box(912, 1460, GY, GY + 200, 312, 314, M.white, { col: false }); for (let y = GY + 40; y < GY + 200; y += 40) box(912, 1460, y - 1, y + 1, 314, 315, new THREE.MeshStandardMaterial({ color: 0xc8c8c4, roughness: .6 }), { col: false });
-  box(912, 1460, GY + 200, GY + 290, 312, 318, sidingU, { col: false });
-  ST.porch = pointL(0xffc890, DAY ? 0 : 9000, 445, GY + 230, 300); mesh(new THREE.SphereGeometry(5, 14, 10), K.bulb, 445, GY + 226, 268, { cast: false });
-  box(-330, 400, GY, GY + 40, 628, 646, hedgeM, { uv: 40 }); box(490, 912, GY, GY + 40, 628, 646, hedgeM, { uv: 40 });
+  // (the front garden, the driveway, the garage door and the house's front are the garden's now: e46_outside.js)
+  ST.porch = pointL(0xffc890, DAY ? 0 : 9000, 510, GY + 200, 290);   // (the lamp beside the front door)
   // 陳伯's house front, beyond his fence
   box(2768, 3400, GY, GY + 520, 640, 652, sidingN, { uv: 120 });
   for (const [x, lit] of [[2880, 1], [3100, 0]]) { box(x - 50, x + 50, GY + 90, GY + 210, 652, 653.5, lit ? winM : winOff, { col: false }); box(x - 54, x + 54, GY + 86, GY + 90, 652, 656, M.white, { col: false }); }
@@ -392,7 +381,7 @@ function roadSounds(dt) {
 }
 function updRoadWorld(dt) {
   ST.near = !!(ZONES.road && ZONES.road.near);
-  if (ST.sky) ST.sky.visible = ST.near || !!(ZONES.yard && ZONES.yard.near) || !!(ZONES.park && ZONES.park.near);
+  if (ST.sky) ST.sky.visible = ST.near || !!(ZONES.yard && ZONES.yard.near) || !!(ZONES.park && ZONES.park.near) || !!(ZONES.garden && ZONES.garden.near);
   if (!ST.near && !NET.on) return;
   if (!NET.client) updSignals(dt);
   updCars(dt); signalLooks(); carHits(dt); roadSounds(dt);

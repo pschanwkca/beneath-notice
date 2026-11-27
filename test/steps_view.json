@@ -1,0 +1,6 @@
+[{"evalFile":"shothelp.js"},{"evalFile":"roof_h.js"},
+ {"eval": "(async()=>{ const b=window.__bn; window.__NODET=true; await b.startChapter('road'); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(10); window.__S.hud(false); return [b.LEVEL]; })()"},
+ {"eval": "(()=>{ const R=window.__R, b=window.__bn; R.put(450, -20, 720); R.face(0,-1); b.step(60); return [b.LEVEL, b.info().pos, b.ZONES.garden.near]; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"vw_pave"},
+ {"eval": "window.__S.abs([1100, 260, 1100],[400, 200, 200])"},{"frame":1},{"frame":1},{"frame":1,"shot":"vw_street"},
+ {"eval": "(()=>{ const R=window.__R, b=window.__bn; window.__S.game(); R.put(-300, -35, 900); R.face(-1,0); b.step(60); return [b.LEVEL, b.info().pos]; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"vw_west"}
+]
