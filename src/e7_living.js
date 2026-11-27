@@ -89,7 +89,7 @@ function buildLivingRoom(K) {
   resGroup(cmGroup(14, 22, 10, ({ part }) => { part(new THREE.BoxGeometry(12, 12, 8), robot, 0, -3, 0); part(new THREE.BoxGeometry(9, 8, 8), robot, 0, 7, 0); part(new THREE.SphereGeometry(1.2, 10, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff5a3a).multiplyScalar(2) }), -2, 7.5, 4.2); part(new THREE.SphereGeometry(1.2, 10, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff5a3a).multiplyScalar(2) }), 2, 7.5, 4.2); }, [robot]), 420, 210, 124, 14, 22, 10, .3, 4, '玩具機械人', true);
   // window + curtains (curtains reach the floor: climb them to the sill)
   box(700, 850, 96, 100, 214, 232, M.white); box(700, 850, 206, 210, 228, 240, M.white, { col: false }); box(700, 704, 100, 206, 228, 240, M.white, { col: false }); box(846, 850, 100, 206, 228, 240, M.white, { col: false }); box(773.5, 776.5, 100, 206, 236, 239, M.white, { col: false });
-  mesh(new THREE.PlaneGeometry(420, 210), K.dusk, 775, 150, 330, { cast: false }).rotation.y = Math.PI;
+  // (no painted view behind the glass any more: the real front garden and the street are out there, e46_outside.js)
   mesh(new THREE.PlaneGeometry(146, 110), MAT.glassThin, 775, 155, 238, { cast: false }).rotation.y = Math.PI;
   sunWindow(V3(775, 155, 236), 146, 110, V3(0, 0, -1), 0, { fill: 14000 });
   if (DAY) { pointL(0xf2eee6, 10000, 640, 240, 40); pointL(0xe2eaff, 8000, 470, 220, 170); }   // daylight bouncing round the room (the window faces away from the sun)

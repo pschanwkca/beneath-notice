@@ -1,0 +1,7 @@
+[{"evalFile":"roof_h.js"},
+ {"eval": "(async()=>{ const b=window.__bn; window.__NODET=true; document.getElementById('chaps').hidden=true; await b.startChapter2(); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(10); return [b.LEVEL]; })()"},
+ {"eval": "(()=>{ const b=window.__bn, R=window.__R, C=b.CAT; R.put(506, 0, 200); b.step(5); C.pos.set(506, 4, 120); C.mode='stalk'; C.cool=0; const log=[]; for(let i=0;i<200;i++){ b.step(1); if(i%20===0) log.push([Math.round(C.pos.x),Math.round(C.pos.z),C.mode]); } R.put(506, -10, 300); for(let i=0;i<300;i++){ b.step(1); if(i%30===0) log.push([Math.round(C.pos.x),Math.round(C.pos.z),C.mode]); } return log; })()"},
+ {"eval": "(()=>{ const b=window.__bn, R=window.__R, C=b.CAT; b.doorOpen(); b.step(200); R.put(-200, 0, 150); b.step(5); C.pos.set(620, 4, -180); C.mode='home'; const log=[]; let maxIn=0; for(let i=0;i<2400 && C.mode!=='sleep';i++){ b.step(1); if(C.pos.x>300&&C.pos.x<312&&(C.pos.z<-62||C.pos.z>44)) maxIn++; if(i%120===0) log.push([Math.round(C.pos.x),Math.round(C.pos.z),C.mode]); } return [C.mode, maxIn, C.pos.toArray().map(Math.round), log]; })()"}
+,
+ {"eval": "(()=>{ const b=window.__bn; const out=[]; for(const c of b.cols){ if(c.t!=='b') continue; if(c.x1>270&&c.x0<340&&c.z1>-30&&c.z0<50&&c.y0<15&&c.y1>15) out.push([c.x0,c.x1,c.y0,c.y1,c.z0,c.z1].map(v=>+v.toFixed(1))); } return out; })()"}
+]

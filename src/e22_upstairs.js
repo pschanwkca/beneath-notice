@@ -83,9 +83,16 @@ function buildUpstairs(K) {
   // family photos up the stairs (the story told in frames)
   const ph = [['photo', 0, 22, 28], ['photo3', 4, 30, 22], ['photo2', 8, 18, 24], ['photo', 12, 24, 30]];
   for (const [img, i, w, h] of ph) { const z = -262 - i * run, y = i * rise + 140; deco(748, 749.6, y - h / 2, y + h / 2, z - w / 2, z + w / 2, MAT.black); mesh(new THREE.PlaneGeometry(w - 3, h - 3), livingPhoto(img), 749.8, y, z, { cast: false }).rotation.y = Math.PI / 2; }
-  // a little round window on the landing (dusk outside)
+  // a little round window on the landing
   sunWindow(V3(824, Y + 140, -495), 52, 52, V3(0, 0, 1), Y, { fill: 6000, sun: 90000 });
-  { const r = mesh(new THREE.CircleGeometry(26, 40), K.dusk, 824, Y + 140, -497.4, { cast: false }); r.rotation.y = 0; const fr = mesh(new THREE.TorusGeometry(27, 2.4, 10, 48), M.paint, 824, Y + 140, -497, { cast: false }); fr.rotation.y = 0; }
+  // (frosted glass, the way landing windows often are: daylight through it, no view — so nothing painted to give itself away)
+  { const fc = document.createElement('canvas'); fc.width = fc.height = 128; const fx = fc.getContext('2d'), gr = fx.createRadialGradient(64, 54, 6, 64, 64, 66);
+    gr.addColorStop(0, '#ffffff'); gr.addColorStop(.7, '#eef3f6'); gr.addColorStop(1, '#d4dde3'); fx.fillStyle = gr; fx.fillRect(0, 0, 128, 128);
+    for (let i = 0; i < 900; i++) { fx.fillStyle = `rgba(${rnd() < .5 ? '255,255,255' : '190,200,210'},${R(.05, .16)})`; fx.fillRect(R(0, 128), R(0, 128), 1.5, 1.5); }
+    const ft = new THREE.CanvasTexture(fc); ft.colorSpace = THREE.SRGBColorSpace;
+    const r = mesh(new THREE.CircleGeometry(26, 40), new THREE.MeshStandardMaterial({ map: ft, emissive: 0xffffff, emissiveMap: ft, emissiveIntensity: .7, roughness: .9 }), 824, Y + 140, -497.4, { cast: false }); r.rotation.y = 0;
+    for (const [w, h] of [[52, 1.6], [1.6, 52]]) box(824 - w / 2, 824 + w / 2, Y + 140 - h / 2, Y + 140 + h / 2, -497.6, -496.6, M.paint, { col: false });
+    const fr = mesh(new THREE.TorusGeometry(27, 2.4, 10, 48), M.paint, 824, Y + 140, -497, { cast: false }); fr.rotation.y = 0; }
   // stairwell light: a pendant at the top, a sconce half-way, the hallway ceiling light
   cyl(790, -380, .4, Yc - 70, Yc, MAT.black, { col: false, seg: 6 }); mesh(new THREE.SphereGeometry(9, 24, 14), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffe2b8, emissiveIntensity: 3 }), 790, Yc - 76, -380, { cast: false });
   pointL(0xffd8aa, 7000, 790, Yc - 90, -380); pointL(0xffc890, 2200, 756, 170, -330); pointL(0xffd8b0, 3800, 864, Yc - 30, -330);
@@ -117,7 +124,6 @@ function buildUpstairs(K) {
   box(570, 670, Y, Y + 36, 198, 232, M.paint); deco(574, 666, Y + 18, Y + 19, 197.6, 198, M.wood);                       // a built-in window seat
   box(572, 668, Y + 36, Y + 42, 198, 234, new THREE.MeshPhysicalMaterial({ color: 0xf0c4cf, roughness: 1, sheen: .9, sheenColor: 0xffe8ee }));   // its cushion
   for (const [x, c] of [[582, 0xffffff], [656, 0xa8d8c8]]) { const pw = mesh(new THREE.SphereGeometry(10, 18, 12), new THREE.MeshPhysicalMaterial({ color: c, roughness: 1, sheen: .8 }), x, Y + 50, 224); pw.scale.set(.9, .9, .45); }
-  mesh(new THREE.PlaneGeometry(320, 220), K.dusk, 620, Y + 110, 330, { cast: false }).rotation.y = Math.PI;
   mesh(new THREE.PlaneGeometry(92, 110), MAT.glassThin, 620, Y + 95, 238, { cast: false }).rotation.y = Math.PI;
   UPS.win = sunWindow(V3(620, Y + 95, 236), 92, 110, V3(0, 0, -1), Y, { fill: 10000 });
   // curtains: open in the daytime; she draws them to watch the star projector

@@ -27,7 +27,11 @@ zoneDef('garden', { floor: GY, env: 'yard', core: [
 ], peek: [
   [-1600, 3500, -80, 1200, 646, 1400],                    // from the street
   [1460, 2770, -80, 1200, -1600, 660],                    // from the yard over its fences
-  [-700, 1600, 380, 1200, -1000, 700]                     // from the roofs
+  [-700, 1600, 380, 1200, -1000, 700],                    // from the roofs
+  // from inside, through the windows (no painted views: what's out there is out there)
+  [306, 912, -12, 560, -60, 252],                         // the front of the living room, and her bedroom over it (the front windows)
+  [736, 920, 255, 560, -518, -262],                       // the landing (its round window onto the back garden)
+  [-170, 10, -12, 266, -232, -110]                        // the kitchen by the sink (its window onto the light well)
 ] });
 
 // ---------- materials ----------
@@ -211,8 +215,8 @@ function buildHouseOutside(P) {
     B(-40, 40, 280, 330, 0, 32, M.trim); for (let z = -36; z < 38; z += 5) B(z, z + 2, 288, 322, 32, 33, M.dark, nc); for (const z of [-34, 34]) B(z - 2, z + 2, 272, 280, 0, 34, M.dark);
     B(-150, -110, 110, 160, 0, 10, M.trim); B(-146, -114, 128, 150, 10, 10.6, M.glassD, nc);
     B(140, 146, 34, 40, 0, 8, M.brass, nc); }
-  // remember the painted views the living room and her bedroom have outside their windows: they hide from outside
-  OUT.backdropsWanted = true;
+  // (the living room and her bedroom used to have painted views behind their windows, hidden from outside: gone)
+  OUT.backdropsWanted = false;   // (the painted views outside the front windows are gone: the windows look out on all this)
   // windows that open, the front door and its cat flap, the light well's drainpipe (e47_windows.js)
   buildWindows(P);
 }
@@ -277,6 +281,9 @@ function buildGarden() {
   const fenceRun = (x0, x1, z0, z1) => { box(x0, x1, GY, GY + 172, z0, z1, M.fence, { uv: 60 }); const alongX = x1 - x0 > z1 - z0;
     for (let a = alongX ? x0 : z0; a < (alongX ? x1 : z1); a += 120) alongX ? box(a, a + 7, GY, GY + 180, z0 - 2, z1 + 2, M.fence, nc) : box(x0 - 2, x1 + 2, GY, GY + 180, a, a + 7, M.fence, nc); };
   fenceRun(-646, 1460, -966, -960); fenceRun(-646, -640, -960, 640); fenceRun(1452, 1460, -960, -440);
+  // past the fences are the neighbours' gardens, not ours: an invisible wall goes up from each fence (gliding off the
+  // roof you bump into it and slide down on our side), and on round the hedge's west end
+  for (const [x0, x1, z0, z1] of [[-660, 1474, -980, -966], [-660, -646, -980, 662], [1460, 1474, -980, -440], [-660, -340, 648, 662]]) cols.push({ t: 'b', x0, x1, y0: GY, y1: 2400, z0, z1, noRay: true, slick: true });
   box(-646, 461, GY, GY + 168, 626, 648, M.hedge, { uv: 70 }); box(551, 912, GY, GY + 168, 626, 648, M.hedge, { uv: 70 });
   for (const [x0, x1] of [[-646, 461], [551, 912]]) box(x0 + 2, x1 - 2, GY + 168, GY + 174, 628, 646, M.hedge, { uv: 70, col: false });
   // (leaves on both faces and the top, so it reads as a hedge, not a green wall)

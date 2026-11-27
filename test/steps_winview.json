@@ -1,0 +1,11 @@
+[{"evalFile":"shothelp.js"},{"evalFile":"roof_h.js"},
+ {"eval": "(async()=>{ const b=window.__bn; window.__NODET=true; document.getElementById('chaps').hidden=true; await b.startChapter2(); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.doorOpen(); b.step(60); window.__S.hud(false); return [b.LEVEL]; })()"},
+ {"eval": "(()=>{ const b=window.__bn, R=window.__R; R.put(760, 0, 60); b.step(10); window.__S.abs([760, 60, 60],[775, 150, 240]); b.step(5); return [b.ZONES.garden.near, b.ZONES.road.near, b.info().calls, b.info().tris]; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"wv_liv"},
+ {"eval": "(()=>{ const b=window.__bn; return [b.ZONES.garden.near, b.ZONES.road.near, b.info().calls, b.info().tris, b.info().fps]; })()"},
+ {"eval": "(()=>{ const b=window.__bn, R=window.__R; R.put(620, 300, 120); b.step(10); window.__S.abs([620, 345, 120],[620, 405, 240]); b.step(5); return 1; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"wv_bed"},
+ {"eval": "(()=>{ const b=window.__bn; return [b.ZONES.garden.near, b.ZONES.road.near, b.info().calls, b.info().tris]; })()"},
+ {"eval": "(()=>{ const b=window.__bn, R=window.__R; R.put(-100, 0, -120); b.step(10); window.__S.abs([-100, 120, -150],[-100, 160, -240]); b.step(5); return 1; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"wv_kit"},
+ {"eval": "(()=>{ const b=window.__bn, R=window.__R; R.put(824, 400, -440); b.step(10); window.__S.abs([824, 420, -440],[824, 440, -520]); b.step(5); return [b.ZONES.garden.near, b.info().pos]; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"wv_land"},
+ {"eval": "(()=>{ const b=window.__bn, R=window.__R; R.put(775, 100, 226); b.step(10); window.__S.abs([775, 112, 205],[775, 90, 500]); b.step(5); return [b.ZONES.garden.near, b.ZONES.road.near, b.info().calls, b.info().tris]; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"wv_sill"},
+ {"eval": "(()=>{ const b=window.__bn; return [b.ZONES.garden.near, b.LEVEL]; })()"}
+]

@@ -373,10 +373,7 @@ function buildKitchen() {
   // window above the sink
   box(-152, -48, 104, 110, -232, -212, MAT.white); box(-152, -148, 110, 190, -232, -224, MAT.white); box(-52, -48, 110, 190, -232, -224, MAT.white); box(-152, -48, 186, 190, -232, -224, MAT.white); box(-101.5, -98.5, 110, 190, -230, -226, MAT.white, { col: false }); box(-150, -50, 148.5, 151.5, -230, -226, MAT.white, { col: false });
   mesh(new THREE.PlaneGeometry(98, 78), MAT.glassThin, -100, 150, -228, { cast: false });
-  // the view: a little light well behind the house (the storeroom wraps round it), the neighbourhood over its back wall
-  { const g = new THREE.PlaneGeometry(111, 210), uv = g.attributes.uv, u0 = (-157 + 310) / 420, u1 = (-46 + 310) / 420;   // (the middle of the painted view, at its own scale)
-    for (let i = 0; i < uv.count; i++) uv.setX(i, u0 + uv.getX(i) * (u1 - u0));
-    mesh(g, K.dusk, -101.5, 150, -303.9, { cast: false }); }
+  // the view: a little light well behind the house (the storeroom wraps round it), the lean-to roof and the sky over it
   sunWindow(V3(-100, 150, -226), 98, 78, V3(0, 0, 1), 0, { fill: 12000 });
   cols.push({ t: 'b', x0: -150, x1: -50, y0: 110, y1: 190, z0: -229, z1: -227, noRay: true });
   // potted herb on the sill
@@ -657,26 +654,44 @@ function catSee(L = leader) {
   return true;
 }
 function ceilAt(x, z, y) { let m = 1e9, mc = null; for (const c of colsNear(x, y, z)) { if (c.t === 'h') { const b = hTop(c, x, z) - c.th; if (b >= y + .5 && b < m) { m = b; mc = c; } continue; } if (c.y0 < y + .5 || c.y0 > m) continue; if (!xzHit(c, x, z, .6, _h)) continue; m = c.y0; mc = c; } return [m, mc]; }
+// the cat walks round walls, not through them (furniture it slips past, as before): is there a wall within its
+// head's reach of (x, z), going (ux, uz)?
+function catWall(x, z, ux, uz) {
+  for (const d of [0, 12, 24, 32]) { const px = x + ux * d, pz = z + uz * d;
+    for (const c of colsNear(px, 15, pz)) if (c.t === 'b' && c.y1 - c.y0 > 120 && c.y0 < 15 && c.y1 > 15 && px > c.x0 - 2 && px < c.x1 + 2 && pz > c.z0 - 2 && pz < c.z1 + 2) return true; }
+  return false;
+}
+// kitchen ↔ living room: through the doorway (the open half: the door stands in the other), not the wall either side of it
+function catVia(C, p) { const inL = C.pos.x > 306, toL = p.x > 306; return inL !== toL && Math.abs(C.pos.x - 306) > 14 ? V3(inL ? 282 : 330, 0, clamp(C.pos.z, -12, 30)) : p; }
 function updCat(dt) {
   const C = CAT; let sp = 0, ty = null; C.cool = Math.max(0, (C.cool || 0) - dt);
   if (NET.client) { const w = NET.npc; if (w && w.c) { const ox = C.pos.x, oz = C.pos.z; const k = 1 - Math.exp(-10 * dt); C.pos.x += (w.c[0] - C.pos.x) * k; C.pos.z += (w.c[1] - C.pos.z) * k; sp = Math.hypot(C.pos.x - ox, C.pos.z - oz) / Math.max(dt, 1e-4); ty = w.c[2]; C.mode = w.c[3]; C.jump = w.c[4]; } const L = leader; catAnim(dt, sp, ty, L.pos.x - C.pos.x, L.pos.z - C.pos.z); return; }
   const L = catTarget();
   const dx = L.pos.x - C.pos.x, dz = L.pos.z - C.pos.z, dl = Math.hypot(dx, dz);
-  const toward = (p, speed) => { const ex = p.x - C.pos.x, ez = p.z - C.pos.z, e = Math.hypot(ex, ez); if (e < speed * dt + 1) return true; C.pos.x += ex / e * speed * dt; C.pos.z += ez / e * speed * dt; ty = Math.atan2(ex, ez); sp = speed; return false; };
+  const toward = (p0, speed) => {
+    const p = catVia(C, p0), ex = p.x - C.pos.x, ez = p.z - C.pos.z, e = Math.hypot(ex, ez); if (p === p0 && e < speed * dt + 1) return true;
+    const ux = ex / e, uz = ez / e, st = speed * dt; ty = Math.atan2(ex, ez);
+    // blocked: slide along the wall (one axis at a time); still blocked: give up the way it was going
+    if (!catWall(C.pos.x, C.pos.z, ux, uz)) { C.pos.x += ux * st; C.pos.z += uz * st; }
+    else if (Math.abs(ux) > .05 && !catWall(C.pos.x, C.pos.z, Math.sign(ux), 0)) C.pos.x += Math.sign(ux) * st;
+    else if (Math.abs(uz) > .05 && !catWall(C.pos.x, C.pos.z, 0, Math.sign(uz))) C.pos.z += Math.sign(uz) * st;
+    else { C.stuckT = (C.stuckT || 0) + dt; if (C.stuckT > 1.2) { C.stuckT = 0; return 'stuck'; } return false; }
+    C.stuckT = 0; sp = speed; return false; };
+  const inHouse = P => { const Z = zoneAt(P); return !!Z && Z.id === 'kitchen' && P.x > -312 && P.y < 250; };   // (her world: the kitchen and the living room, never outside or in the walls)
   switch (C.mode) {
     case 'sleep': if (dl < (L.crouch ? 15 : 30) && L.pos.y < 15 && L.spd > .5 && STATE === 'play') { C.mode = 'wake'; C.t = .9; C.next = 'sniff'; C.sniffT = 3; } break;
     case 'wake': C.t -= dt; if (C.t <= 0) { C.mode = C.next || 'sniff'; C.t = 3.5; if (!KS.said.catwake) { KS.said.catwake = 1; sayW('前拍檔', '貓醒了！別動，或者躲到牠鑽不進去的地方！', '#b7d38a', 3); } } break;
-    case 'inv': if (toward(C.target, 95)) { C.mode = 'sniff'; C.t = 4; } if (catSee(L)) { C.mode = 'stalk'; } break;
-    case 'sniff': C.t -= dt; ty = C.yaw + Math.sin(T * 1.6) * .03; if (catSee(L)) C.mode = 'stalk'; else if (C.t <= 0) { C.mode = 'home'; } break;
-    case 'home': if (toward(C.home, 40)) { C.mode = 'settle'; C.t = 1.4; } if (catSee(L)) C.mode = 'stalk'; break;
+    case 'inv': if (toward(C.target, 95)) { C.mode = 'sniff'; C.t = 4; } if (catSee(L) && inHouse(L.pos)) { C.mode = 'stalk'; } break;
+    case 'sniff': C.t -= dt; ty = C.yaw + Math.sin(T * 1.6) * .03; if (catSee(L) && inHouse(L.pos)) C.mode = 'stalk'; else if (C.t <= 0) { C.mode = 'home'; } break;
+    case 'home': { const r = toward(C.home, 40); if (r === true) { C.mode = 'settle'; C.t = 1.4; } else if (r === 'stuck') { C.mode = 'settle'; C.t = 1.4; } if (catSee(L) && inHouse(L.pos)) C.mode = 'stalk'; break; }   // (can't get home: curls up where she is)
     case 'settle': C.t -= dt; ty = 2.4; if (C.t <= 0) C.mode = 'sleep'; break;
     case 'stalk': {
       const [cl] = ceilAt(L.pos.x, L.pos.z, L.pos.y);
-      if (L.pos.y > 22 || cl - L.pos.y < 28 || dl > 190) { C.mode = 'sniff'; C.t = 3; break; }
-      toward(V3(L.pos.x, 0, L.pos.z), 26); if (dl < 42) { C.mode = 'crouch'; C.t = .75; ty = Math.atan2(dx, dz); }
+      if (L.pos.y > 22 || cl - L.pos.y < 28 || dl > 190 || !inHouse(L.pos)) { C.mode = 'sniff'; C.t = 3; break; }   // (out of the cat flap, into the wall: gone)
+      if (toward(V3(L.pos.x, 0, L.pos.z), 26) === 'stuck') { C.mode = 'sniff'; C.t = 3; break; } if (dl < 42) { C.mode = 'crouch'; C.t = .75; ty = Math.atan2(dx, dz); }
       break;
     }
-    case 'crouch': C.t -= dt; ty = Math.atan2(dx, dz); if (C.t <= 0) { C.mode = 'pounce'; C.t = 0; C.from = C.pos.clone(); C.to = V3(L.pos.x - dx / (dl || 1) * 6, 0, L.pos.z - dz / (dl || 1) * 6); SND.swish(); } break;
+    case 'crouch': C.t -= dt; ty = Math.atan2(dx, dz); if (C.t <= 0 && catWall(C.pos.x, C.pos.z, dx / (dl || 1), dz / (dl || 1))) { C.mode = 'sniff'; C.t = 3; break; } if (C.t <= 0) { C.mode = 'pounce'; C.t = 0; C.from = C.pos.clone(); C.to = V3(L.pos.x - dx / (dl || 1) * 6, 0, L.pos.z - dz / (dl || 1) * 6); SND.swish(); } break;
     case 'pounce': {
       C.t += dt / .5; const t = Math.min(1, C.t); C.pos.lerpVectors(C.from, C.to, t); C.jump = Math.sin(t * Math.PI) * 16; ty = Math.atan2(C.to.x - C.from.x, C.to.z - C.from.z);
       if (t >= 1) { C.jump = 0; const d = Math.hypot(L.pos.x - C.pos.x, L.pos.z - C.pos.z); if (d < 13 && L.pos.y < 10) { knockAny(L, C.pos, '小橘撲過來了！'); SND.meow(); noise(C.pos.clone(), .7); if (!KS.said.catcatch) { KS.said.catcatch = 1; setTimeout(() => sayW('太太', '小橘！別亂來！', '#f4bb72', 2.2), 400); } } C.mode = 'play'; C.t = 1.4; }

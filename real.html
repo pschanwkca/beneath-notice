@@ -1412,7 +1412,7 @@ zoneDef('kitchen', { floor: 0, core: [[-312, 912, -12, 300, -250, 250], [-432, -
 zoneDef('wall', { floor: HO.y + 4, off: HO, core: [[-530, -312, -360, -2, -140, -52]], peek: [[-282, -140, -345, -250, -160, 10], [-312, -160, -12, 90, -200, 0]], env: 'hub' });
 zoneDef('garage', { floor: -20, core: [[912, 1460, -40, 300, -270, 312]], peek: [[820, 912, -10, 70, -240, -150], [1460, 1640, -40, 120, 20, 200]], env: 'garage' });
 zoneDef('yard', { floor: -20, core: [[1460, 2770, -40, 1000, -460, 660]], peek: [[-400, 3500, -80, 1000, 660, 1700], [756, 1460, -80, 1000, -1600, -270], [-330, 756, -80, 1000, -1600, -640], [912, 1460, -80, 1000, 312, 660]], env: 'yard' });
-zoneDef('road', { floor: -35, core: [[-340, 3500, -80, 1000, 660, 1700]], peek: [[1460, 2770, -40, 1000, 260, 660], [-340, 3500, -80, 1000, 1700, 2500], [-1600, 1460, -80, 1000, 262, 660]], env: 'road' });   // (the front garden is the garden's now, e46_outside.js: you see the street from it)
+zoneDef('road', { floor: -35, core: [[-340, 3500, -80, 1000, 660, 1700]], peek: [[1460, 2770, -40, 1000, 260, 660], [-340, 3500, -80, 1000, 1700, 2500], [-1600, 1460, -80, 1000, 262, 660], [306, 912, -12, 295, 140, 252], [306, 912, 295, 560, 60, 252]], env: 'road' });   // (the last two: through the front windows — close to the living room's, anywhere in her bedroom's front half)   // (the front garden is the garden's now, e46_outside.js: you see the street from it)
 zoneDef('park', { floor: -20, core: [[-340, 3500, -80, 1000, 1700, 3760]], peek: [[-340, 3500, -80, 1000, 1180, 1700], [-340, 3500, -80, 1300, 3760, 4880]], env: 'park' });
 zoneDef('school', { floor: -20, core: [[-340, 3500, -80, 1300, 3760, 6300]], peek: [[-340, 3500, -80, 1300, 2500, 3760]], env: 'park' });
 zoneDef('basement', { floor: BO.y, off: BO, core: [[-312, 338, -360, -60, -549, 33], [-282, -160, -60, 150, -549, -245], [-292, -60, -100, 40, -612, -479]], peek: [[-390, -312, -345, -295, -130, -50]], env: 'basement' });
@@ -5493,7 +5493,7 @@ function buildLivingRoom(K) {
   resGroup(cmGroup(14, 22, 10, ({ part }) => { part(new THREE.BoxGeometry(12, 12, 8), robot, 0, -3, 0); part(new THREE.BoxGeometry(9, 8, 8), robot, 0, 7, 0); part(new THREE.SphereGeometry(1.2, 10, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff5a3a).multiplyScalar(2) }), -2, 7.5, 4.2); part(new THREE.SphereGeometry(1.2, 10, 8), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xff5a3a).multiplyScalar(2) }), 2, 7.5, 4.2); }, [robot]), 420, 210, 124, 14, 22, 10, .3, 4, TR('玩具機械人'), true);
   // window + curtains (curtains reach the floor: climb them to the sill)
   box(700, 850, 96, 100, 214, 232, M.white); box(700, 850, 206, 210, 228, 240, M.white, { col: false }); box(700, 704, 100, 206, 228, 240, M.white, { col: false }); box(846, 850, 100, 206, 228, 240, M.white, { col: false }); box(773.5, 776.5, 100, 206, 236, 239, M.white, { col: false });
-  mesh(new THREE.PlaneGeometry(420, 210), K.dusk, 775, 150, 330, { cast: false }).rotation.y = Math.PI;
+  // (no painted view behind the glass any more: the real front garden and the street are out there, e46_outside.js)
   mesh(new THREE.PlaneGeometry(146, 110), MAT.glassThin, 775, 155, 238, { cast: false }).rotation.y = Math.PI;
   sunWindow(V3(775, 155, 236), 146, 110, V3(0, 0, -1), 0, { fill: 14000 });
   if (DAY) { pointL(0xf2eee6, 10000, 640, 240, 40); pointL(0xe2eaff, 8000, 470, 220, 170); }   // daylight bouncing round the room (the window faces away from the sun)
@@ -6087,10 +6087,7 @@ function buildKitchen() {
   // window above the sink
   box(-152, -48, 104, 110, -232, -212, MAT.white); box(-152, -148, 110, 190, -232, -224, MAT.white); box(-52, -48, 110, 190, -232, -224, MAT.white); box(-152, -48, 186, 190, -232, -224, MAT.white); box(-101.5, -98.5, 110, 190, -230, -226, MAT.white, { col: false }); box(-150, -50, 148.5, 151.5, -230, -226, MAT.white, { col: false });
   mesh(new THREE.PlaneGeometry(98, 78), MAT.glassThin, -100, 150, -228, { cast: false });
-  // the view: a little light well behind the house (the storeroom wraps round it), the neighbourhood over its back wall
-  { const g = new THREE.PlaneGeometry(111, 210), uv = g.attributes.uv, u0 = (-157 + 310) / 420, u1 = (-46 + 310) / 420;   // (the middle of the painted view, at its own scale)
-    for (let i = 0; i < uv.count; i++) uv.setX(i, u0 + uv.getX(i) * (u1 - u0));
-    mesh(g, K.dusk, -101.5, 150, -303.9, { cast: false }); }
+  // the view: a little light well behind the house (the storeroom wraps round it), the lean-to roof and the sky over it
   sunWindow(V3(-100, 150, -226), 98, 78, V3(0, 0, 1), 0, { fill: 12000 });
   cols.push({ t: 'b', x0: -150, x1: -50, y0: 110, y1: 190, z0: -229, z1: -227, noRay: true });
   // potted herb on the sill
@@ -6371,26 +6368,44 @@ function catSee(L = leader) {
   return true;
 }
 function ceilAt(x, z, y) { let m = 1e9, mc = null; for (const c of colsNear(x, y, z)) { if (c.t === 'h') { const b = hTop(c, x, z) - c.th; if (b >= y + .5 && b < m) { m = b; mc = c; } continue; } if (c.y0 < y + .5 || c.y0 > m) continue; if (!xzHit(c, x, z, .6, _h)) continue; m = c.y0; mc = c; } return [m, mc]; }
+// the cat walks round walls, not through them (furniture it slips past, as before): is there a wall within its
+// head's reach of (x, z), going (ux, uz)?
+function catWall(x, z, ux, uz) {
+  for (const d of [0, 12, 24, 32]) { const px = x + ux * d, pz = z + uz * d;
+    for (const c of colsNear(px, 15, pz)) if (c.t === 'b' && c.y1 - c.y0 > 120 && c.y0 < 15 && c.y1 > 15 && px > c.x0 - 2 && px < c.x1 + 2 && pz > c.z0 - 2 && pz < c.z1 + 2) return true; }
+  return false;
+}
+// kitchen ↔ living room: through the doorway (the open half: the door stands in the other), not the wall either side of it
+function catVia(C, p) { const inL = C.pos.x > 306, toL = p.x > 306; return inL !== toL && Math.abs(C.pos.x - 306) > 14 ? V3(inL ? 282 : 330, 0, clamp(C.pos.z, -12, 30)) : p; }
 function updCat(dt) {
   const C = CAT; let sp = 0, ty = null; C.cool = Math.max(0, (C.cool || 0) - dt);
   if (NET.client) { const w = NET.npc; if (w && w.c) { const ox = C.pos.x, oz = C.pos.z; const k = 1 - Math.exp(-10 * dt); C.pos.x += (w.c[0] - C.pos.x) * k; C.pos.z += (w.c[1] - C.pos.z) * k; sp = Math.hypot(C.pos.x - ox, C.pos.z - oz) / Math.max(dt, 1e-4); ty = w.c[2]; C.mode = w.c[3]; C.jump = w.c[4]; } const L = leader; catAnim(dt, sp, ty, L.pos.x - C.pos.x, L.pos.z - C.pos.z); return; }
   const L = catTarget();
   const dx = L.pos.x - C.pos.x, dz = L.pos.z - C.pos.z, dl = Math.hypot(dx, dz);
-  const toward = (p, speed) => { const ex = p.x - C.pos.x, ez = p.z - C.pos.z, e = Math.hypot(ex, ez); if (e < speed * dt + 1) return true; C.pos.x += ex / e * speed * dt; C.pos.z += ez / e * speed * dt; ty = Math.atan2(ex, ez); sp = speed; return false; };
+  const toward = (p0, speed) => {
+    const p = catVia(C, p0), ex = p.x - C.pos.x, ez = p.z - C.pos.z, e = Math.hypot(ex, ez); if (p === p0 && e < speed * dt + 1) return true;
+    const ux = ex / e, uz = ez / e, st = speed * dt; ty = Math.atan2(ex, ez);
+    // blocked: slide along the wall (one axis at a time); still blocked: give up the way it was going
+    if (!catWall(C.pos.x, C.pos.z, ux, uz)) { C.pos.x += ux * st; C.pos.z += uz * st; }
+    else if (Math.abs(ux) > .05 && !catWall(C.pos.x, C.pos.z, Math.sign(ux), 0)) C.pos.x += Math.sign(ux) * st;
+    else if (Math.abs(uz) > .05 && !catWall(C.pos.x, C.pos.z, 0, Math.sign(uz))) C.pos.z += Math.sign(uz) * st;
+    else { C.stuckT = (C.stuckT || 0) + dt; if (C.stuckT > 1.2) { C.stuckT = 0; return 'stuck'; } return false; }
+    C.stuckT = 0; sp = speed; return false; };
+  const inHouse = P => { const Z = zoneAt(P); return !!Z && Z.id === 'kitchen' && P.x > -312 && P.y < 250; };   // (her world: the kitchen and the living room, never outside or in the walls)
   switch (C.mode) {
     case 'sleep': if (dl < (L.crouch ? 15 : 30) && L.pos.y < 15 && L.spd > .5 && STATE === 'play') { C.mode = 'wake'; C.t = .9; C.next = 'sniff'; C.sniffT = 3; } break;
     case 'wake': C.t -= dt; if (C.t <= 0) { C.mode = C.next || 'sniff'; C.t = 3.5; if (!KS.said.catwake) { KS.said.catwake = 1; sayW(TR('前拍檔'), TR('貓醒了！別動，或者躲到牠鑽不進去的地方！'), '#b7d38a', 3); } } break;
-    case 'inv': if (toward(C.target, 95)) { C.mode = 'sniff'; C.t = 4; } if (catSee(L)) { C.mode = 'stalk'; } break;
-    case 'sniff': C.t -= dt; ty = C.yaw + Math.sin(T * 1.6) * .03; if (catSee(L)) C.mode = 'stalk'; else if (C.t <= 0) { C.mode = 'home'; } break;
-    case 'home': if (toward(C.home, 40)) { C.mode = 'settle'; C.t = 1.4; } if (catSee(L)) C.mode = 'stalk'; break;
+    case 'inv': if (toward(C.target, 95)) { C.mode = 'sniff'; C.t = 4; } if (catSee(L) && inHouse(L.pos)) { C.mode = 'stalk'; } break;
+    case 'sniff': C.t -= dt; ty = C.yaw + Math.sin(T * 1.6) * .03; if (catSee(L) && inHouse(L.pos)) C.mode = 'stalk'; else if (C.t <= 0) { C.mode = 'home'; } break;
+    case 'home': { const r = toward(C.home, 40); if (r === true) { C.mode = 'settle'; C.t = 1.4; } else if (r === 'stuck') { C.mode = 'settle'; C.t = 1.4; } if (catSee(L) && inHouse(L.pos)) C.mode = 'stalk'; break; }   // (can't get home: curls up where she is)
     case 'settle': C.t -= dt; ty = 2.4; if (C.t <= 0) C.mode = 'sleep'; break;
     case 'stalk': {
       const [cl] = ceilAt(L.pos.x, L.pos.z, L.pos.y);
-      if (L.pos.y > 22 || cl - L.pos.y < 28 || dl > 190) { C.mode = 'sniff'; C.t = 3; break; }
-      toward(V3(L.pos.x, 0, L.pos.z), 26); if (dl < 42) { C.mode = 'crouch'; C.t = .75; ty = Math.atan2(dx, dz); }
+      if (L.pos.y > 22 || cl - L.pos.y < 28 || dl > 190 || !inHouse(L.pos)) { C.mode = 'sniff'; C.t = 3; break; }   // (out of the cat flap, into the wall: gone)
+      if (toward(V3(L.pos.x, 0, L.pos.z), 26) === 'stuck') { C.mode = 'sniff'; C.t = 3; break; } if (dl < 42) { C.mode = 'crouch'; C.t = .75; ty = Math.atan2(dx, dz); }
       break;
     }
-    case 'crouch': C.t -= dt; ty = Math.atan2(dx, dz); if (C.t <= 0) { C.mode = 'pounce'; C.t = 0; C.from = C.pos.clone(); C.to = V3(L.pos.x - dx / (dl || 1) * 6, 0, L.pos.z - dz / (dl || 1) * 6); SND.swish(); } break;
+    case 'crouch': C.t -= dt; ty = Math.atan2(dx, dz); if (C.t <= 0 && catWall(C.pos.x, C.pos.z, dx / (dl || 1), dz / (dl || 1))) { C.mode = 'sniff'; C.t = 3; break; } if (C.t <= 0) { C.mode = 'pounce'; C.t = 0; C.from = C.pos.clone(); C.to = V3(L.pos.x - dx / (dl || 1) * 6, 0, L.pos.z - dz / (dl || 1) * 6); SND.swish(); } break;
     case 'pounce': {
       C.t += dt / .5; const t = Math.min(1, C.t); C.pos.lerpVectors(C.from, C.to, t); C.jump = Math.sin(t * Math.PI) * 16; ty = Math.atan2(C.to.x - C.from.x, C.to.z - C.from.z);
       if (t >= 1) { C.jump = 0; const d = Math.hypot(L.pos.x - C.pos.x, L.pos.z - C.pos.z); if (d < 13 && L.pos.y < 10) { knockAny(L, C.pos, TR('小橘撲過來了！')); SND.meow(); noise(C.pos.clone(), .7); if (!KS.said.catcatch) { KS.said.catcatch = 1; setTimeout(() => sayW(TR('太太'), TR('小橘！別亂來！'), '#f4bb72', 2.2), 400); } } C.mode = 'play'; C.t = 1.4; }
@@ -9946,9 +9961,16 @@ function buildUpstairs(K) {
   // family photos up the stairs (the story told in frames)
   const ph = [['photo', 0, 22, 28], ['photo3', 4, 30, 22], ['photo2', 8, 18, 24], ['photo', 12, 24, 30]];
   for (const [img, i, w, h] of ph) { const z = -262 - i * run, y = i * rise + 140; deco(748, 749.6, y - h / 2, y + h / 2, z - w / 2, z + w / 2, MAT.black); mesh(new THREE.PlaneGeometry(w - 3, h - 3), livingPhoto(img), 749.8, y, z, { cast: false }).rotation.y = Math.PI / 2; }
-  // a little round window on the landing (dusk outside)
+  // a little round window on the landing
   sunWindow(V3(824, Y + 140, -495), 52, 52, V3(0, 0, 1), Y, { fill: 6000, sun: 90000 });
-  { const r = mesh(new THREE.CircleGeometry(26, 40), K.dusk, 824, Y + 140, -497.4, { cast: false }); r.rotation.y = 0; const fr = mesh(new THREE.TorusGeometry(27, 2.4, 10, 48), M.paint, 824, Y + 140, -497, { cast: false }); fr.rotation.y = 0; }
+  // (frosted glass, the way landing windows often are: daylight through it, no view — so nothing painted to give itself away)
+  { const fc = document.createElement('canvas'); fc.width = fc.height = 128; const fx = fc.getContext('2d'), gr = fx.createRadialGradient(64, 54, 6, 64, 64, 66);
+    gr.addColorStop(0, '#ffffff'); gr.addColorStop(.7, '#eef3f6'); gr.addColorStop(1, '#d4dde3'); fx.fillStyle = gr; fx.fillRect(0, 0, 128, 128);
+    for (let i = 0; i < 900; i++) { fx.fillStyle = `rgba(${rnd() < .5 ? '255,255,255' : '190,200,210'},${R(.05, .16)})`; fx.fillRect(R(0, 128), R(0, 128), 1.5, 1.5); }
+    const ft = new THREE.CanvasTexture(fc); ft.colorSpace = THREE.SRGBColorSpace;
+    const r = mesh(new THREE.CircleGeometry(26, 40), new THREE.MeshStandardMaterial({ map: ft, emissive: 0xffffff, emissiveMap: ft, emissiveIntensity: .7, roughness: .9 }), 824, Y + 140, -497.4, { cast: false }); r.rotation.y = 0;
+    for (const [w, h] of [[52, 1.6], [1.6, 52]]) box(824 - w / 2, 824 + w / 2, Y + 140 - h / 2, Y + 140 + h / 2, -497.6, -496.6, M.paint, { col: false });
+    const fr = mesh(new THREE.TorusGeometry(27, 2.4, 10, 48), M.paint, 824, Y + 140, -497, { cast: false }); fr.rotation.y = 0; }
   // stairwell light: a pendant at the top, a sconce half-way, the hallway ceiling light
   cyl(790, -380, .4, Yc - 70, Yc, MAT.black, { col: false, seg: 6 }); mesh(new THREE.SphereGeometry(9, 24, 14), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffe2b8, emissiveIntensity: 3 }), 790, Yc - 76, -380, { cast: false });
   pointL(0xffd8aa, 7000, 790, Yc - 90, -380); pointL(0xffc890, 2200, 756, 170, -330); pointL(0xffd8b0, 3800, 864, Yc - 30, -330);
@@ -9980,7 +10002,6 @@ function buildUpstairs(K) {
   box(570, 670, Y, Y + 36, 198, 232, M.paint); deco(574, 666, Y + 18, Y + 19, 197.6, 198, M.wood);                       // a built-in window seat
   box(572, 668, Y + 36, Y + 42, 198, 234, new THREE.MeshPhysicalMaterial({ color: 0xf0c4cf, roughness: 1, sheen: .9, sheenColor: 0xffe8ee }));   // its cushion
   for (const [x, c] of [[582, 0xffffff], [656, 0xa8d8c8]]) { const pw = mesh(new THREE.SphereGeometry(10, 18, 12), new THREE.MeshPhysicalMaterial({ color: c, roughness: 1, sheen: .8 }), x, Y + 50, 224); pw.scale.set(.9, .9, .45); }
-  mesh(new THREE.PlaneGeometry(320, 220), K.dusk, 620, Y + 110, 330, { cast: false }).rotation.y = Math.PI;
   mesh(new THREE.PlaneGeometry(92, 110), MAT.glassThin, 620, Y + 95, 238, { cast: false }).rotation.y = Math.PI;
   UPS.win = sunWindow(V3(620, Y + 95, 236), 92, 110, V3(0, 0, -1), Y, { fill: 10000 });
   // curtains: open in the daytime; she draws them to watch the star projector
@@ -11718,7 +11739,7 @@ function portalResumeLand(S) {
 // who joined or dropped, how good each link is, frame rate, rescues and errors. One tap copies it as
 // plain text that a player can paste into a chat and send in.
 const NLOG = { t0: performance.now(), lines: [], fps: 0, sumT: 0, mode: '', lv: '', peer: {} };
-const NLOG_BUILD = '20261127-1603';
+const NLOG_BUILD = '20261127-1711';
 function nlog(s) {
   const d = new Date(), p2 = n => String(n).padStart(2, '0');   // the clock time, so "it broke around 9:30" can be matched
   NLOG.lines.push(`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}  ${s}`); if (NLOG.lines.length > 500) NLOG.lines.splice(0, NLOG.lines.length - 500);
@@ -16129,7 +16150,11 @@ zoneDef('garden', { floor: GY, env: 'yard', core: [
 ], peek: [
   [-1600, 3500, -80, 1200, 646, 1400],                    // from the street
   [1460, 2770, -80, 1200, -1600, 660],                    // from the yard over its fences
-  [-700, 1600, 380, 1200, -1000, 700]                     // from the roofs
+  [-700, 1600, 380, 1200, -1000, 700],                    // from the roofs
+  // from inside, through the windows (no painted views: what's out there is out there)
+  [306, 912, -12, 560, -60, 252],                         // the front of the living room, and her bedroom over it (the front windows)
+  [736, 920, 255, 560, -518, -262],                       // the landing (its round window onto the back garden)
+  [-170, 10, -12, 266, -232, -110]                        // the kitchen by the sink (its window onto the light well)
 ] });
 
 // ---------- materials ----------
@@ -16313,8 +16338,8 @@ function buildHouseOutside(P) {
     B(-40, 40, 280, 330, 0, 32, M.trim); for (let z = -36; z < 38; z += 5) B(z, z + 2, 288, 322, 32, 33, M.dark, nc); for (const z of [-34, 34]) B(z - 2, z + 2, 272, 280, 0, 34, M.dark);
     B(-150, -110, 110, 160, 0, 10, M.trim); B(-146, -114, 128, 150, 10, 10.6, M.glassD, nc);
     B(140, 146, 34, 40, 0, 8, M.brass, nc); }
-  // remember the painted views the living room and her bedroom have outside their windows: they hide from outside
-  OUT.backdropsWanted = true;
+  // (the living room and her bedroom used to have painted views behind their windows, hidden from outside: gone)
+  OUT.backdropsWanted = false;   // (the painted views outside the front windows are gone: the windows look out on all this)
   // windows that open, the front door and its cat flap, the light well's drainpipe (e47_windows.js)
   buildWindows(P);
 }
@@ -16379,6 +16404,9 @@ function buildGarden() {
   const fenceRun = (x0, x1, z0, z1) => { box(x0, x1, GY, GY + 172, z0, z1, M.fence, { uv: 60 }); const alongX = x1 - x0 > z1 - z0;
     for (let a = alongX ? x0 : z0; a < (alongX ? x1 : z1); a += 120) alongX ? box(a, a + 7, GY, GY + 180, z0 - 2, z1 + 2, M.fence, nc) : box(x0 - 2, x1 + 2, GY, GY + 180, a, a + 7, M.fence, nc); };
   fenceRun(-646, 1460, -966, -960); fenceRun(-646, -640, -960, 640); fenceRun(1452, 1460, -960, -440);
+  // past the fences are the neighbours' gardens, not ours: an invisible wall goes up from each fence (gliding off the
+  // roof you bump into it and slide down on our side), and on round the hedge's west end
+  for (const [x0, x1, z0, z1] of [[-660, 1474, -980, -966], [-660, -646, -980, 662], [1460, 1474, -980, -440], [-660, -340, 648, 662]]) cols.push({ t: 'b', x0, x1, y0: GY, y1: 2400, z0, z1, noRay: true, slick: true });
   box(-646, 461, GY, GY + 168, 626, 648, M.hedge, { uv: 70 }); box(551, 912, GY, GY + 168, 626, 648, M.hedge, { uv: 70 });
   for (const [x0, x1] of [[-646, 461], [551, 912]]) box(x0 + 2, x1 - 2, GY + 168, GY + 174, 628, 646, M.hedge, { uv: 70, col: false });
   // (leaves on both faces and the top, so it reads as a hedge, not a green wall)
