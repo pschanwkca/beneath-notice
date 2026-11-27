@@ -29,6 +29,18 @@ function unPlace(C, p) {
   C.pos.copy(p); C.pos.y += .3; C.vel.set(0, 0, 0); C.climbing = false; C.mantle = null; C.zip = null; C.line = null; C.on = null; C.hop = null; C.drop = false; C.pullT = 0; C.tumble = 0; C.ptw = null;
   C.grounded = false; C.queue = []; C.lastTrail = C.pos.clone(); if (C.disp) C.disp.copy(C.pos); UNSTK.inT[C.id] = 0;
 }
+// where to put a wedged follower: the nearest spot back along the leader's path where it stands clear, on something
+function unTrailSpot(C, L) {
+  for (let i = trail.length - 1, n = 0; i >= 0 && n < 400; i--, n++) {
+    const q = trail[i], d = Math.hypot(q.x - L.pos.x, q.z - L.pos.z); if (d < 3 || q.st === 'climb' || q.st === 'air' || q.st === 'glide') continue; if (d > 60) break;
+    if (solidAt(q.x, q.y + C.h * .5, q.z) || solidAt(q.x, q.y + C.h * .95, q.z)) continue;
+    const [s] = supportAt(q.x, q.z, C.r * .6, q.y + .6); if (Math.abs(s - q.y) > .8) continue;
+    let room = true; for (let k = 0; k < 6 && room; k++) { const a = k * Math.PI / 3; if (solidAt(q.x + Math.cos(a) * C.r, q.y + C.h * .5, q.z + Math.sin(a) * C.r)) room = false; }
+    if (room) return V3(q.x, q.y, q.z);
+  }
+  const a = L.yaw + Math.PI, p = V3(L.pos.x + Math.sin(a) * 4, L.pos.y, L.pos.z + Math.cos(a) * 4);
+  return solidAt(p.x, p.y + C.h * .5, p.z) ? L.pos.clone() : p;
+}
 function unPoof(p) { for (let i = 0; i < 14; i++) emit(V3(p.x, p.y + 2, p.z), V3(R(-14, 14), R(6, 22), R(-14, 14)), new THREE.Color(.55, .95, .92), R(.3, .7), R(.35, .7), 200, 1); tone(520, 880, .12, .04, 'sine'); }
 function unNote(C, why) {
   const p = C.pos; UNSTK.last = `${LEVEL} · ${C.id} · ${p.x.toFixed(1)}, ${p.y.toFixed(1)}, ${p.z.toFixed(1)} · ${why}`;
@@ -74,10 +86,12 @@ function unstuckTick(dt) {
   // wedged inside something: everybody you control
   for (const C of party) {
     if (!mine(C) || !free(C)) { UNSTK.inT[C.id] = 0; continue; }
-    const c = unInside(C); UNSTK.inT[C.id] = c ? (UNSTK.inT[C.id] || 0) + dt : 0;
-    if (UNSTK.inT[C.id] > .45) {
+    // (a follower walking the leader's path brushes through tight corners — it's bigger than him — and comes out the
+    //  other side: only stuck when it stays inside and stops getting anywhere)
+    const c = unInside(C), going = C !== L && C.spd > .5; UNSTK.inT[C.id] = c && !going ? (UNSTK.inT[C.id] || 0) + dt : c ? (UNSTK.inT[C.id] || 0) * .9 : 0;
+    if (UNSTK.inT[C.id] > (C === L ? .45 : 1)) {
       if (C === L) { unstuck('wedged'); return; }
-      unNote(C, 'wedged'); const a = L.yaw + Math.PI; const p = V3(L.pos.x + Math.sin(a) * 4, L.pos.y, L.pos.z + Math.cos(a) * 4); unPlace(C, solidAt(p.x, p.y + C.h * .5, p.z) ? L.pos.clone() : p); unPoof(C.pos);
+      unNote(C, 'wedged'); const p = unTrailSpot(C, L); unPlace(C, p); unPoof(C.pos);
     }
   }
   // pushing on the stick but going nowhere → offer the way out

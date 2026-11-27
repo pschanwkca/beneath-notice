@@ -324,9 +324,9 @@ function updClimb(C, dt, inX, inY, ctl, run) {
 function pushTrail(L) {
   // only the bat can hang under things: while it roosts (and until it is back on its feet) the others wait where it left the ground
   if (L.roost || (L.roostGap && !L.grounded && !L.climbing)) return;
-  if (L.pos.distanceTo(L.lastTrail) < .35) return; L.lastTrail.copy(L.pos);
+  const jump = L.pos.distanceTo(L.lastTrail); if (jump < .35) return; L.lastTrail.copy(L.pos);
   const pt = { x: L.pos.x, y: L.pos.y, z: L.pos.z, yaw: L.yaw, st: L.state };
-  if (L.roostGap) { L.roostGap = false; pt.st = 'warp'; }
+  if (L.roostGap || jump > 40) { L.roostGap = false; pt.st = 'warp'; }   // (a jump in the path — put back somewhere, respawned — is a jump for the followers too, not a line through the walls)
   trail.push(pt); if (trail.length > 9000) trail.splice(0, 3000);
   for (const F of party) if (F !== L && !F.frozen) { F.queue.push(pt); if (F.queue.length > 7000) F.queue.splice(0, 2000); }
 }

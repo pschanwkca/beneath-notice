@@ -204,11 +204,11 @@ function addPart(x, y, z, kind) {
 }
 const PART_NAME = { spring: '彈簧', lens: '鏡片', cap: '電容' };
 const MP_QUESTS = [
-  { t: '找齊三個零件', s: '彈簧在爐頭旁、電容在洗手盆下面的櫃、鏡片在廁所的鏡櫃。次序隨意，分頭行動最快——客廳門、遙控器電池都可以隨時先做' },
+  { t: '找齊三個零件', s: '彈簧在爐頭旁、電容在洗手盆下面的櫃、鏡片在廁所的鏡櫃。次序隨意，分頭行動最快——客廳門、遙控器電池都可以隨時先做（門未開？由後門貓門出花園，兜去前門貓門入客廳）' },
   { t: '打開通往客廳的門', s: '門被門擋卡住了——熊可以推開或拉走門擋，或者爸爸把它縮小' },
   { t: '全隊進入客廳', s: '所有玩家都要走過去（電腦隊友會跟着）' },
   { t: '拿走遙控器的電池', s: '遙控器在咖啡枱上——女兒在沙發看電視就引開她：關電視、熄燈、弄點聲音；或者派兩個人沿天花槽爬上她的房間，扭動音樂盒——她一定會跑上樓' },
-  { t: '爬過通風口去車房', s: '電池到手，通風口的蓋打開了——全隊一齊爬過去' },
+  { t: '全隊去車房', s: '電池到手，通風口的蓋打開了——一齊爬過去。或者行遠路：女兒房天花嘅閣樓活門都開咗，上閣樓、出屋頂，由車房屋頂嘅通風口落車房' },
   { t: '弄跌監視鏡頭', s: '鐵架頂有部 Origin Dynamics 的監視鏡頭——爬上去把它推跌（熊推、阿刺撞都得）' },
   { t: '打開狗門的門扣', s: '側門下面有狗門，門扣太高——疊羅漢、跳跳跳上去，或者推木箱過去墊腳' },
   { t: '全隊由狗門出去後園', s: '所有玩家都要出去' },
@@ -224,7 +224,8 @@ const SP_Q2B = [
   { t: '上樓去女兒房', s: '客廳後面嘅門口有樓梯，每一級都要爬。太太同女兒都可能會上嚟' },
   { t: '經天花活門上閣樓', s: '衣櫃頂旁邊吊住條拉繩：由衣櫃頂跳過去捉住佢，爬上閣樓。衣櫃隔籬啲收納箱可以幫你爬上衣櫃' }
 ];
-function ventOpen() { if (LIV.ventOpen) return; LIV.ventOpen = true; LIV.ventCol.y0 = -999; LIV.ventCol.y1 = -998; SND.creak(); toastW('通風口的蓋打開了！', 2.6); }
+function ventOpen() { if (LIV.ventOpen) return; LIV.ventOpen = true; LIV.ventCol.y0 = -999; LIV.ventCol.y1 = -998; SND.creak(); toastW('通風口的蓋打開了！', 2.6);
+  if (NET.on) rfHatch(true); }   // (online the attic hatch opens with it: the long way, over the roof, is open too)
 function livingHost() { }
 
 // what's on the TV: a cartoon landscape that slowly pans (the screen's colour sets brightness / off)

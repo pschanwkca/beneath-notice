@@ -362,7 +362,8 @@ function mpObjectives() {
   if (quest === 2 && P.every(C => C.pos.x > 316 && C.pos.x < 912 && C.pos.z > -232)) { setQuest(3); toastW('全隊到齊客廳！', 2.4); }
   if (quest <= 3) mpAdvance();
   if (quest === 4 && !LIV.ventOpen) ventOpen();
-  if (quest === 4 && P.every(C => C.pos.x > 924)) { setQuest(5); toastW('全隊到了車房！', 2.4); }
+  if (quest === 4 && !RF.open) rfHatch(true);
+  if (quest === 4 && P.every(inGarage)) { setQuest(5); toastW('全隊到了車房！', 2.4); }
   if (quest === 5 && GS.camBroken) setQuest(6);
   if (quest === 6 && GS.latch) setQuest(7);
   if (quest === 7 && P.every(C => C.pos.x > 1462)) { setQuest(8); toastW('全隊出了後園！', 2.4); }
@@ -375,11 +376,20 @@ function mpObjectives() {
   if (quest >= MPQ_PARK && quest < MPQ_SCHOOL) mpParkObjectives(P);
   if (quest >= MPQ_SCHOOL) mpSchoolObjectives(P);
 }
+const inGarage = C => C.pos.x > 924 && C.pos.x < 1460 && C.pos.z > -270 && C.pos.z < 312 && C.pos.y < 268;
+// online, on the way to the garage: the living room's vent — or, taking the long way, the next step of that
+function mpGarageMarker(L) {
+  if (inGarage(L)) return null; const Z = zoneAt(L.pos), id = Z ? Z.id : '';
+  if (id === 'roof') return gAttic(L.pos) ? V3(948, 240, 120) : V3(968, RF_GVENT.top + 2, 120);
+  if (id === 'garden') return L.pos.y > 266 ? (OUT.upPipe ? V3(OUT.upPipe.x, 530, OUT.upPipe.z) : null) : LEVELS.garden.marker();
+  if (id === 'kitchen' && L.pos.y > 280 && L.pos.x > 300) return V3(RF.cordP.x, RF.cordP.y, RF.cordP.z);
+  return V3(896, 6, -200);
+}
 function mpMarker() {
   const L = leader;
   if (quest === 0) { const p = LIV.parts.filter(q => !q.got).sort((a, b) => Math.hypot(a.x - L.pos.x, a.z - L.pos.z) - Math.hypot(b.x - L.pos.x, b.z - L.pos.z))[0]; return p ? V3(p.x, p.y + 2, p.z) : null; }
   if (quest === 1) return V3(LIV.wedge.cx, 4, LIV.wedge.cz); if (quest === 2) return V3(345, 0, -10); if (quest === 3) return V3(LIV.remote.cx, 46, LIV.remote.cz);
-  if (quest === 4) return L.pos.x > 924 ? null : V3(896, 6, -200); if (quest === 5) return V3(GS.cam.cx, GS.cam.y0 + 14, GS.cam.cz); if (quest === 6) return GS.latchP; if (quest === 7) return L.pos.x > 1462 ? null : V3(1455, GY + 2, 105);
+  if (quest === 4) return mpGarageMarker(L); if (quest === 5) return V3(GS.cam.cx, GS.cam.y0 + 14, GS.cam.cz); if (quest === 6) return GS.latchP; if (quest === 7) return L.pos.x > 1462 ? null : V3(1455, GY + 2, 105);
   if (quest === 8) return L.pos.x > 2108 ? null : YS.gap; if (quest === 9) return L.pos.x > 2562 ? null : YS.flap; if (quest === 10) return YS.chip ? null : YS.chipP;
   if (quest === 11) return L.pos.z > 650 ? null : ST.gate; if (quest === 12) return V3(1960, GY + 118, 770);
   if (quest === 13) return L.pos.z < 1130 ? V3(2060, GY + 4, 1150) : V3(2060, GY + 4, 1560); if (quest >= MPQ_SCHOOL) return mpSchoolMarker(); if (quest >= MPQ_PARK) return mpParkMarker(); return ST.parkP;
@@ -391,13 +401,13 @@ function netWorldExtra(w) {
   w.ga = [+A.pos.x.toFixed(1), +A.pos.z.toFixed(1), +A.yaw.toFixed(3), +A.aimT.x.toFixed(1), +A.aimT.y.toFixed(1), +A.aimT.z.toFixed(1), GS.camBroken ? 1 : 0, GS.latch ? 1 : 0];
   w.rd = [['go', 'wait', 'amber', 'red', 'walk', 'flash', 'clear'].indexOf(ST.phase), +ST.pt.toFixed(2), ST.req ? 1 : 0, ...ST.cars.flatMap(c => [c.alive ? 1 : 0, c.lane, Math.round(c.x), Math.round(c.v)])];
   if (ST.walker) { const H = ST.walker.H, D = ST.wdog; w.wk = [+H.pos.x.toFixed(1), +H.yaw.toFixed(3), ST.walker.mode, +ST.walker.look.x.toFixed(0), +ST.walker.look.z.toFixed(0), +D.pos.x.toFixed(1), +D.pos.z.toFixed(1), +D.yaw.toFixed(3), D.mode]; }
-  w.ya = [+D.pos.x.toFixed(1), +D.pos.z.toFixed(1), +D.yaw.toFixed(3), D.mode, +D.sleepK.toFixed(2), O.mode, +O.look.x.toFixed(0), +O.look.y.toFixed(0), +O.look.z.toFixed(0), YS.chip ? 1 : 0, LIV.ventOpen ? 1 : 0];
+  w.ya = [+D.pos.x.toFixed(1), +D.pos.z.toFixed(1), +D.yaw.toFixed(3), D.mode, +D.sleepK.toFixed(2), O.mode, +O.look.x.toFixed(0), +O.look.y.toFixed(0), +O.look.z.toFixed(0), YS.chip ? 1 : 0, LIV.ventOpen ? 1 : 0, RF.open ? 1 : 0];
 }
 function netRecvExtra(w) {
   parkNetIn(w); schoolNetIn(w);
   if (w.rd) { ST.phase = ['go', 'wait', 'amber', 'red', 'walk', 'flash', 'clear'][w.rd[0]] || 'go'; ST.pt = w.rd[1]; ST.req = !!w.rd[2]; for (let i = 0; i < ST.cars.length; i++) { const c = ST.cars[i], b = 3 + i * 4; if (w.rd[b] == null) break; const was = c.alive; c.alive = !!w.rd[b]; c.lane = w.rd[b + 1]; if (!was || Math.abs(c.x - w.rd[b + 2]) > 160) c.x = w.rd[b + 2]; c.tx = w.rd[b + 2]; c.v = w.rd[b + 3]; if (!was && c.alive) c.gust.clear(); } }
   if (w.ga) { if (w.ga[6] && !GS.camBroken) { GS.cam.y0 = Math.min(GS.cam.y0, 150); } if (w.ga[7] && !GS.latch) latchOpen(null); }
-  if (w.ya) { if (w.ya[9] && !YS.chip) { YS.chip = true; YS.chipM.visible = false; YS.chipHalo.visible = false; } if (w.ya[10] && !LIV.ventOpen) ventOpen(); }
+  if (w.ya) { if (w.ya[9] && !YS.chip) { YS.chip = true; YS.chipM.visible = false; YS.chipHalo.visible = false; } if (w.ya[10] && !LIV.ventOpen) ventOpen(); if (w.ya[11] && !RF.open) rfHatch(true); }
 }
 function netNPCExtra(dt) {
   const w = NET.npc; if (!w) return; parkNetNPC(dt); schoolNetNPC(dt); pestNetIn(dt);

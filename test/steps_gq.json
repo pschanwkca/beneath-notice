@@ -1,0 +1,4 @@
+[{"eval": "(async()=>{ const b=window.__bn; window.__NODET=true; document.getElementById('chaps').hidden=true; await b.startChapter2(); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(10); return [b.LEVEL]; })()"},
+ {"eval": "(()=>{ const b=window.__bn; const out=[]; for(const c of b.cols){ if(c.t!=='b') continue; if(c.x1>1430&&c.x0<1490&&c.z1>-470&&c.z0<-250&&c.y1>-10&&c.y0<60) out.push([c.x0,c.x1,c.y0,c.y1,c.z0,c.z1].map(v=>+v.toFixed(1))); } return out; })()"},
+ {"eval": "(()=>{ const b=window.__bn; const out=[]; for(const c of b.cols){ if(c.t!=='b') continue; if(c.x1>1430&&c.x0<1490&&c.z1>300&&c.z0<680&&c.y1>-10&&c.y0<60) out.push([c.x0,c.x1,c.y0,c.y1,c.z0,c.z1].map(v=>+v.toFixed(1))); } return out; })()"}
+]

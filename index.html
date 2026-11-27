@@ -1153,6 +1153,7 @@ Object.assign(I18N_EN, {"花槽底呢條舊去水渠……個方向係入返牆�
 Object.assign(I18N_EN, {"喺坑渠度跳落去就係屋後嘅斜屋頂——條去水管可以爬返上嚟": "Drop from the gutter here onto the lean-to roof at the back — the downpipe climbs back up", "跌咗落花園……冇事冇事。斜屋頂嗰條去水管可以爬返上屋頂。": "Fell into the garden… we're fine. The downpipe on the lean-to roof climbs back up to the roof.", "上到斜屋頂……嗰條去水管一直通上大屋屋頂嘅坑渠。": "Up on the lean-to roof… that downpipe goes all the way up to the main roof's gutter.", "抱住去水管爬上大屋屋頂——到頂伸手捉住坑渠邊": "Hug the downpipe and climb to the main roof — at the top, reach round the gutter's lip"});
 Object.assign(I18N_EN, {"地庫": "Basement", "牆身入面": "Inside the wall", "車房": "Garage", "後園": "Back yard", "馬路": "Road", "公園": "Park", "學校": "School", "斜屋頂": "Lean-to roof", "前院": "Front garden", "屋側": "Side of the house", "後花園": "Back garden", "屋頂": "Roof", "坑渠": "Gutter", "車房閣樓": "Garage attic", "閣樓": "Attic", "屋後": "Back of the house", "屋入面": "Indoors", "變咗玩具": "Turned into a toy", "叫你過去集合！": "Calling you over!", "叫咗隊友過嚟集合": "Called the team over", "集合": "Regroup", "叫隊友過嚟集合（多人）": "Call the team over (online)", "叫隊友過嚟集合": "Call the team over", "左邊「集合」": "\"Regroup\" on the left"});
 Object.assign(I18N_ENT, {"{0}：嚟呢度集合！": "{0}: over here, everyone!"});
+Object.assign(I18N_EN, {"彈簧在爐頭旁、電容在洗手盆下面的櫃、鏡片在廁所的鏡櫃。次序隨意，分頭行動最快——客廳門、遙控器電池都可以隨時先做（門未開？由後門貓門出花園，兜去前門貓門入客廳）": "The spring's by the stove, the capacitor's in the cabinet under the sink, the lens is in the bathroom mirror cabinet. Any order — split up to be quickest. The living-room door and the remote batteries can be done any time (door still stuck? Out through the back door's cat flap, round the garden, in through the front door's)", "全隊去車房": "Everyone to the garage", "電池到手，通風口的蓋打開了——一齊爬過去。或者行遠路：女兒房天花嘅閣樓活門都開咗，上閣樓、出屋頂，由車房屋頂嘅通風口落車房": "Got the batteries and the vent cover's open — crawl through together. Or take the long way: the attic hatch in her bedroom ceiling is open too — up into the attic, out onto the roof, and down the garage roof's vent"});
 
 // =====================================================================
 //  Language: 中文 (default) or English.  ?lang=en / ?lang=zh in the address, or the button on the title
@@ -3441,9 +3442,9 @@ function updClimb(C, dt, inX, inY, ctl, run) {
 function pushTrail(L) {
   // only the bat can hang under things: while it roosts (and until it is back on its feet) the others wait where it left the ground
   if (L.roost || (L.roostGap && !L.grounded && !L.climbing)) return;
-  if (L.pos.distanceTo(L.lastTrail) < .35) return; L.lastTrail.copy(L.pos);
+  const jump = L.pos.distanceTo(L.lastTrail); if (jump < .35) return; L.lastTrail.copy(L.pos);
   const pt = { x: L.pos.x, y: L.pos.y, z: L.pos.z, yaw: L.yaw, st: L.state };
-  if (L.roostGap) { L.roostGap = false; pt.st = 'warp'; }
+  if (L.roostGap || jump > 40) { L.roostGap = false; pt.st = 'warp'; }   // (a jump in the path — put back somewhere, respawned — is a jump for the followers too, not a line through the walls)
   trail.push(pt); if (trail.length > 9000) trail.splice(0, 3000);
   for (const F of party) if (F !== L && !F.frozen) { F.queue.push(pt); if (F.queue.length > 7000) F.queue.splice(0, 2000); }
 }
@@ -5608,11 +5609,11 @@ function addPart(x, y, z, kind) {
 }
 const PART_NAME = { spring: TR('彈簧'), lens: TR('鏡片'), cap: TR('電容') };
 const MP_QUESTS = [
-  { t: TR('找齊三個零件'), s: TR('彈簧在爐頭旁、電容在洗手盆下面的櫃、鏡片在廁所的鏡櫃。次序隨意，分頭行動最快——客廳門、遙控器電池都可以隨時先做') },
+  { t: TR('找齊三個零件'), s: TR('彈簧在爐頭旁、電容在洗手盆下面的櫃、鏡片在廁所的鏡櫃。次序隨意，分頭行動最快——客廳門、遙控器電池都可以隨時先做（門未開？由後門貓門出花園，兜去前門貓門入客廳）') },
   { t: TR('打開通往客廳的門'), s: TR('門被門擋卡住了——熊可以推開或拉走門擋，或者爸爸把它縮小') },
   { t: TR('全隊進入客廳'), s: TR('所有玩家都要走過去（電腦隊友會跟着）') },
   { t: TR('拿走遙控器的電池'), s: TR('遙控器在咖啡枱上——女兒在沙發看電視就引開她：關電視、熄燈、弄點聲音；或者派兩個人沿天花槽爬上她的房間，扭動音樂盒——她一定會跑上樓') },
-  { t: TR('爬過通風口去車房'), s: TR('電池到手，通風口的蓋打開了——全隊一齊爬過去') },
+  { t: TR('全隊去車房'), s: TR('電池到手，通風口的蓋打開了——一齊爬過去。或者行遠路：女兒房天花嘅閣樓活門都開咗，上閣樓、出屋頂，由車房屋頂嘅通風口落車房') },
   { t: TR('弄跌監視鏡頭'), s: TR('鐵架頂有部 Origin Dynamics 的監視鏡頭——爬上去把它推跌（熊推、阿刺撞都得）') },
   { t: TR('打開狗門的門扣'), s: TR('側門下面有狗門，門扣太高——疊羅漢、跳跳跳上去，或者推木箱過去墊腳') },
   { t: TR('全隊由狗門出去後園'), s: TR('所有玩家都要出去') },
@@ -5628,7 +5629,8 @@ const SP_Q2B = [
   { t: TR('上樓去女兒房'), s: TR('客廳後面嘅門口有樓梯，每一級都要爬。太太同女兒都可能會上嚟') },
   { t: TR('經天花活門上閣樓'), s: TR('衣櫃頂旁邊吊住條拉繩：由衣櫃頂跳過去捉住佢，爬上閣樓。衣櫃隔籬啲收納箱可以幫你爬上衣櫃') }
 ];
-function ventOpen() { if (LIV.ventOpen) return; LIV.ventOpen = true; LIV.ventCol.y0 = -999; LIV.ventCol.y1 = -998; SND.creak(); toastW(TR('通風口的蓋打開了！'), 2.6); }
+function ventOpen() { if (LIV.ventOpen) return; LIV.ventOpen = true; LIV.ventCol.y0 = -999; LIV.ventCol.y1 = -998; SND.creak(); toastW(TR('通風口的蓋打開了！'), 2.6);
+  if (NET.on) rfHatch(true); }   // (online the attic hatch opens with it: the long way, over the roof, is open too)
 function livingHost() { }
 
 // what's on the TV: a cartoon landscape that slowly pans (the screen's colour sets brightness / off)
@@ -7358,7 +7360,8 @@ function mpObjectives() {
   if (quest === 2 && P.every(C => C.pos.x > 316 && C.pos.x < 912 && C.pos.z > -232)) { setQuest(3); toastW(TR('全隊到齊客廳！'), 2.4); }
   if (quest <= 3) mpAdvance();
   if (quest === 4 && !LIV.ventOpen) ventOpen();
-  if (quest === 4 && P.every(C => C.pos.x > 924)) { setQuest(5); toastW(TR('全隊到了車房！'), 2.4); }
+  if (quest === 4 && !RF.open) rfHatch(true);
+  if (quest === 4 && P.every(inGarage)) { setQuest(5); toastW(TR('全隊到了車房！'), 2.4); }
   if (quest === 5 && GS.camBroken) setQuest(6);
   if (quest === 6 && GS.latch) setQuest(7);
   if (quest === 7 && P.every(C => C.pos.x > 1462)) { setQuest(8); toastW(TR('全隊出了後園！'), 2.4); }
@@ -7371,11 +7374,20 @@ function mpObjectives() {
   if (quest >= MPQ_PARK && quest < MPQ_SCHOOL) mpParkObjectives(P);
   if (quest >= MPQ_SCHOOL) mpSchoolObjectives(P);
 }
+const inGarage = C => C.pos.x > 924 && C.pos.x < 1460 && C.pos.z > -270 && C.pos.z < 312 && C.pos.y < 268;
+// online, on the way to the garage: the living room's vent — or, taking the long way, the next step of that
+function mpGarageMarker(L) {
+  if (inGarage(L)) return null; const Z = zoneAt(L.pos), id = Z ? Z.id : '';
+  if (id === 'roof') return gAttic(L.pos) ? V3(948, 240, 120) : V3(968, RF_GVENT.top + 2, 120);
+  if (id === 'garden') return L.pos.y > 266 ? (OUT.upPipe ? V3(OUT.upPipe.x, 530, OUT.upPipe.z) : null) : LEVELS.garden.marker();
+  if (id === 'kitchen' && L.pos.y > 280 && L.pos.x > 300) return V3(RF.cordP.x, RF.cordP.y, RF.cordP.z);
+  return V3(896, 6, -200);
+}
 function mpMarker() {
   const L = leader;
   if (quest === 0) { const p = LIV.parts.filter(q => !q.got).sort((a, b) => Math.hypot(a.x - L.pos.x, a.z - L.pos.z) - Math.hypot(b.x - L.pos.x, b.z - L.pos.z))[0]; return p ? V3(p.x, p.y + 2, p.z) : null; }
   if (quest === 1) return V3(LIV.wedge.cx, 4, LIV.wedge.cz); if (quest === 2) return V3(345, 0, -10); if (quest === 3) return V3(LIV.remote.cx, 46, LIV.remote.cz);
-  if (quest === 4) return L.pos.x > 924 ? null : V3(896, 6, -200); if (quest === 5) return V3(GS.cam.cx, GS.cam.y0 + 14, GS.cam.cz); if (quest === 6) return GS.latchP; if (quest === 7) return L.pos.x > 1462 ? null : V3(1455, GY + 2, 105);
+  if (quest === 4) return mpGarageMarker(L); if (quest === 5) return V3(GS.cam.cx, GS.cam.y0 + 14, GS.cam.cz); if (quest === 6) return GS.latchP; if (quest === 7) return L.pos.x > 1462 ? null : V3(1455, GY + 2, 105);
   if (quest === 8) return L.pos.x > 2108 ? null : YS.gap; if (quest === 9) return L.pos.x > 2562 ? null : YS.flap; if (quest === 10) return YS.chip ? null : YS.chipP;
   if (quest === 11) return L.pos.z > 650 ? null : ST.gate; if (quest === 12) return V3(1960, GY + 118, 770);
   if (quest === 13) return L.pos.z < 1130 ? V3(2060, GY + 4, 1150) : V3(2060, GY + 4, 1560); if (quest >= MPQ_SCHOOL) return mpSchoolMarker(); if (quest >= MPQ_PARK) return mpParkMarker(); return ST.parkP;
@@ -7387,13 +7399,13 @@ function netWorldExtra(w) {
   w.ga = [+A.pos.x.toFixed(1), +A.pos.z.toFixed(1), +A.yaw.toFixed(3), +A.aimT.x.toFixed(1), +A.aimT.y.toFixed(1), +A.aimT.z.toFixed(1), GS.camBroken ? 1 : 0, GS.latch ? 1 : 0];
   w.rd = [['go', 'wait', 'amber', 'red', 'walk', 'flash', 'clear'].indexOf(ST.phase), +ST.pt.toFixed(2), ST.req ? 1 : 0, ...ST.cars.flatMap(c => [c.alive ? 1 : 0, c.lane, Math.round(c.x), Math.round(c.v)])];
   if (ST.walker) { const H = ST.walker.H, D = ST.wdog; w.wk = [+H.pos.x.toFixed(1), +H.yaw.toFixed(3), ST.walker.mode, +ST.walker.look.x.toFixed(0), +ST.walker.look.z.toFixed(0), +D.pos.x.toFixed(1), +D.pos.z.toFixed(1), +D.yaw.toFixed(3), D.mode]; }
-  w.ya = [+D.pos.x.toFixed(1), +D.pos.z.toFixed(1), +D.yaw.toFixed(3), D.mode, +D.sleepK.toFixed(2), O.mode, +O.look.x.toFixed(0), +O.look.y.toFixed(0), +O.look.z.toFixed(0), YS.chip ? 1 : 0, LIV.ventOpen ? 1 : 0];
+  w.ya = [+D.pos.x.toFixed(1), +D.pos.z.toFixed(1), +D.yaw.toFixed(3), D.mode, +D.sleepK.toFixed(2), O.mode, +O.look.x.toFixed(0), +O.look.y.toFixed(0), +O.look.z.toFixed(0), YS.chip ? 1 : 0, LIV.ventOpen ? 1 : 0, RF.open ? 1 : 0];
 }
 function netRecvExtra(w) {
   parkNetIn(w); schoolNetIn(w);
   if (w.rd) { ST.phase = ['go', 'wait', 'amber', 'red', 'walk', 'flash', 'clear'][w.rd[0]] || 'go'; ST.pt = w.rd[1]; ST.req = !!w.rd[2]; for (let i = 0; i < ST.cars.length; i++) { const c = ST.cars[i], b = 3 + i * 4; if (w.rd[b] == null) break; const was = c.alive; c.alive = !!w.rd[b]; c.lane = w.rd[b + 1]; if (!was || Math.abs(c.x - w.rd[b + 2]) > 160) c.x = w.rd[b + 2]; c.tx = w.rd[b + 2]; c.v = w.rd[b + 3]; if (!was && c.alive) c.gust.clear(); } }
   if (w.ga) { if (w.ga[6] && !GS.camBroken) { GS.cam.y0 = Math.min(GS.cam.y0, 150); } if (w.ga[7] && !GS.latch) latchOpen(null); }
-  if (w.ya) { if (w.ya[9] && !YS.chip) { YS.chip = true; YS.chipM.visible = false; YS.chipHalo.visible = false; } if (w.ya[10] && !LIV.ventOpen) ventOpen(); }
+  if (w.ya) { if (w.ya[9] && !YS.chip) { YS.chip = true; YS.chipM.visible = false; YS.chipHalo.visible = false; } if (w.ya[10] && !LIV.ventOpen) ventOpen(); if (w.ya[11] && !RF.open) rfHatch(true); }
 }
 function netNPCExtra(dt) {
   const w = NET.npc; if (!w) return; parkNetNPC(dt); schoolNetNPC(dt); pestNetIn(dt);
@@ -11471,6 +11483,18 @@ function unPlace(C, p) {
   C.pos.copy(p); C.pos.y += .3; C.vel.set(0, 0, 0); C.climbing = false; C.mantle = null; C.zip = null; C.line = null; C.on = null; C.hop = null; C.drop = false; C.pullT = 0; C.tumble = 0; C.ptw = null;
   C.grounded = false; C.queue = []; C.lastTrail = C.pos.clone(); if (C.disp) C.disp.copy(C.pos); UNSTK.inT[C.id] = 0;
 }
+// where to put a wedged follower: the nearest spot back along the leader's path where it stands clear, on something
+function unTrailSpot(C, L) {
+  for (let i = trail.length - 1, n = 0; i >= 0 && n < 400; i--, n++) {
+    const q = trail[i], d = Math.hypot(q.x - L.pos.x, q.z - L.pos.z); if (d < 3 || q.st === 'climb' || q.st === 'air' || q.st === 'glide') continue; if (d > 60) break;
+    if (solidAt(q.x, q.y + C.h * .5, q.z) || solidAt(q.x, q.y + C.h * .95, q.z)) continue;
+    const [s] = supportAt(q.x, q.z, C.r * .6, q.y + .6); if (Math.abs(s - q.y) > .8) continue;
+    let room = true; for (let k = 0; k < 6 && room; k++) { const a = k * Math.PI / 3; if (solidAt(q.x + Math.cos(a) * C.r, q.y + C.h * .5, q.z + Math.sin(a) * C.r)) room = false; }
+    if (room) return V3(q.x, q.y, q.z);
+  }
+  const a = L.yaw + Math.PI, p = V3(L.pos.x + Math.sin(a) * 4, L.pos.y, L.pos.z + Math.cos(a) * 4);
+  return solidAt(p.x, p.y + C.h * .5, p.z) ? L.pos.clone() : p;
+}
 function unPoof(p) { for (let i = 0; i < 14; i++) emit(V3(p.x, p.y + 2, p.z), V3(R(-14, 14), R(6, 22), R(-14, 14)), new THREE.Color(.55, .95, .92), R(.3, .7), R(.35, .7), 200, 1); tone(520, 880, .12, .04, 'sine'); }
 function unNote(C, why) {
   const p = C.pos; UNSTK.last = `${LEVEL} · ${C.id} · ${p.x.toFixed(1)}, ${p.y.toFixed(1)}, ${p.z.toFixed(1)} · ${why}`;
@@ -11516,10 +11540,12 @@ function unstuckTick(dt) {
   // wedged inside something: everybody you control
   for (const C of party) {
     if (!mine(C) || !free(C)) { UNSTK.inT[C.id] = 0; continue; }
-    const c = unInside(C); UNSTK.inT[C.id] = c ? (UNSTK.inT[C.id] || 0) + dt : 0;
-    if (UNSTK.inT[C.id] > .45) {
+    // (a follower walking the leader's path brushes through tight corners — it's bigger than him — and comes out the
+    //  other side: only stuck when it stays inside and stops getting anywhere)
+    const c = unInside(C), going = C !== L && C.spd > .5; UNSTK.inT[C.id] = c && !going ? (UNSTK.inT[C.id] || 0) + dt : c ? (UNSTK.inT[C.id] || 0) * .9 : 0;
+    if (UNSTK.inT[C.id] > (C === L ? .45 : 1)) {
       if (C === L) { unstuck('wedged'); return; }
-      unNote(C, 'wedged'); const a = L.yaw + Math.PI; const p = V3(L.pos.x + Math.sin(a) * 4, L.pos.y, L.pos.z + Math.cos(a) * 4); unPlace(C, solidAt(p.x, p.y + C.h * .5, p.z) ? L.pos.clone() : p); unPoof(C.pos);
+      unNote(C, 'wedged'); const p = unTrailSpot(C, L); unPlace(C, p); unPoof(C.pos);
     }
   }
   // pushing on the stick but going nowhere → offer the way out
@@ -11739,7 +11765,7 @@ function portalResumeLand(S) {
 // who joined or dropped, how good each link is, frame rate, rescues and errors. One tap copies it as
 // plain text that a player can paste into a chat and send in.
 const NLOG = { t0: performance.now(), lines: [], fps: 0, sumT: 0, mode: '', lv: '', peer: {} };
-const NLOG_BUILD = '20261127-1711';
+const NLOG_BUILD = '20261127-1807';
 function nlog(s) {
   const d = new Date(), p2 = n => String(n).padStart(2, '0');   // the clock time, so "it broke around 9:30" can be matched
   NLOG.lines.push(`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}  ${s}`); if (NLOG.lines.length > 500) NLOG.lines.splice(0, NLOG.lines.length - 500);
@@ -16404,9 +16430,11 @@ function buildGarden() {
   const fenceRun = (x0, x1, z0, z1) => { box(x0, x1, GY, GY + 172, z0, z1, M.fence, { uv: 60 }); const alongX = x1 - x0 > z1 - z0;
     for (let a = alongX ? x0 : z0; a < (alongX ? x1 : z1); a += 120) alongX ? box(a, a + 7, GY, GY + 180, z0 - 2, z1 + 2, M.fence, nc) : box(x0 - 2, x1 + 2, GY, GY + 180, a, a + 7, M.fence, nc); };
   fenceRun(-646, 1460, -966, -960); fenceRun(-646, -640, -960, 640); fenceRun(1452, 1460, -960, -440);
-  // past the fences are the neighbours' gardens, not ours: an invisible wall goes up from each fence (gliding off the
-  // roof you bump into it and slide down on our side), and on round the hedge's west end
-  for (const [x0, x1, z0, z1] of [[-660, 1474, -980, -966], [-660, -646, -980, 662], [1460, 1474, -980, -440], [-660, -340, 648, 662]]) cols.push({ t: 'b', x0, x1, y0: GY, y1: 2400, z0, z1, noRay: true, slick: true });
+  // the garden is a quiet place shut in all round: past the fences are the neighbours' gardens, past the yard's fence
+  // the yard (a chapter of its own, through the garage), past the hedge and the locked gates the street. An invisible,
+  // unclimbable wall goes up from each (gliding off the roof you bump into it and slide down on our side)
+  for (const [x0, x1, z0, z1] of [[-660, 1474, -980, -966], [-660, -646, -980, 662], [1460, 1474, -980, -440], [-660, -340, 648, 662],
+    [1453, 1459, -440, -268], [1453, 1459, 312, 642], [-646, 1453, 633, 643]]) cols.push({ t: 'b', x0, x1, y0: GY, y1: 2400, z0, z1, noRay: true, slick: true });
   box(-646, 461, GY, GY + 168, 626, 648, M.hedge, { uv: 70 }); box(551, 912, GY, GY + 168, 626, 648, M.hedge, { uv: 70 });
   for (const [x0, x1] of [[-646, 461], [551, 912]]) box(x0 + 2, x1 - 2, GY + 168, GY + 174, 628, 646, M.hedge, { uv: 70, col: false });
   // (leaves on both faces and the top, so it reads as a hedge, not a green wall)
