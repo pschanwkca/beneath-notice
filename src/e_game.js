@@ -672,6 +672,7 @@ function updHUD(dt) {
   $('stam').classList.toggle('on', showSt && L.id !== 'gecko'); $('stam').classList.toggle('low', L.stamina < 30);
   if (showSt) { project(V3(L.pos.x, L.pos.y + L.h * .9, L.pos.z), $('stam'), 46, -10); $('stc').style.strokeDashoffset = (94.25 * (1 - L.stamina / 100)).toFixed(1); }
   const mkp = LVL.marker && !GHOST.on ? LVL.marker() : null;   // (a toy can't do the objective: no marker while you're a soul)
+  teamTick(dt);
   if (mkp) { const on = project(mkp, $('mk'), 0, -18, true); $('mk').classList.add('on'); $('mkd').textContent = (Math.hypot(L.pos.x - mkp.x, L.pos.z - mkp.z) / 100).toFixed(1) + ' m'; } else $('mk').classList.remove('on');
   $('cross').classList.toggle('on', L.id === 'dad' || L.id === 'cham'); $('cross').classList.toggle('t', !!aimRes || !!tongueAim);
   $('cells').innerHTML = Array.from({ length: cellMax }, (_, i) => `<i class="${i < cells ? 'f' : ''}"></i>`).join('');
@@ -955,6 +956,7 @@ function setupTouch() {
   hold('tbJump', () => { pressed.Space = true; keys.Space = true; }, () => { keys.Space = false; });
   hold('tbCrouch', () => { pressed.KeyC = true; keys.GDown = true; }, () => { keys.GDown = false; });
   hold('tbPing', () => { pressed.GPing = true; });
+  hold('tbCall', () => { pressed.GCall = true; });
   hold('tbSwap', () => { pressed.Tab = true; });
   hold('tbGrow', () => fireGun(true)); hold('tbShrink', () => fireGun(false));
   hold('tbStack', () => { pressed.KeyF = true; });

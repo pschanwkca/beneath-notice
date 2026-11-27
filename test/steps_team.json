@@ -1,0 +1,8 @@
+[{"evalFile":"roof_h.js"},
+ {"eval": "(async()=>{ const b=window.__bn; window.__NODET=true; document.getElementById('chaps').hidden=true; await b.startChapter2(); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(10); return [b.LEVEL, b.party.map(c=>c.id)]; })()"},
+ {"eval": "(()=>{ const b=window.__bn, R=window.__R; window.__TT=true; R.put(100, 0, 0); R.face(1,0); const p=b.party.filter(c=>c!==b.leader); const spots=[[600,0,40],[-250,0,150],[150,0,-700],[690,-20,-750]]; p.forEach((c,i)=>{ const s=spots[i%spots.length]; c.pos.set(...s); c.vel.set(0,0,0); c.queue=[]; c.frozen=false; if(c.disp) c.disp.copy(c.pos); c.follow=false; c.hold=true; }); b.step(3); return p.map(c=>[c.id, b.ttPlace(c.pos)]); })()"},
+ {"frame":1},{"frame":1},{"frame":1,"shot":"tt_a"},
+ {"eval": "(()=>{ const b=window.__bn; const p=b.party.filter(c=>c!==b.leader); b.teamCallFx(p[0].id, false); b.step(2); const e=document.querySelector('.tt'); return [JSON.stringify(b.TT.call), e.className, b.state]; })()"},
+ {"frame":1},{"frame":1},{"frame":1,"shot":"tt_call"},{"eval":"(()=>{ const b=window.__bn; return [JSON.stringify(b.TT.call), document.querySelector('.tt').className]; })()"},
+ {"eval": "(()=>{ const b=window.__bn; return [...document.querySelectorAll('.tt')].map(e=>[e.className, e.style.transform, e.textContent]); })()"}
+]

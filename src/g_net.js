@@ -320,6 +320,7 @@ function netMsg(d, from) {
     case 'film': if (NET.on && !NET.host) scFilmRecv(d.id); break;
     case 'gh': if (NET.on) ghostRecv(d); break;
     case 'gp': if (NET.on) ghostPingFx(d.id); break;
+    case 'call': if (NET.on) teamCallFx(d.id, false); break;
     case 'end': if (NET.on && !NET.host && STATE === 'play') { if (d.e) END_TXT = d.e; STATE = 'end'; endT = 0; } break;
     case 'ban': if (d.a) chapterBanner(d.a, d.b); else roomBanner(d.b); break;
     case 'xbtn': if (NET.host) pressButton(null); break;
