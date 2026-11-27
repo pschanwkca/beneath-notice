@@ -194,7 +194,7 @@ function buildRoad() {
 
   // ---- the front of our house, the driveway and garage door ----
   // (the front garden, the driveway, the garage door and the house's front are the garden's now: e46_outside.js)
-  ST.porch = pointL(0xffc890, DAY ? 0 : 9000, 510, GY + 200, 290);   // (the lamp beside the front door)
+  ST.porch = pointL(0xffc890, DAY ? 0 : 9000, 571, GY + 200, 290);   // (the lamp beside the front door)
   // 陳伯's house front, beyond his fence
   box(2768, 3400, GY, GY + 520, 640, 652, sidingN, { uv: 120 });
   for (const [x, lit] of [[2880, 1], [3100, 0]]) { box(x - 50, x + 50, GY + 90, GY + 210, 652, 653.5, lit ? winM : winOff, { col: false }); box(x - 54, x + 54, GY + 86, GY + 90, 652, 656, M.white, { col: false }); }

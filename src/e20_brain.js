@@ -122,11 +122,16 @@ function brainIncident(id, o, on, by) {
   if (NET.client || !HB.m) return;
   const add = { klight: .55, tap: .55, hood: .35, blight: .35, flush: .8, tv: .3, lamp: .4, ulight: .3, udesk: .25, ustar: .3, umusic: .45 }[id] || .3;
   const rep = HB.inc.filter(i => i.id === id && T - i.t < 60).length;
-  const why = { klight: on ? '廚房燈自己開咗' : '廚房燈熄咗', tap: '水龍頭開咗', hood: '抽油煙機自己郁', blight: on ? '廁所燈開咗' : '廁所燈熄咗', flush: '冇人沖廁', tv: on ? '電視自己開咗' : '電視熄咗', lamp: '落地燈熄咗', fridge: '雪櫃門開咗', ulight: '女兒房燈郁咗', udesk: '枱燈郁咗', ustar: '星星燈郁咗', umusic: '音樂盒響' }[id] || '有嘢變咗';
+  const why = { klight: on ? '廚房燈自己開咗' : '廚房燈熄咗', tap: '水龍頭開咗', hood: '抽油煙機自己郁', blight: on ? '廁所燈開咗' : '廁所燈熄咗', flush: '冇人沖廁', tv: on ? '電視自己開咗' : '電視熄咗', lamp: '落地燈熄咗', fridge: '雪櫃門開咗', ulight: '女兒房燈郁咗', udesk: '枱燈郁咗', ustar: '星星燈郁咗', umusic: '音樂盒響' }[id] || (o.kind === 'win' ? '窗開咗' : '有嘢變咗');
   brainSus(add * (1 + rep * .6), o.p, why);
   HB.inc.push({ id, t: T, p: o.p.clone() }); if (HB.inc.length > 20) HB.inc.shift();
   const M = HB.m, K = HB.k, mr = agentRoom(M), kr = K ? agentRoom(K) : '';
   const look = [{ look: 1.5 + HB.sus * .8, at: [o.p.x, (o.p.y > 200 ? UPS.y : 0) + 40, o.p.z], low: HB.sus >= 2 }];
+  if (o.kind === 'win') {   // an open window: she comes and shuts it (straight away if she's in that room)
+    if (on) { const steps = [{ wait: R(3, 5) }, { go: WIN_DEF[id].nav }, { say: pick(['咦，窗怎麼開了？', '風好大……誰開了窗？', '窗又開着……']) }, { sw: id, on: false }, ...look], room = roomOf(o.p.x, o.p.z, o.p.y);   // (a moment before she notices the draught)
+      if (mr === room || (room === 'u' && mr === 's')) react(M, 2, steps); else later(M, steps); }
+    return;
+  }
   if (id === 'klight' && !on) {
     react(M, 3, [{ say: pick(HB.sus > 1.5 ? ['又熄燈？誰在玩開關？', '這燈今天是怎麼了……'] : ['咦？燈怎麼熄了？', '跳掣了？']) }, { go: 'kswitch' }, { sw: 'klight', on: true }, ...look]);
     if (K && kr === 'k') setTimeout(() => brainSay('kid', '媽！好黑呀！'), 900);

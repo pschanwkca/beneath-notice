@@ -407,6 +407,7 @@ function hxApply(o, quiet) {
   if (o.id === 'blight' && HX.bfan) HX.bfan.col.y0 = o.on ? HX.bfan.y[0] : -999, HX.bfan.col.y1 = o.on ? HX.bfan.y[1] : -998;
   if (o.id === 'mhcover' && HX.mhc) { const g = HX.mhc.g; if (o.on) { g.position.set(346, .4, -225); g.rotation.set(-Math.PI / 2, 0, .4); HX.mhc.col.y0 = -999; HX.mhc.col.y1 = -998; if (!quiet) toastW('踢腳線蓋拆開咗——後面個老鼠窿通去廁所', 2.6); } }
   if (o.kind === 'cage') cageApply(o);
+  if (o.kind === 'win') winApply(o, quiet);
   if (o.kind === 'trap' && HX.glue) { const G = HX.glue[+o.id.slice(4)]; if (G) G.g.visible = o.on; }
   if (o.seal && SEALS[o.id] && SEALS[o.id].g) { const S = SEALS[o.id]; S.g.visible = o.on; S.col.y0 = o.on ? 0 : -999; S.col.y1 = o.on ? 11.5 : -998; if (!o.on && !quiet) { if (!NET.client) { HB.sealBroke = HB.sealBroke || {}; HB.sealBroke[o.id] = (HB.sealBroke[o.id] || 0) + 1; } toastW('紙皮俾老友撞爛咗——條老鼠窿又通返', 2.4); for (let i = 0; i < 16; i++) emit(V3(S.x, 5, -245), V3(R(-12, 12), R(2, 14), R(-14, -2)), new THREE.Color(.7, .55, .36), R(.3, .6), R(.5, .9), 200, 1); } }
   if (o.id === 'gvent' && o.on && !LIV.ventOpen) { ventOpen(); if (!quiet) toastW('通風口蓋推開咗——客廳同車房而家打通咗', 2.6); }
@@ -421,8 +422,9 @@ function hxSet(o, on, by) {
 }
 function isPlayerId(by) { return !!(by && chars[by]); }
 function hxRequest(o, C) {
+  const say = o.oneShot ? '沖！' : o.on ? o.verb[0] : o.verb[1];   // (what they're doing: said before it's done, or the host would read the next one)
   if (NET.client) nsend({ t: 'hx', i: o.i, by: C.id }, NET.hostId); else hxSet(o, !o.on, C.id);
-  const say = o.oneShot ? '沖！' : o.on ? o.verb[0] : o.verb[1]; toast(`${C.S.name}：${say}`, 1.4);
+  toast(`${C.S.name}：${say}`, 1.4);
   for (let k = 0; k < 10; k++) emit(o.p.clone(), V3(R(-6, 6), R(3, 10), R(-6, 6)), new THREE.Color(1.6, 2.2, 2.1), R(.08, .16), R(.2, .4), 80, 1);
 }
 function hxRecv(d) { const o = HX.list[d.i]; if (!o) return; if (d.f) { HX.flushT = 3.6; hxApply(o); } else if (o.on !== !!d.on) { o.on = !!d.on; hxApply(o); } }

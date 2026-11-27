@@ -843,7 +843,7 @@ LEVELS.kitchen = {
   reset() { if (KS.coreGot && !KS.carried) KS.coreDrop = KS.home ? null : coreGround(KS.coreDrop || KS.core.position); else KS.coreDrop = null; KS.carrier = null; KM.mode = 'goto'; KM.pt = 'stove'; KS.doorTarget = 0; KS.closeT = 0; CAT.mode = 'home'; KID.mode = 'read'; KID.t = 6; if (HB.m) { HB.m.q = []; HB.m.cur = null; HB.m.seat = null; HB.m.react = 0; } HB.search = 0; if (KS.carried) { const C = leader; KS.core.position.set(C.pos.x, C.pos.y + 6, C.pos.z); } },
   eyeText: () => brainEyeText(),
   hint(L) {
-    const bh = backHint(L); if (bh) return bh;
+    const bh = backHint(L) || winHint(L); if (bh) return bh;
     // the vent to the garage (single player): rusted shut — say so, and where the way on is
     if (!KS.mp && !LIV.ventOpen && Math.hypot(L.pos.x - 896, L.pos.z + 200) < 26 && L.pos.y < 40) return KS.ch3 ? '通風口個蓋鏽死咗。行樓上：女兒房衣櫃頂有條拉繩通去閣樓' : '通風口個蓋鏽死咗，推唔開——車房要第二條路先去到';
     // the ways up into the ceiling duct: the hot air over the burner, and the bathroom fan's pull cord

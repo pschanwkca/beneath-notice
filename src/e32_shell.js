@@ -77,7 +77,7 @@ function buildHouseShell() {
     const cap = (p, q) => { const m = capMesh(p, q, capM); P.add(m); };
     cap(A(r0, R, 0), A(r1, R, 0)); for (const [x, z, rx] of [[a0, b0, r0], [a0, b1, r0], [a1, b0, r1], [a1, b1, r1]]) cap(A(x, E, z), A(rx, R, 0));
     // fascia round the eaves, soffit underneath
-    box(a0, a1, E - 14, E, b1, b1 + 3, trim, o); box(a0, 724, E - 14, E, b0 - 3, b0, trim, o); box(924, a1, E - 14, E, b0 - 3, b0, trim, o);   // (the back one stops for the stair tower) box(a0 - 3, a0, E - 14, E, b0, b1, trim, o); box(a1, a1 + 3, E - 14, E, b0, b1, trim, o);
+    box(a0, a1, E - 14, E, b1, b1 + 3, trim, o); box(a0, 724, E - 14, E, b0 - 3, b0, trim, o); box(924, a1, E - 14, E, b0 - 3, b0, trim, o); box(a0 - 3, a0, E - 14, E, b0, b1, trim, o); box(a1, a1 + 3, E - 14, E, b0, b1, trim, o);   // (the back one stops for the stair tower)
     box(a0, a1, E - 14, E - 12, 262, b1, soffit, o); box(a0, 724, E - 14, E - 12, b0, -262, soffit, o); box(924, a1, E - 14, E - 12, b0, -262, soffit, o); box(912, a1, E - 14, E - 12, -262, 262, soffit, o);
     // gutter along the front
     box(a0, a1, E - 16, E - 6, b1 + 3, b1 + 11, gutM, o);

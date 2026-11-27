@@ -1,0 +1,5 @@
+[{"evalFile":"shothelp.js"},{"evalFile":"roof_h.js"},
+ {"eval": "(async()=>{ const b=window.__bn; window.__NODET=true; document.getElementById('chaps').hidden=true; await b.startChapter2(); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(10); return [b.LEVEL, b.state]; })()"},
+ {"eval": "(()=>{ const b=window.__bn; for (const id of ['win_u','win_k']) { const o=b.HX.id[id]; o.on=true; b.winApply(o, true); } b.step(120); window.__S.hud(false); window.__S.abs([700, 300, 520],[620, 390, 250]); return 1; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"win_uout"},
+ {"eval": "(()=>{ window.__S.abs([-60, 160, -150],[-110, 140, -280]); return 1; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"win_kin"}
+]

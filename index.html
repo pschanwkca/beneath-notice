@@ -1122,6 +1122,8 @@ Object.assign(I18N_EN, {"雜物": "Odds & ends", "露營用品": "Camping gear",
 Object.assign(I18N_EN, {"後門鎖咗——之後會通去後園": "The back door's locked — later it'll lead out to the back garden"});
 Object.assign(I18N_EN, {"後門底有個貓門——鑽出去就係屋外花園": "There's a cat flap at the bottom of the back door — through it is the garden", "屋外": "Outside", "屋外：搵路返入屋": "Outside: find a way back in", "後門底有個貓門，可以鑽返入洗衣間。沿住屋邊行，前院後園都去得": "There's a cat flap in the back door — it goes back into the utility room. Walk round the house: the front garden and the back are both open", "出咗屋外……好大陣風。沿住屋邊行吓，記得由後門個貓門返入去。": "We're outside… what a breeze. Let's walk round the house — and remember, back in through the cat flap.", "前院……前門閂住，閘又鎖咗。": "The front garden… the front door's shut and the gate's locked.", "呢邊冷氣機好大部！": "That air conditioner's huge!", "屋外——冇人望到你": "Outside — nobody can see you", "鑽貓門返入洗衣間": "Through the cat flap, back into the utility room", "足球": "Football"});
 Object.assign(I18N_EN, {"搭建屋外花園…": "Building the garden…"});
+Object.assign(I18N_EN, {"客廳窗閂": "Living-room window latch", "睡房窗閂": "Bedroom window latch", "廚房窗閂": "Kitchen window latch", "閂窗": "Shut the window", "推開窗": "Push the window open", "窗推開咗——出面係天井": "The window's open — the light well's outside", "窗推開咗——小心，出面好高": "The window's open — careful, it's a long way down", "前門底有個貓門——鑽出去係前院": "There's a cat flap at the bottom of the front door — through it is the front garden", "窗台上有個窗閂——爬上窗簾，推開佢就出得去": "There's a latch on the windowsill — climb the curtains and push it to get out", "鑽前門貓門返入客廳": "Through the front door's cat flap, back into the living room", "抱住去水管爬上屋後嘅斜屋頂": "Hug the downpipe and climb up onto the back roof", "前門同後門底都有貓門，鑽得返入屋。開咗嘅窗都爬得返入去": "The front and back doors both have cat flaps to get back in. An open window works too", "窗開咗": "A window's open", "咦，窗怎麼開了？": "Huh, why is the window open?", "風好大……誰開了窗？": "So windy… who opened the window?", "窗又開着……": "The window's open again…"});
+Object.assign(I18N_EN, {"窗座上面有個窗閂——推開就出得去（好高，跌落前院花槽）": "There's a latch above the window seat — push it and you can get out (it's high: you'll land in the front flower bed)"});
 
 // =====================================================================
 //  Language: 中文 (default) or English.  ?lang=en / ?lang=zh in the address, or the button on the title
@@ -1376,7 +1378,7 @@ function genScales() {
 const BO = V3(28, -336, -229), HO = V3(-400, -340, -94); let MP_CPS = null;
 const ZONES = {}, ZL = []; let WORLD = false;
 function zoneDef(id, o) { const Z = Object.assign({ id, off: V3(), core: [], lv: null, fx: null, cols: [], lights: [], beams: [], dust: null, env: null, near: false, prepped: false }, o); ZONES[id] = Z; ZL.push(Z); return Z; }
-zoneDef('kitchen', { floor: 0, core: [[-312, 912, -12, 300, -250, 250], [-432, -312, -2, 40, -126, -74], [140, 475, -12, 262, -485, -230], [10, 380, 255, 300, -336, -192], [306, 912, 255, 547, -250, 250], [736, 912, -12, 547, -512, -240], [-167, 748, -12, 266, -624, -232]], peek: [[930, 1060, -40, 60, -260, -120], [-300, -150, -90, 140, -492, -380], [-300, -150, -100, 262, -624, -479]], env: 'kitchen' });
+zoneDef('kitchen', { floor: 0, core: [[-312, 912, -12, 300, -250, 250], [-432, -312, -2, 40, -126, -74], [140, 475, -12, 262, -485, -230], [10, 380, 255, 300, -336, -192], [306, 912, 255, 547, -250, 250], [736, 912, -12, 547, -512, -240], [-167, 748, -12, 266, -624, -232]], peek: [[930, 1060, -40, 60, -260, -120], [-300, -150, -90, 140, -492, -380], [-300, -150, -100, 262, -624, -479], [-230, 30, 266, 460, -360, -230]], env: 'kitchen' });   // (the last: looking down into the light well from the roof)
 // peek: spots in other places from which you can see in (through a mouse hole) — draw this place too
 zoneDef('wall', { floor: HO.y + 4, off: HO, core: [[-530, -312, -360, -2, -140, -52]], peek: [[-282, -140, -345, -250, -160, 10], [-312, -160, -12, 90, -200, 0]], env: 'hub' });
 zoneDef('garage', { floor: -20, core: [[912, 1460, -40, 300, -270, 312]], peek: [[820, 912, -10, 70, -240, -150], [1460, 1640, -40, 120, 20, 200]], env: 'garage' });
@@ -5390,8 +5392,8 @@ function buildLivingRoom(K) {
   box(828, X1 + 12, 0, 260, -244, -232, wallM, { uv: 120 }); box(748, 828, 205, 260, -244, -232, wallM, { uv: 120 }); // far wall (a doorway to the stairs); the vent near the floor leads through a duct into the garage
   box(X1, X1 + 12, 0, 260, -232, -214, wallM, { uv: 120 }); box(X1, X1 + 12, 0, 260, -186, 232, wallM, { uv: 120 }); box(X1, X1 + 12, 0, 4, -214, -186, wallM, { uv: 120 }); box(X1, X1 + 12, 24, 260, -214, -186, wallM, { uv: 120 });
   // front wall with the window opening (x 700–850, y 100–210)
-  box(X0, 700, 0, 260, 232, 244, wallM, { uv: 120 }); box(850, X1 + 12, 0, 260, 232, 244, wallM, { uv: 120 }); box(700, 850, 0, 100, 232, 244, wallM, { uv: 120 }); box(700, 850, 210, 260, 232, 244, wallM, { uv: 120 });
-  box(X0, 330, 0, 9, -232, -230.5, M.white, { col: false }); box(340, 536, 0, 9, -232, -230.5, M.white, { col: false }); box(620, 744, 0, 9, -232, -230.5, M.white, { col: false }); box(832, X1, 0, 9, -232, -230.5, M.white, { col: false }); box(X0, X1, 0, 9, 230.5, 232, M.white, { col: false }); box(X1 - 1.5, X1, 0, 9, -230, 230, M.white, { col: false });
+  box(X0, 470, 0, 260, 232, 244, wallM, { uv: 120 }); box(542, 700, 0, 260, 232, 244, wallM, { uv: 120 }); box(470, 542, 210, 260, 232, 244, wallM, { uv: 120 }); box(850, X1 + 12, 0, 260, 232, 244, wallM, { uv: 120 }); box(700, 850, 0, 100, 232, 244, wallM, { uv: 120 }); box(700, 850, 210, 260, 232, 244, wallM, { uv: 120 });   // (the front door's in 470…542: e47_windows.js)
+  box(X0, 330, 0, 9, -232, -230.5, M.white, { col: false }); box(340, 536, 0, 9, -232, -230.5, M.white, { col: false }); box(620, 744, 0, 9, -232, -230.5, M.white, { col: false }); box(832, X1, 0, 9, -232, -230.5, M.white, { col: false }); box(X0, 462, 0, 9, 230.5, 232, M.white, { col: false }); box(550, X1, 0, 9, 230.5, 232, M.white, { col: false }); box(X1 - 1.5, X1, 0, 9, -230, 230, M.white, { col: false });
   // the door: hinged at z=40, closes towards z=-60, swings into the kitchen
   const dg = new THREE.Group(); dg.position.set(300, 0, 40); LV.add(dg); LIV.door = dg;
   const dm = new THREE.MeshPhysicalMaterial({ color: 0xf0ebe2, roughness: .55, clearcoat: .2 });
@@ -6524,7 +6526,7 @@ LEVELS.kitchen = {
   reset() { if (KS.coreGot && !KS.carried) KS.coreDrop = KS.home ? null : coreGround(KS.coreDrop || KS.core.position); else KS.coreDrop = null; KS.carrier = null; KM.mode = 'goto'; KM.pt = 'stove'; KS.doorTarget = 0; KS.closeT = 0; CAT.mode = 'home'; KID.mode = 'read'; KID.t = 6; if (HB.m) { HB.m.q = []; HB.m.cur = null; HB.m.seat = null; HB.m.react = 0; } HB.search = 0; if (KS.carried) { const C = leader; KS.core.position.set(C.pos.x, C.pos.y + 6, C.pos.z); } },
   eyeText: () => brainEyeText(),
   hint(L) {
-    const bh = backHint(L); if (bh) return bh;
+    const bh = backHint(L) || winHint(L); if (bh) return bh;
     // the vent to the garage (single player): rusted shut — say so, and where the way on is
     if (!KS.mp && !LIV.ventOpen && Math.hypot(L.pos.x - 896, L.pos.z + 200) < 26 && L.pos.y < 40) return KS.ch3 ? TR('通風口個蓋鏽死咗。行樓上：女兒房衣櫃頂有條拉繩通去閣樓') : TR('通風口個蓋鏽死咗，推唔開——車房要第二條路先去到');
     // the ways up into the ceiling duct: the hot air over the burner, and the bathroom fan's pull cord
@@ -7938,7 +7940,7 @@ function buildRoad() {
 
   // ---- the front of our house, the driveway and garage door ----
   // (the front garden, the driveway, the garage door and the house's front are the garden's now: e46_outside.js)
-  ST.porch = pointL(0xffc890, DAY ? 0 : 9000, 510, GY + 200, 290);   // (the lamp beside the front door)
+  ST.porch = pointL(0xffc890, DAY ? 0 : 9000, 571, GY + 200, 290);   // (the lamp beside the front door)
   // 陳伯's house front, beyond his fence
   box(2768, 3400, GY, GY + 520, 640, 652, sidingN, { uv: 120 });
   for (const [x, lit] of [[2880, 1], [3100, 0]]) { box(x - 50, x + 50, GY + 90, GY + 210, 652, 653.5, lit ? winM : winOff, { col: false }); box(x - 54, x + 54, GY + 86, GY + 90, 652, 656, M.white, { col: false }); }
@@ -9060,6 +9062,7 @@ function hxApply(o, quiet) {
   if (o.id === 'blight' && HX.bfan) HX.bfan.col.y0 = o.on ? HX.bfan.y[0] : -999, HX.bfan.col.y1 = o.on ? HX.bfan.y[1] : -998;
   if (o.id === 'mhcover' && HX.mhc) { const g = HX.mhc.g; if (o.on) { g.position.set(346, .4, -225); g.rotation.set(-Math.PI / 2, 0, .4); HX.mhc.col.y0 = -999; HX.mhc.col.y1 = -998; if (!quiet) toastW(TR('踢腳線蓋拆開咗——後面個老鼠窿通去廁所'), 2.6); } }
   if (o.kind === 'cage') cageApply(o);
+  if (o.kind === 'win') winApply(o, quiet);
   if (o.kind === 'trap' && HX.glue) { const G = HX.glue[+o.id.slice(4)]; if (G) G.g.visible = o.on; }
   if (o.seal && SEALS[o.id] && SEALS[o.id].g) { const S = SEALS[o.id]; S.g.visible = o.on; S.col.y0 = o.on ? 0 : -999; S.col.y1 = o.on ? 11.5 : -998; if (!o.on && !quiet) { if (!NET.client) { HB.sealBroke = HB.sealBroke || {}; HB.sealBroke[o.id] = (HB.sealBroke[o.id] || 0) + 1; } toastW(TR('紙皮俾老友撞爛咗——條老鼠窿又通返'), 2.4); for (let i = 0; i < 16; i++) emit(V3(S.x, 5, -245), V3(R(-12, 12), R(2, 14), R(-14, -2)), new THREE.Color(.7, .55, .36), R(.3, .6), R(.5, .9), 200, 1); } }
   if (o.id === 'gvent' && o.on && !LIV.ventOpen) { ventOpen(); if (!quiet) toastW(TR('通風口蓋推開咗——客廳同車房而家打通咗'), 2.6); }
@@ -9074,8 +9077,9 @@ function hxSet(o, on, by) {
 }
 function isPlayerId(by) { return !!(by && chars[by]); }
 function hxRequest(o, C) {
+  const say = o.oneShot ? TR('沖！') : o.on ? o.verb[0] : o.verb[1];   // (what they're doing: said before it's done, or the host would read the next one)
   if (NET.client) nsend({ t: 'hx', i: o.i, by: C.id }, NET.hostId); else hxSet(o, !o.on, C.id);
-  const say = o.oneShot ? TR('沖！') : o.on ? o.verb[0] : o.verb[1]; toast(`${C.S.name}：${say}`, 1.4);
+  toast(`${C.S.name}：${say}`, 1.4);
   for (let k = 0; k < 10; k++) emit(o.p.clone(), V3(R(-6, 6), R(3, 10), R(-6, 6)), new THREE.Color(1.6, 2.2, 2.1), R(.08, .16), R(.2, .4), 80, 1);
 }
 function hxRecv(d) { const o = HX.list[d.i]; if (!o) return; if (d.f) { HX.flushT = 3.6; hxApply(o); } else if (o.on !== !!d.on) { o.on = !!d.on; hxApply(o); } }
@@ -9302,11 +9306,16 @@ function brainIncident(id, o, on, by) {
   if (NET.client || !HB.m) return;
   const add = { klight: .55, tap: .55, hood: .35, blight: .35, flush: .8, tv: .3, lamp: .4, ulight: .3, udesk: .25, ustar: .3, umusic: .45 }[id] || .3;
   const rep = HB.inc.filter(i => i.id === id && T - i.t < 60).length;
-  const why = { klight: on ? TR('廚房燈自己開咗') : TR('廚房燈熄咗'), tap: TR('水龍頭開咗'), hood: TR('抽油煙機自己郁'), blight: on ? TR('廁所燈開咗') : TR('廁所燈熄咗'), flush: TR('冇人沖廁'), tv: on ? TR('電視自己開咗') : TR('電視熄咗'), lamp: TR('落地燈熄咗'), fridge: TR('雪櫃門開咗'), ulight: TR('女兒房燈郁咗'), udesk: TR('枱燈郁咗'), ustar: TR('星星燈郁咗'), umusic: TR('音樂盒響') }[id] || TR('有嘢變咗');
+  const why = { klight: on ? TR('廚房燈自己開咗') : TR('廚房燈熄咗'), tap: TR('水龍頭開咗'), hood: TR('抽油煙機自己郁'), blight: on ? TR('廁所燈開咗') : TR('廁所燈熄咗'), flush: TR('冇人沖廁'), tv: on ? TR('電視自己開咗') : TR('電視熄咗'), lamp: TR('落地燈熄咗'), fridge: TR('雪櫃門開咗'), ulight: TR('女兒房燈郁咗'), udesk: TR('枱燈郁咗'), ustar: TR('星星燈郁咗'), umusic: TR('音樂盒響') }[id] || (o.kind === 'win' ? TR('窗開咗') : TR('有嘢變咗'));
   brainSus(add * (1 + rep * .6), o.p, why);
   HB.inc.push({ id, t: T, p: o.p.clone() }); if (HB.inc.length > 20) HB.inc.shift();
   const M = HB.m, K = HB.k, mr = agentRoom(M), kr = K ? agentRoom(K) : '';
   const look = [{ look: 1.5 + HB.sus * .8, at: [o.p.x, (o.p.y > 200 ? UPS.y : 0) + 40, o.p.z], low: HB.sus >= 2 }];
+  if (o.kind === 'win') {   // an open window: she comes and shuts it (straight away if she's in that room)
+    if (on) { const steps = [{ wait: R(3, 5) }, { go: WIN_DEF[id].nav }, { say: pick([TR('咦，窗怎麼開了？'), TR('風好大……誰開了窗？'), TR('窗又開着……')]) }, { sw: id, on: false }, ...look], room = roomOf(o.p.x, o.p.z, o.p.y);   // (a moment before she notices the draught)
+      if (mr === room || (room === 'u' && mr === 's')) react(M, 2, steps); else later(M, steps); }
+    return;
+  }
   if (id === 'klight' && !on) {
     react(M, 3, [{ say: pick(HB.sus > 1.5 ? [TR('又熄燈？誰在玩開關？'), TR('這燈今天是怎麼了……')] : [TR('咦？燈怎麼熄了？'), TR('跳掣了？')]) }, { go: 'kswitch' }, { sw: 'klight', on: true }, ...look]);
     if (K && kr === 'k') setTimeout(() => brainSay('kid', TR('媽！好黑呀！')), 900);
@@ -11676,7 +11685,7 @@ function portalResumeLand(S) {
 // who joined or dropped, how good each link is, frame rate, rescues and errors. One tap copies it as
 // plain text that a player can paste into a chat and send in.
 const NLOG = { t0: performance.now(), lines: [], fps: 0, sumT: 0, mode: '', lv: '', peer: {} };
-const NLOG_BUILD = '20261127-0341';
+const NLOG_BUILD = '20261127-1427';
 function nlog(s) {
   const d = new Date(), p2 = n => String(n).padStart(2, '0');   // the clock time, so "it broke around 9:30" can be matched
   NLOG.lines.push(`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}  ${s}`); if (NLOG.lines.length > 500) NLOG.lines.splice(0, NLOG.lines.length - 500);
@@ -12821,7 +12830,7 @@ function buildHouseShell() {
     const cap = (p, q) => { const m = capMesh(p, q, capM); P.add(m); };
     cap(A(r0, R, 0), A(r1, R, 0)); for (const [x, z, rx] of [[a0, b0, r0], [a0, b1, r0], [a1, b0, r1], [a1, b1, r1]]) cap(A(x, E, z), A(rx, R, 0));
     // fascia round the eaves, soffit underneath
-    box(a0, a1, E - 14, E, b1, b1 + 3, trim, o); box(a0, 724, E - 14, E, b0 - 3, b0, trim, o); box(924, a1, E - 14, E, b0 - 3, b0, trim, o);   // (the back one stops for the stair tower) box(a0 - 3, a0, E - 14, E, b0, b1, trim, o); box(a1, a1 + 3, E - 14, E, b0, b1, trim, o);
+    box(a0, a1, E - 14, E, b1, b1 + 3, trim, o); box(a0, 724, E - 14, E, b0 - 3, b0, trim, o); box(924, a1, E - 14, E, b0 - 3, b0, trim, o); box(a0 - 3, a0, E - 14, E, b0, b1, trim, o); box(a1, a1 + 3, E - 14, E, b0, b1, trim, o);   // (the back one stops for the stair tower)
     box(a0, a1, E - 14, E - 12, 262, b1, soffit, o); box(a0, 724, E - 14, E - 12, b0, -262, soffit, o); box(924, a1, E - 14, E - 12, b0, -262, soffit, o); box(912, a1, E - 14, E - 12, -262, 262, soffit, o);
     // gutter along the front
     box(a0, a1, E - 16, E - 6, b1 + 3, b1 + 11, gutM, o);
@@ -16156,14 +16165,19 @@ function facePlane(P, face, f, a, y, d, w, h, mat, o = {}) {
 }
 // a window in an outside wall: casing, a sill to stand on, the glass, a glazing bar — and, behind the glass,
 // net curtains (rooms you can look into) or blinds drawn (rooms nobody goes into); shutters on the blind ones
-function outWindow(P, M, face, f, c, cy, w, h, kind) {
+function outWindow(P, M, face, f, c, cy, w, h, kind, openId) {
   const B = faceBox(P, face, f), a0 = c - w / 2, a1 = c + w / 2, y0 = cy - h / 2, y1 = cy + h / 2, nc = { col: false };
   B(a0 - 6, a1 + 6, y1, y1 + 7, -1, 2.2, M.trim, nc); B(a0 - 6, a0, y0, y1, -1, 2.2, M.trim, nc); B(a1, a1 + 6, y0, y1, -1, 2.2, M.trim, nc);
   B(a0 - 9, a1 + 9, y0 - 5, y0, -3, 7, M.trim);                                                           // the sill (a ledge)
   B(a0, a1, y0, y0 + .6, -10, -3, M.trim, nc); B(a0, a1, y1 - .6, y1, -10, -3, M.trim, nc); B(a0, a0 + .6, y0, y1, -10, -3, M.trim, nc); B(a1 - .6, a1, y0, y1, -10, -3, M.trim, nc);
-  facePlane(P, face, f, c, cy, -5, w, h, M.glass); B(c - 1.6, c + 1.6, y0, y1, -5.4, -4, M.trim, nc); B(a0, a1, cy + h * .18 - 1.4, cy + h * .18 + 1.4, -5.4, -4, M.trim, nc);
-  B(a0, a1, y0, y1, -5.8, -4.8, M.trim, { cast: false, noRay: true, col: true }).visible = false;          // (the glass: solid, see-through)
-  facePlane(P, face, f, c, cy, -7, w, h, kind === 'sheer' ? M.sheer : M.blind, { rcv: true });
+  const ytr = cy + h * .18, cur = kind === 'sheer' ? M.sheer : M.blind;
+  B(c - 1.6, c + 1.6, y0, y1, -5.4, -4, M.trim, nc); B(a0, a1, ytr - 1.4, ytr + 1.4, -5.4, -4, M.trim, nc);
+  if (!openId) { facePlane(P, face, f, c, cy, -5, w, h, M.glass); B(a0, a1, y0, y1, -5.8, -4.8, M.trim, { cast: false, noRay: true, col: true }).visible = false; facePlane(P, face, f, c, cy, -7, w, h, cur, { rcv: true }); }   // (the glass: solid, see-through)
+  else {   // a window that opens (e47_windows.js): the lower left light is its own piece, glass, curtain and all
+    const q = [a0, c - 1.6, y0, ytr - 1.4], parts = [q, [c - 1.6, a1, y0, y1], [a0, c - 1.6, ytr - 1.4, y1]], W = (OUT.win = OUT.win || {})[openId] = { cols: [] };
+    parts.forEach(([u0, u1, v0, v1], i) => { const g = facePlane(P, face, f, (u0 + u1) / 2, (v0 + v1) / 2, -5, u1 - u0, v1 - v0, M.glass), cp = facePlane(P, face, f, (u0 + u1) / 2, (v0 + v1) / 2, -7, u1 - u0, v1 - v0, cur, { rcv: true });
+      const lo = Math.min(f - 5.8, f - 4.8), hi = Math.max(f - 5.8, f - 4.8), cl = { t: 'b', x0: u0, x1: u1, y0: v0, y1: v1, z0: lo, z1: hi, noRay: true }; cols.push(cl);
+      if (!i) { W.gl = g; W.cu = cp; W.col = cl; W.y = [v0, v1]; } }); }
   if (kind === 'blind') for (const s of [-1, 1]) { const x0 = s < 0 ? a0 - 6 - w * .42 : a1 + 6, x1 = x0 + w * .42; B(x0, x1, y0, y1, 0, 1.6, M.shutter, nc); for (let y = y0 + 6; y < y1 - 4; y += 7) B(x0 + 2, x1 - 2, y, y + 1.2, 1.6, 2.4, M.shutter, nc); }
 }
 
@@ -16171,11 +16185,11 @@ function outWindow(P, M, face, f, c, cy, w, h, kind) {
 function buildHouseOutside(P) {
   const M = OUT.M || (OUT.M = outMats()); const W0 = -330, W1 = 912, ZF = 262, ZB = -262, WT = 526, nc = { col: false };
   // ---- main block: front, west and the back above the extension ----
-  wallHoles(true, W0, W1, GY, WT, ZF - 10, ZF, [[405, 485, GY, 212], [700, 850, 100, 210], [574, 666, 340, 450], [-240, -140, 100, 210], [40, 140, 100, 210], [-240, -140, 340, 450], [40, 140, 340, 450]], M.sid, P);
+  wallHoles(true, W0, W1, GY, WT, ZF - 10, ZF, [[470, 542, GY, 212], [700, 850, 100, 210], [574, 666, 340, 450], [-240, -140, 100, 210], [40, 140, 100, 210], [-240, -140, 340, 450], [40, 140, 340, 450]], M.sid, P);
   wallHoles(false, ZB, ZF - 10, GY, WT, W0, W0 + 10, [[-150, -50, 340, 450], [70, 170, 340, 450]], M.sid, P);
   wallHoles(true, W0 + 10, 728, 300, WT, ZB, ZB + 10, [[-240, -140, 360, 450], [40, 140, 360, 450]], M.sid, P);
   wbox(W0 + 10, -302, GY, 300, ZB, ZB + 10, M.sid, { parent: P });
-  for (const [c, cy, w, h, k] of [[775, 155, 150, 110, 'sheer'], [620, 395, 92, 110, 'sheer'], [-190, 155, 100, 110, 'blind'], [90, 155, 100, 110, 'blind'], [-190, 395, 100, 110, 'blind'], [90, 395, 100, 110, 'blind']]) outWindow(P, M, 'z+', ZF, c, cy, w, h, k);
+  for (const [c, cy, w, h, k, id] of [[775, 155, 150, 110, 'sheer', 'win_l'], [620, 395, 92, 110, 'sheer', 'win_u'], [-190, 155, 100, 110, 'blind'], [90, 155, 100, 110, 'blind'], [-190, 395, 100, 110, 'blind'], [90, 395, 100, 110, 'blind']]) outWindow(P, M, 'z+', ZF, c, cy, w, h, k, id);
   for (const [c, cy] of [[-100, 395], [120, 395]]) outWindow(P, M, 'x-', W0, c, cy, 100, 110, 'blind');
   for (const [c, cy] of [[-190, 405], [90, 405]]) outWindow(P, M, 'z-', ZB, c, cy, 100, 90, 'blind');
   // ---- the back extension: one storey, walls to 282 ----
@@ -16215,26 +16229,25 @@ function buildHouseOutside(P) {
     box(ax0, ax1, y0, y1, az0, az1, M.trim, { parent: P, col: false }); box(bx0, bx1, y0, y1, bz0, bz1, M.trim, { parent: P, col: false }); }
   // ---- the plinth round the bottom of every outside wall ----
   const pl = (x0, x1, z0, z1) => box(x0, x1, GY, 6, z0, z1, M.plinth, { parent: P, col: false, cast: false });
-  pl(W0 - 3, 405, ZF - 2, ZF + 3); pl(485, W1, ZF - 2, ZF + 3); pl(W0 - 3, W0 + 2, ZB, ZF); pl(W0 - 3, -302, ZB - 3, ZB + 2); pl(-305, -300, -635, ZB);
+  pl(W0 - 3, 466, ZF - 2, ZF + 3); pl(546, W1, ZF - 2, ZF + 3); pl(W0 - 3, W0 + 2, ZB, ZF); pl(W0 - 3, -302, ZB - 3, ZB + 2); pl(-305, -300, -635, ZB);
   pl(-305, 646, -635, -630); pl(734, 759, -635, -630); pl(754, 759, -632, -518); pl(756, 923, -521, -516); pl(918, 923, -518, -270);
   // ---- the front door: a red door in a white surround, a canopy over it, the stoop, the number, a lamp ----
   { const B = faceBox(P, 'z+', ZF);
-    B(401, 409, GY, 216, -10, 2.4, M.trim, nc); B(481, 489, GY, 216, -10, 2.4, M.trim, nc); B(401, 489, 210, 218, -10, 2.4, M.trim, nc);
-    const d = B(409, 481, 0, 210, -7, -4, M.door); for (const [y0, y1] of [[18, 92], [112, 196]]) for (const [x0, x1] of [[415, 442], [448, 475]]) { B(x0, x1, y0, y1, -4, -3.4, M.door, nc); }
-    B(470, 474, 96, 104, -4, -1, M.brass, nc); B(432, 458, 104, 109, -4, -3.2, M.brass, nc);
-    const pn = facePlane(P, 'z+', ZF, 380, 170, .6, 26, 19, M.num); pn.receiveShadow = false;
+    B(462, 470, GY, 216, -10, 2.4, M.trim, nc); B(542, 550, GY, 216, -10, 2.4, M.trim, nc); B(462, 550, 210, 218, -10, 2.4, M.trim, nc);
+    // (the door itself, with its cat flap, is e47_windows.js)
+    const pn = facePlane(P, 'z+', ZF, 441, 170, .6, 26, 19, M.num); pn.receiveShadow = false;
     // canopy: a little gable on two brackets
-    const cy = 224; for (const x of [396, 494]) { box(x - 2, x + 2, cy - 22, cy, ZF, ZF + 22, M.trim, { parent: P, col: false }); }
-    for (const s of [-1, 1]) { const m = new THREE.Mesh(new THREE.BoxGeometry(62, 3, 34), M.shM); m.position.set(445 + s * 26, cy + 9, ZF + 16); m.rotation.z = -s * .42; m.castShadow = true; P.add(m); }
-    box(388, 502, cy - 2, cy + 3, ZF, ZF + 34, M.trim, { parent: P }); box(384, 506, cy - 6, cy - 2, ZF + 30, ZF + 35, M.trim, { parent: P, col: false });
+    const cy = 224; for (const x of [457, 555]) { box(x - 2, x + 2, cy - 22, cy, ZF, ZF + 22, M.trim, { parent: P, col: false }); }
+    for (const s of [-1, 1]) { const m = new THREE.Mesh(new THREE.BoxGeometry(62, 3, 34), M.shM); m.position.set(506 + s * 26, cy + 9, ZF + 16); m.rotation.z = -s * .42; m.castShadow = true; P.add(m); }
+    box(449, 563, cy - 2, cy + 3, ZF, ZF + 34, M.trim, { parent: P }); box(445, 567, cy - 6, cy - 2, ZF + 30, ZF + 35, M.trim, { parent: P, col: false });
     // the stoop: two steps up to the door
-    box(391, 499, GY, GY + 10, ZF, ZF + 44, M.conc, { parent: P }); box(401, 489, GY + 10, 0, ZF - 10, ZF + 24, M.conc, { parent: P });
-    box(406, 484, 0, .8, ZF - 4, ZF + 20, new THREE.MeshStandardMaterial({ color: 0x6a5a3a, roughness: 1 }), { parent: P, cast: false });
+    box(452, 560, GY, GY + 10, ZF, ZF + 44, M.conc, { parent: P }); box(462, 550, GY + 10, 0, ZF - 10, ZF + 24, M.conc, { parent: P });
+    box(467, 545, 0, .4, ZF - 4, ZF + 20, new THREE.MeshStandardMaterial({ color: 0x6a5a3a, roughness: 1 }), { parent: P, cast: false, col: false });
     // a lamp beside the door
-    box(506, 514, 168, 196, ZF, ZF + 3, M.dark, { parent: P, col: false }); const lamp = new THREE.Mesh(new THREE.CylinderGeometry(4, 5, 14, 12), M.glassD); lamp.position.set(510, 186, ZF + 8); P.add(lamp); box(504, 516, 194, 197, ZF + 2, ZF + 14, M.dark, { parent: P, col: false });
+    box(567, 575, 168, 196, ZF, ZF + 3, M.dark, { parent: P, col: false }); const lamp = new THREE.Mesh(new THREE.CylinderGeometry(4, 5, 14, 12), M.glassD); lamp.position.set(571, 186, ZF + 8); P.add(lamp); box(565, 577, 194, 197, ZF + 2, ZF + 14, M.dark, { parent: P, col: false });
     // pots of lavender on the stoop
     const potM = new THREE.MeshStandardMaterial({ color: 0xb8643a, roughness: .9 }), stM = new THREE.MeshStandardMaterial({ color: 0x5a7a4a }), lvM = new THREE.MeshStandardMaterial({ color: 0x8a6ad0, roughness: .8 }), stG = new THREE.CylinderGeometry(.4, .4, 20, 4), lvG = new THREE.SphereGeometry(1.6, 6, 4);
-    for (const x of [394, 496]) { cyl(x, ZF + 34, 8, GY + 10, GY + 26, potM, { parent: P, seg: 16 }); for (let i = 0; i < 7; i++) { const m = new THREE.Mesh(stG, stM); m.position.set(x + R(-5, 5), GY + 36, ZF + 34 + R(-5, 5)); m.rotation.set(R(-.25, .25), 0, R(-.25, .25)); P.add(m); const fl = new THREE.Mesh(lvG, lvM); fl.position.set(m.position.x, GY + 46, m.position.z); fl.scale.y = 2.2; P.add(fl); } } }
+    for (const x of [455, 557]) { cyl(x, ZF + 34, 8, GY + 10, GY + 26, potM, { parent: P, seg: 16 }); for (let i = 0; i < 7; i++) { const m = new THREE.Mesh(stG, stM); m.position.set(x + R(-5, 5), GY + 36, ZF + 34 + R(-5, 5)); m.rotation.set(R(-.25, .25), 0, R(-.25, .25)); P.add(m); const fl = new THREE.Mesh(lvG, lvM); fl.position.set(m.position.x, GY + 46, m.position.z); fl.scale.y = 2.2; P.add(fl); } } }
   // ---- the back door from outside: its surround, a step down to the patio, a canopy and a lamp ----
   { const B = faceBox(P, 'z-', -632);
     B(640, 646, GY, 215, -8, 2.4, M.trim, nc); B(734, 740, GY, 215, -8, 2.4, M.trim, nc); B(640, 740, 209, 215, -8, 2.4, M.trim, nc);
@@ -16252,6 +16265,8 @@ function buildHouseOutside(P) {
     B(140, 146, 34, 40, 0, 8, M.brass, nc); }
   // remember the painted views the living room and her bedroom have outside their windows: they hide from outside
   OUT.backdropsWanted = true;
+  // windows that open, the front door and its cat flap, the light well's drainpipe (e47_windows.js)
+  buildWindows(P);
 }
 
 // ---------- the garden ----------
@@ -16267,21 +16282,21 @@ function buildGarden() {
   box(-330, 912, GY - 10, GY, 262, 646, M.grass, { uv: 90, cast: false }); box(912, 1460, GY - 10, GY, 312, 646, M.drive, { uv: 160, cast: false });
   box(912, 1460, GY, GY + 200, 312, 314, M.trim, nc); for (let y = GY + 40; y < GY + 200; y += 40) box(912, 1460, y - 1, y + 1, 314, 315, new THREE.MeshStandardMaterial({ color: 0xc8c8c4, roughness: .6 }), nc);
   wbox(912, 1460, GY + 200, GY + 290, 312, 318, M.sid, { col: false });
-  for (let z = 306; z < 626; z += 32) box(413, 477, GY, GY + .35, z, z + 28, M.paver, { uv: 64, cast: false, col: false });
+  for (let z = 306; z < 626; z += 32) box(474, 538, GY, GY + .35, z, z + 28, M.paver, { uv: 64, cast: false, col: false });
   // ---- fences: back and west tall timber, behind the garage; the front a tall hedge with a gate and the driveway's gate ----
   const fenceRun = (x0, x1, z0, z1) => { box(x0, x1, GY, GY + 172, z0, z1, M.fence, { uv: 60 }); const alongX = x1 - x0 > z1 - z0;
     for (let a = alongX ? x0 : z0; a < (alongX ? x1 : z1); a += 120) alongX ? box(a, a + 7, GY, GY + 180, z0 - 2, z1 + 2, M.fence, nc) : box(x0 - 2, x1 + 2, GY, GY + 180, a, a + 7, M.fence, nc); };
   fenceRun(-646, 1460, -966, -960); fenceRun(-646, -640, -960, 640); fenceRun(1452, 1460, -960, -440);
-  box(-646, 400, GY, GY + 168, 626, 648, M.hedge, { uv: 70 }); box(490, 912, GY, GY + 168, 626, 648, M.hedge, { uv: 70 });
-  for (const [x0, x1] of [[-646, 400], [490, 912]]) box(x0 + 2, x1 - 2, GY + 168, GY + 174, 628, 646, M.hedge, { uv: 70, col: false });
+  box(-646, 461, GY, GY + 168, 626, 648, M.hedge, { uv: 70 }); box(551, 912, GY, GY + 168, 626, 648, M.hedge, { uv: 70 });
+  for (const [x0, x1] of [[-646, 461], [551, 912]]) box(x0 + 2, x1 - 2, GY + 168, GY + 174, 628, 646, M.hedge, { uv: 70, col: false });
   // (leaves on both faces and the top, so it reads as a hedge, not a green wall)
-  { const segs = [[-646, 400], [490, 912]], N = 1500, hl = new THREE.InstancedMesh(new THREE.PlaneGeometry(22, 22), M.leaf, N), ho = new THREE.Object3D(); let k = 0;
+  { const segs = [[-646, 461], [551, 912]], N = 1500, hl = new THREE.InstancedMesh(new THREE.PlaneGeometry(22, 22), M.leaf, N), ho = new THREE.Object3D(); let k = 0;
     while (k < N) { const sg = segs[k % 2 ? 1 : 0], x = R(sg[0], sg[1]), side = R(0, 1); let y, z;
       if (side < .42) { y = R(GY + 4, GY + 170); z = 626 + R(-2.5, 1.5); } else if (side < .84) { y = R(GY + 4, GY + 170); z = 648 + R(-1.5, 2.5); } else { y = GY + 171 + R(-1, 3); z = R(626, 648); }
       ho.position.set(x, y, z); ho.rotation.set(R(-1.2, 1.2), R(-1.2, 1.2), R(0, 6.28)); ho.scale.setScalar(R(.7, 1.15)); ho.updateMatrix(); hl.setMatrixAt(k++, ho.matrix); }
     hl.receiveShadow = true; LV.add(hl); }
-  { box(400, 404, GY, GY + 176, 630, 644, M.trim); box(486, 490, GY, GY + 176, 630, 644, M.trim);          // the front gate: white pickets, latched
-    box(404, 486, GY + 2, GY + 150, 635, 639, M.trim); for (let x = 406; x < 484; x += 8) box(x, x + 5, GY + 150, GY + 162, 635.5, 638.5, M.trim, nc); }
+  { box(461, 465, GY, GY + 176, 630, 644, M.trim); box(547, 551, GY, GY + 176, 630, 644, M.trim);          // the front gate: white pickets, latched
+    box(465, 547, GY + 2, GY + 150, 635, 639, M.trim); for (let x = 467; x < 545; x += 8) box(x, x + 5, GY + 150, GY + 162, 635.5, 638.5, M.trim, nc); }
   { box(912, 1452, GY, GY + 4, 634, 642, M.dark); box(912, 1452, GY + 150, GY + 156, 634, 642, M.dark, nc);         // the driveway's sliding gate
     box(912, 1452, GY + 4, GY + 150, 636, 640, new THREE.MeshStandardMaterial({ ...genWood([120, 96, 72], [70, 54, 40], 581, 14), roughness: .85 }), { uv: 60 }); for (const x of [912, 1180, 1446]) box(x, x + 6, GY, GY + 160, 632, 644, M.dark, nc); }
   // ---- paths: stepping stones down the west side and along the back, the patio at the back door ----
@@ -16383,11 +16398,11 @@ function outsideTick(dt) {
   if (!WORLD) return;
   if (OUT.backdropsWanted && !OUT.inited) { OUT.inited = true; const K = kitchenMats(); ZONES.kitchen.lv.traverse(m => { if (m.isMesh && m.material === K.dusk && m.position.z > 300) OUT.backdrops.push(m); }); }
   const inside = camera.position.z < 250; for (const m of OUT.backdrops) m.visible = inside;
-  outFlapTick(dt);
+  outFlapTick(dt); windowsTick(dt);
 }
 
 // ---------- the garden as a place ----------
-const GQ = [{ t: TR('屋外：搵路返入屋'), s: TR('後門底有個貓門，可以鑽返入洗衣間。沿住屋邊行，前院後園都去得') }];
+const GQ = [{ t: TR('屋外：搵路返入屋'), s: TR('前門同後門底都有貓門，鑽得返入屋。開咗嘅窗都爬得返入去') }];
 LEVELS.garden = {
   chapter: TR('第一章'), title: TR('屋企'), room: TR('屋外'), house: true, env: 'yard', envI: DAY ? 1 : .5, fog: DAY ? [0xbcd0e2, .00014] : [0x0e1626, .0004], expo: DAY ? .95 : 1.35, bloom: DAY ? [.3, 2.4] : null,
   dust: { N: 0 }, toys: true, npcNear: false, build: buildGarden,
@@ -16406,14 +16421,116 @@ LEVELS.garden = {
     if (!OUT.said.side && L.pos.x < -330 && L.pos.z < 0 && L.pos.z > -400) { OUT.said.side = 1; say(TR('老友'), TR('呢邊冷氣機好大部！'), '#d9a675', 2.4); }
   },
   win() { }, reset() { }, onSwitch() { },
-  marker() { return NET.on ? mpMarker() : OUT.flapP; },
+  marker() { if (NET.on) return mpMarker(); const L = leader, f = V3(506, 0, 262); return L && L.pos.distanceTo(f) < L.pos.distanceTo(OUT.flapP) ? f : OUT.flapP; },
   eyeText: () => TR('屋外——冇人望到你'),
-  hint(L) { if (Math.hypot(L.pos.x - 690, L.pos.z + 640) < 50) return TR('鑽貓門返入洗衣間'); return ''; }
+  hint(L) { if (Math.hypot(L.pos.x - 690, L.pos.z + 640) < 50) return TR('鑽貓門返入洗衣間'); if (Math.hypot(L.pos.x - 506, L.pos.z - 275) < 45) return TR('鑽前門貓門返入客廳'); if (Math.hypot(L.pos.x + 300, L.pos.z + 646) < 26 || Math.hypot(L.pos.x - 754, L.pos.z + 646) < 26) return TR('抱住去水管爬上屋後嘅斜屋頂'); return ''; }
 };
+
+// =====================================================================
+//  WINDOWS THAT OPEN, CAT FLAPS, DRAINPIPES — every way out of the house has a way back in
+//  · three windows have a latch on the sill you can push: the kitchen's over the sink (out into the light well),
+//    the living room's and her bedroom's at the front (out over the flower bed). The lower left light swings
+//    out; climb through and drop
+//  · the family notice an open window: Mom comes over, shuts it and wonders who opened it
+//  · the light well has a drainpipe up its corner, onto the back extension's roof; the extension's downpipes
+//    go down to the garden at its back corners (and back up)
+//  · the front door has a cat flap through into the living room, like the back door's
+// =====================================================================
+const WIN = { L: {}, g: null, flaps: [] };
+const WIN_DEF = {
+  win_l: { name: TR('客廳窗閂'), x0: 700, x1: 850, mid: 775, y0: 100, y1: 206, gy: [100, 210], tr: 174.8, zi: 238, out: 1, latch: [712, 100, 225], nav: 'lwin', gap: [244, 252], fy: 100, wy: 210 },
+  win_u: { name: TR('睡房窗閂'), x0: 574, x1: 666, mid: 620, y0: 342, y1: 450, gy: [340, 450], tr: 414.8, zi: 238, out: 1, latch: [588, 342, 229], nav: 'uwin', gap: [244, 252], fy: 340, wy: 450 },
+  win_k: { name: TR('廚房窗閂'), x0: -150, x1: -50, mid: -100, y0: 110, y1: 190, gy: [111, 189], tr: 150, zi: -228, out: -1, latch: [-140, 110, -218], nav: 'sink' }
+};
+// (Mom walks to a window by these: one in front of the living-room window)
+navN('lwin', 775, 192); navL('lwin', 'lsofa'); navL('lwin', 'ltv');
+
+function buildWindows(P) {
+  const K = kitchenMats(), KV = ZONES.kitchen.lv, white = MAT.white, g = WIN.g = new THREE.Group(); scene.add(g); const kv0 = KV.children.length;
+  const brass = K.brass || new THREE.MeshStandardMaterial({ color: 0xc8a050, metalness: .8, roughness: .3 });
+  for (const [id, D] of Object.entries(WIN_DEF)) {
+    const W = WIN.L[id] = { id, D, a: 0, tgt: 0, out: D.out, ext: OUT.win && OUT.win[id] }, cx1 = D.mid - 1.5, cy1 = D.tr - 1.4, rot = D.out > 0 ? Math.PI : 0;
+    // the room's own glass: hidden, and laid again in three pieces (the lower left one on hinges)
+    KV.traverse(m => { if (m.isMesh && m.material === MAT.glassThin && Math.abs(m.position.z - D.zi) < .6 && m.position.x > D.x0 && m.position.x < D.x1 && m.position.y > D.gy[0] && m.position.y < D.gy[1]) m.visible = false; });
+    const pane = (u0, u1, v0, v1, parent, ox = 0) => { const m = new THREE.Mesh(new THREE.PlaneGeometry(u1 - u0, v1 - v0), MAT.glassThin); m.position.set((u0 + u1) / 2 - ox, (v0 + v1) / 2, parent === g ? D.zi : 0); m.rotation.y = rot; parent.add(m); return m; };
+    pane(cx1, D.x1, D.gy[0], D.gy[1], g); pane(D.x0, cx1, cy1, D.gy[1], g);
+    const pv = new THREE.Group(); pv.position.set(D.x0, 0, D.zi); g.add(pv); W.pv = pv; pane(D.x0, cx1, D.gy[0], cy1, pv, D.x0);
+    const fb = (x0, x1, y0, y1) => { const m = new THREE.Mesh(new THREE.BoxGeometry(x1 - x0, y1 - y0, 1.6), white); m.position.set((x0 + x1) / 2 - D.x0, (y0 + y1) / 2, 0); m.castShadow = false; pv.add(m); };
+    fb(D.x0, cx1, D.gy[0], D.gy[0] + 1.6); fb(D.x0, cx1, cy1 - 1.6, cy1); fb(D.x0, D.x0 + 1.6, D.gy[0], cy1); fb(cx1 - 1.6, cx1, D.gy[0], cy1);
+    // the bars the casement shuts against (where the room's window didn't have them)
+    const zz = D.zi + D.out * -.8; box(D.mid - 1.5, D.mid + 1.5, D.gy[0], D.gy[1], zz - 1.2, zz + 1.2, white, { parent: g, col: false }); box(D.x0, D.mid - 1.5, D.tr - 1.4, D.tr + 1.4, zz - 1.2, zz + 1.2, white, { parent: g, col: false });
+    // its colliders: the room's glass made the right-hand piece, the top-left piece and the casement added
+    const old = cols.find(c => c.t === 'b' && c.noRay && Math.abs(c.x0 - D.x0) < .1 && Math.abs(c.x1 - D.x1) < .1 && c.z0 < D.zi && c.z1 > D.zi && c.y0 < D.y1 && c.y1 > D.y0);
+    const z0 = old ? old.z0 : D.zi - 1, z1 = old ? old.z1 : D.zi + 1; if (old) old.x0 = cx1; else cols.push({ t: 'b', x0: cx1, x1: D.x1, y0: D.y0, y1: D.y1, z0, z1, noRay: true });
+    cols.push({ t: 'b', x0: D.x0, x1: cx1, y0: cy1, y1: D.y1, z0, z1, noRay: true }); W.ci = { t: 'b', x0: D.x0, x1: cx1, y0: D.y0, y1: cy1, z0, z1, noRay: true }; cols.push(W.ci); W.cy = [D.y0, cy1];
+    // between the room's wall and the outside wall (the front ones): a floor and linings through the gap
+    if (D.gap) { const [a, b] = D.gap; box(D.x0, D.x1, D.fy - 4, D.fy, a, b, white, { parent: KV }); box(D.x0, D.x1, D.wy, D.wy + 4, a, b, white, { parent: KV, col: false }); box(D.x0 - 2, D.x0, D.fy, D.wy, a, b, white, { parent: KV }); box(D.x1, D.x1 + 2, D.fy, D.wy, a, b, white, { parent: KV }); }
+    // the latch on the sill: a little brass lever
+    const [lx, ly, lz] = D.latch, lg = new THREE.Group(); lg.position.set(lx, ly + .4, lz); KV.add(lg); lg.userData.noSolid = true;
+    mesh(new THREE.BoxGeometry(6, .8, 4), brass, 0, 0, 0, { parent: lg, cast: false }); const lev = new THREE.Group(); lev.position.y = .4; lg.add(lev); mesh(new THREE.BoxGeometry(1.4, 5, 1.4), brass, 0, 2.5, 0, { parent: lev }); mesh(new THREE.SphereGeometry(1.3, 10, 8), brass, 0, 5.2, 0, { parent: lev });
+    W.o = hxAdd({ id, name: D.name, kind: 'win', p: V3(lx, ly + 3, lz), r: 15, on: false, toggle: lev, verb: [TR('閂窗'), TR('推開窗')] }); hxApply(W.o, true);
+  }
+  // ---- the light well: a parapet round its top, a soffit under the house's back wall, a drainpipe up the corner ----
+  { const ext = new THREE.MeshStandardMaterial({ color: 0xb9c2c4, roughness: .9 }), cap = OUT.M.trim, pipe = OUT.M.gut;
+    box(-163, -157, 266, 322, -312, -262, ext, { parent: KV }); box(-46, -40, 270, 322, -312, -262, ext, { parent: KV }); box(-163, -40, 270, 318, -314, -308, ext, { parent: KV });
+    box(-164, -156, 322, 324, -313, -262, cap, { parent: KV, col: false }); box(-47, -39, 322, 324, -313, -262, cap, { parent: KV, col: false }); box(-164, -39, 318, 320, -315, -307, cap, { parent: KV, col: false });
+    box(-157, -46, 266, 300, -264, -262, ext, { parent: KV }); box(-157, -46, 296, 300, -262, -232, ext, { parent: KV, col: false });
+    cyl(-151, -295, 3, .2, 318, pipe, { parent: KV, seg: 12, col: false }); for (let y = 40; y < 310; y += 60) box(-157, -148, y, y + 3, -297, -293, OUT.M.metal, { parent: KV, col: false });
+    box(-155, -147, 316, 320, -300, -290, pipe, { parent: KV, col: false });
+    cols.push({ t: 'b', x0: -154.5, x1: -147.5, y0: .2, y1: 320, z0: -298.5, z1: -291.5, grip: true });
+    // (the extension's downpipes at its back corners: hold on and climb)
+    for (const x of [-300, 754]) cols.push({ t: 'b', x0: x - 3.6, x1: x + 3.6, y0: GY, y1: outLean(-640) + 3, z0: -649.6, z1: -642.4, grip: true });
+  }
+  // ---- the front door: its inside (a white panelled door), the wall cut for it, a cat flap right through ----
+  { const dw = new THREE.MeshPhysicalMaterial({ color: 0xece6da, roughness: .5, clearcoat: .2 }), pm = new THREE.MeshStandardMaterial({ color: 0x2c2e30, roughness: .5 }), M = OUT.M, red = M.door;
+    // inside face (z 233…236) and outside face (z 255…258), each round the flap's hole (x 496…516, y 0…18)
+    for (const [z0, z1, mat, par] of [[233, 236, dw, KV], [255, 258, red, P]]) { box(470, 496, 0, 210, z0, z1, mat, { parent: par, col: false }); box(516, 542, 0, 210, z0, z1, mat, { parent: par, col: false }); box(496, 516, 18, 210, z0, z1, mat, { parent: par, col: false });
+      for (const [w, h, x, y] of [[24, 3, 506, 19.5], [3, 21, 494.5, 10], [3, 21, 517.5, 10]]) box(x - w / 2, x + w / 2, y - h / 2, y + h / 2, z0 - .8, z1 + .8, pm, { parent: par, col: false }); }
+    box(496, 516, -.2, 0, 236, 255, pm, { parent: KV, col: false }); box(495, 497, 0, 18, 236, 255, pm, { parent: KV, col: false }); box(515, 517, 0, 18, 236, 255, pm, { parent: KV, col: false }); box(496, 516, 17, 19, 236, 255, pm, { parent: KV, col: false });
+    box(470, 542, -10, 0, 240, 252, M.conc, { parent: KV, cast: false });                                    // (a threshold under it)
+    for (const [x0, x1, y0] of [[470, 496, 0], [516, 542, 0], [496, 516, 18]]) cols.push({ t: 'b', x0, x1, y0, y1: 210, z0: 233, z1: 258 });
+    // inside: an architrave round the door, a brass knob, a doormat
+    for (const [x0, x1, y0, y1] of [[462, 470, 0, 218], [542, 550, 0, 218], [462, 550, 210, 218]]) box(x0, x1, y0, y1, 229.5, 232, white, { parent: KV, col: false });
+    mesh(new THREE.SphereGeometry(2.4, 14, 10), K.brass, 535, 100, 231, { parent: KV, cast: false });
+    box(471, 541, 0, .4, 196, 230, new THREE.MeshStandardMaterial({ color: 0x7a5a3a, roughness: 1 }), { parent: KV, cast: false, col: false });
+    // outside: the knob and the letter slot
+    box(531, 535, 96, 104, 258, 261, M.brass, { parent: P, col: false }); box(493, 519, 104, 109, 258, 258.8, M.brass, { parent: P, col: false });
+    for (const [y0, y1] of [[24, 92], [112, 196]]) for (const [x0, x1] of [[476, 493], [519, 536]]) box(x0, x1, y0, y1, 258, 258.6, red, { parent: P, col: false });
+    // the flap: on the outside face, hinged at the top
+    const pv = new THREE.Group(); pv.position.set(506, 18, 256.5); P.add(pv); mesh(new THREE.BoxGeometry(19.4, 17.4, .8), new THREE.MeshPhysicalMaterial({ color: 0x3a3a38, roughness: .2, transparent: true, opacity: .55, clearcoat: .6 }), 0, -8.8, 0, { parent: pv, cast: false });
+    WIN.flaps.push({ pv, x0: 494, x1: 518, z0: 226, z1: 270, mid: 256, inSide: -1, a: 0 });
+  }
+  // (what's added to the house's rooms here keeps the colliders it was given: no loose props, no extra solids)
+  for (let i = kv0; i < KV.children.length; i++) KV.children[i].userData.noSolid = true;
+}
+
+// a window being opened or shut (runs on everyone)
+function winApply(o, quiet) {
+  const W = WIN.L[o.id]; if (!W) return; W.tgt = o.on ? 1.25 : 0;
+  const set = (c, on) => { if (!c) return; if (on) { c.y0 = -999; c.y1 = -998; } else { c.y0 = c._y0; c.y1 = c._y1; } };
+  for (const c of [W.ci, W.ext && W.ext.col]) if (c && c._y0 === undefined) { c._y0 = c.y0; c._y1 = c.y1; }
+  set(W.ci, o.on); set(W.ext && W.ext.col, o.on);
+  if (!o.on) {   // shut on someone half through: they're put out on the sill
+    const D = W.D, zOut = D.out > 0 ? 266 : D.zi - 10; for (const C of party) { const p = C.pos; if (p.x > D.x0 && p.x < D.mid && p.y > D.y0 - 4 && p.y < W.cy[1] && (D.out > 0 ? p.z > D.zi - 3 && p.z < 264 : p.z < D.zi + 3 && p.z > D.zi - 10)) { p.z = zOut; C.vel.set(0, 0, 0); } } }
+  if (!quiet && o.on && !NET.client) toastW(o.id === 'win_k' ? TR('窗推開咗——出面係天井') : TR('窗推開咗——小心，出面好高'), 2.4);
+}
+function windowsTick(dt) {
+  for (const W of Object.values(WIN.L)) { W.a = damp(W.a, W.tgt, W.tgt > W.a ? 2.2 : 3.2, dt); if (W.pv) W.pv.rotation.y = -W.out * W.a; if (W.ext) { const v = W.a < .03; W.ext.gl.visible = v; W.ext.cu.visible = v; } }
+  for (const F of WIN.flaps) { let want = 0;
+    for (const C of party) { if (C.frozen) continue; const p = C.pos; if (p.x > F.x0 && p.x < F.x1 && p.y < 16 && p.z > F.z0 && p.z < F.z1) { want = (p.z > F.mid) === (F.inSide < 0) ? 1.1 : -1.1; break; } }
+    F.a = damp(F.a, want, want ? 14 : 5, dt); F.pv.rotation.x = F.a; }
+}
+// hints: the latch, the cat flap from inside
+function winHint(L) {
+  const p = L.pos; if (p.x > 466 && p.x < 546 && p.z > 150 && p.z < 236 && p.y < 20) return TR('前門底有個貓門——鑽出去係前院');
+  if (p.x > 720 && p.x < 830 && p.z > 150 && p.z < 232 && p.y < 30) return TR('窗台上有個窗閂——爬上窗簾，推開佢就出得去');
+  if (p.x > 560 && p.x < 680 && p.z > 150 && p.z < 232 && p.y > 290 && p.y < 330) return TR('窗座上面有個窗閂——推開就出得去（好高，跌落前院花槽）');
+  return '';
+}
 
 requestAnimationFrame(frame);
 init().catch(e => { console.error(e); $('err').textContent = TR('載入失敗：') + (e && e.stack || e); });
-if (location.hash === '#dev') window.__VC = () => VC; if (location.hash === '#dev') window.__bn = { OUT, outLean, supportAt, solidAt, PEST, CAGES, pestArrive, pestLeave, cageOpen, BK, zipInput, zipNear, inStore, linePt, get bDoor() { return door; }, ACD, abilCD, LOOSE, looseHeld, useHeld, primaryDown, pouchTakeOut, POUCH, looseInput, get T() { return T; }, CINE, cineStart, cineAt, cineSay, SC, scBell, filmPlay, filmEnd, FILM_RECESS, FILM_ESSAY, FILM_END, MPQ_SCHOOL, MPQ_PARK, scFilm, mpSchoolMarker, say, toast, chapterBanner, emoShow, GHOST, ghostPing, watchCycle, keys, grade, RL, REAL, ST, MAT, HUMANS, humanBody, humanAnim, humanGait, buildHuman, SOLID, POUCH, pouchUse, pouchOpen, pouchClose, PROPS, get party() { return party; }, get cols() { return cols; }, ZONES, ZL, STATIC, get LV() { return LV; }, dayCloudTex, camera, MOLE, moleDig, softAt, switchTo, LP, WARPS, PK, SLIDE, parkLit, moonShade, NLOG, netLogText, nlog, LOBBY, mpSaveLoad, mpApplySave, setMyName, hostFreeze, toyUnfreezeAll, UNSTK, unstuck, unInside, PORT, PRO, PO, portalOut, proSkip, prC, prPad, MP_PRO, WATCH, watchCycle, watchTarget, STICK, EMO, EMOTES, renderSticker, emoKit, emoKitDone, emoBuildAll, TTL, titleSetup, titleEnd, RoomEnvironment, livingGet, RF, RFH, RFG, rfHatch, rfTopAt, rfHip, rfGab, FILM_RIDGE, startRoof, birdSees, birdGrab, RF_NEST, get CPS() { return CPS; }, emoDo, emoShow, emoOpen, emoClose, UPS, humanFloor, roomOf, navNearest, ACTS, roomSteps, brainIncident, react, agentRoom, OLDB, YS, AGB, GS, camPowered, doorOpen, mpChecklist, HB, HX, hxSet, hxNear, navPath, NAVN, KM, KID, LIV, scene, THREE, MUS, ARR, BANK, AU, SET, toyFreeze, useProto, TAKE, protoTarget, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, ST, pressButton, LANES, pause, garageHear, TEST, testWarp, WARPS, testAll, startChapter2, NC, batPing, tortShell, crewJoin, hideK, startGame, startChapter, openChapters, step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT, GS, YS, DECK, GY, WC, ventOpen, latchOpen, mpMarker, zoneFloor, KS }; }, info: () => ({ fps: $('fps').textContent, state: STATE, lv: LEVEL, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
+if (location.hash === '#dev') window.__VC = () => VC; if (location.hash === '#dev') window.__bn = { OUT, outLean, WIN, winApply, supportAt, solidAt, PEST, CAGES, pestArrive, pestLeave, cageOpen, BK, zipInput, zipNear, inStore, linePt, get bDoor() { return door; }, ACD, abilCD, LOOSE, looseHeld, useHeld, primaryDown, pouchTakeOut, POUCH, looseInput, get T() { return T; }, CINE, cineStart, cineAt, cineSay, SC, scBell, filmPlay, filmEnd, FILM_RECESS, FILM_ESSAY, FILM_END, MPQ_SCHOOL, MPQ_PARK, scFilm, mpSchoolMarker, say, toast, chapterBanner, emoShow, GHOST, ghostPing, watchCycle, keys, grade, RL, REAL, ST, MAT, HUMANS, humanBody, humanAnim, humanGait, buildHuman, SOLID, POUCH, pouchUse, pouchOpen, pouchClose, PROPS, get party() { return party; }, get cols() { return cols; }, ZONES, ZL, STATIC, get LV() { return LV; }, dayCloudTex, camera, MOLE, moleDig, softAt, switchTo, LP, WARPS, PK, SLIDE, parkLit, moonShade, NLOG, netLogText, nlog, LOBBY, mpSaveLoad, mpApplySave, setMyName, hostFreeze, toyUnfreezeAll, UNSTK, unstuck, unInside, PORT, PRO, PO, portalOut, proSkip, prC, prPad, MP_PRO, WATCH, watchCycle, watchTarget, STICK, EMO, EMOTES, renderSticker, emoKit, emoKitDone, emoBuildAll, TTL, titleSetup, titleEnd, RoomEnvironment, livingGet, RF, RFH, RFG, rfHatch, rfTopAt, rfHip, rfGab, FILM_RIDGE, startRoof, birdSees, birdGrab, RF_NEST, get CPS() { return CPS; }, emoDo, emoShow, emoOpen, emoClose, UPS, humanFloor, roomOf, navNearest, ACTS, roomSteps, brainIncident, react, agentRoom, OLDB, YS, AGB, GS, camPowered, doorOpen, mpChecklist, HB, HX, hxSet, hxNear, navPath, NAVN, KM, KID, LIV, scene, THREE, MUS, ARR, BANK, AU, SET, toyFreeze, useProto, TAKE, protoTarget, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, ST, pressButton, LANES, pause, garageHear, TEST, testWarp, WARPS, testAll, startChapter2, NC, batPing, tortShell, crewJoin, hideK, startGame, startChapter, openChapters, step: (n, dt = 1 / 60) => { for (let i = 0; i < n; i++) update(dt); return window.__bn.info(); }, press: c => { pressed[c] = true; }, respawn, batteries, applyQ, chars, party, cam, mom, startMomVisit, switchTo, setQuest, resizables, renderer, keys, get crackBox() { return crackBox; }, get leader() { return leader; }, get STK() { return STK; }, NET, mpConnect, mpPick, mpStartGame, get world() { return { quest, cp, PROTO, LEVEL }; }, TOY, toyFreeze, chamTongue, sqCarry, sqScout, get tongueAim() { return tongueAim; }, SCOUT, joinCham, IDS, roomFor, sizeNotice, useProto, get PROTO() { return PROTO; }, set PROTO(v) { PROTO = v; }, VIALS, CRUMBS, stackPress, stackSolve, isBase, bearShove, pushTarget, loadLevel, get LEVEL() { return LEVEL; }, KS, KM, CAT, KID, joinGecko, get cp() { return cp; }, get state() { return STATE; }, set state(v) { STATE = v; }, get meter() { return meter; }, set meter(v) { meter = v; }, get quest() { return quest; }, pauseNow: () => pause(), UNL, unlockKey, openRoster, isUnlocked, buildPartyHUD, hogRoll, coonThrow, frogSwitch, inDark, pebN: () => CREW.peb.length, CREW, get W() { return { ZONES, ZL, BO, HO, LIV, LP, WC, NPCW, enterZone, zoneAt, applyResize, LEVELS, colsNear, cols, crackBox, END_TXT, GS, YS, DECK, GY, WC, ventOpen, latchOpen, mpMarker, zoneFloor, KS }; }, info: () => ({ fps: $('fps').textContent, state: STATE, lv: LEVEL, pos: leader && leader.pos.toArray().map(v => +v.toFixed(2)), st: leader && leader.state, climbing: leader && !!leader.climbing, mom: mom.mode, meter: +meter.toFixed(2), quest, calls: renderer.info.render.calls, tris: renderer.info.render.triangles }) };
 
 </script>
 </body>

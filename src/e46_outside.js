@@ -97,14 +97,19 @@ function facePlane(P, face, f, a, y, d, w, h, mat, o = {}) {
 }
 // a window in an outside wall: casing, a sill to stand on, the glass, a glazing bar — and, behind the glass,
 // net curtains (rooms you can look into) or blinds drawn (rooms nobody goes into); shutters on the blind ones
-function outWindow(P, M, face, f, c, cy, w, h, kind) {
+function outWindow(P, M, face, f, c, cy, w, h, kind, openId) {
   const B = faceBox(P, face, f), a0 = c - w / 2, a1 = c + w / 2, y0 = cy - h / 2, y1 = cy + h / 2, nc = { col: false };
   B(a0 - 6, a1 + 6, y1, y1 + 7, -1, 2.2, M.trim, nc); B(a0 - 6, a0, y0, y1, -1, 2.2, M.trim, nc); B(a1, a1 + 6, y0, y1, -1, 2.2, M.trim, nc);
   B(a0 - 9, a1 + 9, y0 - 5, y0, -3, 7, M.trim);                                                           // the sill (a ledge)
   B(a0, a1, y0, y0 + .6, -10, -3, M.trim, nc); B(a0, a1, y1 - .6, y1, -10, -3, M.trim, nc); B(a0, a0 + .6, y0, y1, -10, -3, M.trim, nc); B(a1 - .6, a1, y0, y1, -10, -3, M.trim, nc);
-  facePlane(P, face, f, c, cy, -5, w, h, M.glass); B(c - 1.6, c + 1.6, y0, y1, -5.4, -4, M.trim, nc); B(a0, a1, cy + h * .18 - 1.4, cy + h * .18 + 1.4, -5.4, -4, M.trim, nc);
-  B(a0, a1, y0, y1, -5.8, -4.8, M.trim, { cast: false, noRay: true, col: true }).visible = false;          // (the glass: solid, see-through)
-  facePlane(P, face, f, c, cy, -7, w, h, kind === 'sheer' ? M.sheer : M.blind, { rcv: true });
+  const ytr = cy + h * .18, cur = kind === 'sheer' ? M.sheer : M.blind;
+  B(c - 1.6, c + 1.6, y0, y1, -5.4, -4, M.trim, nc); B(a0, a1, ytr - 1.4, ytr + 1.4, -5.4, -4, M.trim, nc);
+  if (!openId) { facePlane(P, face, f, c, cy, -5, w, h, M.glass); B(a0, a1, y0, y1, -5.8, -4.8, M.trim, { cast: false, noRay: true, col: true }).visible = false; facePlane(P, face, f, c, cy, -7, w, h, cur, { rcv: true }); }   // (the glass: solid, see-through)
+  else {   // a window that opens (e47_windows.js): the lower left light is its own piece, glass, curtain and all
+    const q = [a0, c - 1.6, y0, ytr - 1.4], parts = [q, [c - 1.6, a1, y0, y1], [a0, c - 1.6, ytr - 1.4, y1]], W = (OUT.win = OUT.win || {})[openId] = { cols: [] };
+    parts.forEach(([u0, u1, v0, v1], i) => { const g = facePlane(P, face, f, (u0 + u1) / 2, (v0 + v1) / 2, -5, u1 - u0, v1 - v0, M.glass), cp = facePlane(P, face, f, (u0 + u1) / 2, (v0 + v1) / 2, -7, u1 - u0, v1 - v0, cur, { rcv: true });
+      const lo = Math.min(f - 5.8, f - 4.8), hi = Math.max(f - 5.8, f - 4.8), cl = { t: 'b', x0: u0, x1: u1, y0: v0, y1: v1, z0: lo, z1: hi, noRay: true }; cols.push(cl);
+      if (!i) { W.gl = g; W.cu = cp; W.col = cl; W.y = [v0, v1]; } }); }
   if (kind === 'blind') for (const s of [-1, 1]) { const x0 = s < 0 ? a0 - 6 - w * .42 : a1 + 6, x1 = x0 + w * .42; B(x0, x1, y0, y1, 0, 1.6, M.shutter, nc); for (let y = y0 + 6; y < y1 - 4; y += 7) B(x0 + 2, x1 - 2, y, y + 1.2, 1.6, 2.4, M.shutter, nc); }
 }
 
@@ -112,11 +117,11 @@ function outWindow(P, M, face, f, c, cy, w, h, kind) {
 function buildHouseOutside(P) {
   const M = OUT.M || (OUT.M = outMats()); const W0 = -330, W1 = 912, ZF = 262, ZB = -262, WT = 526, nc = { col: false };
   // ---- main block: front, west and the back above the extension ----
-  wallHoles(true, W0, W1, GY, WT, ZF - 10, ZF, [[405, 485, GY, 212], [700, 850, 100, 210], [574, 666, 340, 450], [-240, -140, 100, 210], [40, 140, 100, 210], [-240, -140, 340, 450], [40, 140, 340, 450]], M.sid, P);
+  wallHoles(true, W0, W1, GY, WT, ZF - 10, ZF, [[470, 542, GY, 212], [700, 850, 100, 210], [574, 666, 340, 450], [-240, -140, 100, 210], [40, 140, 100, 210], [-240, -140, 340, 450], [40, 140, 340, 450]], M.sid, P);
   wallHoles(false, ZB, ZF - 10, GY, WT, W0, W0 + 10, [[-150, -50, 340, 450], [70, 170, 340, 450]], M.sid, P);
   wallHoles(true, W0 + 10, 728, 300, WT, ZB, ZB + 10, [[-240, -140, 360, 450], [40, 140, 360, 450]], M.sid, P);
   wbox(W0 + 10, -302, GY, 300, ZB, ZB + 10, M.sid, { parent: P });
-  for (const [c, cy, w, h, k] of [[775, 155, 150, 110, 'sheer'], [620, 395, 92, 110, 'sheer'], [-190, 155, 100, 110, 'blind'], [90, 155, 100, 110, 'blind'], [-190, 395, 100, 110, 'blind'], [90, 395, 100, 110, 'blind']]) outWindow(P, M, 'z+', ZF, c, cy, w, h, k);
+  for (const [c, cy, w, h, k, id] of [[775, 155, 150, 110, 'sheer', 'win_l'], [620, 395, 92, 110, 'sheer', 'win_u'], [-190, 155, 100, 110, 'blind'], [90, 155, 100, 110, 'blind'], [-190, 395, 100, 110, 'blind'], [90, 395, 100, 110, 'blind']]) outWindow(P, M, 'z+', ZF, c, cy, w, h, k, id);
   for (const [c, cy] of [[-100, 395], [120, 395]]) outWindow(P, M, 'x-', W0, c, cy, 100, 110, 'blind');
   for (const [c, cy] of [[-190, 405], [90, 405]]) outWindow(P, M, 'z-', ZB, c, cy, 100, 90, 'blind');
   // ---- the back extension: one storey, walls to 282 ----
@@ -156,26 +161,25 @@ function buildHouseOutside(P) {
     box(ax0, ax1, y0, y1, az0, az1, M.trim, { parent: P, col: false }); box(bx0, bx1, y0, y1, bz0, bz1, M.trim, { parent: P, col: false }); }
   // ---- the plinth round the bottom of every outside wall ----
   const pl = (x0, x1, z0, z1) => box(x0, x1, GY, 6, z0, z1, M.plinth, { parent: P, col: false, cast: false });
-  pl(W0 - 3, 405, ZF - 2, ZF + 3); pl(485, W1, ZF - 2, ZF + 3); pl(W0 - 3, W0 + 2, ZB, ZF); pl(W0 - 3, -302, ZB - 3, ZB + 2); pl(-305, -300, -635, ZB);
+  pl(W0 - 3, 466, ZF - 2, ZF + 3); pl(546, W1, ZF - 2, ZF + 3); pl(W0 - 3, W0 + 2, ZB, ZF); pl(W0 - 3, -302, ZB - 3, ZB + 2); pl(-305, -300, -635, ZB);
   pl(-305, 646, -635, -630); pl(734, 759, -635, -630); pl(754, 759, -632, -518); pl(756, 923, -521, -516); pl(918, 923, -518, -270);
   // ---- the front door: a red door in a white surround, a canopy over it, the stoop, the number, a lamp ----
   { const B = faceBox(P, 'z+', ZF);
-    B(401, 409, GY, 216, -10, 2.4, M.trim, nc); B(481, 489, GY, 216, -10, 2.4, M.trim, nc); B(401, 489, 210, 218, -10, 2.4, M.trim, nc);
-    const d = B(409, 481, 0, 210, -7, -4, M.door); for (const [y0, y1] of [[18, 92], [112, 196]]) for (const [x0, x1] of [[415, 442], [448, 475]]) { B(x0, x1, y0, y1, -4, -3.4, M.door, nc); }
-    B(470, 474, 96, 104, -4, -1, M.brass, nc); B(432, 458, 104, 109, -4, -3.2, M.brass, nc);
-    const pn = facePlane(P, 'z+', ZF, 380, 170, .6, 26, 19, M.num); pn.receiveShadow = false;
+    B(462, 470, GY, 216, -10, 2.4, M.trim, nc); B(542, 550, GY, 216, -10, 2.4, M.trim, nc); B(462, 550, 210, 218, -10, 2.4, M.trim, nc);
+    // (the door itself, with its cat flap, is e47_windows.js)
+    const pn = facePlane(P, 'z+', ZF, 441, 170, .6, 26, 19, M.num); pn.receiveShadow = false;
     // canopy: a little gable on two brackets
-    const cy = 224; for (const x of [396, 494]) { box(x - 2, x + 2, cy - 22, cy, ZF, ZF + 22, M.trim, { parent: P, col: false }); }
-    for (const s of [-1, 1]) { const m = new THREE.Mesh(new THREE.BoxGeometry(62, 3, 34), M.shM); m.position.set(445 + s * 26, cy + 9, ZF + 16); m.rotation.z = -s * .42; m.castShadow = true; P.add(m); }
-    box(388, 502, cy - 2, cy + 3, ZF, ZF + 34, M.trim, { parent: P }); box(384, 506, cy - 6, cy - 2, ZF + 30, ZF + 35, M.trim, { parent: P, col: false });
+    const cy = 224; for (const x of [457, 555]) { box(x - 2, x + 2, cy - 22, cy, ZF, ZF + 22, M.trim, { parent: P, col: false }); }
+    for (const s of [-1, 1]) { const m = new THREE.Mesh(new THREE.BoxGeometry(62, 3, 34), M.shM); m.position.set(506 + s * 26, cy + 9, ZF + 16); m.rotation.z = -s * .42; m.castShadow = true; P.add(m); }
+    box(449, 563, cy - 2, cy + 3, ZF, ZF + 34, M.trim, { parent: P }); box(445, 567, cy - 6, cy - 2, ZF + 30, ZF + 35, M.trim, { parent: P, col: false });
     // the stoop: two steps up to the door
-    box(391, 499, GY, GY + 10, ZF, ZF + 44, M.conc, { parent: P }); box(401, 489, GY + 10, 0, ZF - 10, ZF + 24, M.conc, { parent: P });
-    box(406, 484, 0, .8, ZF - 4, ZF + 20, new THREE.MeshStandardMaterial({ color: 0x6a5a3a, roughness: 1 }), { parent: P, cast: false });
+    box(452, 560, GY, GY + 10, ZF, ZF + 44, M.conc, { parent: P }); box(462, 550, GY + 10, 0, ZF - 10, ZF + 24, M.conc, { parent: P });
+    box(467, 545, 0, .4, ZF - 4, ZF + 20, new THREE.MeshStandardMaterial({ color: 0x6a5a3a, roughness: 1 }), { parent: P, cast: false, col: false });
     // a lamp beside the door
-    box(506, 514, 168, 196, ZF, ZF + 3, M.dark, { parent: P, col: false }); const lamp = new THREE.Mesh(new THREE.CylinderGeometry(4, 5, 14, 12), M.glassD); lamp.position.set(510, 186, ZF + 8); P.add(lamp); box(504, 516, 194, 197, ZF + 2, ZF + 14, M.dark, { parent: P, col: false });
+    box(567, 575, 168, 196, ZF, ZF + 3, M.dark, { parent: P, col: false }); const lamp = new THREE.Mesh(new THREE.CylinderGeometry(4, 5, 14, 12), M.glassD); lamp.position.set(571, 186, ZF + 8); P.add(lamp); box(565, 577, 194, 197, ZF + 2, ZF + 14, M.dark, { parent: P, col: false });
     // pots of lavender on the stoop
     const potM = new THREE.MeshStandardMaterial({ color: 0xb8643a, roughness: .9 }), stM = new THREE.MeshStandardMaterial({ color: 0x5a7a4a }), lvM = new THREE.MeshStandardMaterial({ color: 0x8a6ad0, roughness: .8 }), stG = new THREE.CylinderGeometry(.4, .4, 20, 4), lvG = new THREE.SphereGeometry(1.6, 6, 4);
-    for (const x of [394, 496]) { cyl(x, ZF + 34, 8, GY + 10, GY + 26, potM, { parent: P, seg: 16 }); for (let i = 0; i < 7; i++) { const m = new THREE.Mesh(stG, stM); m.position.set(x + R(-5, 5), GY + 36, ZF + 34 + R(-5, 5)); m.rotation.set(R(-.25, .25), 0, R(-.25, .25)); P.add(m); const fl = new THREE.Mesh(lvG, lvM); fl.position.set(m.position.x, GY + 46, m.position.z); fl.scale.y = 2.2; P.add(fl); } } }
+    for (const x of [455, 557]) { cyl(x, ZF + 34, 8, GY + 10, GY + 26, potM, { parent: P, seg: 16 }); for (let i = 0; i < 7; i++) { const m = new THREE.Mesh(stG, stM); m.position.set(x + R(-5, 5), GY + 36, ZF + 34 + R(-5, 5)); m.rotation.set(R(-.25, .25), 0, R(-.25, .25)); P.add(m); const fl = new THREE.Mesh(lvG, lvM); fl.position.set(m.position.x, GY + 46, m.position.z); fl.scale.y = 2.2; P.add(fl); } } }
   // ---- the back door from outside: its surround, a step down to the patio, a canopy and a lamp ----
   { const B = faceBox(P, 'z-', -632);
     B(640, 646, GY, 215, -8, 2.4, M.trim, nc); B(734, 740, GY, 215, -8, 2.4, M.trim, nc); B(640, 740, 209, 215, -8, 2.4, M.trim, nc);
@@ -193,6 +197,8 @@ function buildHouseOutside(P) {
     B(140, 146, 34, 40, 0, 8, M.brass, nc); }
   // remember the painted views the living room and her bedroom have outside their windows: they hide from outside
   OUT.backdropsWanted = true;
+  // windows that open, the front door and its cat flap, the light well's drainpipe (e47_windows.js)
+  buildWindows(P);
 }
 
 // ---------- the garden ----------
@@ -208,21 +214,21 @@ function buildGarden() {
   box(-330, 912, GY - 10, GY, 262, 646, M.grass, { uv: 90, cast: false }); box(912, 1460, GY - 10, GY, 312, 646, M.drive, { uv: 160, cast: false });
   box(912, 1460, GY, GY + 200, 312, 314, M.trim, nc); for (let y = GY + 40; y < GY + 200; y += 40) box(912, 1460, y - 1, y + 1, 314, 315, new THREE.MeshStandardMaterial({ color: 0xc8c8c4, roughness: .6 }), nc);
   wbox(912, 1460, GY + 200, GY + 290, 312, 318, M.sid, { col: false });
-  for (let z = 306; z < 626; z += 32) box(413, 477, GY, GY + .35, z, z + 28, M.paver, { uv: 64, cast: false, col: false });
+  for (let z = 306; z < 626; z += 32) box(474, 538, GY, GY + .35, z, z + 28, M.paver, { uv: 64, cast: false, col: false });
   // ---- fences: back and west tall timber, behind the garage; the front a tall hedge with a gate and the driveway's gate ----
   const fenceRun = (x0, x1, z0, z1) => { box(x0, x1, GY, GY + 172, z0, z1, M.fence, { uv: 60 }); const alongX = x1 - x0 > z1 - z0;
     for (let a = alongX ? x0 : z0; a < (alongX ? x1 : z1); a += 120) alongX ? box(a, a + 7, GY, GY + 180, z0 - 2, z1 + 2, M.fence, nc) : box(x0 - 2, x1 + 2, GY, GY + 180, a, a + 7, M.fence, nc); };
   fenceRun(-646, 1460, -966, -960); fenceRun(-646, -640, -960, 640); fenceRun(1452, 1460, -960, -440);
-  box(-646, 400, GY, GY + 168, 626, 648, M.hedge, { uv: 70 }); box(490, 912, GY, GY + 168, 626, 648, M.hedge, { uv: 70 });
-  for (const [x0, x1] of [[-646, 400], [490, 912]]) box(x0 + 2, x1 - 2, GY + 168, GY + 174, 628, 646, M.hedge, { uv: 70, col: false });
+  box(-646, 461, GY, GY + 168, 626, 648, M.hedge, { uv: 70 }); box(551, 912, GY, GY + 168, 626, 648, M.hedge, { uv: 70 });
+  for (const [x0, x1] of [[-646, 461], [551, 912]]) box(x0 + 2, x1 - 2, GY + 168, GY + 174, 628, 646, M.hedge, { uv: 70, col: false });
   // (leaves on both faces and the top, so it reads as a hedge, not a green wall)
-  { const segs = [[-646, 400], [490, 912]], N = 1500, hl = new THREE.InstancedMesh(new THREE.PlaneGeometry(22, 22), M.leaf, N), ho = new THREE.Object3D(); let k = 0;
+  { const segs = [[-646, 461], [551, 912]], N = 1500, hl = new THREE.InstancedMesh(new THREE.PlaneGeometry(22, 22), M.leaf, N), ho = new THREE.Object3D(); let k = 0;
     while (k < N) { const sg = segs[k % 2 ? 1 : 0], x = R(sg[0], sg[1]), side = R(0, 1); let y, z;
       if (side < .42) { y = R(GY + 4, GY + 170); z = 626 + R(-2.5, 1.5); } else if (side < .84) { y = R(GY + 4, GY + 170); z = 648 + R(-1.5, 2.5); } else { y = GY + 171 + R(-1, 3); z = R(626, 648); }
       ho.position.set(x, y, z); ho.rotation.set(R(-1.2, 1.2), R(-1.2, 1.2), R(0, 6.28)); ho.scale.setScalar(R(.7, 1.15)); ho.updateMatrix(); hl.setMatrixAt(k++, ho.matrix); }
     hl.receiveShadow = true; LV.add(hl); }
-  { box(400, 404, GY, GY + 176, 630, 644, M.trim); box(486, 490, GY, GY + 176, 630, 644, M.trim);          // the front gate: white pickets, latched
-    box(404, 486, GY + 2, GY + 150, 635, 639, M.trim); for (let x = 406; x < 484; x += 8) box(x, x + 5, GY + 150, GY + 162, 635.5, 638.5, M.trim, nc); }
+  { box(461, 465, GY, GY + 176, 630, 644, M.trim); box(547, 551, GY, GY + 176, 630, 644, M.trim);          // the front gate: white pickets, latched
+    box(465, 547, GY + 2, GY + 150, 635, 639, M.trim); for (let x = 467; x < 545; x += 8) box(x, x + 5, GY + 150, GY + 162, 635.5, 638.5, M.trim, nc); }
   { box(912, 1452, GY, GY + 4, 634, 642, M.dark); box(912, 1452, GY + 150, GY + 156, 634, 642, M.dark, nc);         // the driveway's sliding gate
     box(912, 1452, GY + 4, GY + 150, 636, 640, new THREE.MeshStandardMaterial({ ...genWood([120, 96, 72], [70, 54, 40], 581, 14), roughness: .85 }), { uv: 60 }); for (const x of [912, 1180, 1446]) box(x, x + 6, GY, GY + 160, 632, 644, M.dark, nc); }
   // ---- paths: stepping stones down the west side and along the back, the patio at the back door ----
@@ -324,11 +330,11 @@ function outsideTick(dt) {
   if (!WORLD) return;
   if (OUT.backdropsWanted && !OUT.inited) { OUT.inited = true; const K = kitchenMats(); ZONES.kitchen.lv.traverse(m => { if (m.isMesh && m.material === K.dusk && m.position.z > 300) OUT.backdrops.push(m); }); }
   const inside = camera.position.z < 250; for (const m of OUT.backdrops) m.visible = inside;
-  outFlapTick(dt);
+  outFlapTick(dt); windowsTick(dt);
 }
 
 // ---------- the garden as a place ----------
-const GQ = [{ t: '屋外：搵路返入屋', s: '後門底有個貓門，可以鑽返入洗衣間。沿住屋邊行，前院後園都去得' }];
+const GQ = [{ t: '屋外：搵路返入屋', s: '前門同後門底都有貓門，鑽得返入屋。開咗嘅窗都爬得返入去' }];
 LEVELS.garden = {
   chapter: '第一章', title: '屋企', room: '屋外', house: true, env: 'yard', envI: DAY ? 1 : .5, fog: DAY ? [0xbcd0e2, .00014] : [0x0e1626, .0004], expo: DAY ? .95 : 1.35, bloom: DAY ? [.3, 2.4] : null,
   dust: { N: 0 }, toys: true, npcNear: false, build: buildGarden,
@@ -347,7 +353,7 @@ LEVELS.garden = {
     if (!OUT.said.side && L.pos.x < -330 && L.pos.z < 0 && L.pos.z > -400) { OUT.said.side = 1; say('老友', '呢邊冷氣機好大部！', '#d9a675', 2.4); }
   },
   win() { }, reset() { }, onSwitch() { },
-  marker() { return NET.on ? mpMarker() : OUT.flapP; },
+  marker() { if (NET.on) return mpMarker(); const L = leader, f = V3(506, 0, 262); return L && L.pos.distanceTo(f) < L.pos.distanceTo(OUT.flapP) ? f : OUT.flapP; },
   eyeText: () => '屋外——冇人望到你',
-  hint(L) { if (Math.hypot(L.pos.x - 690, L.pos.z + 640) < 50) return '鑽貓門返入洗衣間'; return ''; }
+  hint(L) { if (Math.hypot(L.pos.x - 690, L.pos.z + 640) < 50) return '鑽貓門返入洗衣間'; if (Math.hypot(L.pos.x - 506, L.pos.z - 275) < 45) return '鑽前門貓門返入客廳'; if (Math.hypot(L.pos.x + 300, L.pos.z + 646) < 26 || Math.hypot(L.pos.x - 754, L.pos.z + 646) < 26) return '抱住去水管爬上屋後嘅斜屋頂'; return ''; }
 };

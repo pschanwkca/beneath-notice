@@ -1,0 +1,10 @@
+[{"evalFile":"shothelp.js"},{"evalFile":"roof_h.js"},{"evalFile":"vent_h.js"},
+ {"eval": "(async()=>{ const b=window.__bn; window.__NODET=true; document.getElementById('chaps').hidden=true; await b.startChapter2(); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(10); return [b.LEVEL, b.state, Object.keys(b.WIN.L)]; })()"},
+ {"eval": "(()=>{ const R=window.__R, b=window.__bn; R.put(715, 101, 222); b.step(10); const L=b.leader; const near = b.hxNear(L); b.press('KeyE'); b.step(1); b.step(90); const W=b.WIN.L.win_l; return { near: near && near.id, on: W.o.on, a: +W.a.toFixed(2), col: W.ci.y0, ext: W.ext && W.ext.col.y0 }; })()"},
+ {"eval": "window.__S.hud(false); window.__S.abs([830, 150, 420],[740, 140, 250])"},{"frame":1},{"frame":1},{"frame":1,"shot":"win_lout"},
+ {"eval": "window.__S.abs([780, 150, 120],[740, 140, 250])"},{"frame":1},{"frame":1},{"frame":1,"shot":"win_lin"},
+ {"eval": "(()=>{ const R=window.__R, b=window.__bn; window.__S.game(); R.put(735, 101, 222); b.step(5); const r = window.__V.go([[735,240],[735,300],[735,380]], 1200, 30); return [r.reached, r.end, b.LEVEL, b.W.WC.cz.id, r.log.slice(0,12)]; })()"},
+ {"eval": "(()=>{ const R=window.__R, b=window.__bn; R.put(506, -19, 330); b.step(5); const r = window.__V.go([[506,300],[506,270],[506,240],[506,200]], 1400, 30); return [r.reached, r.end, b.LEVEL, b.W.WC.cz.id, r.log.slice(0,14)]; })()"},
+ {"eval": "(()=>{ const R=window.__R, b=window.__bn; window.__S.hud(false); R.put(506, 1, 160); R.face(0,1); b.step(60); return b.info().pos; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"door_in"},
+ {"eval": "(()=>{ const R=window.__R, b=window.__bn; R.put(506, -19, 380); R.face(0,-1); b.step(60); return b.info().pos; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"door_out"}
+]
