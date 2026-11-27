@@ -1124,6 +1124,8 @@ Object.assign(I18N_EN, {"後門底有個貓門——鑽出去就係屋外花園"
 Object.assign(I18N_EN, {"搭建屋外花園…": "Building the garden…"});
 Object.assign(I18N_EN, {"客廳窗閂": "Living-room window latch", "睡房窗閂": "Bedroom window latch", "廚房窗閂": "Kitchen window latch", "閂窗": "Shut the window", "推開窗": "Push the window open", "窗推開咗——出面係天井": "The window's open — the light well's outside", "窗推開咗——小心，出面好高": "The window's open — careful, it's a long way down", "前門底有個貓門——鑽出去係前院": "There's a cat flap at the bottom of the front door — through it is the front garden", "窗台上有個窗閂——爬上窗簾，推開佢就出得去": "There's a latch on the windowsill — climb the curtains and push it to get out", "鑽前門貓門返入客廳": "Through the front door's cat flap, back into the living room", "抱住去水管爬上屋後嘅斜屋頂": "Hug the downpipe and climb up onto the back roof", "前門同後門底都有貓門，鑽得返入屋。開咗嘅窗都爬得返入去": "The front and back doors both have cat flaps to get back in. An open window works too", "窗開咗": "A window's open", "咦，窗怎麼開了？": "Huh, why is the window open?", "風好大……誰開了窗？": "So windy… who opened the window?", "窗又開着……": "The window's open again…"});
 Object.assign(I18N_EN, {"窗座上面有個窗閂——推開就出得去（好高，跌落前院花槽）": "There's a latch above the window seat — push it and you can get out (it's high: you'll land in the front flower bed)"});
+Object.assign(I18N_EN, {"花槽底呢條舊去水渠……個方向係入返牆身——前拍檔屋企頂嗰度。": "This old drain pipe under the planter… it heads back into the wall — up to the top of my old partner's place.", "爬上花槽嘅磚牆，鑽入舊去水渠——通去牆身入面": "Climb the planter's brickwork into the old drain pipe — it leads inside the wall"});
+Object.assign(I18N_EN, {"喺坑渠度跳落去就係屋後嘅斜屋頂——條去水管可以爬返上嚟": "Drop from the gutter here onto the lean-to roof at the back — the downpipe climbs back up", "跌咗落花園……冇事冇事。斜屋頂嗰條去水管可以爬返上屋頂。": "Fell into the garden… we're fine. The downpipe on the lean-to roof climbs back up to the roof.", "上到斜屋頂……嗰條去水管一直通上大屋屋頂嘅坑渠。": "Up on the lean-to roof… that downpipe goes all the way up to the main roof's gutter.", "抱住去水管爬上大屋屋頂——到頂伸手捉住坑渠邊": "Hug the downpipe and climb to the main roof — at the top, reach round the gutter's lip"});
 
 // =====================================================================
 //  Language: 中文 (default) or English.  ?lang=en / ?lang=zh in the address, or the button on the title
@@ -5927,7 +5929,7 @@ function buildHub() {
   // the last ledge reaches out under the gap; from it, climb the board on the gap's edge up into the crawlspace
   box(0, 40, 306, 310, -28, -4, K.stud, { uv: 60 }); box(0, 2.5, 310, 340, -17, -3, K.stud, { uv: 30 });
   // kitchen gap at the top (warm light leaking in)
-  const glow = mesh(new THREE.PlaneGeometry(40, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffc890).multiplyScalar(1.6) }), 20, 353, -6, { cast: false }); glow.rotation.x = Math.PI / 2;
+  const glow = mesh(new THREE.PlaneGeometry(40, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffc890).multiplyScalar(1.6) }), 20, 353, -6, { cast: false }); glow.rotation.x = Math.PI / 2; STATIC.hubGlow = glow;
   // copper pipe running up through the gap: grab it from the top ledge and climb out
   cyl(40, 23, 2.6, 4, 330, M.copper, { seg: 20 });
   tubeM([[-60, 4, 20], [-58, 120, 22], [-62, 240, 20], [-60, 330, 21]], .7, M.rubber); tubeM([[-50, 4, 22], [-46, 160, 24], [-52, 330, 23]], .55, M.paintRed);
@@ -5951,7 +5953,7 @@ function buildHub() {
   const stamp = mesh(new THREE.PlaneGeometry(6, 7), MAT.photo, -79.7, 14, -14, { cast: false }); stamp.rotation.y = Math.PI / 2;
   // lights
   LV.add(new THREE.HemisphereLight(0x6a5a4c, 0x2a1e16, 1.0));
-  spotL(0xffc890, 90000, V3(20, 352, -6), V3(0, 0, -4), .45, .6, 1024, 6, 600);
+  { const s = spotL(0xffc890, 1700, V3(20, 352, -6), V3(0, 0, -4), .45, .6, 1024, 6, 600); s.decay = 1.3; }   // (a gentler falloff: still warm on the floor, no longer blinding on the top ledge)
   addBeam(0xffc890, V3(20, 330, -8), V3(0, 4, 0), .2, .07);
   addBeam(0xffb070, V3(-28, 10, -8), V3(-28, 4, 2), .9, .02);
   STATIC.hubTop = V3(20, 341, -6);
@@ -6038,7 +6040,8 @@ function buildKitchen() {
   // behind the mouse hole: a crawl tunnel, then a small chamber over the gap that drops into the wall cavity
   // (the cavity's top board is the floor here; the copper pipe sticks up through the gap)
   box(-344, -312, 0, 18, -114, -110, K.stud); box(-344, -312, 0, 18, -90, -86, K.stud); box(-344, -312, 15, 18, -110, -90, K.stud);
-  box(-428, -424, 0, 24, -124, -76, K.stud); box(-428, -340, 0, 24, -124, -120, K.stud); box(-428, -340, 0, 24, -80, -76, K.stud);
+  box(-428, -424, 0, 24, -124, -107.4, K.stud); box(-428, -424, 0, 24, -92.6, -76, K.stud); box(-428, -424, 14.5, 24, -107.4, -92.6, K.stud);   // (a gap in the far end: the old drain pipe from the garden comes in there)
+  box(-428, -340, 0, 24, -124, -120, K.stud); box(-428, -340, 0, 24, -80, -76, K.stud);
   box(-344, -340, 0, 24, -120, -110, K.stud); box(-344, -340, 0, 24, -90, -80, K.stud); box(-344, -340, 15, 24, -110, -90, K.stud);
   box(-428, -340, 20, 24, -124, -76, K.stud);
   // online games don't go down there: a grate covers the gap
@@ -11685,7 +11688,7 @@ function portalResumeLand(S) {
 // who joined or dropped, how good each link is, frame rate, rescues and errors. One tap copies it as
 // plain text that a player can paste into a chat and send in.
 const NLOG = { t0: performance.now(), lines: [], fps: 0, sumT: 0, mode: '', lv: '', peer: {} };
-const NLOG_BUILD = '20261127-1427';
+const NLOG_BUILD = '20261127-1514';
 function nlog(s) {
   const d = new Date(), p2 = n => String(n).padStart(2, '0');   // the clock time, so "it broke around 9:30" can be matched
   NLOG.lines.push(`${p2(d.getHours())}:${p2(d.getMinutes())}:${p2(d.getSeconds())}  ${s}`); if (NLOG.lines.length > 500) NLOG.lines.splice(0, NLOG.lines.length - 500);
@@ -12833,7 +12836,7 @@ function buildHouseShell() {
     box(a0, a1, E - 14, E, b1, b1 + 3, trim, o); box(a0, 724, E - 14, E, b0 - 3, b0, trim, o); box(924, a1, E - 14, E, b0 - 3, b0, trim, o); box(a0 - 3, a0, E - 14, E, b0, b1, trim, o); box(a1, a1 + 3, E - 14, E, b0, b1, trim, o);   // (the back one stops for the stair tower)
     box(a0, a1, E - 14, E - 12, 262, b1, soffit, o); box(a0, 724, E - 14, E - 12, b0, -262, soffit, o); box(924, a1, E - 14, E - 12, b0, -262, soffit, o); box(912, a1, E - 14, E - 12, -262, 262, soffit, o);
     // gutter along the front
-    box(a0, a1, E - 16, E - 6, b1 + 3, b1 + 11, gutM, o);
+    box(a0, a1, E - 16, E - 6, b1 + 3, b1 + 11, gutM, o); gutTop(a0, a1, E - 6, b1 + 3, b1 + 11, P);
     // the upper east wall that stands clear of the garage roof, with two windows (blinds half down)
     box(913, 921, 260, W, -262, 104, sidingU, { ...o, uv: 120 }); box(913, 921, 260, W, 136, 262, sidingU, { ...o, uv: 120 }); box(913, 921, 300, W, 104, 136, sidingU, { ...o, uv: 120 });   // (the ceiling duct goes through it into the garage attic)
     const glass = new THREE.MeshPhysicalMaterial({ color: 0x5a6e84, roughness: .06, metalness: .2, clearcoat: 1 }), blind = new THREE.MeshStandardMaterial({ color: 0xece4d2, roughness: .8 });
@@ -12864,7 +12867,7 @@ function buildHouseShell() {
     box(x0, x1, E - 14, E, z1, z1 + 3, trim, o); box(x0, x1, E - 14, E, z0 - 3, z0, trim, o);
     box(x0, x1, E - 14, E - 12, 312, z1, soffit, o); box(x0, x1, E - 14, E - 12, z0, -270, soffit, o);
     // gutters front and back, and a downpipe down the yard-side front corner
-    box(x0, x1, E - 16, E - 6, z1 + 3, z1 + 11, gutM, o); box(x0, x1, E - 16, E - 6, z0 - 11, z0 - 3, gutM, o);
+    box(x0, x1, E - 16, E - 6, z1 + 3, z1 + 11, gutM, o); box(x0, x1, E - 16, E - 6, z0 - 11, z0 - 3, gutM, o); gutTop(x0, x1, E - 6, z1 + 3, z1 + 11, P); gutTop(x0, x1, E - 6, z0 - 11, z0 - 3, P);
     cyl(1470, 337, 3.4, GY + 10, E - 10, gutM, { ...o, seg: 12 }); box(1462, 1478, GY, GY + 6, 330, 352, gutM, o);
     for (const y of [60, 160]) box(1466, 1474, y, y + 3, 331, 339, gutM, o);
   }
@@ -15080,7 +15083,7 @@ function buildRoof() {
   const solid = (x0, x1, y0, y1, z0, z1, o = {}) => { const c = { t: 'b', x0, x1, y0, y1, z0, z1, ...o }; cols.push(c); return c; };
   // eaves: fascia boards with the soffit behind them (ledges you can climb up onto), the front gutter
   solid(912, 943, H.E - 14, H.E, -290, 290); solid(H.a0, H.a1, H.E - 14, H.E, 262, 293); solid(H.a0, 724, H.E - 14, H.E, -293, -262); solid(924, H.a1, H.E - 14, H.E, -293, -262); solid(H.a0 - 3, -330, H.E - 14, H.E, -290, 290);
-  solid(H.a0, H.a1, H.E - 16, H.E - 6, 293, 301);
+  solid(H.a0, H.a1, H.E - 16, H.E - 6, 293, 301); solid(H.a0, 724, H.E - 16, H.E - 6, -302.6, -293);   // (the front gutter, the back one: you can walk along in them; the back one a touch deeper than drawn, so climbing up the downpipe under it you reach round its lip)
   solid(G.x0, G.x1, G.E - 14, G.E, G.z1, G.z1 + 3); solid(G.x0, G.x1, G.E - 14, G.E, G.z0 - 3, G.z0);
   solid(G.x0, G.x1, G.E - 16, G.E - 6, G.z1 + 3, G.z1 + 11); solid(G.x0, G.x1, G.E - 16, G.E - 6, G.z0 - 11, G.z0 - 3);
   // the chimney (brick: a good climb), its cap and pots
@@ -15473,9 +15476,10 @@ LEVELS.roof = {
     RF.bird.on = false; RF.bird.state = 'off'; RF.bird.held = null; RF.said = {}; RF.via = prev === 'garage' ? 'g' : '';
     // (up from the garage: the way out is the garage roof's vent; fall off, and you're back on the garage roof)
     if (RF.via) { setQuest(1); cp = 5; setTimeout(() => { if (STATE === 'play' && LEVEL === 'roof') say(TR('爸爸'), TR('車房閣樓……通風口嗰度有光。爬上去就出到屋頂。'), '#f5f0e6', 3.2); }, 500); }
+    if (prev === 'garden') cp = 2;   // (up the downpipe from the lean-to: already outside, on the roof)
     if (prev === 'kitchen') { setTimeout(() => say(TR('爸爸'), TR('閣樓……我啲舊嘢都擺喺度。'), '#f5f0e6', 3), 900); setTimeout(() => say(TR('爸爸'), TR('通風口嗰邊有光——由嗰度出得去屋頂。'), '#f5f0e6', 3.4), 4400); }
   },
-  keep(id) { return id === 'yard' || id === 'road' || id === 'garden'; },   // falling off the edge doesn't start the next chapter: you're put back on the roof
+  keep(id) { return id === 'yard' || id === 'road'; },   // falling off over the yard or the street doesn't start the next chapter: you're put back on the roof (off into the garden, you're in the garden: the downpipe from the lean-to climbs back up)
   detect: detectRoof,
   update(dt) {
     lvT += dt; const L = leader; if (NET.on || STATE !== 'play') return;
@@ -15499,7 +15503,7 @@ LEVELS.roof = {
   },
   reset() { const B = RF.bird; if (B && B.on) { B.held = null; B.state = 'circle'; B.cool = 4; } },
   eyeText: () => { const B = RF.bird; if (!B || !B.on) return ''; if (B.state === 'swoop') return TR('佢衝落嚟喇！躲入通風口個罩底！'); if (B.held) return TR('俾喜鵲擔走緊……'); return meter > .3 ? TR('喜鵲望緊你！快啲躲') : B.state === 'perch' ? TR('喜鵲喺佢個竇度四圍望') : TR('喜鵲喺上面兜圈——唔好俾佢見到'); },
-  hint(L) { if ((quest === 4 || quest === 2 && RF.via) && Math.abs(L.pos.x - 924) < 30 && Math.abs(L.pos.z - RFG.zm) < 50) return TR('長春藤架可以爬上爬落'); return ''; },
+  hint(L) { if ((quest === 4 || quest === 2 && RF.via) && Math.abs(L.pos.x - 924) < 30 && Math.abs(L.pos.z - RFG.zm) < 50) return TR('長春藤架可以爬上爬落'); if (L.pos.z < -290 && L.pos.y > 520 && L.pos.y < 536 && L.pos.x < 724) return TR('喺坑渠度跳落去就係屋後嘅斜屋頂——條去水管可以爬返上嚟'); return ''; },
   onSwitch() { }
 };
 function rfPutBack() {
@@ -16141,6 +16145,14 @@ function wbox(x0, x1, y0, y1, z0, z1, mat, o = {}) {
   if (o.col !== false) cols.push({ t: 'b', x0, x1, y0, y1, z0, z1, m });
   return m;
 }
+// the open top of a gutter (drawn as a solid box): a dark channel inset along it, a few dead leaves lying in it
+let GUT_TOP = null;
+function gutTop(x0, x1, y, z0, z1, P) {
+  if (!GUT_TOP) { const sh = new THREE.Shape(); sh.moveTo(0, -2.2); sh.quadraticCurveTo(1.5, -.2, 0, 2.2); sh.quadraticCurveTo(-1.5, -.2, 0, -2.2);
+    GUT_TOP = { ch: new THREE.MeshStandardMaterial({ color: 0x4a4c48, roughness: .5 }), lf: [0x7a5a32, 0x8f6a3a, 0x5f5530].map(c => new THREE.MeshStandardMaterial({ color: c, roughness: .9, side: THREE.DoubleSide })), g: new THREE.ShapeGeometry(sh, 4) }; }
+  box(x0 + 1.2, x1 - 1.2, y, y + .12, z0 + 1.3, z1 - 1.3, GUT_TOP.ch, { parent: P, col: false, cast: false });
+  for (let x = x0 + R(4, 20); x < x1 - 4; x += R(14, 46)) { const m = new THREE.Mesh(GUT_TOP.g, GUT_TOP.lf[(x * 7 | 0) % 3]); m.rotation.set(-Math.PI / 2 + R(-.2, .2), 0, R(0, 6.3)); m.scale.setScalar(R(.8, 1.2)); m.position.set(x, y + .2, R(z0 + 2.5, z1 - 2.5)); P.add(m); }
+}
 // a wall with rectangular openings: along x (z0…z1 thick) or along z (x0…x1 thick); holes [a0, a1, y0, y1]
 function wallHoles(alongX, a0, a1, y0, y1, t0, t1, holes, mat, P) {
   const xs = [...new Set([a0, a1, ...holes.flatMap(h => [h[0], h[1]])])].filter(v => v >= a0 && v <= a1).sort((p, q) => p - q);
@@ -16186,7 +16198,7 @@ function buildHouseOutside(P) {
   const M = OUT.M || (OUT.M = outMats()); const W0 = -330, W1 = 912, ZF = 262, ZB = -262, WT = 526, nc = { col: false };
   // ---- main block: front, west and the back above the extension ----
   wallHoles(true, W0, W1, GY, WT, ZF - 10, ZF, [[470, 542, GY, 212], [700, 850, 100, 210], [574, 666, 340, 450], [-240, -140, 100, 210], [40, 140, 100, 210], [-240, -140, 340, 450], [40, 140, 340, 450]], M.sid, P);
-  wallHoles(false, ZB, ZF - 10, GY, WT, W0, W0 + 10, [[-150, -50, 340, 450], [70, 170, 340, 450]], M.sid, P);
+  wallHoles(false, ZB, ZF - 10, GY, WT, W0, W0 + 10, [[-150, -50, 340, 450], [70, 170, 340, 450], [-114, -86, 0, 18]], M.sid, P);   // (the last: the crawl tunnel from the kitchen's mouse hole goes through it, behind the raised planter)
   wallHoles(true, W0 + 10, 728, 300, WT, ZB, ZB + 10, [[-240, -140, 360, 450], [40, 140, 360, 450]], M.sid, P);
   wbox(W0 + 10, -302, GY, 300, ZB, ZB + 10, M.sid, { parent: P });
   for (const [c, cy, w, h, k, id] of [[775, 155, 150, 110, 'sheer', 'win_l'], [620, 395, 92, 110, 'sheer', 'win_u'], [-190, 155, 100, 110, 'blind'], [90, 155, 100, 110, 'blind'], [-190, 395, 100, 110, 'blind'], [90, 395, 100, 110, 'blind']]) outWindow(P, M, 'z+', ZF, c, cy, w, h, k, id);
@@ -16221,15 +16233,23 @@ function buildHouseOutside(P) {
     box(-312, 766, outLean(-640) - 12, outLean(-640) - 3, -650, -642, M.gut, { parent: P, col: false });
     for (const x of [-300, 754]) { cyl(x, -646, 3.2, GY + 10, outLean(-640) - 8, M.gut, { parent: P, seg: 12, col: false }); box(x - 6, x + 6, GY, GY + 4, -654, -638, M.gut, { parent: P, col: false }); } }
   // ---- the main roof's back gutter (the stair tower stops it) and downpipes at the corners ----
-  { const E = 552 - 28 * RF.p; box(-358, 724, E - 16, E - 6, -301, -293, M.gut, { parent: P, col: false });
+  { const E = 552 - 28 * RF.p; box(-358, 724, E - 16, E - 6, -301, -293, M.gut, { parent: P, col: false }); gutTop(-358, 724, E - 6, -301, -293, P);
     for (const z of [-297, 297]) { cyl(-346, z, 3.4, GY + 10, E - 10, M.gut, { parent: P, seg: 12, col: false }); box(-354, -338, GY, GY + 5, z - 9, z + 9, M.gut, { parent: P, col: false }); } }
+  // ---- a downpipe from the main roof's back gutter down onto the lean-to roof (a grip: the climb from the lean-to up
+  //      to the main roof — up the pipe, round the gutter's lip, onto the eave), held off the wall by two long stays ----
+  { const E = 552 - 28 * RF.p, x = 380, z = -297, yb = outLean(z);
+    cyl(x, z, 3.2, yb + 4, E - 16, M.gut, { parent: P, seg: 12, col: false });
+    { const sh = new THREE.Mesh(new THREE.CylinderGeometry(3.2, 3.2, 10, 12), M.gut); sh.rotation.x = -.9; sh.position.set(x, yb + 3.4, z - 3.2); sh.castShadow = true; P.add(sh); }   // (the shoe at its foot)
+    cyl(x, z, 4.6, E - 20, E - 15, M.gut, { parent: P, seg: 12, col: false });                                           // (the outlet collar under the gutter)
+    for (const y of [392, 470]) { box(x - .8, x + .8, y - .8, y + .8, -294, -262, M.dark, { parent: P, col: false }); cyl(x, z, 3.9, y - 2.5, y + 2.5, M.dark, { parent: P, seg: 12, col: false }); }
+    cols.push({ t: 'b', x0: x - 3.4, x1: x + 3.4, y0: yb, y1: E - 16, z0: z - 3.4, z1: z + 3.4, grip: true }); OUT.upPipe = V3(x, yb, z); }
   // ---- white corner boards up every outside corner ----
   for (const [x, z, y0, y1, sx, sz] of [[W0, ZF, GY, WT, -1, 1], [W0, ZB, GY, WT, -1, -1], [-302, -632, GY, 282, -1, -1], [756, -632, GY, 282, 1, -1], [920, -518, GY, 552, 1, -1], [728, -518, 282, 552, -1, -1]]) {
     const o = (a, b) => [Math.min(a, b), Math.max(a, b)], [ax0, ax1] = o(x, x + sx * 1.6), [az0, az1] = o(z - sz * 7, z + sz * 1.6), [bz0, bz1] = o(z, z + sz * 1.6), [bx0, bx1] = o(x - sx * 7, x);
     box(ax0, ax1, y0, y1, az0, az1, M.trim, { parent: P, col: false }); box(bx0, bx1, y0, y1, bz0, bz1, M.trim, { parent: P, col: false }); }
   // ---- the plinth round the bottom of every outside wall ----
   const pl = (x0, x1, z0, z1) => box(x0, x1, GY, 6, z0, z1, M.plinth, { parent: P, col: false, cast: false });
-  pl(W0 - 3, 466, ZF - 2, ZF + 3); pl(546, W1, ZF - 2, ZF + 3); pl(W0 - 3, W0 + 2, ZB, ZF); pl(W0 - 3, -302, ZB - 3, ZB + 2); pl(-305, -300, -635, ZB);
+  pl(W0 - 3, 466, ZF - 2, ZF + 3); pl(546, W1, ZF - 2, ZF + 3); pl(W0 - 3, W0 + 2, ZB, -142); pl(W0 - 3, W0 + 2, -50, ZF); pl(W0 - 3, -302, ZB - 3, ZB + 2); pl(-305, -300, -635, ZB);
   pl(-305, 646, -635, -630); pl(734, 759, -635, -630); pl(754, 759, -632, -518); pl(756, 923, -521, -516); pl(918, 923, -518, -270);
   // ---- the front door: a red door in a white surround, a canopy over it, the stoop, the number, a lamp ----
   { const B = faceBox(P, 'z+', ZF);
@@ -16269,13 +16289,55 @@ function buildHouseOutside(P) {
   buildWindows(P);
 }
 
+// ---------- the raised planter against the west wall ----------
+// Herbs on top. Under it, out of sight: the top of the wall cavity (前拍檔's home), which reaches out past the house
+// wall here, and the crawl chamber behind the kitchen's mouse hole. An old clay drain pipe comes out at its west end:
+// climb the brickwork into it and it leads into that chamber — the gap down to her home, the tunnel to the kitchen.
+const PLANT = { X0: -538, X1: -330, Z0: -142, Z1: -50, TOP: 30, PZ: -100, PY: 7, PR: 9, PX0: -544, PX1: -428 };
+function buildPlanter(M, FL, ST2, SH) {
+  const { X0, X1, Z0, Z1, TOP, PZ, PY, PR, PX0, PX1 } = PLANT, nc = { col: false }, U = { uv: 90 };
+  const cap = new THREE.MeshStandardMaterial({ color: 0xb4aa9a, roughness: .9 });
+  // brick walls: the two long sides, and the west end round the pipe
+  wbox(X0, X1, GY, TOP, Z0, Z0 + 4, M.brick, U); wbox(X0, X1, GY, TOP, Z1 - 4, Z1, M.brick, U);
+  wbox(X0, X0 + 8, GY, TOP, Z0 + 4, PZ - 11, M.brick, U); wbox(X0, X0 + 8, GY, TOP, PZ + 11, Z1 - 4, M.brick, U);
+  wbox(X0, X0 + 8, GY, PY - 11, PZ - 11, PZ + 11, M.brick, U); wbox(X0, X0 + 8, PY + 11, TOP, PZ - 11, PZ + 11, M.brick, U);
+  // stone coping round the top, the soil inside (just under the coping's lip)
+  box(X0 - 3, X0 + 9, TOP, TOP + 3, Z0 - 3, Z1 + 3, cap, { uv: 40 }); box(X0 + 9, X1, TOP, TOP + 3, Z0 - 3, Z0 + 5, cap, { uv: 40 }); box(X0 + 9, X1, TOP, TOP + 3, Z1 - 5, Z1 + 3, cap, { uv: 40 });
+  box(X0 + 8, X1, TOP - 6, TOP - 1, Z0 + 4, Z1 - 4, M.soil, { uv: 40, cast: false });
+  // herbs: lavender, rosemary and thyme bushes, a few white daisies
+  for (let i = 0; i < 46; i++) { const x = R(X0 + 14, X1 - 8), z = R(Z0 + 10, Z1 - 10), h = R(8, 22); ST2.push([x, z, h, TOP - 1]); FL.push([x, TOP - 1 + h, z, R(1.6, 2.8), i % 5 ? (i % 3 ? 0x8a6ad0 : 0x9a7ae0) : 0xf4f0ea]); }
+  for (const [x, z, r] of [[-516, -122, 11], [-470, -70, 9], [-420, -118, 12], [-372, -76, 10], [-350, -120, 8]]) SH.push([x, TOP - 1 + r * .55, z, r]);
+  // moss and a damp stain under the pipe's mouth
+  { const ms = new THREE.MeshStandardMaterial({ color: 0x55702f, roughness: 1, flatShading: true }), mg = new THREE.IcosahedronGeometry(1, 0);
+    for (const [y, z, r] of [[-5, -104, 2.4], [-7, -97, 2], [-9, -101, 2.8], [-12, -95, 1.8], [-14, -106, 2.2], [-17, -99, 3], [-18, -92, 2], [-18, -110, 2.4], [-3, -111, 1.4], [-2, -90, 1.6]]) {
+      const m = new THREE.Mesh(mg, ms); m.position.set(X0 - .3, y, z); m.scale.set(.7, r * .8, r); m.rotation.x = R(0, 3); m.receiveShadow = true; LV.add(m); } }
+  { const dm = new THREE.MeshStandardMaterial({ color: 0x3e3022, roughness: .85 });
+    for (const [x, z, r] of [[X0 - 10, PZ, 9], [X0 - 18, PZ + 5, 6], [X0 - 15, PZ - 6, 5]]) { const d = new THREE.Mesh(new THREE.CircleGeometry(r, 20), dm); d.rotation.x = -Math.PI / 2; d.position.set(x, GY + .06, z); d.receiveShadow = true; LV.add(d); } }
+  // the pipe: glazed clay, its socket end sticking out of the brickwork, silt along its floor
+  { const len = PX1 - PX0, cx = (PX0 + PX1) / 2, tc = new THREE.MeshStandardMaterial({ color: 0xa65a3c, roughness: .7 }), tin = new THREE.MeshStandardMaterial({ color: 0x6e3a26, roughness: .95, side: THREE.BackSide });
+    const tube = (r, l, x, m) => { const g = new THREE.CylinderGeometry(r, r, l, 32, 1, true); g.rotateZ(Math.PI / 2); const t = new THREE.Mesh(g, m); t.position.set(x, PY, PZ); t.castShadow = true; t.receiveShadow = true; LV.add(t); return t; };
+    tube(PR + 2, len, cx, tc); tube(PR, len, cx, tin); tube(PR + 4, 7, PX0 + 3.5, tc); tube(PR + .2, 7, PX0 + 3.5, tin);
+    const ring = new THREE.Mesh(new THREE.RingGeometry(PR, PR + 4, 32), tc); ring.rotation.y = -Math.PI / 2; ring.position.set(PX0 - .01, PY, PZ); LV.add(ring);
+    const mor = new THREE.Mesh(new THREE.RingGeometry(PR + 3.8, PR + 8, 32), new THREE.MeshStandardMaterial({ color: 0x9a948a, roughness: 1 })); mor.rotation.y = -Math.PI / 2; mor.position.set(X0 - .06, PY, PZ); mor.receiveShadow = true; LV.add(mor);   // (mortared into the brickwork)
+    box(PX0, PX1, -.6, .25, PZ - 5.4, PZ + 5.4, M.soil, { uv: 30, cast: false, col: false });
+    // (inside: a flat floor, its sides and roof)
+    const bc = (y0, y1, z0, z1) => cols.push({ t: 'b', x0: PX0, x1: PX1, y0, y1, z0, z1 });
+    bc(-4, 0, PZ - 7.4, PZ + 7.4); bc(-4, PY + PR, PZ - 11, PZ - 7.4); bc(-4, PY + PR, PZ + 7.4, PZ + 11); bc(PY + 7.5, PY + 13, PZ - 11, PZ + 11); }
+  // an upturned flowerpot by the pipe's mouth (a step up), a broken half-brick
+  { const pot = new THREE.MeshStandardMaterial({ color: 0xb8643a, roughness: .9 }), g = new THREE.CylinderGeometry(6.5, 8.5, 15, 24), m = new THREE.Mesh(g, pot); m.position.set(X0 - 9, GY + 7.5, PZ - 24); m.castShadow = m.receiveShadow = true; LV.add(m);
+    cols.push({ t: 'c', x: X0 - 9, z: PZ - 24, r: 7.5, y0: GY, y1: GY + 15 });
+    const rim = new THREE.Mesh(new THREE.CylinderGeometry(9.4, 9.6, 3, 24), pot); rim.position.set(X0 - 9, GY + 1.5, PZ - 24); rim.castShadow = rim.receiveShadow = true; LV.add(rim);
+    const hole = new THREE.Mesh(new THREE.CircleGeometry(1.6, 12), M.dark); hole.rotation.x = -Math.PI / 2; hole.position.set(X0 - 9, GY + 15.02, PZ - 24); LV.add(hole);
+    const hb = new THREE.Mesh(new THREE.BoxGeometry(11, 6, 10), new THREE.MeshStandardMaterial({ color: 0x9a4632, roughness: .95 })); hb.position.set(X0 - 20, GY + 3, PZ - 38); hb.rotation.y = .5; hb.castShadow = hb.receiveShadow = true; LV.add(hb); cols.push({ t: 'c', x: X0 - 20, z: PZ - 38, r: 6, y0: GY, y1: GY + 6 }); }
+}
+
 // ---------- the garden ----------
 function buildGarden() {
   const M = OUT.M || (OUT.M = outMats()); const nc = { col: false };
   LV.add(new THREE.HemisphereLight(0xc4dcff, 0x8a8a6a, 1.6));
   { const tgt = V3(300, GY, -300); const s = spotL(0xfff0dc, 26000000, sunFrom(tgt), tgt, .64, .5, 2048, 1200, 3900); s.userData.prio = 1; OUT.sun = s; }
   // ---- the ground: lawn all round (and the neighbours' beyond the fences), a far field to the horizon ----
-  for (const [x0, x1, z0, z1] of [[-1600, -330, -1600, 1700], [-330, 1456, -1600, -632], [-330, -302, -632, -262], [756, 1456, -632, -518], [920, 1456, -518, -270], [1456, 3000, -1600, -446]]) box(x0, x1, GY - 10, GY, z0, z1, M.grass, { uv: 90, cast: false });
+  for (const [x0, x1, z0, z1] of [[-1600, -538, -1600, 1700], [-538, -330, -1600, -142], [-538, -330, -50, 1700], [-330, 1456, -1600, -632], [-330, -302, -632, -262], [756, 1456, -632, -518], [920, 1456, -518, -270], [1456, 3000, -1600, -446]]) box(x0, x1, GY - 10, GY, z0, z1, M.grass, { uv: 90, cast: false });
   { const g = new THREE.PlaneGeometry(12000, 9000); g.rotateX(-Math.PI / 2); const m = new THREE.Mesh(g, new THREE.MeshStandardMaterial({ color: 0x5f7a46, roughness: 1 })); m.position.set(-1000, GY - 1.5, -5400); LV.add(m);
     const g2 = new THREE.PlaneGeometry(4000, 9000); g2.rotateX(-Math.PI / 2); const m2 = new THREE.Mesh(g2, m.material); m2.position.set(-3600, GY - 1.5, 3500); LV.add(m2); }
   // ---- the front: lawn, the driveway up to the garage door, a path from the gate to the door ----
@@ -16301,7 +16363,10 @@ function buildGarden() {
     box(912, 1452, GY + 4, GY + 150, 636, 640, new THREE.MeshStandardMaterial({ ...genWood([120, 96, 72], [70, 54, 40], 581, 14), roughness: .85 }), { uv: 60 }); for (const x of [912, 1180, 1446]) box(x, x + 6, GY, GY + 160, 632, 644, M.dark, nc); }
   // ---- paths: stepping stones down the west side and along the back, the patio at the back door ----
   { const st = [], rs = [];
-    for (let z = 600; z > -720; z -= 34) st.push([-412 + R(-4, 4), z + R(-3, 3)]); for (let x = -380; x < 560; x += 34) st.push([x + R(-3, 3), -722 + R(-4, 4)]);
+    // (down the west side the path swings out round the raised planter, past the mouth of its drain pipe)
+    const wc = new THREE.CatmullRomCurve3([[-412, 600], [-412, 150], [-424, 70], [-490, 10], [-576, -38], [-584, -98], [-576, -158], [-490, -214], [-424, -270], [-412, -350], [-412, -720]].map(([x, z]) => V3(x, 0, z)), false, 'centripetal');
+    for (const q of wc.getSpacedPoints(Math.round(wc.getLength() / 34))) st.push([q.x + R(-3, 3), q.z + R(-3, 3)]);
+    for (let x = -380; x < 560; x += 34) st.push([x + R(-3, 3), -722 + R(-4, 4)]);
     for (const [x, z] of st) { const w = R(26, 32), d = R(20, 24); box(x - w / 2, x + w / 2, GY, GY + .35, z - d / 2, z + d / 2, M.paver, { uv: 64, cast: false, col: false }); rs.push(1); }   // (flush with the lawn: you walk on the grass)
     box(560, 840, GY, GY + .4, -796, -672, M.paver, { uv: 64, cast: false, col: false }); box(560, 840, GY, GY + .45, -798, -796, M.plinth, nc); }
   // ---- flower beds against the walls and along the back fence ----
@@ -16309,12 +16374,13 @@ function buildGarden() {
   const bed = (x0, x1, z0, z1, n, pal, shrubs = 0) => {
     box(x0, x1, GY, GY + 3, z0, z0 + 2.5, M.brick, { uv: 20 }); box(x0, x1, GY, GY + 3, z1 - 2.5, z1, M.brick, { uv: 20 }); box(x0, x0 + 2.5, GY, GY + 3, z0, z1, M.brick, { uv: 20 }); box(x1 - 2.5, x1, GY, GY + 3, z0, z1, M.brick, { uv: 20 });
     box(x0 + 2.5, x1 - 2.5, GY, GY + 1.6, z0 + 2.5, z1 - 2.5, M.soil, { uv: 40, cast: false });
-    for (let i = 0; i < n; i++) { const x = R(x0 + 5, x1 - 5), z = R(z0 + 5, z1 - 5), h = R(14, 46); ST2.push([x, z, h]); FL.push([x, GY + 1.6 + h, z, R(2.2, 4), pal[i % pal.length]]); }
+    for (let i = 0; i < n; i++) { const x = R(x0 + 5, x1 - 5), z = R(z0 + 5, z1 - 5), h = R(14, 46); ST2.push([x, z, h, GY + 1.6]); FL.push([x, GY + 1.6 + h, z, R(2.2, 4), pal[i % pal.length]]); }
     for (let i = 0; i < shrubs; i++) { const x = R(x0 + 10, x1 - 10), z = R(z0 + 8, z1 - 8), r = R(9, 18); SH.push([x, GY + r * .7, z, r]); }
   };
   const warm = [0xe85a6a, 0xf2c23a, 0xff8a3a, 0xf4f0ea, 0xd85a9a], cool = [0x8a6ad0, 0x5a7ad8, 0xf4f0ea, 0xc8a0e8];
-  bed(-374, -333, -250, 250, 70, warm, 8); bed(-290, 550, -678, -636, 90, cool, 10); bed(-300, 380, 265, 300, 50, warm, 6); bed(510, 890, 265, 300, 40, cool, 5);
-  bed(-450, 1430, -956, -912, 110, [...warm, ...cool], 28); bed(-636, -596, -780, 600, 50, cool, 24);
+  bed(-374, -333, -250, -152, 16, warm, 2); bed(-374, -333, -40, 250, 44, warm, 5); bed(-290, 550, -678, -636, 90, cool, 10); bed(-300, 380, 265, 300, 50, warm, 6); bed(510, 890, 265, 300, 40, cool, 5);
+  bed(-450, 1430, -956, -912, 110, [...warm, ...cool], 28); bed(-636, -596, -780, -230, 20, cool, 10); bed(-636, -596, 30, 600, 22, cool, 11);
+  buildPlanter(M, FL, ST2, SH);
   // ---- things in the garden ----
   // wheelie bins by the side of the house (green and blue), climbable
   for (const [x, c] of [[-560, 0x2f6a3a], [-504, 0x2f4f8a]]) { box(x - 23, x + 23, GY + 6, GY + 100, -600, -556, new THREE.MeshStandardMaterial({ color: c, roughness: .6 })); box(x - 25, x + 25, GY + 100, GY + 106, -604, -554, new THREE.MeshStandardMaterial({ color: c, roughness: .5 }));
@@ -16348,11 +16414,11 @@ function buildGarden() {
   leaves.castShadow = true; leaves.receiveShadow = true; LV.add(leaves);
   // ---- flowers and shrubs (instanced) ----
   { const sg = new THREE.CylinderGeometry(.35, .45, 1, 4); sg.translate(0, .5, 0); const stems = new THREE.InstancedMesh(sg, new THREE.MeshStandardMaterial({ color: 0x4a7a32, roughness: .8 }), ST2.length);
-    ST2.forEach(([x, z, h], i) => { o.position.set(x, GY + 1.6, z); o.rotation.set(R(-.12, .12), 0, R(-.12, .12)); o.scale.set(1, h, 1); o.updateMatrix(); stems.setMatrixAt(i, o.matrix); }); LV.add(stems);
+    ST2.forEach(([x, z, h, y0], i) => { o.position.set(x, y0, z); o.rotation.set(R(-.12, .12), 0, R(-.12, .12)); o.scale.set(1, h, 1); o.updateMatrix(); stems.setMatrixAt(i, o.matrix); }); LV.add(stems);
     const bl = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), new THREE.MeshStandardMaterial({ roughness: .7 }), FL.length), col = new THREE.Color();
     FL.forEach(([x, y, z, r, c], i) => { o.position.set(x, y, z); o.rotation.set(0, 0, 0); o.scale.set(r, r * .7, r); o.updateMatrix(); bl.setMatrixAt(i, o.matrix); bl.setColorAt(i, col.setHex(c)); }); bl.castShadow = true; LV.add(bl);
     const sh = new THREE.InstancedMesh(new THREE.IcosahedronGeometry(1, 1), new THREE.MeshStandardMaterial({ color: 0x3f6a32, roughness: .9, flatShading: true }), SH.length);
-    SH.forEach(([x, y, z, r], i) => { o.position.set(x, y, z); o.rotation.set(R(0, 3), R(0, 3), 0); o.scale.set(r, r * .75, r); o.updateMatrix(); sh.setMatrixAt(i, o.matrix); if (r > 13) cols.push({ t: 'c', x, z, r: r * .8, y0: GY, y1: y + r * .6 }); }); sh.castShadow = true; sh.receiveShadow = true; LV.add(sh); }
+    SH.forEach(([x, y, z, r], i) => { o.position.set(x, y, z); o.rotation.set(R(0, 3), R(0, 3), 0); o.scale.set(r, r * .75, r); o.updateMatrix(); sh.setMatrixAt(i, o.matrix); if (r > 13) cols.push({ t: 'c', x, z, r: r * .8, y0: y - r * .7, y1: y + r * .6 }); }); sh.castShadow = true; sh.receiveShadow = true; LV.add(sh); }
   // ---- the neighbours' houses beyond the fences ----
   const nHouse = (x0, x1, z0, z1, top, sid, roofM, wins) => {
     box(x0, x1, GY, top, z0, z1, sid, { uv: 120 }); box(x0 - 3, x1 + 3, GY, GY + 22, z0 - 3, z1 + 3, M.plinth, nc);
@@ -16398,6 +16464,8 @@ function outsideTick(dt) {
   if (!WORLD) return;
   if (OUT.backdropsWanted && !OUT.inited) { OUT.inited = true; const K = kitchenMats(); ZONES.kitchen.lv.traverse(m => { if (m.isMesh && m.material === K.dusk && m.position.z > 300) OUT.backdrops.push(m); }); }
   const inside = camera.position.z < 250; for (const m of OUT.backdrops) m.visible = inside;
+  // the warm glow painted over the gap at the top of 前拍檔's wall is for looking up at from her home, not from the chamber above it
+  if (STATIC.hubGlow) STATIC.hubGlow.visible = camera.position.y < HO.y + 335;
   outFlapTick(dt); windowsTick(dt);
 }
 
@@ -16410,7 +16478,8 @@ LEVELS.garden = {
   quests: GQ,
   enter(prev, again) {
     if (again || NET.on) return;
-    setTimeout(() => { if (STATE === 'play' && LEVEL === 'garden') say(TR('爸爸'), TR('出咗屋外……好大陣風。沿住屋邊行吓，記得由後門個貓門返入去。'), '#f5f0e6', 3.6); }, 600);
+    const line = prev === 'roof' ? TR('跌咗落花園……冇事冇事。斜屋頂嗰條去水管可以爬返上屋頂。') : TR('出咗屋外……好大陣風。沿住屋邊行吓，記得由後門個貓門返入去。');
+    setTimeout(() => { if (STATE === 'play' && LEVEL === 'garden') say(TR('爸爸'), line, '#f5f0e6', 3.6); }, 600);
   },
   keep(id) { return id === 'yard' || id === 'road'; },     // (over a fence or a gate isn't the next chapter: there's no way over them anyway)
   detect(dt) { meter = Math.max(0, meter - dt * .5); KS.watch = null; },
@@ -16419,11 +16488,13 @@ LEVELS.garden = {
     if (L.pos.y < GY - 70) { const p = CPS[cp] || CPS[0]; party.forEach((C, i) => { if (C.frozen) return; C.pos.set(p[0] + (i % 3 - 1) * 4, p[1], p[2] + Math.floor(i / 3) * 4); C.vel.set(0, 0, 0); C.climbing = false; C.mantle = null; C.queue = []; if (C.disp) C.disp.copy(C.pos); }); trail = []; leader.lastTrail.copy(leader.pos); }
     if (!OUT.said.front && L.pos.z > 262) { OUT.said.front = 1; say(TR('爸爸'), TR('前院……前門閂住，閘又鎖咗。'), '#f5f0e6', 2.8); }
     if (!OUT.said.side && L.pos.x < -330 && L.pos.z < 0 && L.pos.z > -400) { OUT.said.side = 1; say(TR('老友'), TR('呢邊冷氣機好大部！'), '#d9a675', 2.4); }
+    if (!OUT.said.lean && L.grounded && L.pos.y > 270 && L.pos.z < -262 && L.pos.z > -640) { OUT.said.lean = 1; say(TR('爸爸'), TR('上到斜屋頂……嗰條去水管一直通上大屋屋頂嘅坑渠。'), '#f5f0e6', 3.4); }
+    if (!OUT.said.pipe && Math.hypot(L.pos.x - PLANT.PX0, L.pos.z - PLANT.PZ) < 60) { OUT.said.pipe = 1; setTimeout(() => { if (STATE === 'play') say(TR('爸爸'), TR('花槽底呢條舊去水渠……個方向係入返牆身——前拍檔屋企頂嗰度。'), '#f5f0e6', 3.6); }, OUT.said.side ? 2600 : 0); }
   },
   win() { }, reset() { }, onSwitch() { },
   marker() { if (NET.on) return mpMarker(); const L = leader, f = V3(506, 0, 262); return L && L.pos.distanceTo(f) < L.pos.distanceTo(OUT.flapP) ? f : OUT.flapP; },
   eyeText: () => TR('屋外——冇人望到你'),
-  hint(L) { if (Math.hypot(L.pos.x - 690, L.pos.z + 640) < 50) return TR('鑽貓門返入洗衣間'); if (Math.hypot(L.pos.x - 506, L.pos.z - 275) < 45) return TR('鑽前門貓門返入客廳'); if (Math.hypot(L.pos.x + 300, L.pos.z + 646) < 26 || Math.hypot(L.pos.x - 754, L.pos.z + 646) < 26) return TR('抱住去水管爬上屋後嘅斜屋頂'); return ''; }
+  hint(L) { if (Math.hypot(L.pos.x - 690, L.pos.z + 640) < 50) return TR('鑽貓門返入洗衣間'); if (Math.hypot(L.pos.x - 506, L.pos.z - 275) < 45) return TR('鑽前門貓門返入客廳'); if (Math.hypot(L.pos.x + 300, L.pos.z + 646) < 26 || Math.hypot(L.pos.x - 754, L.pos.z + 646) < 26) return TR('抱住去水管爬上屋後嘅斜屋頂'); if (OUT.upPipe && Math.hypot(L.pos.x - OUT.upPipe.x, L.pos.z - OUT.upPipe.z) < 30 && L.pos.y > 280) return TR('抱住去水管爬上大屋屋頂——到頂伸手捉住坑渠邊'); if (Math.hypot(L.pos.x - PLANT.PX0, L.pos.z - PLANT.PZ) < 34 && L.pos.y < 2) return TR('爬上花槽嘅磚牆，鑽入舊去水渠——通去牆身入面'); return ''; }
 };
 
 // =====================================================================

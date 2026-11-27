@@ -80,7 +80,7 @@ function buildHouseShell() {
     box(a0, a1, E - 14, E, b1, b1 + 3, trim, o); box(a0, 724, E - 14, E, b0 - 3, b0, trim, o); box(924, a1, E - 14, E, b0 - 3, b0, trim, o); box(a0 - 3, a0, E - 14, E, b0, b1, trim, o); box(a1, a1 + 3, E - 14, E, b0, b1, trim, o);   // (the back one stops for the stair tower)
     box(a0, a1, E - 14, E - 12, 262, b1, soffit, o); box(a0, 724, E - 14, E - 12, b0, -262, soffit, o); box(924, a1, E - 14, E - 12, b0, -262, soffit, o); box(912, a1, E - 14, E - 12, -262, 262, soffit, o);
     // gutter along the front
-    box(a0, a1, E - 16, E - 6, b1 + 3, b1 + 11, gutM, o);
+    box(a0, a1, E - 16, E - 6, b1 + 3, b1 + 11, gutM, o); gutTop(a0, a1, E - 6, b1 + 3, b1 + 11, P);
     // the upper east wall that stands clear of the garage roof, with two windows (blinds half down)
     box(913, 921, 260, W, -262, 104, sidingU, { ...o, uv: 120 }); box(913, 921, 260, W, 136, 262, sidingU, { ...o, uv: 120 }); box(913, 921, 300, W, 104, 136, sidingU, { ...o, uv: 120 });   // (the ceiling duct goes through it into the garage attic)
     const glass = new THREE.MeshPhysicalMaterial({ color: 0x5a6e84, roughness: .06, metalness: .2, clearcoat: 1 }), blind = new THREE.MeshStandardMaterial({ color: 0xece4d2, roughness: .8 });
@@ -111,7 +111,7 @@ function buildHouseShell() {
     box(x0, x1, E - 14, E, z1, z1 + 3, trim, o); box(x0, x1, E - 14, E, z0 - 3, z0, trim, o);
     box(x0, x1, E - 14, E - 12, 312, z1, soffit, o); box(x0, x1, E - 14, E - 12, z0, -270, soffit, o);
     // gutters front and back, and a downpipe down the yard-side front corner
-    box(x0, x1, E - 16, E - 6, z1 + 3, z1 + 11, gutM, o); box(x0, x1, E - 16, E - 6, z0 - 11, z0 - 3, gutM, o);
+    box(x0, x1, E - 16, E - 6, z1 + 3, z1 + 11, gutM, o); box(x0, x1, E - 16, E - 6, z0 - 11, z0 - 3, gutM, o); gutTop(x0, x1, E - 6, z1 + 3, z1 + 11, P); gutTop(x0, x1, E - 6, z0 - 11, z0 - 3, P);
     cyl(1470, 337, 3.4, GY + 10, E - 10, gutM, { ...o, seg: 12 }); box(1462, 1478, GY, GY + 6, 330, 352, gutM, o);
     for (const y of [60, 160]) box(1466, 1474, y, y + 3, 331, 339, gutM, o);
   }

@@ -1,0 +1,8 @@
+[{"evalFile":"shothelp.js"},{"evalFile":"roof_h.js"},{"evalFile":"vent_h.js"},
+ {"eval": "(async()=>{ const b=window.__bn; window.__NODET=true; document.getElementById('chaps').hidden=true; b.loadLevel('wall'); await new Promise(r=>setTimeout(r,600)); for(let i=0;i<200 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(5); return [b.LEVEL, b.state]; })()"},
+ {"eval": "(()=>{ const b=window.__bn; const L=b.leader; L.pos.set(b.W.HO.x+60,b.W.HO.y+4,b.W.HO.z+15); L.vel.set(0,0,0); L.climbing=false; let i=0; for(const F of b.party) if(F!==L){ i++; F.pos.set(L.pos.x-(4+i*3), L.pos.y, L.pos.z+(i%2?3:-3)); F.queue=[]; F.disp&&F.disp.copy(F.pos);} b.cam.yaw=Math.PI/2; b.cam.pitch=0.14; b.step(70); window.__S.hud(false); return [b.LEVEL, b.ZONES.garden.near, b.ZONES.kitchen.near]; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"hub_in"},
+ {"eval": "(()=>{ const R=window.__R, b=window.__bn; window.__S.game(); R.put(-380, -30, -117); b.step(20); const r = window.__V.go([[-398.8,-104],[-398.8,-104,-1],[-404,-116,-1],[-380,-116,-1],[-352,-116,-1],[-336,-100,-1],[-290,-100]], 2500, 25); return [r.reached, r.end, r.zone, b.LEVEL, r.log.slice(-14)]; })()"}
+,
+ {"eval": "(()=>{ const R=window.__R, b=window.__bn; R.put(-290, 0, -100); b.step(10); const r = window.__V.go([[-352,-100],[-352,-116],[-404,-116],[-412,-100],[-460,-100],[-560,-100],[-600,-80]], 3000, 25); return [r.reached, r.end, r.zone, b.LEVEL, r.log.slice(-10)]; })()"},
+ {"eval": "(()=>{ const R=window.__R, b=window.__bn; R.put(-600, -20, -100); b.step(10); const r = window.__V.go([[-560,-100],[-470,-100],[-412,-104],[-404,-116],[-352,-116],[-336,-100],[-290,-100]], 3000, 25); return [r.reached, r.end, r.zone, b.LEVEL, r.log.slice(-12)]; })()"}
+]

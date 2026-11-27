@@ -1,0 +1,9 @@
+[{"evalFile":"shothelp.js"},{"evalFile":"roof_h.js"},{"evalFile":"vent_h.js"},
+ {"eval": "(async()=>{ const b=window.__bn; window.__NODET=true; document.getElementById('chaps').hidden=true; await b.startChapter2(); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(10); return [b.LEVEL, b.state]; })()"},
+ {"eval": "(()=>{ const R=window.__R, b=window.__bn; R.put(690, 1, -585); b.step(10); window.__V.go([[690,-640],[690,-700]], 600, 100); R.put(-600, -20, -10); R.face(0.5,-1); b.step(60); window.__S.hud(false); return [b.LEVEL, b.info().pos]; })()"},
+ {"eval": "window.__S.abs([-620, 50, 60],[-470, -5, -110]); 1"},{"frame":1},{"frame":1},{"frame":1,"shot":"pl_wide"},
+ {"eval": "window.__S.abs([-600, 0, -130],[-540, -2, -100]); 1"},{"frame":1},{"frame":1},{"frame":1,"shot":"pl_mouth"},
+ {"eval": "window.__S.abs([-430, 140, -230],[-440, 20, -96]); 1"},{"frame":1},{"frame":1},{"frame":1,"shot":"pl_top"},
+ {"eval": "(()=>{ const R=window.__R, b=window.__bn; window.__S.game(); R.put(-530, 0, -100); R.face(1,0); b.cam.pitch=0.05; b.step(60); return [b.LEVEL, b.info().pos]; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"pl_inpipe"},
+ {"eval": "(()=>{ const R=window.__R, b=window.__bn; R.put(-412, 0, -100); b.step(30); window.__S.abs([-350, 12, -102],[-430, 6, -100]); return [b.LEVEL, b.info().pos]; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"pl_chamber"}
+]

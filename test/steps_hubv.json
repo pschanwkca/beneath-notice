@@ -1,0 +1,7 @@
+[{"evalFile":"shothelp.js"},{"evalFile":"roof_h.js"},
+ {"eval": "(async()=>{ const b=window.__bn; window.__NODET=true; document.getElementById('chaps').hidden=true; b.loadLevel('wall'); await new Promise(r=>setTimeout(r,600)); for(let i=0;i<200 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(5); window.__S.hud(false); return [b.LEVEL, b.state]; })()"},
+ {"eval": "(()=>{const b=window.__bn,W=b.W; const L=b.leader; L.pos.set(20,310,-10).add(W.HO); L.vel.set(0,0,0); L.stamina=100; for(const F of b.party) if(F!==L){F.pos.copy(L.pos); F.pos.x+=6; F.disp.copy(F.pos); F.queue=[];} b.cam.yaw=Math.PI/2; b.cam.pitch=.35; for(let k=0;k<20;k++) b.step(1); return [b.ZONES.garden.near, b.ZONES.kitchen.near]})()"},{"frame":1},{"frame":1},{"frame":1,"shot":"hv_top"},
+ {"eval": "(()=>{ const b=window.__bn; const g=b.ZONES.garden; window.__gc=[g.core,g.peek]; g.core=[]; g.peek=[]; for(let k=0;k<10;k++) b.step(1); return [g.near]; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"hv_top_nog"},
+ {"eval": "(()=>{ const b=window.__bn; const g=b.ZONES.garden; [g.core,g.peek]=window.__gc; b.cam.pitch=-0.6; for(let k=0;k<30;k++) b.step(1); return 1; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"hv_up"},
+ {"eval": "(()=>{ const R=window.__R, b=window.__bn; R.put(-412, 0, -100); b.step(30); window.__S.abs([-350, 12, -102],[-430, 6, -100]); return 1; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"hv_ch"}
+]

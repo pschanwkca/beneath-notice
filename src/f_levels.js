@@ -244,7 +244,7 @@ function buildHub() {
   // the last ledge reaches out under the gap; from it, climb the board on the gap's edge up into the crawlspace
   box(0, 40, 306, 310, -28, -4, K.stud, { uv: 60 }); box(0, 2.5, 310, 340, -17, -3, K.stud, { uv: 30 });
   // kitchen gap at the top (warm light leaking in)
-  const glow = mesh(new THREE.PlaneGeometry(40, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffc890).multiplyScalar(1.6) }), 20, 353, -6, { cast: false }); glow.rotation.x = Math.PI / 2;
+  const glow = mesh(new THREE.PlaneGeometry(40, 24), new THREE.MeshBasicMaterial({ color: new THREE.Color(0xffc890).multiplyScalar(1.6) }), 20, 353, -6, { cast: false }); glow.rotation.x = Math.PI / 2; STATIC.hubGlow = glow;
   // copper pipe running up through the gap: grab it from the top ledge and climb out
   cyl(40, 23, 2.6, 4, 330, M.copper, { seg: 20 });
   tubeM([[-60, 4, 20], [-58, 120, 22], [-62, 240, 20], [-60, 330, 21]], .7, M.rubber); tubeM([[-50, 4, 22], [-46, 160, 24], [-52, 330, 23]], .55, M.paintRed);
@@ -268,7 +268,7 @@ function buildHub() {
   const stamp = mesh(new THREE.PlaneGeometry(6, 7), MAT.photo, -79.7, 14, -14, { cast: false }); stamp.rotation.y = Math.PI / 2;
   // lights
   LV.add(new THREE.HemisphereLight(0x6a5a4c, 0x2a1e16, 1.0));
-  spotL(0xffc890, 90000, V3(20, 352, -6), V3(0, 0, -4), .45, .6, 1024, 6, 600);
+  { const s = spotL(0xffc890, 1700, V3(20, 352, -6), V3(0, 0, -4), .45, .6, 1024, 6, 600); s.decay = 1.3; }   // (a gentler falloff: still warm on the floor, no longer blinding on the top ledge)
   addBeam(0xffc890, V3(20, 330, -8), V3(0, 4, 0), .2, .07);
   addBeam(0xffb070, V3(-28, 10, -8), V3(-28, 4, 2), .9, .02);
   STATIC.hubTop = V3(20, 341, -6);
@@ -355,7 +355,8 @@ function buildKitchen() {
   // behind the mouse hole: a crawl tunnel, then a small chamber over the gap that drops into the wall cavity
   // (the cavity's top board is the floor here; the copper pipe sticks up through the gap)
   box(-344, -312, 0, 18, -114, -110, K.stud); box(-344, -312, 0, 18, -90, -86, K.stud); box(-344, -312, 15, 18, -110, -90, K.stud);
-  box(-428, -424, 0, 24, -124, -76, K.stud); box(-428, -340, 0, 24, -124, -120, K.stud); box(-428, -340, 0, 24, -80, -76, K.stud);
+  box(-428, -424, 0, 24, -124, -107.4, K.stud); box(-428, -424, 0, 24, -92.6, -76, K.stud); box(-428, -424, 14.5, 24, -107.4, -92.6, K.stud);   // (a gap in the far end: the old drain pipe from the garden comes in there)
+  box(-428, -340, 0, 24, -124, -120, K.stud); box(-428, -340, 0, 24, -80, -76, K.stud);
   box(-344, -340, 0, 24, -120, -110, K.stud); box(-344, -340, 0, 24, -90, -80, K.stud); box(-344, -340, 15, 24, -110, -90, K.stud);
   box(-428, -340, 20, 24, -124, -76, K.stud);
   // online games don't go down there: a grate covers the gap
