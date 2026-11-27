@@ -27,6 +27,7 @@ function hangerMesh(col) {
   g.traverse(o => { if (o.isMesh) { o.castShadow = true; o.userData.noSolid = true; } });
   return g;
 }
+const utilF0 = () => new THREE.MeshStandardMaterial({ color: 0x8a8478, roughness: .9 });
 function buildBackHall(K) {
   const W = MAT.white;
   const wallM = new THREE.MeshStandardMaterial({ color: 0xdcd3c2, roughness: .95, map: K.wall.map || null });
@@ -42,7 +43,8 @@ function buildBackHall(K) {
   const rise = 19, run = 25;
   for (let i = 0; i < 4; i++) { const x0 = -170 + i * run, top = -76 + (i + 1) * rise; box(x0, x0 + run, -86, top, -612, -512, MAT.stair, { uv: 60 });
     box(x0 - .4, x0 + 1.2, top - 1.2, top + .3, -612, -512, W, nc); }                       // white nosing
-  box(-294, 748, -86, 270, -624, -612, wallM, { uv: 120 });                                  // the long back wall
+  box(-294, 650, -86, 270, -624, -612, wallM, { uv: 120 }); box(730, 748, 0, 270, -624, -612, wallM, { uv: 120 }); box(650, 730, 205, 270, -624, -612, wallM, { uv: 120 });   // the long back wall (the back door at x 650–730)
+  box(650, 730, -10, 0, -624, -612, utilF0(), { cast: false });
   box(-294, -282, -86, 270, -612, -479, wallM, { uv: 120 });                                 // west end of the landing
   box(-294, -157, 134, 270, -491, -479, wallM, { uv: 120 });                                 // over the stairwell's top
   box(-170, -157, -86, 270, -512, -479, wallM, { uv: 120 });                                 // beside the steps
@@ -61,10 +63,10 @@ function buildBackHall(K) {
   // a runner rug, a dome light or two
   box(60, 430, 0, .25, -590, -540, new THREE.MeshStandardMaterial({ color: 0x7a3e34, roughness: 1 }), ncs);
   for (const x of [-220, 110, 390]) { mesh(new THREE.SphereGeometry(13, 24, 10, 0, Math.PI * 2, 0, Math.PI / 2), new THREE.MeshStandardMaterial({ color: 0xfff1da, emissive: 0xffd9a0, emissiveIntensity: .9 }), x, 260, -562, { cast: false }).rotation.x = Math.PI; }
-  pointL(0xffd2a0, 1500, 110, 236, -562);
+  pointL(0xffd2a0, 1150, 110, 236, -562);
   // the landing is double height: a wall lamp lower down so its floor isn't in the dark
   { const sc = mesh(new THREE.SphereGeometry(7, 18, 10, 0, Math.PI), new THREE.MeshStandardMaterial({ color: 0xfff1da, emissive: 0xffd9a0, emissiveIntensity: 1.1 }), -282, 96, -552, { cast: false }); sc.rotation.y = Math.PI / 2; sc.userData.noSolid = true;
-    pointL(0xffd2a0, 1600, -272, 92, -552); } pointL(0xffd2a0, 1400, 390, 236, -562);
+    pointL(0xffd2a0, 1100, -272, 92, -552); } pointL(0xffd2a0, 1100, 390, 236, -562);
   // ---- the climb to the clothesline: newspapers → shoe cabinet → shoe boxes → tissue box ----
   const cab = new THREE.MeshStandardMaterial({ color: 0xe6dccb, roughness: .55 });
   box(-64, -4, 0, 90, -612, -578, cab, { uv: 60 }); box(-66, -2, 90, 93, -613, -576, new THREE.MeshStandardMaterial({ color: 0x8a6446, roughness: .5 }));
@@ -101,8 +103,8 @@ function buildBackHall(K) {
   box(472, 736, -10, 0, -612, -244, utilF, { uv: 80, cast: false });
   box(460, 472, 0, 270, -500, -482, wallM, { uv: 120 }); box(736, 748, 0, 270, -624, -510, wallM, { uv: 120 });
   box(472, 736, 260, 270, -500, -244, ceilM, { cast: false });
-  box(472, 736, 0, 9, -611.9, -610.4, W, nc);
-  pointL(0xfff0dc, 1700, 600, 238, -430);
+  box(472, 646, 0, 9, -611.9, -610.4, W, nc); box(734, 736, 0, 9, -611.9, -610.4, W, nc);
+  pointL(0xfff0dc, 1300, 600, 238, -430);
   mesh(new THREE.CylinderGeometry(14, 14, 3, 28), new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xfff0dc, emissiveIntensity: 1 }), 600, 258.5, -430, { cast: false });
   { const en = new THREE.MeshPhysicalMaterial({ color: 0xf4f4f0, roughness: .3, clearcoat: .8 });   // washing machine
     box(474, 546, 0, 84, -474, -404, en); box(474, 546, 84, 86, -474, -404, new THREE.MeshStandardMaterial({ color: 0xd8d8d2, roughness: .4 }));
@@ -117,10 +119,8 @@ function buildBackHall(K) {
     for (const q of k) cyl(q.x, q.z, 1.9, 0, 28.5, bm, { col: false, seg: 14 });
     box(559, 605, 0, 25, -609, -581, cloth(0xe8e2d4), nc); cols.push({ t: 'b', x0: 559, x1: 605, y0: 0, y1: 25, z0: -609, z1: -581, soft: true });
     for (const [x, z, c, s] of [[570, -598, 0xd8665a, 9], [588, -590, 0x5a7ac8, 10], [596, -603, 0xf2d26a, 7], [575, -586, 0xffffff, 8]]) { const b = mesh(new THREE.SphereGeometry(s, 16, 10), cloth(c), x, 22, z); b.scale.y = .45; b.userData.noSolid = true; } }
-  { const dm = new THREE.MeshStandardMaterial({ color: 0x5a4434, roughness: .6 });   // the back door (to the garden — shut for now)
-    box(650, 730, 0, 205, -612, -609, dm); box(662, 718, 120, 190, -609.2, -608.6, new THREE.MeshPhysicalMaterial({ color: 0x9ab4c8, roughness: .1, transparent: true, opacity: .7 }), nc);
+  { // the back door's frame and mat (the door itself swings: e45_pest.js)
     for (const [x0, x1] of [[646, 650], [730, 734]]) box(x0, x1, 0, 209, -612, -607, W, nc); box(646, 734, 205, 209, -612, -607, W, nc);
-    const kb = mesh(new THREE.SphereGeometry(2.4, 14, 10), K.brass, 722, 100, -607); kb.userData.noSolid = true;
     box(652, 728, 0, .9, -607, -580, new THREE.MeshStandardMaterial({ color: 0x6a5a3a, roughness: 1 }), ncs); }
   { const bm = new THREE.MeshStandardMaterial({ color: 0xb08a5a, roughness: .9 });   // a broom leaning in the corner
     const st = mesh(new THREE.CylinderGeometry(1.1, 1.1, 120, 8), bm, 726, 70, -270); st.rotation.z = .12; st.userData.noSolid = true;
@@ -139,7 +139,7 @@ function buildBackHall(K) {
   // a bare bulb on a cord
   cyl(0, -370, .25, 226, 258, MAT.black, { col: false, seg: 6 });
   mesh(new THREE.SphereGeometry(4.5, 18, 12), new THREE.MeshStandardMaterial({ color: 0xfff2d8, emissive: 0xffd49a, emissiveIntensity: 1.4 }), 0, 222, -370, { cast: false }).userData.noSolid = true;
-  pointL(0xffcf94, 1200, 0, 214, -370);
+  pointL(0xffcf94, 950, 0, 214, -370);
   // metal shelving along the west wall
   { const x0 = -155, x1 = -113, z0 = -492, z1 = -262;
     for (const x of [x0, x1 - 2]) for (const z of [z0, z1 - 2, (z0 + z1) / 2]) box(x, x + 2, 0, 200, z, z + 2, steelM, nc);
@@ -174,6 +174,30 @@ function buildBackHall(K) {
   // …and a few in the hallway and the utility room that don't
   for (const [t, x, y, z] of [['raisin', -14, 93, -596], ['button', 130, 0, -560], ['cap', 330, 0, -540], ['marble', 520, 0, -360]]) addLoose(t, x, y, z);
 }
+
+// ---------- the light pool: which side of the walls a point is on ----------
+// 's' the storeroom · 'b' the back (landing, hallway, utility room) · 'h' the rest of the house and everywhere else.
+// The storeroom and the back share a doorway, and so do the utility room and the living room; anything else has a wall in between.
+function lightSide(p) {
+  if (inStore(p)) return 's';
+  if (p.y > -90 && p.y < 270 && p.x > -294 && p.x < 748 && (p.z < -500 || (p.x < -157 && p.z < -479)) && p.z > -624) return 'b';
+  if (p.y > -10 && p.y < 270 && p.x > 472 && p.x < 736 && p.z < -244 && p.z > -624) return 'b';
+  return 'h';
+}
+function wallBetweenLight(lp, cp) {
+  if (!WORLD) return false; const a = lightSide(cp), b = lightSide(lp); if (a === b) return false;
+  if ((a === 's' && b === 'b') || (a === 'b' && b === 's')) return false;
+  if (a === 'b' && b === 'h') return !(cp.x > 472 && lp.x > 312 && lp.z > -244 && lp.y < 270);   // from the utility room, the living room's lamps through the doorway
+  if (a === 'h' && b === 'b') return !(cp.x > 472 && cp.z < -100 && cp.y < 270 && lp.x > 472);   // and the other way round
+  return true;
+}
+
+// through the open basement door: the back's lamps light the top of the basement stairs
+function doorSpill(lp, cp) { return !!door && door.rotation.y > .1 && lightSide(lp) === 'b' && cp.x > -300 && cp.x < -150 && cp.z > -500 && cp.z < -150 && cp.y < 150 && Math.hypot(lp.x + 224, lp.z + 480) < 300; }
+// the back of the house has its own air: a corridor and a storeroom at night, dimmer than the kitchen, not as dark as the basement
+// (eased in like any change of place, so walking up out of the basement or through to the kitchen doesn't jump)
+const BACK_ATM = { fog: [0x17130f, .00105], expo: 1.26, envI: .42 };
+function backAtmo(D, cp) { if (!WORLD || lightSide(cp) === 'h') return D; return { fog: BACK_ATM.fog, expo: BACK_ATM.expo, envI: BACK_ATM.envI, bloom: D.bloom }; }
 
 // ---------- the basement door: colliders follow it; online it stands ajar; it shuts behind you ----------
 function backDoorTick(dt) {
@@ -255,7 +279,7 @@ function backQuiet(p) { return WORLD && inStore(p); }
 // ---------- per frame (with the kitchen) ----------
 function backTick(dt) {
   if (!WORLD) return;
-  backDoorTick(dt); hangerTick(dt); storeTick(dt);
+  backDoorTick(dt); hangerTick(dt); storeTick(dt); pestTick(dt);
   for (const C of party) if (C.line && C !== leader) lineOff(C, false);   // switched away mid-ride: let go
   const L = leader; if (!L || STATE !== 'play') return;
   if (LEVEL === 'kitchen' && mine(L)) {

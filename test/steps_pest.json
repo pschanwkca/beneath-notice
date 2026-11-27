@@ -1,0 +1,3 @@
+[{"eval": "window.__bn.startChapter2(); 1"}, {"wait": 6000},
+ {"eval": "(()=>{const B=window.__bn,L=B.leader; window.__NODET=true; B.toyUnfreezeAll(); B.state='play'; L.pos.set(100,0,-560); L.vel.set(0,0,0); for(const C of B.party) if(C!==L){C.pos.set(90,0,-556); C.queue=[];} B.pestArrive(); const tr=[]; for(let i=0;i<70;i++){ B.step(60); const H=B.PEST.H; tr.push([Math.round(H.pos.x),Math.round(H.pos.z),B.PEST.i]); if(B.PEST.st!=='in') break; } return {tr, st:B.PEST.st, cages:B.CAGES.map(K=>K.g.visible), steel:B.resizables.filter(q=>q.name==='鋼絲球').map(q=>[q.cx,q.y0])}; })()"}
+]

@@ -1,0 +1,4 @@
+[{"eval": "window.__bn.startChapter('road'); 1"}, {"wait": 6000},
+ {"eval": "(()=>{const B=window.__bn,L=B.leader; window.__NODET=true; B.toyUnfreezeAll(); B.state='play'; L.pos.set(3380,-35,797); L.vel.set(0,0,0); for(const C of B.party) if(C!==L){C.pos.set(3370,-35,790); C.queue=[];} B.cam.yaw=Math.atan2(-1,0); B.keys.KeyW=true; B.step(400); B.keys.KeyW=false; const p=L.pos.toArray().map(v=>+v.toFixed(1)); L.pos.set(-300,-35,900); B.cam.yaw=Math.atan2(1,0); B.keys.KeyW=true; B.step(400); B.keys.KeyW=false; const q=L.pos.toArray().map(v=>+v.toFixed(1)); L.pos.set(3360,-20,720); B.cam.yaw=Math.atan2(-1,-0.1); B.cam.pitch=.15; B.cam.dist=120; B.step(30); return {east:p, west:q, st:L.state}; })()"},
+ {"frame": 1}, {"shot": "road_end"}
+]

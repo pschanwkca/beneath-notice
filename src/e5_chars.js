@@ -190,7 +190,7 @@ function updWatch() {
   let x = v.x, y = v.y; if (v.z > 1) { x = -x; y = -y; } const a = Math.atan2(y, x); const rx = innerWidth / 2 - 90, ry = innerHeight / 2 - 120;
   const t = Math.min(rx / Math.abs(Math.cos(a) || 1e-6), ry / Math.abs(Math.sin(a) || 1e-6));
   el.style.left = (innerWidth / 2 + Math.cos(a) * t) + 'px'; el.style.top = (innerHeight / 2 - Math.sin(a) * t) + 'px'; el.querySelector('i').style.transform = `rotate(${-a}rad)`;
-  el.querySelector('span').textContent = w.who === 'kid' ? '小彩：女兒在看這邊！' : '小彩：太太在看這邊！'; el.classList.add('on');
+  el.querySelector('span').textContent = w.who === 'kid' ? '小彩：女兒在看這邊！' : w.who === 'pest' ? '小彩：滅蟲師傅在看這邊！' : '小彩：太太在看這邊！'; el.classList.add('on');
 }
 // ---------- kitchen warm-air vent ----------
 function buildVent() {

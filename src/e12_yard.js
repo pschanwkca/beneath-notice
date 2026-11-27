@@ -386,7 +386,7 @@ function mpMarker() {
 }
 // what the host tells everyone about the garage and the yard
 function netWorldExtra(w) {
-  parkNetOut(w); schoolNetOut(w);
+  parkNetOut(w); schoolNetOut(w); pestNetOut(w);
   const A = GS.agent, D = YS.dog, O = YS.old;
   w.ga = [+A.pos.x.toFixed(1), +A.pos.z.toFixed(1), +A.yaw.toFixed(3), +A.aimT.x.toFixed(1), +A.aimT.y.toFixed(1), +A.aimT.z.toFixed(1), GS.camBroken ? 1 : 0, GS.latch ? 1 : 0];
   w.rd = [['go', 'wait', 'amber', 'red', 'walk', 'flash', 'clear'].indexOf(ST.phase), +ST.pt.toFixed(2), ST.req ? 1 : 0, ...ST.cars.flatMap(c => [c.alive ? 1 : 0, c.lane, Math.round(c.x), Math.round(c.v)])];
@@ -400,7 +400,7 @@ function netRecvExtra(w) {
   if (w.ya) { if (w.ya[9] && !YS.chip) { YS.chip = true; YS.chipM.visible = false; YS.chipHalo.visible = false; } if (w.ya[10] && !LIV.ventOpen) ventOpen(); }
 }
 function netNPCExtra(dt) {
-  const w = NET.npc; if (!w) return; parkNetNPC(dt); schoolNetNPC(dt);
+  const w = NET.npc; if (!w) return; parkNetNPC(dt); schoolNetNPC(dt); pestNetIn(dt);
   for (const c of ST.cars) if (c.alive && c.tx != null) { c.x += LANES[c.lane].dir * c.v * dt; c.x += (c.tx - c.x) * (1 - Math.exp(-4 * dt)); }
   if (w.wk && ST.walker) { const W = ST.walker, H = W.H, D = ST.wdog, k = w.wk; H.pos.x += (k[0] - H.pos.x) * (1 - Math.exp(-8 * dt)); H.yaw = angDamp(H.yaw, k[1], 8, dt); W.mode = k[2]; W.look.set(k[3], GY + 4, k[4]); D.pos.x += (k[5] - D.pos.x) * (1 - Math.exp(-8 * dt)); D.pos.z += (k[6] - D.pos.z) * (1 - Math.exp(-8 * dt)); D.yaw = angDamp(D.yaw, k[7], 8, dt); D.mode = k[8]; W.t = 99; }
   if (w.ga && GS.agent) { const A = GS.agent, g = w.ga, ox = A.pos.x, oz = A.pos.z; const k = 1 - Math.exp(-8 * dt); if (Math.hypot(g[0] - ox, g[1] - oz) > 80) { A.pos.x = g[0]; A.pos.z = g[1]; } else { A.pos.x += (g[0] - ox) * k; A.pos.z += (g[1] - oz) * k; } A.pos.y = GY; A.yaw = angDamp(A.yaw, g[2], 8, dt); A.aimT.set(g[3], g[4], g[5]); A.aim.lerp(A.aimT, 1 - Math.exp(-3 * dt)); agentPose(A, Math.hypot(A.pos.x - ox, A.pos.z - oz), dt); }

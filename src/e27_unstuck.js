@@ -62,7 +62,7 @@ function unstuck(how) {
 function unstuckTick(dt) {
   if (!WORLD || STATE !== 'play') { UNSTK.hold = 0; unChip(); return; }
   const L = leader; if (!L || !mine(L)) { unChip(); return; }
-  const free = C => !C.frozen && !C.carried && !C.climbing && !C.mantle && !C.zip && !C.line && !C.on && !C.hop && !C.ptw && !C.roost && !(C.pullT > 0);
+  const free = C => !C.frozen && !C.carried && !C.climbing && !C.mantle && !C.zip && !C.line && !C.caged && !C.on && !C.hop && !C.ptw && !C.roost && !(C.pullT > 0);
   // remember good places to come back to
   UNSTK.t -= dt;
   if (UNSTK.t <= 0 && free(L) && L.grounded && !isBase(L) && LEVEL !== 'portal') {

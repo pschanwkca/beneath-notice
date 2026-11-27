@@ -142,7 +142,10 @@ function lightTick(dt) {
     for (const Z of ZL) if (Z.near) for (const l of Z.lights) {
       if (l.isHemisphereLight || !(l.intensity > 0)) continue;
       // lamps from a neighbouring place only count when they are close (e.g. right through the mouse hole)
-      if (Z !== WC.cz) { l.getWorldPosition(_lw); if (_lw.distanceTo(cp) > 150 && _lw.distanceTo(lp) > 150) continue; }
+      l.getWorldPosition(_lw);
+      if (Z !== WC.cz && _lw.distanceTo(cp) > 150 && _lw.distanceTo(lp) > 150 && !doorSpill(_lw, cp)) continue;
+      // …and inside the house, a lamp on the far side of a wall doesn't count at all (lights shine through walls: the storeroom would flicker with the kitchen's)
+      if (!l.userData.prio && Z.id === 'kitchen' && WC.cz && WC.cz.id === 'kitchen' && wallBetweenLight(_lw, cp)) continue;
       const e = { l, sc: lightScore(l, cp, lp) };
       if (l.isSpotLight) (l.castShadow ? shs : sps).push(e); else if (l.isPointLight) pts.push(e);
     }
@@ -152,7 +155,7 @@ function lightTick(dt) {
   poolAssign(LP.pt, LP.want[0], dt, copyPoint); poolAssign(LP.sh, LP.want[1], dt, copySpot); poolAssign(LP.sp, LP.want[2], dt, copySpot);
   // the room's ambient sky light follows the camera
   const Z = WC.cz; const h = Z && Z.lights.find(l => l.isHemisphereLight);
-  if (h) { const k = LP.snap ? 1 : 1 - Math.exp(-3 * dt); LP.hemi.color.lerp(h.color, k); LP.hemi.groundColor.lerp(h.groundColor, k); LP.hemi.intensity += (h.intensity - LP.hemi.intensity) * k; }
+  if (h) { const k = LP.snap ? 1 : 1 - Math.exp(-3 * dt); LP.hemi.color.lerp(h.color, k); LP.hemi.groundColor.lerp(h.groundColor, k); LP.hemi.intensity += (h.intensity * (lightSide(cp) === 'h' ? 1 : .45) - LP.hemi.intensity) * k; }
   LP.snap = false;
 }
 
@@ -166,7 +169,7 @@ function zoneTick(dt) {
   houseShellTick(); solidTick(); humanLifeTick(dt); realTick(dt);
   // atmosphere of the place the camera is in
   const cz = zoneAt(cp) || (leader && zoneAt(leader.pos)) || WC.cz || ZONES[LEVEL]; if (cz) WC.cz = cz;
-  const D = LEVELS[WC.cz.id]; const k = LP.snap ? 1 : 1 - Math.exp(-2.5 * dt);
+  const D = backAtmo(LEVELS[WC.cz.id], cp); const k = LP.snap ? 1 : 1 - Math.exp(-2.5 * dt);
   WC.fogC.setHex(D.fog[0]); scene.fog.color.lerp(WC.fogC, k); scene.fog.density += (D.fog[1] - scene.fog.density) * k; renderer.toneMappingExposure += (D.expo - renderer.toneMappingExposure) * k;
   // bloom per place: in the sun almost everything is brighter than the indoor threshold, so outdoors by day only the really bright things (the sun, glints) glow
   const BL = D.bloom || BLOOM_IN; bloom.strength += (BL[0] - bloom.strength) * k; bloom.threshold += (BL[1] - bloom.threshold) * k;

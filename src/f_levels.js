@@ -53,7 +53,7 @@ function scheduleLines(list, dt = 1 / 60) { for (const L of list) if (lvT - dt <
 function noise(p, loud, clang) {
   noiseRing(p); if (NET.on && NET.host) nsend({ t: 'ring', p: [p.x, p.y, p.z], v: clang || 0 });
   if (NET.client) return; const Z = WORLD ? zoneAt(p, 4) : null;
-  if (backQuiet(p)) return;   // (the storeroom: nobody hears it)
+  pestHear(p, loud); if (backQuiet(p)) return;   // (the storeroom: nobody hears it — bar the pest man, if he's in there)
   if (!Z || Z.id === 'kitchen') { momHear(p, loud); catHear(p, loud); kidHear(p); }
   else if (LEVELS[Z.id].hear) LEVELS[Z.id].hear(p, loud);
 }
@@ -720,12 +720,14 @@ function detectKitchen(dt) {
   if (STATE !== 'play') return;
   if (window.__NODET) { meter = 0; return; }
   if (TOY.grace > 0) { meter = Math.max(0, meter - dt * .5); return; }
-  if (inStore(leader.pos)) { meter = Math.max(0, meter - dt * .5); KS.watch = null; return; }   // nobody looks into the storeroom
+  const pz = PEST.st === 'in' && PEST.H && (inStore(PEST.H.pos) || PEST.H.pos.z < -480);   // (the pest man is the one who does look in there)
+  if (inStore(leader.pos) && !pz) { meter = Math.max(0, meter - dt * .5); KS.watch = null; return; }   // nobody looks into the storeroom
   const L = leader; let seen = 0, who = null;
   if (L.frozen || !mine(L)) { meter = Math.max(0, meter - dt * .5); KS.watch = null; return; }
   const s1 = eyeSee(mom.head, .55, 440); if (s1 > seen) { seen = s1; who = 'mom'; }
   const s2 = eyeSee(KID.head, .5, 360); if (s2 > seen) { seen = s2; who = 'kid'; }
-  KS.watch = seen > 0 ? { p: (who === 'kid' ? KID.head : mom.head).getWorldPosition(V3()), s: seen, who } : null;
+  const s3 = pestSee(); if (s3 > seen) { seen = s3; who = 'pest'; }
+  KS.watch = seen > 0 ? { p: (who === 'kid' ? KID.head : who === 'pest' ? PEST.H.head : mom.head).getWorldPosition(V3()), s: seen, who } : null;
   const kd = Math.hypot(L.pos.x - KID.root.position.x, L.pos.z - KID.root.position.z); if (kd < 45 && Math.abs(L.pos.y - KID.root.position.y) < 40 && L.spd > 2 && !L.crouch && KID.mode !== 'read' && !underCover(L)) { seen = Math.max(seen, .3); who = who || 'kid'; }
   if (seen > 0) {
     const lit = litAt(V3(L.pos.x, L.pos.y + L.h * .5, L.pos.z)) * (inDark(L.pos) ? .6 : 1); const mv = L.spd > 1.5 ? 1 : .5; const cr = L.crouch ? .55 : 1; const glow = KS.carried && (!NET.on || KS.carrier === L.id) ? 1.35 : 1;
@@ -768,7 +770,7 @@ LEVELS.kitchen = {
   build() {
     buildKitchen(); buildKid(); buildCat(); buildToyBin(); LEVELS.kitchen.updrafts = [{ x: 57, z: -205, r: 11, y0: 88.5, y1: 178, fx: 14, all: true, hot: true }, buildVent()];
     addVial(-128, 13, -200); addVial(170, 184, -168); addVial(70, 88.5, -215); for (const p of [[-120, 0, 70], [-70, 0, 100], [20, 0, -146], [-30, 91.8, -182], [246, 1.2, 122]]) addCrumb(...p);
-    buildLivingRoom(kitchenMats()); buildPassages(kitchenMats()); buildMouseWar(kitchenMats()); buildLivedIn(kitchenMats()); buildBackHall(kitchenMats()); buildHouseSwitches(kitchenMats()); buildUpstairs(kitchenMats());
+    buildLivingRoom(kitchenMats()); buildPassages(kitchenMats()); buildMouseWar(kitchenMats()); buildLivedIn(kitchenMats()); buildBackHall(kitchenMats()); buildPest(kitchenMats()); buildHouseSwitches(kitchenMats()); buildUpstairs(kitchenMats());
     // online co-op: the three machine parts
     addPart(44, 88.5, -212, 'spring'); addPart(205, 110, -464, 'lens'); addPart(-112, 13, -186, 'cap');
   },

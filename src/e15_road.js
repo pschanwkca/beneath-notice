@@ -237,6 +237,9 @@ function buildRoad() {
   const sign = mesh(new THREE.PlaneGeometry(150, 47), new THREE.MeshStandardMaterial({ map: signTex(), roughness: .6 }), 2060, GY + 236, 1660, { cast: false }); sign.rotation.y = Math.PI; box(1996, 2004, GY + 196, GY + 260, 1658, 1662, metal, { col: false }); box(2116, 2124, GY + 196, GY + 260, 1658, 1662, metal, { col: false });
   const gateL = new THREE.Group(); gateL.position.set(2010, GY, 1660); gateL.rotation.y = -1.25; LV.add(gateL); const gateR = new THREE.Group(); gateR.position.set(2110, GY, 1660); gateR.rotation.y = 1.25; LV.add(gateR);
   for (const [gg, s] of [[gateL, 1], [gateR, -1]]) { for (let i = 0; i < 7; i++) mesh(new THREE.BoxGeometry(2, 110, 2), metal, s * (5 + i * 7), 58, 0, { parent: gg }); mesh(new THREE.BoxGeometry(50, 3, 3), metal, s * 26, 108, 0, { parent: gg }); mesh(new THREE.BoxGeometry(50, 3, 3), metal, s * 26, 12, 0, { parent: gg }); }
+  // the street's two ends: road works hoardings (smooth panels — nothing to climb), a little ground beyond so the edge isn't a cliff
+  for (const [x0, x1] of [[-340, -330], [3400, 3500]]) { box(x0, x1, RY - 10, GY, 636, 800, pave, { uv: 128, cast: false }); box(x0, x1, RY - 12, RY, 800, 1500, asphalt, { uv: 220, cast: false }); box(x0, x1, RY - 10, GY, 1500, 1664, pave, { uv: 128, cast: false }); }
+  roadHoarding(3436, 1), roadHoarding(-326, -1);
   // (the park itself — its paths, trees and benches — is its own place: e30_park)
   const trunk = new THREE.MeshStandardMaterial({ color: 0x3a2c22, roughness: .95 }), leafM = new THREE.MeshStandardMaterial({ color: DAY ? 0x4f7f3a : 0x2c4a24, roughness: .9, flatShading: true, emissive: DAY ? 0x2a4a1c : 0 });
   // ---- street furniture on our side ----
@@ -463,4 +466,21 @@ function newsTex() {
   for (let col = 0; col < 4; col++) for (let y = 8; y < 250; y += 7) { const w = R(30, 56); x.fillStyle = `rgba(40,40,40,${R(.25, .45)})`; x.fillRect(8 + col * 62, y, w, 2.2); if (rnd() < .06) { x.fillStyle = 'rgba(30,30,30,.55)'; x.fillRect(8 + col * 62, y, 56, 5); y += 4; } }
   x.fillStyle = 'rgba(120,110,90,.25)'; x.fillRect(132, 40, 56, 44);
   return (_news = tex(c));
+}
+
+// a construction hoarding across the whole street (green panels, a sign, a flashing lamp on top)
+function roadHoarding(x, side) {
+  const pm = new THREE.MeshStandardMaterial({ color: 0x3f7a52, roughness: .7, metalness: .2 }), rib = new THREE.MeshStandardMaterial({ color: 0x356a46, roughness: .7, metalness: .2 });
+  const t0 = x - 3, t1 = x + 3, top = GY + 240;
+  box(t0, t1, RY, top, 630, 1670, pm, { col: false, uv: 120 });
+  for (let z = 640; z < 1670; z += 40) box(x - side * 3.6, x - side * 3, RY, top, z, z + 3, rib, { col: false, cast: false });
+  box(t0 - 1, t1 + 1, top, top + 6, 628, 1672, new THREE.MeshStandardMaterial({ color: 0xe8e4d8, roughness: .6 }), { col: false });
+  cols.push({ t: 'b', x0: t0, x1: t1, y0: RY - 20, y1: GY + 900, z0: 620, z1: 1680, slick: true });   // (too smooth and too high to get over)
+  const c = document.createElement('canvas'); c.width = 512; c.height = 256; const g = c.getContext('2d');
+  g.fillStyle = '#f4f1e6'; g.fillRect(0, 0, 512, 256); g.fillStyle = '#c8312a'; g.fillRect(0, 0, 512, 64); g.fillStyle = '#fff'; g.font = '900 44px "Noto Sans TC", sans-serif'; g.textBaseline = 'middle'; g.textAlign = 'center';
+  const t1s = '道路工程', t2s = '前面封路 · 請勿進入'; g.fillText(t1s, 256, 34); g.fillStyle = '#1e2a22'; g.font = '700 38px "Noto Sans TC", sans-serif'; const w2 = g.measureText(t2s).width; if (w2 > 480) g.font = `700 ${Math.floor(38 * 480 / w2)}px "Noto Sans TC", sans-serif`; g.fillText(t2s, 256, 150);
+  for (let i = 0; i < 8; i++) { g.fillStyle = i % 2 ? '#1e1e1e' : '#f2c23a'; g.beginPath(); g.moveTo(i * 64, 256); g.lineTo(i * 64 + 32, 206); g.lineTo(i * 64 + 64, 206); g.lineTo(i * 64 + 32, 256); g.fill(); }
+  const tex = new THREE.CanvasTexture(c); tex.colorSpace = THREE.SRGBColorSpace;
+  for (const z of [720, 1150, 1580]) { const m = mesh(new THREE.PlaneGeometry(150, 75), new THREE.MeshStandardMaterial({ map: tex, roughness: .6 }), x - side * 3.8, GY + 120, z, { cast: false }); m.rotation.y = side > 0 ? -Math.PI / 2 : Math.PI / 2; }
+  for (const z of [700, 1150, 1600]) { mesh(new THREE.SphereGeometry(5, 14, 10), new THREE.MeshStandardMaterial({ color: 0xff9a2a, emissive: 0xff7a10, emissiveIntensity: 1.6 }), x, top + 12, z, { cast: false }); }
 }

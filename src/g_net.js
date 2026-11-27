@@ -349,6 +349,7 @@ function netMsg(d, from) {
     case 'peb': launchPebble(V3(...d.a), V3(...d.b), d.d); break;
     case 'pch': pouchRecv(d); break;
     case 'loose': looseRecv(d); break;
+    case 'cage': cageRecv(d); break;
     case 'swr': if (NET.host) hostSwitch(d.i, d.id); break;
     case 'swo': if (!NET.host) swOn(d.i, d.d); break;
     case 'get': if (NET.host) hostGet(d); break;
@@ -400,6 +401,7 @@ function hostGet(d) {
 function hostSeen(tp, who) {
   if (who && (who.startsWith('skid') || who === 'tch' || who === 'grd' || who === 'her')) { scSeen(tp, who); return; }
   if (who === 'agent' || who === 'cam') { garageSeen(tp, who); return; } if (who === 'dog' || who === 'old') { yardSeen(tp, who); return; } if (who === 'walker' || who === 'wdog') { roadSeen(tp, who); return; }
+  if (who === 'pest') { pestSeen(tp); return; }
   if (who === 'mom' || who === 'kid') brainGlimpse(tp);
   if (who === 'mom' && KM.mode !== 'sus' && KM.mode !== 'fopen' && !TOY.fetch) { KM.prev = KM.mode; KM.mode = 'sus'; KM.susP = tp; KM.trackT = 2.2; if (!KS.said.sus) { KS.said.sus = 1; sayW('太太', '嗯？……什麼東西？', '#f4bb72', 2.2); } }
   if (who === 'mom' && KM.mode === 'sus') { KM.susP = tp; KM.trackT = 2.2; }

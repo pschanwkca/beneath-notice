@@ -338,7 +338,7 @@ function brainNeeds(A, dt) {
 }
 // set up when the kitchen is prepared (dinner: Mom at the stove, the daughter doing homework)
 function brainReset() {
-  HUM.v = HUM.bel = HUM.quiet = 0; HB.belief = 0; HB.sealNow = false; HB.sealT = 0; HB.holeUse = {}; HB.sealBroke = {}; HB.steelOut = {}; for (const id in SEALS) if (SEALS[id].steel) STEEL_PARK(SEALS[id].x, SEALS[id].steel);
+  HUM.v = HUM.bel = HUM.quiet = 0; HB.belief = 0; HB.sealNow = false; HB.sealT = 0; HB.holeUse = {}; HB.sealBroke = {}; HB.steelOut = {}; pestReset(); for (const id in SEALS) if (SEALS[id].steel) STEEL_PARK(SEALS[id].x, SEALS[id].steel);
   HB.sus = 0; HB.stage = 0; HB.search = 0; HB.inc = []; HB.mem = []; HB.quiet = 0; HB.kidForgot = 0; HB.lastSay = {};
   const M = HB.m = mkAgent('mom'); M.act = 'cook'; M.last = ['cook', '', '']; M.q = [{ wait: 10, km: ['act', 'stove'], at: [22, 96, -178] }];
   M.need = { wash: .3, fridge: .4, sit: .2, bath: R(0, .4), tidy: .2, checkKid: .1, phone: .45, window: .1, wipe: .15, toys: .1 };

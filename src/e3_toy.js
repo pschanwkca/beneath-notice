@@ -22,6 +22,7 @@ function toyLook(C, on) {
 function toyBurst(p) { for (let i = 0; i < 34; i++) emit(p, V3(R(-16, 16), R(4, 24), R(-16, 16)), new THREE.Color(.5, 2.2, 2.1), R(.15, .4), R(.4, 1), 40, 2); }
 function toyReachable(C) {
   const p = C.pos; if (p.x < -300 || p.x > 300) return false;
+  if (p.z < -480 || inStore(p)) return false;   // (round the back: nowhere she'd go to tidy up)
   if (p.y < 6 && p.x > 148 && p.x < 234 && p.z > -222 && p.z < -148) return false; // under the fridge
   if (inFridge(C)) return KS.doorA > .8;
   return true;
@@ -47,6 +48,7 @@ function toyWho(who) {
   if (w === 'dog' && !park) return ['鄰居的狗', '汪！（叼着玩具搖尾巴）', '#d8a45a'];
   if (w === 'drone') return ['Origin Dynamics 無人機', '（嗶——）目標……係一隻玩具？', '#9fb3c8'];
   if (w === 'old') return ['陳伯', '咦，誰把玩具留在這裡？', '#c8b8a0'];
+  if (w === 'pest') return [PEST_NAME, '咦……邊個細路將玩具周圍擺？', PEST_COL];
   if (w === 'walker' || w === 'wdog') return ['行人', '……誰把玩具丟在行人路上？', '#9ec4e8'];
   if (w.startsWith('skid')) { const k = SC.kids[+w.slice(4)]; return [k ? k.name : '同學', rnd() < .5 ? '嘩！隻老鼠公仔識郁㗎！' : '老師！有隻玩具老鼠！', k ? k.col : '#f0c070']; }
   if (w === 'tch') return ['陳老師', '……邊個帶咗公仔返學校？交畀我先。', '#b8d0b0'];

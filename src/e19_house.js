@@ -288,12 +288,12 @@ function steelWool(x) {
   }, [sm]);
   const r = resGroup(G, x, -238, 20, 11, 9, 7, .3, 1, '鋼絲球', false); r.c.push = false; STEEL_PARK(x, r); return r;   // (no falling: it's wedged in)
 }
-const steelIn = id => { const S = SEALS[id], r = S && S.steel; return !!r && r.y0 < 5 && Math.abs(r.cx - S.x) < 3 && r.s > .45; };
+const steelIn = id => { const S = SEALS[id], r = S && S.steel; return !!r && r.y0 < 5 && Math.abs(r.cx - S.x) < 3 && r.s > .52; };
 function steelPlug(id) { const S = SEALS[id], r = S.steel; r.cx = S.x; r.cz = -238; r.y0 = 0; r.s = r.target = 1; applyResize(r); r.wakeT = T + 1; }
 // shrunk in the hole: it drops out on the bathroom side, and the hole is open again
 function steelTick() {
   if (NET.client) return;
-  for (const id in SEALS) { const S = SEALS[id], r = S.steel; if (!r || !(r.y0 < 5 && Math.abs(r.cx - S.x) < 3) || r.s > .45) continue;
+  for (const id in SEALS) { const S = SEALS[id], r = S.steel; if (!r || !(r.y0 < 5 && Math.abs(r.cx - S.x) < 3) || r.s > .52) continue;
     r.cx = S.x + 9; r.cz = -251; r.y0 = 0; applyResize(r); HB.steelOut = HB.steelOut || {}; HB.steelOut[id] = (HB.steelOut[id] || 0) + 1;
     toastW('鋼絲球縮細咗，跌咗出嚟——條老鼠窿又通返', 2.8); SND.snap && SND.snap(); for (let i = 0; i < 14; i++) emit(V3(S.x, 4, -244), V3(R(-10, 10), R(2, 10), R(-14, -2)), new THREE.Color(.62, .66, .7), R(.15, .3), R(.4, .8), 200, 1); }
 }
@@ -304,6 +304,7 @@ function hxPassageSwitches() {
   // the fridge: its seal is strong — only the bear can pull the door open (and the family will notice it's open)
   hxAdd({ id: 'fridge', name: '雪櫃門', kind: 'door', who: 'bear', p: V3(152, 8, -142), r: 10, on: false, verb: ['閂雪櫃門', '用力拉開雪櫃門'] });
   hxAdd({ id: 'mhcover', name: '踢腳線蓋', kind: 'cover', p: V3(335, 4, -226), r: 7, once: true, quiet: true, verb: ['拆開踢腳線蓋', '拆開踢腳線蓋'] });
+  pestSwitches();
   hxAdd({ id: 'gvent', name: '通風口蓋（由呢邊推開）', kind: 'cover', lv: 'any', sp: true, p: V3(903, 12, -200), r: 8, once: true, quiet: true, verb: ['推開通風口蓋', '推開通風口蓋'] });
 }
 function glueTick(dt) {
@@ -405,6 +406,7 @@ function hxApply(o, quiet) {
   if (o.id === 'gstrip' && !o.on && !quiet && !NET.client) toastW('監視鏡頭斷了電——它現在甚麼都看不到', 3);
   if (o.id === 'blight' && HX.bfan) HX.bfan.col.y0 = o.on ? HX.bfan.y[0] : -999, HX.bfan.col.y1 = o.on ? HX.bfan.y[1] : -998;
   if (o.id === 'mhcover' && HX.mhc) { const g = HX.mhc.g; if (o.on) { g.position.set(346, .4, -225); g.rotation.set(-Math.PI / 2, 0, .4); HX.mhc.col.y0 = -999; HX.mhc.col.y1 = -998; if (!quiet) toastW('踢腳線蓋拆開咗——後面個老鼠窿通去廁所', 2.6); } }
+  if (o.kind === 'cage') cageApply(o);
   if (o.kind === 'trap' && HX.glue) { const G = HX.glue[+o.id.slice(4)]; if (G) G.g.visible = o.on; }
   if (o.seal && SEALS[o.id] && SEALS[o.id].g) { const S = SEALS[o.id]; S.g.visible = o.on; S.col.y0 = o.on ? 0 : -999; S.col.y1 = o.on ? 11.5 : -998; if (!o.on && !quiet) { if (!NET.client) { HB.sealBroke = HB.sealBroke || {}; HB.sealBroke[o.id] = (HB.sealBroke[o.id] || 0) + 1; } toastW('紙皮俾老友撞爛咗——條老鼠窿又通返', 2.4); for (let i = 0; i < 16; i++) emit(V3(S.x, 5, -245), V3(R(-12, 12), R(2, 14), R(-14, -2)), new THREE.Color(.7, .55, .36), R(.3, .6), R(.5, .9), 200, 1); } }
   if (o.id === 'gvent' && o.on && !LIV.ventOpen) { ventOpen(); if (!quiet) toastW('通風口蓋推開咗——客廳同車房而家打通咗', 2.6); }
