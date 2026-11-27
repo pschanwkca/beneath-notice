@@ -33,6 +33,18 @@ function polyMesh(pts, mat, U, V, s, parent) {
   const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
   const m = new THREE.Mesh(g, mat); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m;
 }
+// the same flat (sloped) polygon with a rectangular hole cut through it, seen from above: [x0, x1, z0, z1] (a roof vent's opening)
+function polyHole(pts, hole, mat, U, V, s, parent) {
+  const p0 = pts[0], n = V3().subVectors(pts[1], p0).cross(V3().subVectors(pts[2], p0)), yAt = (x, z) => p0.y - (n.x * (x - p0.x) + n.z * (z - p0.z)) / n.y;
+  let ct = pts.map(p => new THREE.Vector2(p.x, p.z)); if (THREE.ShapeUtils.isClockWise(ct)) ct = ct.reverse();
+  let hl = [[hole[0], hole[2]], [hole[0], hole[3]], [hole[1], hole[3]], [hole[1], hole[2]]].map(([x, z]) => new THREE.Vector2(x, z)); if (!THREE.ShapeUtils.isClockWise(hl)) hl = hl.reverse();
+  const faces = THREE.ShapeUtils.triangulateShape(ct, [hl]), all = [...ct, ...hl], pos = [], uv = [], idx = [];
+  for (const q of all) { const P = V3(q.x, yAt(q.x, q.y), q.y); pos.push(P.x, P.y, P.z); uv.push(P.dot(U) / s, P.dot(V) / s); }
+  // every triangle faces up (like polyMesh's)
+  for (const [a, b, c] of faces) { const A = all[a], B = all[b], C = all[c]; ((B.y - A.y) * (C.x - A.x) - (B.x - A.x) * (C.y - A.y)) >= 0 ? idx.push(a, b, c) : idx.push(a, c, b); }
+  const g = new THREE.BufferGeometry(); g.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3)); g.setAttribute('uv', new THREE.Float32BufferAttribute(uv, 2)); g.setIndex(idx); g.computeVertexNormals();
+  const m = new THREE.Mesh(g, mat); m.castShadow = true; m.receiveShadow = true; parent.add(m); return m;
+}
 // the cap over a ridge or a hip: half a cylinder (9 cm across, 3.5 proud) laid from p to q, its overlapping cap shingles drawn on
 function capMesh(p, q, mat) {
   const d = V3().subVectors(q, p), L = d.length(), g = new THREE.CylinderGeometry(4.6, 4.6, L, 14, 1, true, -Math.PI / 2, Math.PI);
@@ -58,7 +70,7 @@ function buildHouseShell() {
   { const a0 = -358, a1 = 940, b0 = -290, b1 = 290, W = 552, E = W - 28 * pitch, R = W + 262 * pitch, r0 = -330 + 262, r1 = 912 - 262;
     const A = (x, y, z) => V3(x, y, z);
     polyMesh([A(a0, E, b1), A(a1, E, b1), A(r1, R, 0), A(r0, R, 0)], shM, V3(1, 0, 0), V3(0, .438, -.899), 230, P);
-    polyMesh([A(a1, E, b0), A(a0, E, b0), A(r0, R, 0), A(r1, R, 0)], shM, V3(1, 0, 0), V3(0, .438, .899), 230, P);
+    polyHole([A(a1, E, b0), A(a0, E, b0), A(r0, R, 0), A(r1, R, 0)], [RF_VENT.x0, RF_VENT.x1, RF_VENT.z0, RF_VENT.z1], shM, V3(1, 0, 0), V3(0, .438, .899), 230, P);   // (with the vent's opening)
     polyMesh([A(a1, E, b1), A(a1, E, b0), A(r1, R, 0)], shM, V3(0, 0, 1), V3(-.899, .438, 0), 230, P);
     polyMesh([A(a0, E, b0), A(a0, E, b1), A(r0, R, 0)], shM, V3(0, 0, 1), V3(.899, .438, 0), 230, P);
     // ridge and hip caps
@@ -70,7 +82,7 @@ function buildHouseShell() {
     // gutter along the front
     box(a0, a1, E - 16, E - 6, b1 + 3, b1 + 11, gutM, o);
     // the upper east wall that stands clear of the garage roof, with two windows (blinds half down)
-    box(913, 921, 260, W, -262, 262, sidingU, { ...o, uv: 120 });
+    box(913, 921, 260, W, -262, 104, sidingU, { ...o, uv: 120 }); box(913, 921, 260, W, 136, 262, sidingU, { ...o, uv: 120 }); box(913, 921, 300, W, 104, 136, sidingU, { ...o, uv: 120 });   // (the ceiling duct goes through it into the garage attic)
     const glass = new THREE.MeshPhysicalMaterial({ color: 0x5a6e84, roughness: .06, metalness: .2, clearcoat: 1 }), blind = new THREE.MeshStandardMaterial({ color: 0xece4d2, roughness: .8 });
     for (const z of [-120, 120]) { box(921, 922, 430, 520, z - 42, z + 42, glass, o); box(920.5, 921.5, 482, 520, z - 40, z + 40, blind, o);
       for (let y = 484; y < 520; y += 5) box(921.4, 922, y, y + 1, z - 40, z + 40, blind, o);
@@ -81,7 +93,7 @@ function buildHouseShell() {
   }
   // ---------- the garage: gabled, ridge running east–west, gable end facing the yard ----------
   { const x0 = 914, x1 = 1478, z0 = -290, z1 = 332, zm = 21, W = 270, E = W - 20 * pitch, R = W + 291 * pitch, A = (x, y, z) => V3(x, y, z);
-    polyMesh([A(x0, E, z1), A(x1, E, z1), A(x1, R, zm), A(x0, R, zm)], shM, V3(1, 0, 0), V3(0, .438, -.899), 230, P);
+    polyHole([A(x0, E, z1), A(x1, E, z1), A(x1, R, zm), A(x0, R, zm)], [RF_GVENT.x0, RF_GVENT.x1, RF_GVENT.z0, RF_GVENT.z1], shM, V3(1, 0, 0), V3(0, .438, -.899), 230, P);
     polyMesh([A(x1, E, z0), A(x0, E, z0), A(x0, R, zm), A(x1, R, zm)], shM, V3(1, 0, 0), V3(0, .438, .899), 230, P);
     P.add(capMesh(A(x0, R, zm), A(x1, R, zm), capM));
     // the gable: siding triangle on the yard wall, with a round louvred attic vent

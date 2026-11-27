@@ -1,0 +1,3 @@
+[{"eval": "window.__bn.startChapter('road'); 1"}, {"wait": 6000},
+ {"eval": "(()=>{const B=window.__bn; const near=[]; for(const c of B.cols){ if(c.t!=='b') continue; if(c.x1>3300 && c.x0<3500 && c.z1>700 && c.z0<900 && c.y1>-100 && c.y0<20) near.push([c.x0,c.x1,c.y0,c.y1,c.z0,c.z1].map(v=>+(+v).toFixed(1))); } const g=[]; for(const c of B.cols){ if(c.t!=='b') continue; if(c.y1>-40 && c.y1<-30 && c.x1-c.x0>300) g.push([c.x0,c.x1,c.y0,c.y1,c.z0,c.z1].map(v=>+(+v).toFixed(1))); } return {near:near.slice(0,30), ground:g.slice(0,30)}; })()"}
+]

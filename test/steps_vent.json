@@ -1,0 +1,7 @@
+[{"evalFile":"shothelp.js"},{"evalFile":"roof_h.js"},{"evalFile":"vent_h.js"},
+ {"eval":"window.__R.start()"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; R.put(564, 554, -100); b.step(10); const L=b.leader; L.stamina=L.stamMax=100; return window.__V.go([[564,-130],[564,-151],[564,-151,584],[564,-159],[564,-159,620],[564,-170]], 2400, 40); })()"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; R.put(564, 554, -100); b.step(10); const L=b.leader; L.stamina=L.stamMax=100; return window.__V.go([[564,-130],[564,-151],[564,-151,584],[549,-151],[549,-151,620],[540,-151]], 2400, 60); })()"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; R.put(1030, 282, 120); b.step(10); const L=b.leader; L.stamina=L.stamMax=100; return window.__V.go([[1000,120],[980,120,300],[970,120],[970,120,341],[970,129],[970,129,379],[970,140]], 3000, 60); })()"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; R.put(1030, 282, 120); b.step(10); const L=b.leader; L.stamina=L.stamMax=100; return window.__V.go([[1000,120],[980,120,300],[970,120],[970,120,341],[953,120],[953,120,379],[940,120]], 3000, 60); })()"}
+]

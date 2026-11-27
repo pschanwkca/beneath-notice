@@ -22,3 +22,5 @@ Object.assign(I18N_EN, {"滅蟲公司師傅": "Pest controller", "捕鼠籠": "C
 Object.assign(I18N_ENT, {"{0}出返嚟喇！": "{0} is out!"});
 Object.assign(I18N_EN, {"小彩：滅蟲師傅在看這邊！": "小彩: the pest controller is looking this way!"});
 Object.assign(I18N_EN, {"道路工程": "ROAD WORKS", "前面封路 · 請勿進入": "Road closed ahead · Keep out"});
+Object.assign(I18N_EN, {"雜物": "Odds & ends", "露營用品": "Camping gear", "車房雜物": "Garage junk", "舊玩具": "Old toys", "細佬妹": "Little ones", "車房閣樓……通風口嗰度有光。爬上去就出到屋頂。": "The garage attic… there's light at the vent. Climb up and we're out on the roof.", "出到嚟喇！沿長春藤架爬上大屋屋頂，上屋脊睇吓。": "We're out! Climb the ivy trellis up onto the house roof and take a look from the ridge."});
+Object.assign(I18N_EN, {"後門鎖咗——之後會通去後園": "The back door's locked — later it'll lead out to the back garden"});

@@ -18,6 +18,9 @@ const RF_GVENT = { x0: 950, x1: 986, z0: 108, z1: 132, top: 380 };     // the ga
 const RF_HATCH = { x0: 800, x1: 856, z0: 66, z1: 114 };                // the attic hatch in her ceiling
 const SUNSET = V3(-.6, .1, .79).normalize();
 const RF_ON = () => !!ZONES.roof && WC.cz === ZONES.roof;
+// the garage attic (over the garage's ceiling) and the garage under that ceiling: the ceiling stops light and sight between them
+const gIn = p => p.x > 912 && p.x < 1460 && p.z > -272 && p.z < 314;
+const gAttic = p => gIn(p) && p.y > 277 && p.y < 420, gUnder = p => gIn(p) && p.y < 274 && p.y > -60;
 
 // ---------- the roof surfaces ----------
 // the cap along the ridge and the hips (3.5 cm proud and 9 wide, like the shell's cap boards; easing out over a few cm)
@@ -46,7 +49,9 @@ function rfTopAt(x, z) {
     [-330, 912, 548, 1150, -262, 262],                                   // the attic and the air over the house
     [-440, 1000, 520, 1150, 262, 400], [-440, 1000, 520, 1150, -400, -262], [-440, -330, 520, 1150, -262, 262], [912, 1000, 520, 1150, -262, 262],   // round the eaves
     band(-400, -270, 252), band(-270, -200, gy(-270)), band(-200, -130, gy(-200)), band(-130, -60, gy(-130)), band(-60, G.zm, gy(-60)),
-    band(G.zm, 100, gy(100)), band(100, 170, gy(170)), band(170, 240, gy(240)), band(240, 312, gy(312)), band(312, 440, 252)
+    band(G.zm, 100, gy(100)), band(100, 170, gy(170)), band(170, 240, gy(240)), band(240, 312, gy(312)), band(312, 440, 252),
+    // the garage attic (over the garage's ceiling, round the end of the duct — that stays the garage's)
+    [952, 1460, 280.5, 420, -270, 312], [912, 952, 280.5, 420, -270, 104], [912, 952, 280.5, 420, 136, 312], [912, 952, 300.5, 420, 104, 136]
   ] });
   ZL.splice(ZL.indexOf(ZONES.roof), 1); ZL.unshift(ZONES.roof);
   // from up here you see the street and the yard below
@@ -96,7 +101,8 @@ function buildRoof() {
   { const mx = -180, mz = -24; cyl(mx, mz, 1.3, H.R + 40, H.R + 196, M.dark, { seg: 10 }); for (const [y, w] of [[H.R + 150, 70], [H.R + 168, 54], [H.R + 186, 38]]) { const r = mesh(new THREE.CylinderGeometry(.7, .7, w, 8), M.dark, mx, y, mz); r.rotation.z = Math.PI / 2; cols.push({ t: 'b', x0: mx - w / 2, x1: mx + w / 2, y0: y - .7, y1: y + .7, z0: mz - .7, z1: mz + .7, noRay: true }); }
     for (const y of [H.R + 52, H.R + 72]) box(-151, -148, y, y + 5, -30, -18, M.dark); }
   // the upper east wall over the garage roof, its two window sills (ledges) and the ivy trellis between them
-  solid(912, 921, 255, H.W, -262, 262); for (const z of [-120, 120]) solid(921, 924, 426, 430, z - 48, z + 48);
+  // (with the ceiling duct's way through it, over the garage attic's floor: z 104…136 up to 300)
+  solid(912, 921, 255, H.W, -262, 104); solid(912, 921, 255, H.W, 136, 262); solid(912, 921, 300, H.W, 104, 136); for (const z of [-120, 120]) solid(921, 924, 426, 430, z - 48, z + 48);
   buildTrellis(M);
   // the house's roof vent, and the garage's
   buildRoofVent(M, RF_VENT, rfHip, true); buildRoofVent(M, RF_GVENT, rfGab, false);
@@ -111,13 +117,14 @@ function buildRoof() {
   // everything up here has the colliders it was given (rafters overhead, the moving lid, cord and bird must not be made solid)
   for (const ch of LV.children) ch.userData.noSolid = true;
 }
-// the ivy trellis: a white lattice on stand-offs, thick with leaves, between the two windows
+// the ivy trellis: a white lattice on stand-offs, thick with leaves, between the two windows — its foot just over the
+// garage roof's ridge (where the ridge meets the wall), so none of it pokes down into the garage attic
 function buildTrellis(M) {
-  const x0 = 921, x1 = 927, y0 = 378, y1 = 522, z0 = -40, z1 = 40;
+  const x0 = 921, x1 = 927, y0 = 418, y1 = 522, z0 = RFG.zm - 40, z1 = RFG.zm + 40;
   cols.push({ t: 'b', x0, x1, y0, y1, z0, z1, grip: true });
   for (let z = z0; z <= z1; z += 10) rfDeco(rfBoxG(1.6, y1 - y0, 1.6, 0, 0, 926, (y0 + y1) / 2, z), M.white);
   for (let y = y0 + 6; y < y1; y += 12) rfDeco(rfBoxG(1.4, 1.4, z1 - z0, 0, 0, 925.4, y, (z0 + z1) / 2), M.white);
-  for (const y of [y0 + 20, y1 - 20]) rfDeco(rfBoxG(5, 2, 2, 0, 0, 923.5, y, 0), M.white);
+  for (const y of [y0 + 20, y1 - 20]) rfDeco(rfBoxG(5, 2, 2, 0, 0, 923.5, y, RFG.zm), M.white);
   // leaves: crossed cards scattered over it, thicker at the bottom
   const lg = new THREE.PlaneGeometry(9, 9), N = 180, im = new THREE.InstancedMesh(lg, M.leaf, N), o = new THREE.Object3D();
   for (let i = 0; i < N; i++) { const t = Math.pow(rnd(), 1.4); o.position.set(927 + R(-.5, 2.5), y0 + 4 + (1 - t) * (y1 - y0 - 10), R(z0 - 4, z1 + 4)); o.rotation.set(R(-.6, .6), Math.PI / 2 + R(-.7, .7), R(0, 6.28)); o.scale.setScalar(R(.7, 1.3)); o.updateMatrix(); im.setMatrixAt(i, o.matrix); }
@@ -126,7 +133,7 @@ function buildTrellis(M) {
 // a box roof vent: a sheet-metal curb round a hole in the roof, a hood on short legs with louvred sides.
 // You come and go between the curb's top and the hood (a 10 cm gap)
 function buildRoofVent(M, V, topF, house) {
-  const yB = topF((V.x0 + V.x1) / 2, V.z0) - 18, yT = V.top, hy = yT + 10;
+  const yB = Math.min(topF((V.x0 + V.x1) / 2, V.z0), topF((V.x0 + V.x1) / 2, V.z1)) - 18, yT = V.top, hy = yT + 10;
   const w = (x0, x1, z0, z1) => box(x0, x1, yB, yT, z0, z1, M.zinc, { uv: 30 });
   w(V.x0, V.x0 + 2, V.z0, V.z1); w(V.x1 - 2, V.x1, V.z0, V.z1); w(V.x0 + 2, V.x1 - 2, V.z0, V.z0 + 2); w(V.x0 + 2, V.x1 - 2, V.z1 - 2, V.z1);
   box(V.x0 - 5, V.x1 + 5, hy, hy + 2, V.z0 - 5, V.z1 + 5, M.zinc);
@@ -147,7 +154,7 @@ function buildAttic(M) {
   const H = RFH, p = RF.p, th = H.th, F = H.W, A = (x, y, z) => V3(x, y, z);
   // the underside of the roof (seen only from inside)
   polyMesh([A(H.a0, H.E - th, H.b1), A(H.a1, H.E - th, H.b1), A(H.r1, H.R - th, 0), A(H.r0, H.R - th, 0)], M.ply, V3(1, 0, 0), V3(0, .438, -.899), 120, LV).castShadow = false;
-  polyMesh([A(H.a1, H.E - th, H.b0), A(H.a0, H.E - th, H.b0), A(H.r0, H.R - th, 0), A(H.r1, H.R - th, 0)], M.ply, V3(1, 0, 0), V3(0, .438, .899), 120, LV).castShadow = false;
+  polyHole([A(H.a1, H.E - th, H.b0), A(H.a0, H.E - th, H.b0), A(H.r0, H.R - th, 0), A(H.r1, H.R - th, 0)], [RF_VENT.x0, RF_VENT.x1, RF_VENT.z0, RF_VENT.z1], M.ply, V3(1, 0, 0), V3(0, .438, .899), 120, LV).castShadow = false;
   polyMesh([A(H.a1, H.E - th, H.b1), A(H.a1, H.E - th, H.b0), A(H.r1, H.R - th, 0)], M.ply, V3(0, 0, 1), V3(-.899, .438, 0), 120, LV).castShadow = false;
   // rafters (front and back), the ridge board
   // (past the ridge's end the hips cut them short)
@@ -162,9 +169,10 @@ function buildAttic(M) {
   // a partition of boards closes off the dark end over the kitchen
   { const pts = [A(300, F, -237), A(300, F, 237), A(300, H.R - th, 0)]; polyMesh(pts, M.plyF, V3(0, 0, 1), V3(0, 1, 0), 120, LV); const m2 = polyMesh(pts, M.ply, V3(0, 0, 1), V3(0, 1, 0), 120, LV); m2.castShadow = false;
     cols.push({ t: 'b', x0: 296, x1: 300, y0: F, y1: H.R, z0: -240, z1: 240 }); }
-  // Dad's boxes: two under the vent make a way up to it (the big one, the smaller one on top)
+  // Dad's boxes: two under the vent make a way up to it (the big one, the smaller one on top — inside the vent's
+  // collar, a little lower than its bottom edge's far side: climb it from the near side, then up the collar's inside)
   const cbox = (x0, x1, y0, y1, z0, z1, lab) => { const m = box(x0, x1, y0, y1, z0, z1, M.card, { uv: 40 }); if (lab) { const L = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(30, (x1 - x0) * .7), Math.min(15, (y1 - y0) * .6)), new THREE.MeshStandardMaterial({ map: lab, roughness: .9 })); L.position.set((x0 + x1) / 2, (y0 + y1) / 2, z1 + .1); LV.add(L); } return m; };
-  cbox(534, 594, F, F + 20, -178, -126, M.label('實驗筆記', '2019 – 2022')); cbox(546, 582, F + 20, F + 32, -164, -136, M.label('舊零件'));
+  cbox(534, 594, F, F + 20, -178, -126, M.label('實驗筆記', '2019 – 2022')); cbox(549.8, 578.2, F + 20, F + 33, -158.2, -145, M.label('舊零件'));
   cbox(470, 520, F, F + 26, -150, -100, M.label('聖誕裝飾')); cbox(640, 690, F, F + 22, -120, -72, M.label('BB衫', '留俾細佬妹')); cbox(650, 684, F + 22, F + 38, -112, -82);
   cbox(690, 740, F, F + 24, 132, 176, M.label('相簿')); cbox(380, 430, F, F + 30, 80, 130); cbox(390, 420, F + 30, F + 44, 90, 120, M.label('爸爸', '大學'));
   // an old blue suitcase lying flat, a rolled-up rug, a desk fan, a framed photo leaning on a box
@@ -203,15 +211,59 @@ function rfHatch(open) {
   else { RF.lidG.position.set((hx.x0 + hx.x1) / 2, 550.5, (hx.z0 + hx.z1) / 2); RF.lidG.rotation.set(0, 0, 0); RF.lid.y0 = 540; RF.lid.y1 = 552; RF.cord.y0 = -999; RF.cord.y1 = -998; }
   RF.cordM.visible = open; if (RF.hatchL) { RF.hatchL.intensity = open ? 700 : 0; RF.hatchB.visible = open; }
 }
-// the garage attic: just the boards over its ceiling, a glow from the vent, and the duct's end peeled open
+// the garage attic: the underside of its roof on rafters, pink insulation between the joists and a boarded walkway,
+// a bare bulb somebody left on, the round louvred vent in the gable (the sky through its slats), the duct's end peeled
+// open — and under the roof vent a crate and a column of junk with a shelf board on top: up those, up the inside of
+// the vent's collar, and out under its hood onto the garage roof
 function buildGarageAttic(M) {
-  const G = RFG; const A = (x, y, z) => V3(x, y, z);
-  polyMesh([A(G.x0, G.E - G.th, G.z1), A(G.x1, G.E - G.th, G.z1), A(G.x1, G.R - G.th, G.zm), A(G.x0, G.R - G.th, G.zm)], M.ply, V3(1, 0, 0), V3(0, .438, -.899), 120, LV).castShadow = false;
-  polyMesh([A(G.x1, G.E - G.th, G.z0), A(G.x0, G.E - G.th, G.z0), A(G.x0, G.R - G.th, G.zm), A(G.x1, G.R - G.th, G.zm)], M.ply, V3(1, 0, 0), V3(0, .438, .899), 120, LV).castShadow = false;
-  // the inside of the gable end (so you can't see out through it)
-  { const pts = [A(1458, 270, -270), A(1458, 270, 312), A(1458, G.R - G.th, G.zm)]; const m = polyMesh(pts, M.plyF, V3(0, 0, 1), V3(0, 1, 0), 120, LV); m.castShadow = false; }
-  for (let x = 930; x < 1450; x += 40) deco(x - 1.5, x + 1.5, 280, 281.2, -262, 304, M.wood);
-  pointL(0x9a8aa8, 220, 1000, 300, 120);
+  const G = RFG, p = RF.p, th = G.th, F = 280, A = (x, y, z) => V3(x, y, z), V = RF_GVENT;
+  polyHole([A(G.x0, G.E - th, G.z1), A(G.x1, G.E - th, G.z1), A(G.x1, G.R - th, G.zm), A(G.x0, G.R - th, G.zm)], [V.x0, V.x1, V.z0, V.z1], M.ply, V3(1, 0, 0), V3(0, .438, -.899), 120, LV).castShadow = false;
+  polyMesh([A(G.x1, G.E - th, G.z0), A(G.x0, G.E - th, G.z0), A(G.x0, G.R - th, G.zm), A(G.x1, G.R - th, G.zm)], M.ply, V3(1, 0, 0), V3(0, .438, .899), 120, LV).castShadow = false;
+  // the inside of the gable end, with the round vent cut through it (a lined hole: the slats and the sky beyond)
+  { const sh = new THREE.Shape([new THREE.Vector2(-270, 270), new THREE.Vector2(312, 270), new THREE.Vector2(G.zm, G.R - th)]);
+    const h = new THREE.Path(); h.absarc(G.zm, 352, 21.5, 0, Math.PI * 2, true); sh.holes.push(h);
+    const g = new THREE.ShapeGeometry(sh, 28), uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) / 120, uv.getY(i) / 120);
+    const m = new THREE.Mesh(g, M.plyF); m.rotation.y = -Math.PI / 2; m.position.x = 1458; m.receiveShadow = true; LV.add(m);
+    const lin = new THREE.Mesh(new THREE.CylinderGeometry(21.5, 21.5, 2.6, 32, 1, true), new THREE.MeshStandardMaterial({ color: 0xb8956a, roughness: .9, side: THREE.DoubleSide })); lin.rotation.z = Math.PI / 2; lin.position.set(1459.3, 352, G.zm); LV.add(lin);
+    const ring = new THREE.Mesh(new THREE.TorusGeometry(22.2, 1.4, 8, 36), M.wood); ring.rotation.y = Math.PI / 2; ring.position.set(1457.6, 352, G.zm); LV.add(ring); }
+  // rafters down both slopes (none through the vent), the ridge board
+  { const dz = (G.R - th - F) / p, L = dz / Math.cos(26 * Math.PI / 180), zc = dz / 2;
+    for (let x = 944; x < 1450; x += 40) for (const s of [1, -1]) { if (s > 0 && x > V.x0 - 6 && x < V.x1 + 6) continue;
+      const c = V3(x, G.R - th - zc * p, G.zm + s * zc).addScaledVector(V3(0, .899, .438 * s), -4.5); rfDeco(rfBoxG(3, 9, L, s * 26 * Math.PI / 180, 0, c.x, c.y, c.z), M.wood); }
+    rfDeco(rfBoxG(1458 - 921, 12, 3, 0, 0, (921 + 1458) / 2, G.R - th - 6, G.zm), M.wood); }
+  // joists over the garage ceiling (clear of the grille), pink insulation between them, a walkway of boards
+  for (let x = 930; x < 1450; x += 40) { if (x < 952) { deco(x - 1.5, x + 1.5, 279.6, 280.8, -262, 104, M.wood); deco(x - 1.5, x + 1.5, 279.6, 280.8, 136, 304, M.wood); } else deco(x - 1.5, x + 1.5, 279.6, 280.8, -262, 304, M.wood); }
+  for (const [x0, x1, z0, z1] of [[921, 1458, -262, 104], [921, 1458, 136, 304], [952, 1458, 104, 136]]) { const g = new THREE.PlaneGeometry(x1 - x0, z1 - z0), uv = g.attributes.uv; for (let i = 0; i < uv.count; i++) uv.setXY(i, uv.getX(i) * (x1 - x0) / 70, uv.getY(i) * (z1 - z0) / 70);
+    const ins = new THREE.Mesh(g, M.ins); ins.rotation.x = -Math.PI / 2; ins.position.set((x0 + x1) / 2, F + .25, (z0 + z1) / 2); ins.receiveShadow = true; LV.add(ins); }
+  for (const [x0, x1, z0, z1] of [[952, 1196, 44, 88], [1196, 1440, 44, 88], [1124, 1168, -170, 44]]) box(x0, x1, F, F + .9, z0, z1, M.plyF, { uv: 60, cast: false });
+  // ---- the way up: a crate, then a column of junk right under the vent with an old shelf board across its top ----
+  const card = (x0, x1, y0, y1, z0, z1, lab, face = 'z1', o = {}) => { const m = box(x0, x1, y0, y1, z0, z1, M.card, { uv: 40, ...o }); if (lab) { const L = new THREE.Mesh(new THREE.PlaneGeometry(Math.min(30, ((face === 'x1' ? z1 - z0 : x1 - x0)) * .7), Math.min(15, (y1 - y0) * .6)), new THREE.MeshStandardMaterial({ map: lab, roughness: .9 }));
+    if (face === 'x1') { L.position.set(x1 + .1, (y0 + y1) / 2, (z0 + z1) / 2); L.rotation.y = Math.PI / 2; } else L.position.set((x0 + x1) / 2, (y0 + y1) / 2, z1 + .1); LV.add(L); } return m; };
+  { const crate = new THREE.MeshStandardMaterial({ map: M.wood.map, color: 0xb08a5a, roughness: .85 });
+    box(976, 1012, F, F + 24, 100, 140, crate);
+    for (const y of [F + 4, F + 12, F + 20]) { deco(1012, 1012.8, y - 2.5, y + 2.5, 100, 140, M.wood); deco(976, 1012, y - 2.5, y + 2.5, 140, 140.8, M.wood); }
+    deco(1012, 1013, F, F + 24, 100, 103, M.wood); deco(1012, 1013, F, F + 24, 137, 140, M.wood); }
+  // (the column's one collider and its shelf board; the things in it are just drawn)
+  cols.push({ t: 'b', x0: 960, x1: 976, y0: F, y1: 340.5, z0: 112, z1: 128 }); box(953.8, 976, 340.5, 342, 111.8, 128.2, M.wood);
+  card(960, 976, F, F + 22, 112, 128, M.label('雜物'), 'z1', { col: false });
+  { const red = new THREE.MeshStandardMaterial({ color: 0xb8332a, roughness: .45, metalness: .35 }); box(960.6, 975.4, F + 22, F + 38, 112.6, 127.4, red, { col: false });
+    box(961, 975, F + 29.6, F + 30.4, 112.4, 127.6, M.dark, { col: false, cast: false }); box(966, 970, F + 38, F + 40, 117, 123, M.dark, { col: false }); }
+  { const tin = new THREE.MeshStandardMaterial({ color: 0xd8d4ca, metalness: .55, roughness: .4 }), lab = [0x3a6ea8, 0x4f9a62];
+    for (let i = 0; i < 2; i++) { const y0 = F + 40 + i * 10.25; cyl(968, 120, 7, y0, y0 + 10, tin, { col: false, seg: 24 }); cyl(968, 120, 7.08, y0 + 2.5, y0 + 7, new THREE.MeshStandardMaterial({ color: lab[i], roughness: .6 }), { col: false, seg: 24, open: true, cast: false }); } }
+  // ---- the rest of the junk: boxes, an old suitcase, paint tins, a rolled-up rug ----
+  card(1240, 1300, F, F + 26, -150, -100, M.label('露營用品')); card(1250, 1290, F + 26, F + 44, -146, -106);
+  card(1330, 1380, F, F + 22, 140, 186, M.label('車房雜物')); card(1020, 1070, F, F + 20, -60, -20, M.label('舊玩具', '細佬妹'));
+  box(1180, 1240, F, F + 12, -112, -72, new THREE.MeshStandardMaterial({ color: 0x6a4a3a, roughness: .6 }), { uv: 30 }); box(1205, 1215, F + 12, F + 14, -96, -88, M.dark);
+  { const cols3 = [[1400, 104, 0x3a8a6a], [1414, 112, 0xd8b04a], [1402, 120, 0xb84a3a]];
+    for (const [x, z, c] of cols3) { cyl(x, z, 6, F, F + 11, new THREE.MeshStandardMaterial({ color: 0xcfcbc2, metalness: .5, roughness: .45 }), { seg: 20 }); cyl(x, z, 6.06, F + 3, F + 8, new THREE.MeshStandardMaterial({ color: c, roughness: .6 }), { col: false, seg: 20, open: true, cast: false }); } }
+  { const r = cyl(0, 0, 8, 0, 110, new THREE.MeshStandardMaterial({ color: 0x5a6e8a, roughness: .95 }), { col: false, seg: 18 }); r.rotation.z = Math.PI / 2; r.position.set(1300, F + 8, 230); cols.push({ t: 'b', x0: 1245, x1: 1355, y0: F, y1: F + 16, z0: 222, z1: 238 }); }
+  // ---- light: a bare bulb on a flex from the ridge (left on), the sky through the gable vent ----
+  { const bx = 1180, bz = 30, top = G.R - th - Math.abs(bz - G.zm) * p, by = 362;
+    cyl(bx, bz, .35, by + 5, top, M.dark, { col: false, seg: 6, cast: false }); cyl(bx, bz, 1.6, by + 2, by + 6, new THREE.MeshStandardMaterial({ color: 0xc8a050, metalness: .7, roughness: .35 }), { col: false, seg: 12 });
+    mesh(new THREE.SphereGeometry(2.8, 14, 12), new THREE.MeshStandardMaterial({ color: 0xfff4e0, emissive: 0xffc27a, emissiveIntensity: 3 }), bx, by, bz, { cast: false });
+    cyl(bx + 1.2, bz, .15, by - 14, by + 3, M.dark, { col: false, seg: 4, cast: false });
+    pointL(0xffc27a, 2100, bx, by - 4, bz); }
+  pointL(0x9aa6d8, 320, 1428, 345, G.zm); addBeam(0xc8d0ff, V3(1452, 352, G.zm), V3(1320, 284, G.zm - 10), .26, .035);
   // the duct's end: a panel peeled back at the bottom — walk in, and the grille is right there
   const bent = new THREE.Mesh(new THREE.BoxGeometry(4, 12, 24), new THREE.MeshStandardMaterial({ color: 0xc4cacd, metalness: .5, roughness: .48 })); bent.position.set(953, 286, 120); bent.rotation.z = -.9; bent.castShadow = true; LV.add(bent);
 }
@@ -396,7 +448,7 @@ function roofTick(dt) {
   if (on && ST.sky) ST.sky.visible = false;
   const far = on ? 3700 : 2400; if (camera.far !== far) { camera.far = far; camera.updateProjectionMatrix(); }
   // under the roof (in the attic): dim and warm; out on top: the evening sky
-  const cp = camera.position, inA = on && cp.x > -330 && cp.x < 912 && Math.abs(cp.z) < 262 && cp.y < rfHip(cp.x, cp.z) - RFH.th - 1 ? 1 : 0;
+  const cp = camera.position, inA = on && ((cp.x > -330 && cp.x < 912 && Math.abs(cp.z) < 262 && cp.y < rfHip(cp.x, cp.z) - RFH.th - 1) || gAttic(cp) && cp.y < rfGab(cp.x, cp.z) - RFG.th - 1) ? 1 : 0;
   RF.attic = damp(RF.attic, inA, 4, dt); const D = LEVELS.roof, k = RF.attic;
   if (RF.hemi) RF.hemi.intensity = lerp(1.45, .32, k); D.envI = lerp(.85, .25, k); D.expo = lerp(.98, 1.55, k); D.fog[1] = lerp(.00016, .0006, k);
   // up the cord to the hatch: pull yourself over its edge onto the attic floor beside it
@@ -418,7 +470,7 @@ LEVELS.roof = {
   chapter: '第一章', title: '屋企', room: '閣樓', house: true, env: 'dusk', envI: .85, fog: [0xc8805e, .00016], expo: .98, bloom: [.34, 1.7],
   dust: { N: 900, box: [300, 900, 552, 660, -230, 230], beamFrac: .5, door: false },
   toys: true, npcNear: false, build: buildRoof,
-  cps: [[820, 552, 30], [565, 584, -150], [560, 651, -60], [300, RFH.R + 3.5, 0], [880, 568, 0], [1100, 393, 60], [-128, 670, -8]],
+  cps: [[820, 552, 30], [564, 585.5, -151], [560, 651, -60], [300, RFH.R + 3.5, 0], [880, 568, 0], [1100, 393, 60], [-128, 670, -8]],
   quests: RQ,
   // started from the chapter list: the crew has just climbed up through her ceiling into the attic
   spawn() {
@@ -429,7 +481,9 @@ LEVELS.roof = {
   },
   enter(prev, again) {
     rfHatch(true); if (again || NET.on) return;
-    RF.bird.on = false; RF.bird.state = 'off'; RF.bird.held = null; RF.said = {};
+    RF.bird.on = false; RF.bird.state = 'off'; RF.bird.held = null; RF.said = {}; RF.via = prev === 'garage' ? 'g' : '';
+    // (up from the garage: the way out is the garage roof's vent; fall off, and you're back on the garage roof)
+    if (RF.via) { setQuest(1); cp = 5; setTimeout(() => { if (STATE === 'play' && LEVEL === 'roof') say('爸爸', '車房閣樓……通風口嗰度有光。爬上去就出到屋頂。', '#f5f0e6', 3.2); }, 500); }
     if (prev === 'kitchen') { setTimeout(() => say('爸爸', '閣樓……我啲舊嘢都擺喺度。', '#f5f0e6', 3), 900); setTimeout(() => say('爸爸', '通風口嗰邊有光——由嗰度出得去屋頂。', '#f5f0e6', 3.4), 4400); }
   },
   keep(id) { return id === 'yard' || id === 'road'; },   // falling off the edge doesn't start the next chapter: you're put back on the roof
@@ -437,6 +491,7 @@ LEVELS.roof = {
   update(dt) {
     lvT += dt; const L = leader; if (NET.on || STATE !== 'play') return;
     if (quest === 0 && L.grounded && L.pos.y > 580 && rfIn(L.pos.x, L.pos.z, RF_VENT, 10)) { setQuest(1); toast('爬上鐵框頂，喺罩下面鑽出去'); }
+    if (quest <= 1 && RF.via && L.grounded && rfOut(L) && L.pos.x > 925) { setQuest(2); roomBanner('屋頂'); setTimeout(() => say('爸爸', '出到嚟喇！沿長春藤架爬上大屋屋頂，上屋脊睇吓。', '#f5f0e6', 3.2), 600); }
     if (quest <= 1 && L.grounded && rfOut(L) && L.pos.x < RFH.a1) { setQuest(2); roomBanner('屋頂'); setTimeout(() => say('老友', '嘩……好高！', '#d9a675', 2.2), 600); setTimeout(() => say('爸爸', '上屋脊睇吓。', '#f5f0e6', 2.4), 2900); }
     if (quest === 2 && L.grounded && L.pos.y > RFH.R - 1 && Math.abs(L.pos.z) < 7 && L.pos.x > RFH.r0 + 10 && L.pos.x < RFH.r1 - 10) filmPlay(FILM_RIDGE);
     if (quest === 3 && L.grounded && L.pos.x > 780 && rfOut(L)) { setQuest(4); say('爸爸', '下面就係車房屋頂。跳落去！', '#f5f0e6', 2.6); }
@@ -448,14 +503,14 @@ LEVELS.roof = {
   win() { },
   marker() {
     if (NET.on) return mpMarker();
-    const L = leader; if (quest === 0) return V3(564, 586, -150); if (quest === 1) return V3(564, 624, -150);
+    const L = leader; if (RF.via && quest <= 1) return V3(968, RF_GVENT.top + 2, 120); if (quest === 0) return V3(564, 586, -150); if (quest === 1) return V3(564, 624, -150);
     if (quest === 2) return V3(clamp(L.pos.x, RFH.r0 + 30, RFH.r1 - 30), RFH.R + 4, 0);
     if (quest === 3) return V3(820, rfHip(820, 0) + 3, 0); if (quest === 4) return V3(1060, rfGab(1060, 40) + 3, 40);
     return V3(968, RF_GVENT.top + 2, 120);
   },
   reset() { const B = RF.bird; if (B && B.on) { B.held = null; B.state = 'circle'; B.cool = 4; } },
   eyeText: () => { const B = RF.bird; if (!B || !B.on) return ''; if (B.state === 'swoop') return '佢衝落嚟喇！躲入通風口個罩底！'; if (B.held) return '俾喜鵲擔走緊……'; return meter > .3 ? '喜鵲望緊你！快啲躲' : B.state === 'perch' ? '喜鵲喺佢個竇度四圍望' : '喜鵲喺上面兜圈——唔好俾佢見到'; },
-  hint(L) { if (quest === 4 && Math.abs(L.pos.x - 924) < 30 && Math.abs(L.pos.z) < 50) return '長春藤架可以爬上爬落'; return ''; },
+  hint(L) { if ((quest === 4 || quest === 2 && RF.via) && Math.abs(L.pos.x - 924) < 30 && Math.abs(L.pos.z - RFG.zm) < 50) return '長春藤架可以爬上爬落'; return ''; },
   onSwitch() { }
 };
 function rfPutBack() {

@@ -1,0 +1,6 @@
+[{"eval": "window.__bn.startChapter2(); 1"}, {"wait": 6000},
+ {"eval": "(()=>{const B=window.__bn,L=B.leader; window.__NODET=true; B.toyUnfreezeAll(); B.state='play'; L.pos.set(-100,92,-196); L.vel.set(0,0,0); L.grounded=true; B.cam.yaw=0; B.cam.pitch=.02; B.cam.dist=26; B.step(40); return 1; })()"},
+ {"frame": 1}, {"shot": "win_kitchen"},
+ {"eval": "(()=>{const B=window.__bn,L=B.leader; L.pos.set(-40,0.05,-400); L.vel.set(0,0,0); B.cam.yaw=Math.atan2(0.4,-1); B.cam.pitch=.35; B.cam.dist=90; B.step(60); return 1; })()"},
+ {"frame": 1}, {"shot": "win_store"}
+]

@@ -1,0 +1,8 @@
+[{"eval": "window.__bn.startChapter('basement'); 1"}, {"wait": 5000},
+ {"eval": "(()=>{const B=window.__bn,L=B.leader; window.__NODET=true; B.state='play'; B.startMomVisit(); B.step(150); B.mom.root.visible=false; L.pos.set(-215,-136,-405); L.vel.set(0,0,0); for(const C of B.party) if(C!==L){C.pos.set(-230,-150,-390); C.queue=[];} B.cam.yaw=0; B.cam.pitch=.05; B.cam.dist=40; B.step(40); return 1; })()"},
+ {"frame": 1}, {"shot": "lj_stairs"},
+ {"eval": "(()=>{const B=window.__bn,L=B.leader; L.pos.set(-215,-76,-530); L.vel.set(0,0,0); B.cam.yaw=Math.atan2(-1,0.3); B.cam.pitch=.12; B.cam.dist=45; B.step(80); return 1; })()"},
+ {"frame": 1}, {"shot": "lj_landing"},
+ {"eval": "(()=>{const B=window.__bn,L=B.leader; L.pos.set(-30,0.05,-330); L.vel.set(0,0,0); B.cam.yaw=Math.atan2(1,0.6); B.cam.pitch=.3; B.cam.dist=90; B.step(120); return 1; })()"},
+ {"frame": 1}, {"shot": "lj_store"}
+]

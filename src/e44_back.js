@@ -132,7 +132,14 @@ function buildBackHall(K) {
   // ================= the storeroom =================
   box(-157, 138, -10, .05, -500, -232, storeF, { cast: false });
   box(-167, -157, 0, 266, -500, -232, wallM, { uv: 120 }); box(138, 150, 0, 266, -500, -482, wallM, { uv: 120 });
-  box(-167, 150, 258, 266, -500, -232, ceilM, { cast: false });
+  box(-167, 150, 258, 266, -500, -312, ceilM, { cast: false }); box(-46, 150, 258, 266, -312, -232, ceilM, { cast: false });
+  // the light well the kitchen window looks into: open to the sky, the neighbourhood painted over its low back wall (f_levels.js)
+  { const ext = new THREE.MeshStandardMaterial({ color: 0xb9c2c4, roughness: .9 }), pav = new THREE.MeshStandardMaterial({ color: 0x8c8a84, roughness: 1 });
+    box(-46, -38, -10, 270, -312, -232, ext, { uv: 120 });                          // its east side (the storeroom's on the other side)
+    box(-157, -38, -10, 45, -306, -300, ext, { uv: 120 });                           // its low back wall
+    box(-157, -38, 45, 270, -314, -304, ext, { uv: 120 });                           // (behind the painted view: the storeroom side)
+    box(-157, -46, -10, .2, -300, -232, pav, { cast: false });                       // paving
+    for (const [x, z, r, c] of [[-128, -276, 9, 0xa0583a], [-70, -284, 7, 0x8a4a30]]) { cyl(x, z, r, .2, r * 1.6, new THREE.MeshStandardMaterial({ color: c, roughness: .9 })); const p = mesh(new THREE.IcosahedronGeometry(r * 1.5, 1), new THREE.MeshStandardMaterial({ color: 0x3f7a3a, roughness: .9, flatShading: true }), x, r * 2.7, z); p.userData.noSolid = true; } }
   // the pantry door, standing open against the wall
   { const dm = new THREE.MeshPhysicalMaterial({ color: 0xece6da, roughness: .55, clearcoat: .2 });
     box(36, 40, 0, 203, -498, -420, dm); const kb = mesh(new THREE.SphereGeometry(2, 14, 10), K.brass, 34, 98, -426); kb.userData.noSolid = true; }
@@ -141,16 +148,16 @@ function buildBackHall(K) {
   mesh(new THREE.SphereGeometry(4.5, 18, 12), new THREE.MeshStandardMaterial({ color: 0xfff2d8, emissive: 0xffd49a, emissiveIntensity: 1.4 }), 0, 222, -370, { cast: false }).userData.noSolid = true;
   pointL(0xffcf94, 950, 0, 214, -370);
   // metal shelving along the west wall
-  { const x0 = -155, x1 = -113, z0 = -492, z1 = -262;
+  { const x0 = -155, x1 = -113, z0 = -492, z1 = -322;
     for (const x of [x0, x1 - 2]) for (const z of [z0, z1 - 2, (z0 + z1) / 2]) box(x, x + 2, 0, 200, z, z + 2, steelM, nc);
     for (const y of [40, 80, 120, 160, 198]) box(x0, x1, y - 2, y, z0, z1, new THREE.MeshStandardMaterial({ color: 0xb8bcc0, metalness: .5, roughness: .45 }));
     const can = (x, z, y, c) => cyl(x, z, 4.2, y, y + 11, new THREE.MeshStandardMaterial({ color: c, metalness: .5, roughness: .35 }), { seg: 20 });
     for (let i = 0; i < 6; i++) can(-140, -470 + i * 10, 40, [0xc8312a, 0xe8c25a, 0x2f8a4a][i % 3]);
-    for (let i = 0; i < 4; i++) can(-128, -340 + i * 10, 80, [0x3a6ad0, 0xc8312a][i % 2]);
+    for (let i = 0; i < 4; i++) can(-128, -368 + i * 10, 80, [0x3a6ad0, 0xc8312a][i % 2]);
     for (const [z, c, h] of [[-470, 0xf2a33a, 32], [-452, 0xd84a3a, 30], [-432, 0x4a9ad8, 34]]) box(-150, -122, 120, 120 + h, z, z + 14, new THREE.MeshStandardMaterial({ color: c, roughness: .8 }));   // cereal boxes
     // a big jar of marbles (a few have got out) and a jar of raisins on the bottom shelf
-    cyl(-134, -300, 9, 40, 62, new THREE.MeshPhysicalMaterial({ color: 0xdff0f6, roughness: .05, transparent: true, opacity: .45, clearcoat: 1 }), { seg: 28 });
-    for (let i = 0; i < 14; i++) { const b = mesh(new THREE.SphereGeometry(1.5, 10, 8), new THREE.MeshPhysicalMaterial({ color: [0x4a9ad8, 0xe85a4a, 0x5ac87a, 0xf2c23a][i % 4], roughness: .1, clearcoat: 1 }), -134 + R(-6, 6), 41.5 + (i % 5) * 2.6, -300 + R(-6, 6), { cast: false }); b.userData.noSolid = true; }
+    cyl(-134, -342, 9, 40, 62, new THREE.MeshPhysicalMaterial({ color: 0xdff0f6, roughness: .05, transparent: true, opacity: .45, clearcoat: 1 }), { seg: 28 });
+    for (let i = 0; i < 14; i++) { const b = mesh(new THREE.SphereGeometry(1.5, 10, 8), new THREE.MeshPhysicalMaterial({ color: [0x4a9ad8, 0xe85a4a, 0x5ac87a, 0xf2c23a][i % 4], roughness: .1, clearcoat: 1 }), -134 + R(-6, 6), 41.5 + (i % 5) * 2.6, -342 + R(-6, 6), { cast: false }); b.userData.noSolid = true; }
     cyl(-134, -400, 8, 40, 58, new THREE.MeshPhysicalMaterial({ color: 0xeedfcf, roughness: .1, transparent: true, opacity: .55 }), { seg: 24 });
     cyl(-134, -400, 8.3, 58, 61, new THREE.MeshStandardMaterial({ color: 0xc8312a, roughness: .5 }), { seg: 24 }); }
   // a rice sack slumped on the floor, a torn bag of sugar, the sewing tin, cardboard boxes, a step stool
@@ -297,5 +304,6 @@ function backHint(L) {
   if (!BK.used && !L.climbing && L.pos.y < 40 && L.pos.x > -70 && L.pos.x < 60 && L.pos.z < -540 && L.pos.z > -612) return '爬上報紙、鞋櫃同鞋盒，捉住頂嗰個衣架就可以滑過成條走廊';
   if (inStore(L.pos) && L.pos.y < 9 && Math.hypot(L.pos.x + 30, L.pos.z + 238) < 18) return '牆腳個窿通去廚房櫃底——一出去就係太太腳邊，小心';
   if (L.pos.y < 9 && L.pos.x > -40 && L.pos.x < -20 && L.pos.z > -232 && L.pos.z < -168) return '櫃底條窿通去後面嘅儲物房（嗰度冇人望到你）';
+  if (PEST.st === 'off' && L.pos.y < 30 && L.pos.x > 630 && L.pos.x < 750 && L.pos.z < -580 && L.pos.z > -612) return '後門鎖咗——之後會通去後園';
   return '';
 }

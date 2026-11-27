@@ -146,6 +146,8 @@ function lightTick(dt) {
       if (Z !== WC.cz && _lw.distanceTo(cp) > 150 && _lw.distanceTo(lp) > 150 && !doorSpill(_lw, cp)) continue;
       // …and inside the house, a lamp on the far side of a wall doesn't count at all (lights shine through walls: the storeroom would flicker with the kitchen's)
       if (!l.userData.prio && Z.id === 'kitchen' && WC.cz && WC.cz.id === 'kitchen' && wallBetweenLight(_lw, cp)) continue;
+      // …nor the garage's lamps up in its attic (the ceiling's between)
+      if (Z.id === 'garage' && gAttic(cp) && _lw.y < 276) continue;
       const e = { l, sc: lightScore(l, cp, lp) };
       if (l.isSpotLight) (l.castShadow ? shs : sps).push(e); else if (l.isPointLight) pts.push(e);
     }
@@ -165,7 +167,9 @@ const WC = { cz: null, envK: 1, envWant: null, fogC: new THREE.Color(), banner: 
 function zoneTick(dt) {
   if (!WORLD) return;
   const cp = camera.position, lp = leader ? leader.pos : cp;
-  for (const Z of ZL) { Z.near = inZone(Z, cp.x, cp.y, cp.z, 45) || inZone(Z, lp.x, lp.y, lp.z, 45) || (!!Z.peek && Z.peek.some(b => cp.x > b[0] && cp.x < b[1] && cp.y > b[2] && cp.y < b[3] && cp.z > b[4] && cp.z < b[5])); Z.lv.visible = Z.fx.visible = Z.near; if (Z.npcs) for (const o of Z.npcs) o.visible = Z.near; }
+  for (const Z of ZL) { Z.near = inZone(Z, cp.x, cp.y, cp.z, 45) || inZone(Z, lp.x, lp.y, lp.z, 45) || (!!Z.peek && Z.peek.some(b => cp.x > b[0] && cp.x < b[1] && cp.y > b[2] && cp.y < b[3] && cp.z > b[4] && cp.z < b[5]));
+    if (Z.id === 'roof' && Z.near && gUnder(cp) && gUnder(lp)) Z.near = false;   // (under the garage's ceiling you don't see its attic, or the roofs)
+    Z.lv.visible = Z.fx.visible = Z.near; if (Z.npcs) for (const o of Z.npcs) o.visible = Z.near; }
   houseShellTick(); solidTick(); humanLifeTick(dt); realTick(dt);
   // atmosphere of the place the camera is in
   const cz = zoneAt(cp) || (leader && zoneAt(leader.pos)) || WC.cz || ZONES[LEVEL]; if (cz) WC.cz = cz;

@@ -345,7 +345,9 @@ function buildKitchen() {
   box(-312, 330, -10, 0, -240, 240, K.floor, { uv: 140, cast: false });
   // ceiling (with the hole the hood's chimney goes up through)
   box(-330, 16, 260, 270, -240, 240, K.ceil, { cast: false }); box(60, 330, 260, 270, -240, 240, K.ceil, { cast: false }); box(16, 60, 260, 270, -240, -218, K.ceil, { cast: false }); box(16, 60, 260, 270, -198, 240, K.ceil, { cast: false });
-  box(-312, -150, 0, 260, -232, -220, K.wall, { uv: 120 }); box(-50, -36, 0, 260, -232, -220, K.wall, { uv: 120 }); box(-36, -24, 10, 260, -232, -220, K.wall, { uv: 120 }); box(-24, 196, 0, 260, -232, -220, K.wall, { uv: 120 });   // (a mouse-size hole behind the counter, through to the storeroom) box(206, 236, 0, 260, -232, -220, K.wall, { uv: 120 }); box(196, 206, 8, 260, -232, -220, K.wall, { uv: 120 });   // (a mouse hole behind the fridge, through to the bathroom) box(298, 312, 0, 260, -232, -220, K.wall, { uv: 120 }); box(236, 298, 205, 260, -232, -220, K.wall, { uv: 120 });
+  box(-312, -150, 0, 260, -232, -220, K.wall, { uv: 120 }); box(-50, -36, 0, 260, -232, -220, K.wall, { uv: 120 }); box(-36, -24, 10, 260, -232, -220, K.wall, { uv: 120 }); box(-24, 196, 0, 260, -232, -220, K.wall, { uv: 120 });   // (a mouse-size hole behind the counter, through to the storeroom)
+  box(206, 236, 0, 260, -232, -220, K.wall, { uv: 120 }); box(196, 206, 8, 260, -232, -220, K.wall, { uv: 120 });   // (a mouse hole behind the fridge, through to the bathroom)
+  box(298, 312, 0, 260, -232, -220, K.wall, { uv: 120 }); box(236, 298, 205, 260, -232, -220, K.wall, { uv: 120 });
   box(-150, -50, 0, 110, -232, -220, K.wall, { uv: 120 }); box(-150, -50, 190, 260, -232, -220, K.wall, { uv: 120 });
   // (the back wall has the bathroom door in it, between the fridge and the living-room wall)
   box(-312, 312, 0, 260, 220, 232, K.wall, { uv: 120 }); box(300, 312, 0, 260, -232, -62, K.wall, { uv: 120 }); box(300, 312, 0, 260, 44, 232, K.wall, { uv: 120 }); box(300, 312, 212, 260, -62, 44, K.wall, { uv: 120 });
@@ -370,7 +372,10 @@ function buildKitchen() {
   // window above the sink
   box(-152, -48, 104, 110, -232, -212, MAT.white); box(-152, -148, 110, 190, -232, -224, MAT.white); box(-52, -48, 110, 190, -232, -224, MAT.white); box(-152, -48, 186, 190, -232, -224, MAT.white); box(-101.5, -98.5, 110, 190, -230, -226, MAT.white, { col: false }); box(-150, -50, 148.5, 151.5, -230, -226, MAT.white, { col: false });
   mesh(new THREE.PlaneGeometry(98, 78), MAT.glassThin, -100, 150, -228, { cast: false });
-  mesh(new THREE.PlaneGeometry(420, 210), K.dusk, -100, 150, -330, { cast: false });
+  // the view: a little light well behind the house (the storeroom wraps round it), the neighbourhood over its back wall
+  { const g = new THREE.PlaneGeometry(111, 210), uv = g.attributes.uv, u0 = (-157 + 310) / 420, u1 = (-46 + 310) / 420;   // (the middle of the painted view, at its own scale)
+    for (let i = 0; i < uv.count; i++) uv.setX(i, u0 + uv.getX(i) * (u1 - u0));
+    mesh(g, K.dusk, -101.5, 150, -303.9, { cast: false }); }
   sunWindow(V3(-100, 150, -226), 98, 78, V3(0, 0, 1), 0, { fill: 12000 });
   cols.push({ t: 'b', x0: -150, x1: -50, y0: 110, y1: 190, z0: -229, z1: -227, noRay: true });
   // potted herb on the sill

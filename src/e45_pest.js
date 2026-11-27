@@ -28,7 +28,7 @@ const PEST_LINES = {
   bye: '搞掂。有咩再打電話俾我。'
 };
 // cage traps (spot, which way the door faces)
-const CAGE_SPOTS = [{ x: -60, z: -320, face: 'x+' }, { x: 345, z: -210, face: 'z+' }, { x: 246, z: -126, face: 'x-' }];
+const CAGE_SPOTS = [{ x: -60, z: -350, face: 'x+' }, { x: 345, z: -210, face: 'z+' }, { x: 246, z: -126, face: 'x-' }];
 const CAGES = [];
 
 // ---------- building (with the kitchen) ----------

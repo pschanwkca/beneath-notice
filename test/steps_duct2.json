@@ -1,0 +1,5 @@
+[{"evalFile":"shothelp.js"},
+ {"eval": "(async()=>{ const b=window.__bn; window.__NODET=true; await b.startChapter('garage'); for(let i=0;i<160 && b.state!=='play';i++) await new Promise(r=>setTimeout(r,250)); b.step(10); window.__S.hud(false); return [b.LEVEL, b.state]; })()"},
+ {"eval": "(()=>{ const b=window.__bn, L=b.leader; L.pos.set(890, 275.5, 120); L.vel.set(0,0,0); for (const C of b.party) if (C!==L) { C.pos.set(884,275.5,120); C.queue=[]; } b.cam.yaw = -Math.PI/2; b.step(60); return [b.info().pos, b.W.WC.cz.id, b.ZONES.roof.near]; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"duct_e"},
+ {"eval": "(()=>{ const b=window.__bn, L=b.leader; L.pos.set(1200, -20, 100); L.vel.set(0,0,0); for (const C of b.party) if (C!==L) { C.pos.set(1210,-20,110); C.queue=[]; } b.cam.yaw = Math.PI*0.5; b.step(60); return [b.info().pos, b.W.WC.cz.id, b.ZONES.roof.near, b.LP.pt.filter(x=>x.intensity>0).length]; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"gar_floor"}
+]

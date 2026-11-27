@@ -1,0 +1,6 @@
+[{"evalFile":"shothelp.js"},{"evalFile":"roof_h.js"},{"evalFile":"vent_h.js"},
+ {"eval":"window.__R.start()"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; R.put(960, b.rfGab(960,21) + 1, 21); b.step(20); const L=b.leader; L.stamina=L.stamMax=100; return window.__V.go([[926,21],[926,21,536],[880,21]], 3000, 60); })()"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; R.put(960, b.rfGab(960,50) + 1, 50); b.step(20); const L=b.leader; L.stamina=L.stamMax=100; return window.__V.go([[915,50],[915,50,536],[880,50]], 3000, 60); })()"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; window.__S.hud(false); R.put(990, 412, 21); R.face(-1,0.3); b.step(60); return b.info().pos; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"groof_2"}
+]

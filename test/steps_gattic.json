@@ -1,0 +1,10 @@
+[{"evalFile":"shothelp.js"},{"evalFile":"roof_h.js"},
+ {"eval":"window.__R.start()"},
+ {"eval":"window.__S.hud(false); 1"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; R.put(1100, 281, 66); R.face(-1,0.5); b.step(60); return [b.info().pos, b.LEVEL, b.W.WC.cz.id]; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"gatt_1"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; R.put(1100, 281, 66); R.face(1,-0.2); b.step(60); return [b.info().pos, b.LEVEL, b.W.WC.cz.id]; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"gatt_2"},
+ {"eval":"window.__S.abs([1060, 300, 160],[968, 345, 118])"},{"frame":1},{"frame":1},{"frame":1,"shot":"gatt_3"},
+ {"eval":"window.__S.abs([1240, 330, -120],[1300, 300, 120])"},{"frame":1},{"frame":1},{"frame":1,"shot":"gatt_4"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; window.__S.game(); R.put(564, 586, -151); R.face(0,-1); b.step(60); return [b.info().pos]; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"att_vent"},
+ {"eval":"(()=>{ const R=window.__R, b=window.__bn; R.put(1100, 394, 60); R.face(-1,0.4); b.step(60); return [b.info().pos, b.W.WC.cz.id]; })()"},{"frame":1},{"frame":1},{"frame":1,"shot":"groof_1"}
+]

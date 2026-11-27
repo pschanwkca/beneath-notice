@@ -17,7 +17,7 @@ const AGB = { sus: 0, stage: 0, quiet: 0, last: [], act: null, rx: null, search:
 function buildGarageDuct(M) {
   const D = new THREE.MeshStandardMaterial({ map: kitchenMats().steel.map, color: 0xc4cacd, metalness: .5, roughness: .48 });
   box(906, 912, 270, 275, 108, 132, D);                                            // a little step up onto the garage ceiling
-  box(906, 950, 270, 300, 106, 108, D); box(906, 950, 270, 300, 132, 134, D); box(946, 950, 290, 300, 108, 132, D);   // (its bottom peeled away: the way in from the garage attic) box(904, 950, 298, 300, 106, 134, D);
+  box(906, 950, 270, 300, 106, 108, D); box(906, 950, 270, 300, 132, 134, D); box(946, 950, 290, 300, 108, 132, D); box(904, 950, 298, 300, 106, 134, D);   // (its bottom peeled away: the way in from the garage attic)
   box(878, 906, 270, 294, 134, 136, D); box(904, 906, 270, 294, 132, 136, D);
   // the grille (no collider: you drop through it onto the top shelf)
   const gm = new THREE.MeshStandardMaterial({ color: 0xd8dde2, metalness: .8, roughness: .35 });
